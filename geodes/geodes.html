@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Geodes</title>
+  <style>
+    :root {
+      --bg: #0c0f14;
+      --ui: #121722;
+      --text: #e8ecf1;
+      --accent: #ff6a00;
+      --good: #35dd8a;
+      --bad: #ff4d6d;
+      --muted: #90a0b7;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: radial-gradient(1200px 800px at 50% 50%, #121826 0%, #0c0f14 60%, #080b10 100%);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, Noto Sans, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      user-select: none;
+      overflow: hidden;
+      touch-action: manipulation;
+      /* Improve touch responsiveness */
+      -webkit-touch-callout: none;
+      /* Disable iOS callouts */
+      -webkit-tap-highlight-color: transparent;
+      /* Remove tap highlights */
+    }
+
+    #game {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+
+    #hud {
+      position: fixed;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 10px;
+      background: rgba(12, 15, 20, 0.45);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      z-index: 5;
+      font-size: 14px;
+      /* Smaller on mobile */
+    }
+
+    @media (max-width: 768px) {
+      #hud {
+        gap: 6px;
+        padding: 4px 8px;
+        font-size: 12px;
+        top: 8px;
+      }
+    }
+
+    .chip {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--muted);
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .score .dot {
+      background: var(--good);
+    }
+
+    .missed .dot {
+      background: var(--bad);
+    }
+
+    .speed .dot {
+      background: var(--accent);
+    }
+
+    .key {
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .val {
+      color: var(--text);
+      min-width: 3ch;
+      text-align: right;
+    }
+
+    #controls {
+      position: fixed;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      z-index: 5;
+    }
+
+    @media (max-width: 768px) {
+      #controls {
+        gap: 8px;
+        bottom: 10px;
+      }
+    }
+
+    button {
+      all: unset;
+      cursor: pointer;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 700;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      transition: transform .08s ease, background .2s ease, box-shadow .2s ease;
+    }
+
+    @media (max-width: 768px) {
+      button {
+        padding: 8px 12px;
+        font-size: 14px;
+        min-height: 44px;
+        /* Touch-friendly minimum size */
+        min-width: 44px;
+      }
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    #startBtn {
+      background: linear-gradient(180deg, rgba(53, 221, 138, 0.2), rgba(53, 221, 138, 0.05));
+      border-color: rgba(53, 221, 138, 0.35);
+    }
+
+    #pauseBtn {
+      background: linear-gradient(180deg, rgba(255, 144, 0, 0.18), rgba(255, 144, 0, 0.05));
+      border-color: rgba(255, 144, 0, 0.35);
+    }
+
+    #resetBtn {
+      background: linear-gradient(180deg, rgba(255, 77, 109, 0.2), rgba(255, 77, 109, 0.05));
+      border-color: rgba(255, 77, 109, 0.35);
+    }
+
+    #muteBtn {
+      background: linear-gradient(180deg, rgba(144, 144, 255, 0.2), rgba(144, 144, 255, 0.05));
+      border-color: rgba(144, 144, 255, 0.35);
+    }
+
+    #muteBtn.muted {
+      background: linear-gradient(180deg, rgba(255, 144, 144, 0.2), rgba(255, 144, 144, 0.05));
+      border-color: rgba(255, 144, 144, 0.35);
+    }
+
+    #overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 6;
+      background: radial-gradient(800px 500px at 50% 50%, rgba(8, 11, 16, 0.85), rgba(8, 11, 16, 0.96));
+      color: var(--text);
+      /* Mobile: the overlay content can exceed viewport height; allow scrolling */
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    }
+
+    #overlay .panel {
+      max-width: 780px;
+      padding: 28px 26px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      text-align: center;
+      width: min(780px, 100%);
+      /* Keep panel within viewport so the CTA doesn't get pushed off-screen */
+      max-height: calc(100dvh - 32px);
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Mobile tightening: reduce vertical space so Play is reachable */
+    @media (max-width: 768px) {
+      #overlay .panel {
+        padding: 16px 14px;
+        border-radius: 14px;
+        max-height: calc(100dvh - 24px);
+      }
+
+      #overlay h1 {
+        font-size: 30px;
+        margin-bottom: 6px;
+      }
+
+      #overlay p {
+        margin: 8px auto 12px auto;
+      }
+
+      #overlay .big {
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      #overlay .pill {
+        padding: 7px 10px;
+        font-size: 12px;
+      }
+
+      #overlay .cta {
+        margin-top: 12px;
+        width: 100%;
+      }
+    }
+
+    #overlay h1 {
+      margin: 0 0 8px 0;
+      letter-spacing: 0.5px;
+      font-size: 40px;
+      line-height: 1.1;
+      background: linear-gradient(92deg, #ffcf5a, #ff6a00 50%, #ffd1ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 6px 18px rgba(255, 106, 0, 0.25));
+    }
+
+    #overlay p {
+      margin: 10px auto 16px auto;
+      color: #c9d4e3;
+    }
+
+    #overlay .big {
+      font-size: 15px;
+    }
+
+    #overlay .row {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    #overlay .pill {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-weight: 600;
+      color: #eaeff7;
+    }
+
+    #overlay .pill.ruby-pill {
+      color: #eaeff7;
+      /* Keep text white like other pills */
+    }
+
+    #overlay .pill.ruby-pill .ruby-symbol {
+      color: #ff1744;
+      /* Only the ruby symbol is red */
+    }
+
+    #overlay .cta {
+      margin-top: 18px;
+      padding: 12px 18px;
+      font-size: 16px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(53, 221, 138, 0.25), rgba(53, 221, 138, 0.08));
+      border: 1px solid rgba(53, 221, 138, 0.45);
+    }
+
+    /* Ensure hidden overrides #overlay's display:flex */
+    #overlay.hidden {
+      display: none;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .menu-link {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 7;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 12px;
+      color: var(--text);
+      background: rgba(12, 15, 20, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .menu-link:hover {
+      background: rgba(12, 15, 20, 0.62);
+    }
+
+    .menu-link:focus-visible {
+      outline: 3px solid rgba(255, 106, 0, .5);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+
+<body>
+  <a class="menu-link" href="../gamemenu.html" aria-label="Back to games menu">← Menu</a>
+  <canvas id="game"></canvas>
+
+  <div id="hud">
+    <div class="chip score">
+      <div class="dot"></div><span class="key">Score</span><span class="val" id="score">0</span>
+    </div>
+    <div class="chip missed">
+      <div class="dot"></div><span class="key">Missed</span><span class="val"><span id="missed">0</span>/20</span>
+    </div>
+    <div class="chip speed">
+      <div class="dot"></div><span class="key">Speed</span><span class="val" id="speedMult">1.0×</span>
+    </div>
+  </div>
+
+  <div id="controls">
+    <button id="startBtn" title="Start / Resume">Start</button>
+    <button id="pauseBtn" title="Pause">Pause</button>
+    <button id="resetBtn" title="Reset">Reset</button>
+    <button id="muteBtn" title="Mute / Unmute Audio">🔊</button>
+  </div>
+
+  <div id="overlay">
+    <div class="panel">
+      <h1>GEODES</h1>
+      <p class="big">Click objects erupting from the volcano to crack them open. Geodes contain valuable gems, while
+        rocks just break apart. Fireballs explode and break all geodes on screen at once. The game ends when
+        <strong>20</strong> geodes escape the screen.
+      </p>
+
+      <div class="row">
+        <div class="pill">🌋 <strong>Geodes</strong> — Dark spheres with silver specks. Click to crack open and release
+          gems.</div>
+        <div class="pill">🪨 <strong>Rocks</strong> — Gray stones. Click to break into pieces (no gems, no penalty for
+          missing).</div>
+        <div class="pill">🔥 <strong>Fireballs</strong> — Rare glowing orbs. Click to explode and turn all geodes into
+          diamonds!</div>
+      </div>
+
+      <div class="row">
+        <div class="pill">💎 Diamond — 100</div>
+        <div class="pill ruby-pill"><span class="ruby-symbol">♦</span> Ruby — 80</div>
+        <div class="pill">🟩 Emerald — 60</div>
+        <div class="pill">🔷 Sapphire — 40</div>
+        <div class="pill">🟣 Amethyst — 20</div>
+        <div class="pill">🟠 Amber — 10</div>
+      </div>
+      <div class="row">
+        <div class="pill">Most rare ➜ Diamond → Ruby → Emerald → Sapphire → Amethyst → Amber</div>
+      </div>
+      <button class="cta" id="playBtn">Play</button>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const canvas = document.getElementById('game');
+      const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
+
+      // HUD
+      const scoreEl = document.getElementById('score');
+      const missedEl = document.getElementById('missed');
+      const speedEl = document.getElementById('speedMult');
+
+      const overlay = document.getElementById('overlay');
+      const playBtn = document.getElementById('playBtn');
+      const startBtn = document.getElementById('startBtn');
+      const pauseBtn = document.getElementById('pauseBtn');
+      const resetBtn = document.getElementById('resetBtn');
+      const muteBtn = document.getElementById('muteBtn');
+
+      // World & game state
+      let W = 0, H = 0, DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      let lastTime = 0, running = false, gameOver = false;
+      let score = 0, missed = 0;
+
+      // Volcano position (center) and mouth radius
+      const volcano = { x: 0, y: 0, mouthR: 26 };
+
+      // Spawn control
+      let spawnTimer = 0;
+      const SPAWN_INTERVAL_MS = 1200; // Reduced geode frequency (was 800ms)
+      let rockTimer = 0;
+      const ROCK_INTERVAL_MS = 600; // Rocks spawn more frequently than geodes
+      let fireballTimer = 0;
+      const FIREBALL_INTERVAL_MS = 45000; // Fireball every 45 seconds (much rarer)
+
+      // Collections
+      const geodes = [];
+      const rocks = []; // New collection for plain rocks
+      const shards = [];
+      const gems = [];
+      const particles = [];
+      const fireballs = []; // New collection for fireballs
+
+      // Configurations
+      const MAX_MISSED = 20;
+
+      // Gem rarities and points (descending rarity & value per specification)
+      const GEM_TYPES = [
+        { name: 'diamond', color: '#b9f2ff', points: 100, weight: 1 },  // ~1%
+        { name: 'ruby', color: '#ff1744', points: 80, weight: 3 },  // ~3%
+        { name: 'emerald', color: '#00e676', points: 60, weight: 6 },  // ~6%
+        { name: 'sapphire', color: '#40c4ff', points: 40, weight: 10 }, // ~10%
+        { name: 'amethyst', color: '#b388ff', points: 20, weight: 20 }, // ~20%
+        { name: 'amber', color: '#ffb300', points: 10, weight: 60 }, // ~60%
+      ];
+      const TOTAL_WEIGHT = GEM_TYPES.reduce((a, t) => a + t.weight, 0);
+
+      // Rock colors (duller, earthier than geodes)
+      const ROCK_COLORS = [
+        '#5a5a5a', '#6b6b6b', '#4a4a4a', '#7a7a7a', '#565656', '#636363'
+      ];
+
+      // Geode palette (dark with silver specks for realistic geode look)
+      const GEODE_COLORS = [
+        '#1a1a1a', '#0f0f0f', '#2a2a2a', '#1f1f1f', '#252525', '#1c1c1c'
+      ];
+
+      // Compute global speed multiplier: +10% every 1000 points
+      function globalSpeedMult() {
+        const tiers = Math.floor(score / 1000);
+        return 1 + 0.10 * tiers;
+      }
+
+      function updateHUD() {
+        scoreEl.textContent = score.toString();
+        missedEl.textContent = missed.toString();
+        speedEl.textContent = `${globalSpeedMult().toFixed(1)}×`;
+      }
+
+      function resize() {
+        const { innerWidth, innerHeight } = window;
+        W = canvas.width = Math.floor(innerWidth * DPR);
+        H = canvas.height = Math.floor(innerHeight * DPR);
+        canvas.style.width = `${innerWidth}px`;
+        canvas.style.height = `${innerHeight}px`;
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        volcano.x = innerWidth / 2;
+        volcano.y = innerHeight - 40; // Position volcano at bottom of screen
+      }
+      window.addEventListener('resize', resize, { passive: true });
+      resize();
+
+      // Utility
+      const rand = (a = 1, b = 0) => Math.random() * (a - b) + b;
+      const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+      const dist2 = (x1, y1, x2, y2) => (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
+
+      // Choose a gem type based on weights
+      function chooseGemType() {
+        let r = Math.random() * TOTAL_WEIGHT;
+        for (const t of GEM_TYPES) {
+          if (r < t.weight) return t;
+          r -= t.weight;
+        }
+        return GEM_TYPES[GEM_TYPES.length - 1];
+      }
+
+      // Geode creation
+      function spawnGeode() {
+        // Launch geodes upward from volcano with some horizontal spread
+        const angle = rand(-Math.PI / 4, -3 * Math.PI / 4); // Upward arc between -45° and -135°
+        const dir = { x: Math.cos(angle), y: Math.sin(angle) };
+        const baseSpeed = rand(350, 500); // Even higher launch speed for dramatic arcs
+        const radius = rand(18, 30); // Larger than rocks (14-24) but smaller than fireballs (20-28)
+        const spin = rand(1.5, -1.5);
+        const col = GEODE_COLORS[(Math.random() * GEODE_COLORS.length) | 0];
+
+        geodes.push({
+          x: volcano.x + rand(-12, 12),
+          y: volcano.y - Math.min(canvas.clientWidth, canvas.clientHeight) * 0.26 + rand(-6, 6), // Top of volcano
+          vx: dir.x * baseSpeed, // horizontal velocity
+          vy: dir.y * baseSpeed, // vertical velocity (negative = upward)
+          r: radius, spin, rot: rand(Math.PI * 2), color: col,
+          clicked: false, escaped: false
+        });
+      }
+
+      // Fireball creation
+      function spawnFireball() {
+        const angle = rand(-Math.PI / 4, -3 * Math.PI / 4);
+        const dir = { x: Math.cos(angle), y: Math.sin(angle) };
+        const baseSpeed = rand(300, 450);
+        const radius = rand(20, 28); // Slightly larger than geodes
+
+        fireballs.push({
+          x: volcano.x + rand(-12, 12),
+          y: volcano.y - Math.min(canvas.clientWidth, canvas.clientHeight) * 0.26 + rand(-6, 6),
+          vx: dir.x * baseSpeed,
+          vy: dir.y * baseSpeed,
+          r: radius, rot: 0, pulsePhase: 0,
+          clicked: false, escaped: false
+        });
+      }
+
+      // Rock creation (plain rocks with no gems)
+      function spawnRock() {
+        const angle = rand(-Math.PI / 4, -3 * Math.PI / 4);
+        const dir = { x: Math.cos(angle), y: Math.sin(angle) };
+        const baseSpeed = rand(350, 500);
+        const radius = rand(14, 24); // Slightly smaller than geodes on average
+        const spin = rand(1.5, -1.5);
+        const col = ROCK_COLORS[(Math.random() * ROCK_COLORS.length) | 0];
+
+        rocks.push({
+          x: volcano.x + rand(-12, 12),
+          y: volcano.y - Math.min(canvas.clientWidth, canvas.clientHeight) * 0.26 + rand(-6, 6),
+          vx: dir.x * baseSpeed,
+          vy: dir.y * baseSpeed,
+          r: radius, spin, rot: rand(Math.PI * 2), color: col,
+          clicked: false, escaped: false
+        });
+      }
+
+      // Shards from geode cracking
+      function makeShards(x, y, baseColor, dir) {
+        const n = 10 + (Math.random() * 10 | 0);
+        for (let i = 0; i < n; i++) {
+          const ang = Math.atan2(dir.y, dir.x) + rand(Math.PI / 1.5, -Math.PI / 1.5);
+          const spd = rand(90, 210);
+          const life = rand(0.5, 1.2);
+          shards.push({
+            x, y, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
+            rot: rand(Math.PI * 2), vrot: rand(6, -6),
+            w: rand(3, 8), h: rand(5, 14),
+            life, ttl: life, color: baseColor
+          });
+        }
+      }
+
+      // Sparkle particles (for gem collection)
+      function makeSparkles(x, y, color) {
+        for (let i = 0; i < 16; i++) {
+          const ang = rand(Math.PI * 2);
+          const spd = rand(40, 180);
+          const life = rand(0.4, 0.9);
+          particles.push({
+            x, y, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
+            life, ttl: life, size: rand(1, 3), color
+          });
+        }
+      }
+
+      // Fireball explosion effect
+      function explodeFireball(fb) {
+        // Play explosion sound
+        if (typeof sfxExplosion === 'function') {
+          sfxExplosion();
+        }
+
+        // Create explosion particles
+        for (let i = 0; i < 30; i++) {
+          const angle = rand(Math.PI * 2);
+          const speed = rand(100, 300);
+          const life = rand(0.8, 1.5);
+          particles.push({
+            x: fb.x, y: fb.y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life, ttl: life,
+            size: rand(2, 6),
+            color: ['#ff6a00', '#ffcf5a', '#ff3f6e'][Math.floor(Math.random() * 3)]
+          });
+        }
+
+        // Award points and break all geodes on screen; spawn free diamonds (visual only)
+        let awarded = 0;
+        for (let i = geodes.length - 1; i >= 0; i--) {
+          const g = geodes[i];
+          // Award the diamond value for each geode (fireball turns them into diamonds)
+          const diamondPoints = GEM_TYPES[0].points;
+          awarded += diamondPoints;
+          makeShards(g.x, g.y, g.color, { x: g.vx / 100, y: g.vy / 100 });
+          spawnDiamond(g.x, g.y - 4, { free: true }); // spawn a visual diamond but mark it free
+          geodes.splice(i, 1);
+        }
+
+        // Also break all rocks on screen and award their points
+        for (let i = rocks.length - 1; i >= 0; i--) {
+          const r = rocks[i];
+          awarded += 5; // rocks worth 5 points when exploded by fireball
+          makeShards(r.x, r.y, r.color, { x: r.vx / 100, y: r.vy / 100 });
+          rocks.splice(i, 1);
+        }
+
+        // Apply the awarded points and update HUD/sfx
+        if (awarded > 0) {
+          score += awarded;
+          updateHUD();
+          if (typeof sfxGem === 'function') sfxGem(Math.min(1000, awarded));
+        }
+      }
+
+      // Gem creation
+      function maybeSpawnGem(x, y) {
+        if (Math.random() < 0.85) {
+          const t = chooseGemType();
+          // gentle upward drift
+          const drift = rand(12, -12);
+          gems.push({
+            type: t.name, color: t.color, points: t.points,
+            x, y, r: 14, rot: rand(Math.PI * 2), vrot: rand(1.2, -1.2),
+            vx: drift, vy: rand(-10, -30),
+            life: 8.0, ttl: 8.0, alpha: 1
+          });
+        }
+      }
+
+      // Special function to always spawn diamonds (for fireball explosions)
+      function spawnDiamond(x, y, opts = {}) {
+        // opts.free -> when true the spawned diamond remains visually but awards no points if later clicked
+        const diamondType = GEM_TYPES[0]; // Diamond is first in array (most valuable)
+        const drift = rand(12, -12);
+        const free = !!opts.free;
+        gems.push({
+          type: diamondType.name, color: diamondType.color, points: free ? 0 : diamondType.points,
+          x, y, r: 14, rot: rand(Math.PI * 2), vrot: rand(1.2, -1.2),
+          vx: drift, vy: rand(-10, -30),
+          life: 8.0, ttl: 8.0, alpha: 1,
+          free // mark so code can choose to treat it specially if needed
+        });
+      }
+
+      // Remove escaped geodes
+      function outOfBounds(x, y, pad = 30) {
+        return x < -pad || y < -pad || x > canvas.clientWidth + pad || y > canvas.clientHeight + pad;
+      }
+
+      // Drawing helpers
+      function drawVolcano() {
+        const x = volcano.x, y = volcano.y;
+        const baseW = Math.min(canvas.clientWidth, canvas.clientHeight) * 0.32;
+        const height = Math.min(canvas.clientWidth, canvas.clientHeight) * 0.26;
+
+        // Glow
+        const lg = ctx.createRadialGradient(x, y - height * 0.98, 2, x, y - height * 0.98, volcano.mouthR * 3.2);
+        lg.addColorStop(0, 'rgba(255,90,0,0.55)');
+        lg.addColorStop(1, 'rgba(255,90,0,0.0)');
+        ctx.fillStyle = lg;
+        ctx.beginPath();
+        ctx.arc(x, y - height * 0.98, volcano.mouthR * 3.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Body
+        const topW = baseW * 0.22;
+        ctx.fillStyle = '#2c2f3a';
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+        ctx.lineWidth = 2;
+
+        ctx.beginPath();
+        ctx.moveTo(x - topW / 2, y - height);
+        ctx.lineTo(x + topW / 2, y - height);
+        ctx.lineTo(x + baseW / 2, y);
+        ctx.lineTo(x - baseW / 2, y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Lava rim
+        const grad = ctx.createLinearGradient(x, y - height, x, y - height + 20);
+        grad.addColorStop(0, '#ffcf5a');
+        grad.addColorStop(0.5, '#ff6a00');
+        grad.addColorStop(1, '#d24d00');
+        ctx.fillStyle = grad;
+        const rimR = volcano.mouthR;
+        ctx.beginPath();
+        roundedRectPath(ctx, x - topW / 2 - 4, y - height - 8, topW + 8, 18, 8);
+        ctx.fill();
+
+        // Mouth opening
+        const mg = ctx.createRadialGradient(x, y - height + 2, 4, x, y - height + 2, rimR);
+        mg.addColorStop(0, 'rgba(0,0,0,0.85)');
+        mg.addColorStop(1, 'rgba(0,0,0,0.0)');
+        ctx.fillStyle = mg;
+        ctx.beginPath();
+        ctx.arc(x, y - height + 2, rimR, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function roundedRectPath(ctx, x, y, w, h, r) {
+        const rr = Math.min(r, w / 2, h / 2);
+        ctx.moveTo(x + rr, y);
+        ctx.arcTo(x + w, y, x + w, y + h, rr);
+        ctx.arcTo(x + w, y + h, x, y + h, rr);
+        ctx.arcTo(x, y + h, x, y, rr);
+        ctx.arcTo(x, y, x + w, y, rr);
+      }
+
+      function drawGeode(g) {
+        ctx.save();
+        ctx.translate(g.x, g.y);
+        ctx.rotate(g.rot);
+
+        // Main geode body - dark rounded shape
+        const rg = ctx.createRadialGradient(0, 0, g.r * 0.2, 0, 0, g.r * 1.2);
+        rg.addColorStop(0, lighten(g.color, 0.4)); // Lighter center
+        rg.addColorStop(0.6, g.color); // Main dark color
+        rg.addColorStop(1, darken(g.color, 0.3)); // Darker edge
+        ctx.fillStyle = rg;
+
+        // Rounded geode shape (circle with slight irregularity)
+        ctx.beginPath();
+        ctx.arc(0, 0, g.r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Silver specks scattered across surface
+        ctx.fillStyle = '#c0c0c0'; // Silver color
+        for (let i = 0; i < 12; i++) {
+          const speckAngle = (i * 2.1 + g.rot * 0.5) % (Math.PI * 2);
+          const speckDist = g.r * (0.3 + (Math.sin(i * 1.7) * 0.4));
+          const speckSize = 1 + Math.sin(i * 2.3) * 0.8;
+
+          const sx = Math.cos(speckAngle) * speckDist;
+          const sy = Math.sin(speckAngle) * speckDist;
+
+          ctx.beginPath();
+          ctx.arc(sx, sy, speckSize, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Brighter silver specks for extra sparkle
+        ctx.fillStyle = '#e8e8e8';
+        for (let i = 0; i < 6; i++) {
+          const speckAngle = (i * 1.8 + g.rot * 0.3) % (Math.PI * 2);
+          const speckDist = g.r * (0.2 + (Math.cos(i * 1.9) * 0.5));
+          const speckSize = 0.5 + Math.cos(i * 2.7) * 0.3;
+
+          const sx = Math.cos(speckAngle) * speckDist;
+          const sy = Math.sin(speckAngle) * speckDist;
+
+          ctx.beginPath();
+          ctx.arc(sx, sy, speckSize, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Subtle edge highlight
+        ctx.strokeStyle = 'rgba(192,192,192,0.3)'; // Silver edge
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      function drawFireball(f) {
+        ctx.save();
+        ctx.translate(f.x, f.y);
+
+        // Pulsing effect
+        f.pulsePhase += 0.15;
+        const pulse = 1 + Math.sin(f.pulsePhase) * 0.2;
+        const r = f.r * pulse;
+
+        // Outer glow
+        const glowGrad = ctx.createRadialGradient(0, 0, r * 0.3, 0, 0, r * 1.8);
+        glowGrad.addColorStop(0, 'rgba(255,106,0,0.8)');
+        glowGrad.addColorStop(0.4, 'rgba(255,106,0,0.4)');
+        glowGrad.addColorStop(1, 'rgba(255,106,0,0.0)');
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 1.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Main fireball body
+        const fireGrad = ctx.createRadialGradient(0, 0, r * 0.2, 0, 0, r);
+        fireGrad.addColorStop(0, '#ffcf5a');
+        fireGrad.addColorStop(0.4, '#ff6a00');
+        fireGrad.addColorStop(0.8, '#d24d00');
+        fireGrad.addColorStop(1, '#8b1a00');
+        ctx.fillStyle = fireGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Hot core highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.beginPath();
+        ctx.ellipse(-r * 0.3, -r * 0.25, r * 0.15, r * 0.1, Math.PI / 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      function drawRock(r) {
+        ctx.save();
+        ctx.translate(r.x, r.y);
+        ctx.rotate(r.rot);
+
+        // Simple rock gradient (duller than geodes)
+        const rg = ctx.createRadialGradient(0, 0, r.r * 0.3, 0, 0, r.r * 1.1);
+        rg.addColorStop(0, lighten(r.color, 0.2));
+        rg.addColorStop(0.6, r.color);
+        rg.addColorStop(1, darken(r.color, 0.3));
+        ctx.fillStyle = rg;
+
+        // Irregular rock shape (more jagged than geodes)
+        const sides = 6;
+        ctx.beginPath();
+        for (let i = 0; i < sides; i++) {
+          const a = i * (Math.PI * 2 / sides) + 0.2;
+          const rr = r.r * (0.7 + Math.sin(i * 2.3 + r.rot) * 0.15); // More irregular
+          const px = Math.cos(a) * rr;
+          const py = Math.sin(a) * rr;
+          i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fill();
+
+        // Subtle edge (no bright highlight like geodes)
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      function drawShard(s) {
+        const a = s.ttl / s.life;
+        ctx.save();
+        ctx.globalAlpha = clamp(a, 0, 1);
+        ctx.translate(s.x, s.y);
+        ctx.rotate(s.rot);
+        ctx.fillStyle = s.color;
+        ctx.beginPath();
+        ctx.moveTo(-s.w / 2, -s.h / 2);
+        ctx.lineTo(s.w / 2, -s.h / 2);
+        ctx.lineTo(0, s.h / 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawGem(g) {
+        ctx.save();
+        ctx.translate(g.x, g.y);
+        ctx.rotate(g.rot);
+        ctx.globalAlpha = g.alpha;
+
+        // Shimmer effect - animated highlight intensity
+        g.shimmerPhase = (g.shimmerPhase || 0) + 0.12;
+        const shimmer = 0.7 + Math.sin(g.shimmerPhase) * 0.3;
+
+        // Outer glow for visibility
+        const glowGrad = ctx.createRadialGradient(0, 0, g.r * 0.5, 0, 0, g.r * 2.2);
+        glowGrad.addColorStop(0, g.color + '80'); // 50% opacity
+        glowGrad.addColorStop(0.6, g.color + '20'); // 12% opacity
+        glowGrad.addColorStop(1, g.color + '00'); // transparent
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, g.r * 2.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Main gem body
+        ctx.fillStyle = g.color;
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.lineWidth = 1.5;
+
+        switch (g.type) {
+          case 'diamond': drawDiamondShape(0, 0, g.r); break;
+          case 'ruby': drawHex(0, 0, g.r * 0.95); break;
+          case 'emerald': drawOct(0, 0, g.r * 0.95); break;
+          case 'sapphire': drawRhombus(0, 0, g.r); break;
+          case 'amethyst': drawCircle(0, 0, g.r * 0.9); break;
+          case 'amber': drawTeardrop(0, 0, g.r); break;
+        }
+        ctx.fill();
+        ctx.stroke();
+
+        // Animated specular highlights
+        ctx.globalAlpha = g.alpha * shimmer;
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+
+        // Main highlight
+        ctx.beginPath();
+        ctx.ellipse(-g.r * 0.3, -g.r * 0.25, g.r * 0.22, g.r * 0.1, Math.PI / 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Secondary shimmer highlight
+        ctx.globalAlpha = g.alpha * shimmer * 0.6;
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.beginPath();
+        ctx.ellipse(g.r * 0.2, g.r * 0.1, g.r * 0.15, g.r * 0.06, -Math.PI / 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Sparkle points around the gem
+        const sparkleTime = g.shimmerPhase * 0.7;
+        for (let i = 0; i < 4; i++) {
+          const sparklePhase = sparkleTime + i * Math.PI / 2;
+          const sparkleIntensity = Math.max(0, Math.sin(sparklePhase)) * g.alpha;
+          if (sparkleIntensity > 0.3) {
+            const angle = i * Math.PI / 2 + g.rot * 0.5;
+            const dist = g.r * 1.4;
+            const sx = Math.cos(angle) * dist;
+            const sy = Math.sin(angle) * dist;
+
+            ctx.globalAlpha = sparkleIntensity;
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.beginPath();
+            ctx.arc(sx, sy, 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        ctx.restore();
+      }
+
+      function drawDiamondShape(cx, cy, r) {
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - r);
+        ctx.lineTo(cx + r * 0.9, cy);
+        ctx.lineTo(cx, cy + r);
+        ctx.lineTo(cx - r * 0.9, cy);
+        ctx.closePath();
+      }
+      function drawHex(cx, cy, r) {
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const a = i * Math.PI / 3;
+          const x = cx + Math.cos(a) * r;
+          const y = cy + Math.sin(a) * r;
+          i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+        }
+        ctx.closePath();
+      }
+      function drawOct(cx, cy, r) {
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const a = i * Math.PI / 4;
+          const x = cx + Math.cos(a) * r;
+          const y = cy + Math.sin(a) * r;
+          i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+        }
+        ctx.closePath();
+      }
+      function drawRhombus(cx, cy, r) {
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - r);
+        ctx.lineTo(cx + r, cy);
+        ctx.lineTo(cx, cy + r);
+        ctx.lineTo(cx - r, cy);
+        ctx.closePath();
+      }
+      function drawCircle(cx, cy, r) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.closePath();
+      }
+      function drawTeardrop(cx, cy, r) {
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - r * 0.9);
+        ctx.bezierCurveTo(cx + r * 0.8, cy - r * 0.4, cx + r * 0.6, cy + r * 0.6, cx, cy + r);
+        ctx.bezierCurveTo(cx - r * 0.6, cy + r * 0.6, cx - r * 0.8, cy - r * 0.4, cx, cy - r * 0.9);
+        ctx.closePath();
+      }
+
+      function lighten(hex, amt = 0.2) { return shade(hex, amt); }
+      function darken(hex, amt = 0.2) { return shade(hex, -amt); }
+      function shade(hex, amt) {
+        const c = hex.replace('#', '');
+        const num = parseInt(c, 16);
+        let r = (num >> 16) & 255, g = (num >> 8) & 255, b = num & 255;
+        const f = (amt >= 0) ? (1 - amt) : (1 + amt);
+        if (amt >= 0) { r = r + (255 - r) * amt; g = g + (255 - g) * amt; b = b + (255 - b) * amt; }
+        else { r *= f; g *= f; b *= f; }
+        const toHex = v => ('0' + Math.round(v).toString(16)).slice(-2);
+        return '#' + toHex(r) + toHex(g) + toHex(b);
+      }
+
+      // Main loop
+      function loop(t) {
+        if (!running) { lastTime = t; requestAnimationFrame(loop); return; }
+        const dt = Math.min(0.033, (t - lastTime) / 1000); // clamp delta to 33ms
+        lastTime = t;
+
+        // Clear with a subtle transparent layer for trailing effect
+        ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+        // Background stars/speckles
+        drawBackgroundStars();
+
+        // Volcano
+        drawVolcano();
+
+        // Spawn geodes
+        spawnTimer += dt * 1000;
+        if (spawnTimer >= SPAWN_INTERVAL_MS) {
+          spawnTimer = 0;
+          if (!gameOver) spawnGeode();
+        }
+
+        // Spawn rocks
+        rockTimer += dt * 1000;
+        if (rockTimer >= ROCK_INTERVAL_MS) {
+          rockTimer = 0;
+          if (!gameOver) spawnRock();
+        }
+
+        // Spawn fireballs (rare)
+        fireballTimer += dt * 1000;
+        if (fireballTimer >= FIREBALL_INTERVAL_MS) {
+          fireballTimer = 0;
+          if (!gameOver) spawnFireball();
+        }
+
+        const gSpeed = globalSpeedMult();
+
+        // Update & draw shards
+        for (let i = shards.length - 1; i >= 0; i--) {
+          const s = shards[i];
+          s.ttl -= dt;
+          s.x += s.vx * dt;
+          s.y += s.vy * dt;
+          s.vx *= 0.99; s.vy += 60 * dt; // little gravity
+          s.rot += s.vrot * dt;
+          if (s.ttl <= 0) shards.splice(i, 1);
+          else drawShard(s);
+        }
+
+        // Update & draw geodes
+        for (let i = geodes.length - 1; i >= 0; i--) {
+          const g = geodes[i];
+          g.rot += g.spin * dt;
+
+          // Apply physics: horizontal velocity stays constant, vertical velocity affected by gravity
+          // Use a slower speed multiplier for more manageable gameplay at start
+          const slowSpeed = gSpeed * 0.4; // Slow down geodes to 40% of normal speed
+          g.x += g.vx * slowSpeed * dt;
+          g.y += g.vy * slowSpeed * dt;
+          g.vy += 300 * slowSpeed * dt; // Scale gravity with speed so trajectory shape is preserved
+
+          drawGeode(g);
+
+          // Check if geode escaped at bottom of screen
+          if (!g.clicked && !g.escaped && g.y > canvas.clientHeight + g.r + 10) {
+            g.escaped = true;
+            geodes.splice(i, 1);
+            missed++;
+            updateHUD();
+            if (missed >= MAX_MISSED) endGame();
+          }
+        }
+
+        // Update & draw fireballs
+        for (let i = fireballs.length - 1; i >= 0; i--) {
+          const fb = fireballs[i];
+
+          // Apply same physics as geodes
+          const slowSpeed = gSpeed * 0.4;
+          fb.x += fb.vx * slowSpeed * dt;
+          fb.y += fb.vy * slowSpeed * dt;
+          fb.vy += 300 * slowSpeed * dt;
+
+          drawFireball(fb);
+
+          // Check if fireball escaped at bottom of screen
+          if (!fb.clicked && !fb.escaped && fb.y > canvas.clientHeight + fb.r + 10) {
+            fb.escaped = true;
+            fireballs.splice(i, 1);
+            // Fireballs don't count as missed
+          }
+        }
+
+        // Update & draw rocks
+        for (let i = rocks.length - 1; i >= 0; i--) {
+          const rock = rocks[i];
+          rock.rot += rock.spin * dt;
+
+          // Apply same physics as geodes
+          const slowSpeed = gSpeed * 0.4;
+          rock.x += rock.vx * slowSpeed * dt;
+          rock.y += rock.vy * slowSpeed * dt;
+          rock.vy += 300 * slowSpeed * dt;
+
+          drawRock(rock);
+
+          // Remove rocks that fall off screen (don't count as missed)
+          if (rock.y > canvas.clientHeight + rock.r + 10) {
+            rocks.splice(i, 1);
+          }
+        }
+
+        // Update & draw gems
+        for (let i = gems.length - 1; i >= 0; i--) {
+          const gm = gems[i];
+          gm.ttl -= dt;
+          gm.x += gm.vx * dt;
+          gm.y += gm.vy * dt;
+          gm.vy += 6 * dt; // subtle gravity counter to initial upward drift
+          gm.rot += gm.vrot * dt;
+          gm.alpha = clamp(gm.ttl / gm.life, 0, 1);
+
+          // Keep gems within bounds gently
+          if (gm.x < 12) { gm.x = 12; gm.vx *= -0.4; }
+          if (gm.x > canvas.clientWidth - 12) { gm.x = canvas.clientWidth - 12; gm.vx *= -0.4; }
+          if (gm.y < 12) { gm.y = 12; gm.vy *= -0.2; }
+          if (gm.y > canvas.clientHeight - 12) { gm.y = canvas.clientHeight - 12; gm.vy *= -0.6; }
+
+          drawGem(gm);
+          if (gm.ttl <= 0) gems.splice(i, 1);
+        }
+
+        // Update & draw sparkles
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.ttl -= dt;
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          p.vx *= 0.98; p.vy *= 0.98;
+          const a = clamp(p.ttl / p.life, 0, 1);
+          ctx.globalAlpha = a;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+          if (p.ttl <= 0) particles.splice(i, 1);
+        }
+
+        requestAnimationFrame(loop);
+      }
+
+      // Starry ambient field
+      const starField = Array.from({ length: 120 }, () => ({
+        x: Math.random(), y: Math.random(), s: rand(0.2, 1.2), a: rand(0.4, 0.9)
+      }));
+      function drawBackgroundStars() {
+        const w = canvas.clientWidth, h = canvas.clientHeight;
+        ctx.save();
+        for (const st of starField) {
+          const x = st.x * w, y = st.y * h;
+          ctx.globalAlpha = st.a * 0.6;
+          ctx.fillStyle = '#8ea7ff';
+          ctx.fillRect(x, y, st.s, st.s);
+        }
+        ctx.restore();
+      }
+
+      // Click handling
+      function onClick(ev) {
+        if (gameOver) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = (ev.clientX - rect.left);
+        const y = (ev.clientY - rect.top);
+
+        // Prefer clicking gems first (they may overlap shards/geodes)
+        for (let i = gems.length - 1; i >= 0; i--) {
+          const gm = gems[i];
+          if (hitGem(gm, x, y)) {
+            score += gm.points;
+            updateHUD();
+            makeSparkles(gm.x, gm.y, gm.color);
+            gems.splice(i, 1);
+            return;
+          }
+        }
+
+        // Then fireballs (priority over geodes for special effect)
+        for (let i = fireballs.length - 1; i >= 0; i--) {
+          const fb = fireballs[i];
+          if (dist2(x, y, fb.x, fb.y) <= Math.pow(fb.r + 5, 2)) {
+            fb.clicked = true;
+            fireballs.splice(i, 1);
+            explodeFireball(fb);
+            return;
+          }
+        }
+
+        // Then rocks (break but no gems)
+        for (let i = rocks.length - 1; i >= 0; i--) {
+          const rock = rocks[i];
+          if (dist2(x, y, rock.x, rock.y) <= Math.pow(rock.r + 2, 2)) {
+            rock.clicked = true;
+            rocks.splice(i, 1);
+            makeShards(rock.x, rock.y, rock.color, { x: rock.vx / 100, y: rock.vy / 100 });
+            // Rocks now give a small score when clicked
+            score += 5; // regular rocks worth 5 points
+            updateHUD();
+            // Play small gem-like sound to give feedback
+            if (typeof sfxGem === 'function') sfxGem(5);
+            return;
+          }
+        }
+
+        // Then geodes
+        const GEODE_SCALE = 1.4; // Must match the scale used in the visual patch
+        for (let i = geodes.length - 1; i >= 0; i--) {
+          const g = geodes[i];
+          // Apply scale to geode radius for hit detection
+          if (dist2(x, y, g.x, g.y) <= Math.pow((g.r + 2) * GEODE_SCALE, 2)) {
+            g.clicked = true;
+            geodes.splice(i, 1);
+            makeShards(g.x, g.y, g.color, { x: g.vx / 100, y: g.vy / 100 }); // Use velocity for shard direction
+            maybeSpawnGem(g.x, g.y - 4);
+            if (typeof sfxGeode === 'function') sfxGeode();
+            return;
+          }
+        }
+      }
+      canvas.addEventListener('mousedown', onClick);
+
+      // Add touch support for mobile devices
+      canvas.addEventListener('touchstart', function (e) {
+        e.preventDefault(); // Prevent scrolling
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+
+        for (let i = 0; i < e.touches.length; i++) {
+          const touch = e.touches[i];
+          const x = (touch.clientX - rect.left) * scaleX;
+          const y = (touch.clientY - rect.top) * scaleY;
+
+          // Create a synthetic event object for onClick
+          onClick({ offsetX: x, offsetY: y });
+        }
+      }, { passive: false });
+
+      function hitGem(g, x, y) {
+        // Approximate by circle / diamond bounding
+        const r = g.r * 1.0;
+        return dist2(x, y, g.x, g.y) <= r * r * 1.1;
+        // (Shapes vary, but circle is an ok general hit area for fun.)
+      }
+
+      // Game state control
+      function startGame() {
+        if (gameOver) return;
+        running = true;
+        overlay.classList.add('hidden');
+      }
+      function pauseGame() {
+        running = false;
+      }
+      function resetGame() {
+        running = false; gameOver = false;
+        score = 0; missed = 0;
+        geodes.length = 0; rocks.length = 0; shards.length = 0; gems.length = 0; particles.length = 0; fireballs.length = 0;
+        spawnTimer = 0; rockTimer = 0; fireballTimer = 0;
+        updateHUD();
+        overlay.classList.remove('hidden');
+        overlay.querySelector('h1').textContent = 'GEODES';
+        overlay.querySelector('.cta').textContent = 'Play';
+      }
+      function endGame() {
+        gameOver = true;
+        running = false;
+        overlay.classList.remove('hidden');
+        overlay.querySelector('h1').textContent = 'Game Over';
+        overlay.querySelector('.cta').textContent = 'Play Again';
+        const infoP = overlay.querySelector('p.big');
+        infoP.innerHTML = `Final Score: <strong>${score}</strong> — Geodes escaped: <strong>${missed}</strong>. Click <em>Play Again</em> to restart.`;
+      }
+
+      // Buttons
+      playBtn.addEventListener('click', () => {
+        if (gameOver) resetGame();
+        startGame();
+      });
+      playBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        if (gameOver) resetGame();
+        startGame();
+      });
+
+      startBtn.addEventListener('click', startGame);
+      startBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        startGame();
+      });
+
+      pauseBtn.addEventListener('click', pauseGame);
+      pauseBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        pauseGame();
+      });
+
+      resetBtn.addEventListener('click', resetGame);
+      resetBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        resetGame();
+      });
+
+      muteBtn.addEventListener('click', function () {
+        window.audioMuted = !window.audioMuted;
+        muteBtn.textContent = window.audioMuted ? '🔇' : '🔊';
+        muteBtn.classList.toggle('muted', window.audioMuted);
+        muteBtn.title = window.audioMuted ? 'Unmute Audio' : 'Mute Audio';
+      });
+      muteBtn.addEventListener('touchend', function (e) {
+        e.preventDefault();
+        window.audioMuted = !window.audioMuted;
+        muteBtn.textContent = window.audioMuted ? '🔇' : '🔊';
+        muteBtn.classList.toggle('muted', window.audioMuted);
+        muteBtn.title = window.audioMuted ? 'Unmute Audio' : 'Mute Audio';
+      });
+
+      // Keyboard shortcuts
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+          e.preventDefault();
+          running ? pauseGame() : startGame();
+        } else if (e.code === 'KeyR') {
+          resetGame();
+        }
+      });
+
+      // Handle orientation changes for mobile
+      window.addEventListener('orientationchange', () => {
+        setTimeout(resize, 100); // Small delay to let orientation settle
+      });
+
+      // Start the render loop
+      requestAnimationFrame(loop);
+      updateHUD();
+    })();
+  </script>
+  <script>
+    // Simple WebAudio-based sfx without external files
+    (() => {
+      let AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return; // No WebAudio support
+
+      let ctx = null, master = null, noiseBuf = null;
+      const vol = 0.35;
+
+      // Global mute state accessible to sound functions
+      window.audioMuted = false;
+
+      function ensureCtx() {
+        if (ctx) return;
+        ctx = new AC();
+        master = ctx.createGain();
+        master.gain.value = vol;
+        master.connect(ctx.destination);
+        noiseBuf = makeNoiseBuffer();
+      }
+      function resumeCtx() {
+        ensureCtx();
+        if (ctx.state === 'suspended') ctx.resume();
+      }
+      function makeNoiseBuffer() {
+        const len = Math.floor(ctx.sampleRate * 1.0);
+        const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * 0.7;
+        return buf;
+      }
+      function now() { ensureCtx(); return ctx.currentTime; }
+      function env(g, t0, a = 0.005, r = 0.12, peak = 1.0) {
+        g.gain.cancelScheduledValues(t0);
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), t0 + a);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + a + r);
+      }
+      function osc(type = 'sine', f = 440) {
+        const o = ctx.createOscillator();
+        o.type = type; o.frequency.value = f;
+        const g = ctx.createGain();
+        o.connect(g); g.connect(master);
+        return { o, g };
+      }
+      function noiseBurst({ freq = 1200, q = 4, a = 0.003, r = 0.12, gain = 0.6, hp = 0 } = {}) {
+        const src = ctx.createBufferSource();
+        src.buffer = noiseBuf;
+        const filt = ctx.createBiquadFilter();
+        filt.type = hp ? 'highpass' : 'bandpass';
+        filt.frequency.value = freq; filt.Q.value = q;
+        const g = ctx.createGain();
+        src.connect(filt); filt.connect(g); g.connect(master);
+        const t = now();
+        env(g, t, a, r, gain);
+        src.start(t);
+        src.stop(t + a + r + 0.05);
+      }
+
+      // SFX
+      function sfxStart() {
+        if (window.audioMuted) return;
+        resumeCtx();
+        const t = now();
+        const a = osc('sine', 440), b = osc('sine', 660);
+        env(a.g, t, 0.01, 0.12, 0.9); a.o.start(t); a.o.stop(t + 0.22);
+        env(b.g, t + 0.04, 0.01, 0.14, 0.6); b.o.start(t + 0.04); b.o.stop(t + 0.28);
+      }
+      function sfxOver() {
+        if (window.audioMuted) return;
+        resumeCtx();
+        const t = now();
+        const a = osc('triangle', 520), b = osc('triangle', 390);
+        env(a.g, t, 0.005, 0.18, 0.7); a.o.frequency.exponentialRampToValueAtTime(260, t + 0.22);
+        a.o.start(t); a.o.stop(t + 0.25);
+        env(b.g, t + 0.06, 0.005, 0.22, 0.6); b.o.frequency.exponentialRampToValueAtTime(195, t + 0.28);
+        b.o.start(t + 0.06); b.o.stop(t + 0.34);
+        noiseBurst({ freq: 600, q: 0.8, a: 0.01, r: 0.3, gain: 0.25, hp: 1 });
+      }
+      function sfxGem(points = 10) {
+        if (window.audioMuted) return;
+        resumeCtx();
+        const base = 700 + Math.min(100, points) * 1.8;
+        const t = now();
+        [0, 0.06, 0.12].forEach((off, i) => {
+          const o = osc('square', base * (1 + i * 0.12));
+          env(o.g, t + off, 0.004, 0.08, 0.5 + i * 0.1);
+          o.o.start(t + off); o.o.stop(t + off + 0.12);
+        });
+        noiseBurst({ freq: 3000, q: 2.5, a: 0.002, r: 0.06, gain: 0.18 });
+      }
+      function sfxGeode() {
+        if (window.audioMuted) return;
+        resumeCtx();
+        const t = now();
+
+        // High-frequency glass shatter - multiple overlapping noise bursts
+        noiseBurst({ freq: 4200, q: 8, a: 0.001, r: 0.05, gain: 0.4 }); // Sharp initial crack
+        noiseBurst({ freq: 2800, q: 6, a: 0.003, r: 0.08, gain: 0.3 }); // Mid-range tinkle
+        noiseBurst({ freq: 1800, q: 4, a: 0.005, r: 0.12, gain: 0.25 }); // Lower shards falling
+
+        // Crystalline tones - multiple high-pitched sine waves like glass resonance
+        const glassFreqs = [2400, 1800, 1200, 950];
+        glassFreqs.forEach((freq, i) => {
+          const glass = osc('sine', freq);
+          env(glass.g, t + i * 0.008, 0.001, 0.06 + i * 0.02, 0.15 - i * 0.03);
+          glass.o.frequency.exponentialRampToValueAtTime(freq * 0.7, t + 0.08);
+          glass.o.start(t + i * 0.008);
+          glass.o.stop(t + 0.12 + i * 0.02);
+        });
+
+        // Sharp attack click for initial impact
+        const click = osc('square', 150);
+        env(click.g, t, 0.0005, 0.015, 0.3);
+        click.o.start(t); click.o.stop(t + 0.02);
+      }
+
+      function sfxExplosion() {
+        if (window.audioMuted) return;
+        resumeCtx();
+        const t = now();
+
+        // Deep explosion rumble
+        const rumble = osc('sawtooth', 45);
+        env(rumble.g, t, 0.002, 0.25, 0.6);
+        rumble.o.frequency.exponentialRampToValueAtTime(25, t + 0.25);
+        rumble.o.start(t); rumble.o.stop(t + 0.3);
+
+        // Sharp explosion crack
+        noiseBurst({ freq: 800, q: 1.5, a: 0.001, r: 0.08, gain: 0.7 });
+
+        // High-frequency explosion sizzle
+        noiseBurst({ freq: 6000, q: 3, a: 0.003, r: 0.15, gain: 0.4 });
+
+        // Mid-range explosion whoosh
+        noiseBurst({ freq: 1500, q: 2, a: 0.005, r: 0.2, gain: 0.5 });
+
+        // Explosive percussive hit
+        const hit = osc('square', 80);
+        env(hit.g, t, 0.0008, 0.04, 0.8);
+        hit.o.frequency.exponentialRampToValueAtTime(40, t + 0.05);
+        hit.o.start(t); hit.o.stop(t + 0.06);
+
+        // Secondary explosion echo
+        setTimeout(() => {
+          const echo = osc('triangle', 60);
+          const echoT = now();
+          env(echo.g, echoT, 0.01, 0.12, 0.3);
+          echo.o.start(echoT); echo.o.stop(echoT + 0.15);
+        }, 80);
+      }
+
+      function sfxMilestone() {
+        if (window.audioMuted) return;
+        resumeCtx();
+        const t = now();
+
+        // Celebratory ascending melody - major chord progression
+        const melody = [440, 554.37, 659.25, 880]; // A4, C#5, E5, A5 (A major chord)
+
+        melody.forEach((freq, i) => {
+          const note = osc('triangle', freq);
+          const startTime = t + i * 0.12;
+          env(note.g, startTime, 0.01, 0.25, 0.6 - i * 0.05);
+
+          // Add slight vibrato for richness
+          note.o.frequency.setValueAtTime(freq, startTime);
+          note.o.frequency.setValueAtTime(freq * 1.02, startTime + 0.1);
+          note.o.frequency.exponentialRampToValueAtTime(freq, startTime + 0.25);
+
+          note.o.start(startTime);
+          note.o.stop(startTime + 0.3);
+        });
+
+        // Sparkly high-frequency chimes
+        for (let i = 0; i < 8; i++) {
+          const chime = osc('sine', 1760 + i * 110); // High octave notes
+          const chimeTime = t + i * 0.05;
+          env(chime.g, chimeTime, 0.002, 0.15, 0.3);
+          chime.o.start(chimeTime);
+          chime.o.stop(chimeTime + 0.18);
+        }
+
+        // Bright celebration noise burst
+        noiseBurst({ freq: 3500, q: 4, a: 0.005, r: 0.2, gain: 0.25 });
+      }
+
+      function sfxGeodeEscape() {
+        if (window.audioMuted) return;
+        resumeCtx();
+        const t = now();
+
+        // Sad descending melody - minor chord
+        const sadMelody = [523.25, 466.16, 415.30, 349.23]; // C5, Bb4, Ab4, F4 (descending minor)
+
+        sadMelody.forEach((freq, i) => {
+          const note = osc('sine', freq);
+          const startTime = t + i * 0.15;
+          env(note.g, startTime, 0.02, 0.3, 0.4 - i * 0.05);
+
+          // Slight downward pitch bend for sadness
+          note.o.frequency.setValueAtTime(freq, startTime);
+          note.o.frequency.exponentialRampToValueAtTime(freq * 0.95, startTime + 0.3);
+
+          note.o.start(startTime);
+          note.o.stop(startTime + 0.35);
+        });
+
+        // Low, mournful rumble
+        const rumble = osc('triangle', 110);
+        env(rumble.g, t, 0.05, 0.4, 0.3);
+        rumble.o.frequency.exponentialRampToValueAtTime(90, t + 0.4);
+        rumble.o.start(t);
+        rumble.o.stop(t + 0.5);
+
+        // Soft disappointing noise
+        noiseBurst({ freq: 400, q: 2, a: 0.02, r: 0.25, gain: 0.15 });
+      }
+
+      // Wire up UI/DOM events to sfx (without changing game code)
+      document.addEventListener('DOMContentLoaded', () => {
+        const overlay = document.getElementById('overlay');
+        const h1 = overlay?.querySelector('h1');
+        const playBtn = document.getElementById('playBtn');
+        const startBtn = document.getElementById('startBtn');
+        const canvas = document.getElementById('game');
+        const scoreEl = document.getElementById('score');
+
+        // Unlock audio on first gesture
+        const unlock = () => { resumeCtx(); window.removeEventListener('pointerdown', unlock); window.removeEventListener('keydown', unlock); };
+        window.addEventListener('pointerdown', unlock, { once: true });
+        window.addEventListener('keydown', unlock, { once: true });
+
+        // Start sound on Play/Start clicks
+        playBtn?.addEventListener('click', () => sfxStart());
+        startBtn?.addEventListener('click', () => sfxStart());
+
+        // Game Over detection via heading text
+        if (h1) {
+          const mo = new MutationObserver(() => {
+            if ((h1.textContent || '').trim().toLowerCase().includes('game over')) sfxOver();
+          });
+          mo.observe(h1, { childList: true, characterData: true, subtree: true });
+        }
+
+        // Gem collect via score increment
+        let lastScore = parseInt(scoreEl?.textContent || '0', 10) || 0;
+        if (scoreEl) {
+          const so = new MutationObserver(() => {
+            const cur = parseInt(scoreEl.textContent || '0', 10) || 0;
+            if (cur > lastScore) {
+              sfxGem(cur - lastScore);
+
+              // Check for milestone achievement (every 1000 points)
+              const lastMilestone = Math.floor(lastScore / 1000);
+              const currentMilestone = Math.floor(cur / 1000);
+              if (currentMilestone > lastMilestone && currentMilestone > 0) {
+                // Delay the milestone sound slightly so it doesn't overlap with gem sound
+                setTimeout(() => sfxMilestone(), 200);
+              }
+            }
+            lastScore = cur;
+          });
+          so.observe(scoreEl, { childList: true, characterData: true, subtree: true });
+        }
+
+        // Geode escape detection via missed counter
+        const missedEl = document.getElementById('missed');
+        let lastMissed = parseInt(missedEl?.textContent || '0', 10) || 0;
+        if (missedEl) {
+          const mo = new MutationObserver(() => {
+            const cur = parseInt(missedEl.textContent || '0', 10) || 0;
+            if (cur > lastMissed) {
+              sfxGeodeEscape();
+            }
+            lastMissed = cur;
+          });
+          mo.observe(missedEl, { childList: true, characterData: true, subtree: true });
+        }
+
+        // Geode crack approximation: canvas click that didn't change score in this tick
+        canvas?.addEventListener('mousedown', () => {
+          const before = parseInt(scoreEl?.textContent || '0', 10) || 0;
+          // Run after game click handler
+          setTimeout(() => {
+            const after = parseInt(scoreEl?.textContent || '0', 10) || 0;
+            const isOverlayHidden = overlay?.classList.contains('hidden');
+            if (isOverlayHidden && after === before) sfxGeode();
+          }, 0);
+        });
+      });
+    })();
+  </script>
+  <script>
+    // Scale up the game rendering and keep clicks accurate
+    (() => {
+      const SCALE = 1.25; // adjust as desired
+
+      const canvas = document.getElementById('game');
+      if (!canvas) return;
+
+      // Apply visual scale to the canvas only (HUD/controls unaffected)
+      canvas.style.transformOrigin = 'center center';
+      canvas.style.transform = `scale(${SCALE})`;
+      // canvas.style.pointerEvents = 'none'; // we'll proxy input
+
+      // Only create and append the proxy if the canvas exists
+      if (canvas) {
+        // Create a transparent proxy to capture and remap input to the canvas
+        const proxy = document.createElement('div');
+        Object.assign(proxy.style, {
+          position: 'fixed',
+          inset: '0',
+          zIndex: '4',
+          background: 'transparent'
+        });
+        document.body.appendChild(proxy);
+
+        function forwardMouse(ev) {
+          const r = canvas.getBoundingClientRect();
+          // Compute scale factors between the canvas's untransformed client size and the transformed rect
+          const scaleX = canvas.clientWidth / r.width;
+          const scaleY = canvas.clientHeight / r.height;
+          // Map screen coords back to the canvas' unscaled coordinate space using the ratio
+          const clientX = r.left + (ev.clientX - r.left) * scaleX;
+          const clientY = r.top + (ev.clientY - r.top) * scaleY;
+
+          const e2 = new MouseEvent('mousedown', {
+            bubbles: true,
+            cancelable: true,
+            clientX, clientY,
+            // Touch events may not have these properties, so fallback to sensible defaults
+            button: typeof ev.button === 'number' ? ev.button : 0,
+            buttons: typeof ev.buttons === 'number' ? ev.buttons : 1,
+            ctrlKey: !!ev.ctrlKey, shiftKey: !!ev.shiftKey, altKey: !!ev.altKey, metaKey: !!ev.metaKey
+          });
+          canvas.dispatchEvent(e2);
+          ev.preventDefault();
+        }
+        proxy.addEventListener('mousedown', forwardMouse);
+
+        // Basic touch support -> synthesize a mousedown
+        proxy.addEventListener('touchstart', (ev) => {
+          const t = ev.changedTouches && ev.changedTouches[0];
+          if (!t) return;
+          forwardMouse(t);
+          ev.preventDefault();
+        }, { passive: false });
+      }
+    })();
+  </script>
+  <script>
+    // Removed broken canvas patch that referenced undefined variables (P, GLOW_RADIUS, GEODE_SCALE).
+    // This no-op placeholder keeps structure intact and avoids runtime/syntax errors.
+  </script>
+  <script>
+    (() => {
+      const canvas = document.getElementById('game');
+      if (!canvas) return;
+
+      // Put the drawing canvas above the proxy helper (so its pixels are never obscured)
+      // but keep HUD/overlay above it (those are z-index 5/6).
+      canvas.style.zIndex = '3';
+
+      // If the scale/proxy helper created a full-screen fixed div, lower it so the canvas is above it.
+      Array.from(document.body.children).forEach(el => {
+        if (el === canvas) return;
+        const cs = getComputedStyle(el);
+        if (cs.position === 'fixed' && cs.backgroundColor === 'transparent') {
+          // Only touch elements that look like the proxy (no children, full-screen)
+          const rect = el.getBoundingClientRect();
+          if (rect.width > 50 && rect.height > 50 && el.childElementCount === 0) {
+            el.style.zIndex = '1';
+          }
+        }
+      });
+
+      // Slightly boost contrast/saturation so small gems are easier to spot on dark backgrounds
+      canvas.style.filter = 'contrast(1.08) saturate(1.06)';
+
+      // If you still can't see gems, try disabling the canvas transform (temporary debug)
+      // canvas.style.transform = 'none';
+    })();
+  </script>
+</body>
+
+</html>

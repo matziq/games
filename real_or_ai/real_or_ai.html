@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Real or AI</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			background: #222;
+			color: #fff;
+			text-align: center;
+		}
+
+		.menu-link {
+			position: fixed;
+			top: 12px;
+			left: 12px;
+			z-index: 10;
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			padding: 8px 10px;
+			border-radius: 999px;
+			text-decoration: none;
+			font-weight: 800;
+			font-size: 12px;
+			color: #fff;
+			background: rgba(0, 0, 0, .35);
+			border: 1px solid rgba(255, 255, 255, .14);
+			box-shadow: 0 10px 24px rgba(0, 0, 0, .35);
+			backdrop-filter: blur(6px);
+		}
+
+		.menu-link:hover {
+			background: rgba(0, 0, 0, .5);
+		}
+
+		.menu-link:focus-visible {
+			outline: 3px solid rgba(0, 153, 255, .6);
+			outline-offset: 2px;
+		}
+
+		.game-container {
+			margin: 40px auto;
+			max-width: 740px;
+			background: #333;
+			border-radius: 12px;
+			padding: 32px;
+			box-shadow: 0 4px 24px #0006;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+		}
+
+		.images {
+			display: flex;
+			justify-content: center;
+			gap: 32px;
+			margin: 32px 0;
+			width: 100%;
+			flex-wrap: wrap;
+		}
+
+		.images img {
+			width: min(320px, calc(50% - 16px));
+			height: 320px;
+			max-width: 100%;
+			object-fit: contain;
+			background: #111;
+			border-radius: 8px;
+			cursor: pointer;
+			border: 4px solid #444;
+			transition: border-color 0.2s;
+			-webkit-user-drag: none;
+		}
+
+		@media (max-width: 720px) {
+			.images {
+				gap: 16px;
+			}
+
+			.images img {
+				width: 100%;
+				height: min(60vh, 360px);
+			}
+		}
+
+		.images img.selected {
+			border-color: #09f;
+		}
+
+		.images img.wrong {
+			border-color: #f33;
+		}
+
+		.images img.right {
+			border-color: #3f3;
+		}
+
+		.score {
+			font-size: 1.3em;
+			margin: 24px 0;
+		}
+
+		.btn {
+			background: #09f;
+			color: #fff;
+			border: none;
+			padding: 12px 32px;
+			border-radius: 6px;
+			font-size: 1em;
+			cursor: pointer;
+			margin-top: 24px;
+		}
+
+		.btn:disabled {
+			background: #555;
+			cursor: not-allowed;
+		}
+
+		#instructions {
+			font-size: 1.2em;
+			margin: 18px 0;
+			color: #ffd700;
+		}
+
+		#instructions .real-emphasis {
+			color: #00ff8a;
+			font-weight: 900;
+			letter-spacing: 0.03em;
+			text-transform: uppercase;
+			text-decoration: underline;
+			text-decoration-thickness: 3px;
+			text-underline-offset: 4px;
+			text-shadow:
+				0 0 6px rgba(0, 255, 138, 0.8),
+				0 0 18px rgba(0, 255, 138, 0.5);
+		}
+	</style>
+</head>
+
+<body>
+	<a class="menu-link" href="../gamemenu.html" aria-label="Back to games menu">← Menu</a>
+	<div class="game-container">
+		<h1>Real or AI?</h1>
+		<div id="round-info"></div>
+		<div id="instructions">Choose the <span class="real-emphasis">REAL</span> image</div>
+		<div class="images" id="images"></div>
+		<div id="feedback"></div>
+		<div class="score" id="score"></div>
+		<button class="btn" id="nextBtn" style="display:none;">Next</button>
+		<button class="btn" id="restartBtn" style="display:none;">Restart</button>
+	</div>
+	<script src="image_manifest.js"></script>
+	<script>
+		// Dynamic image loading - will be populated by scanning folders
+		let aiImages = [];
+		let realImages = [];
+		let totalRounds = 0;
+
+		function setScanStatus(text) {
+			const imagesEl = document.getElementById('images');
+			if (imagesEl) imagesEl.innerHTML = `<p>${text}</p>`;
+		}
+
+		function getManifest() {
+			return (window.__REAL_OR_AI_MANIFEST__ && typeof window.__REAL_OR_AI_MANIFEST__ === 'object')
+				? window.__REAL_OR_AI_MANIFEST__
+				: null;
+		}
+
+		function unique(list) {
+			return Array.from(new Set(list));
+		}
+
+		function takeFirst(list, n) {
+			return list.slice(0, Math.max(0, n));
+		}
+
+		// Function to dynamically load images from folders
+		async function loadImagesFromFolders() {
+			setScanStatus('Loading image manifest...');
+			try {
+				const manifest = getManifest();
+				if (manifest) {
+					// Use manifest for file:// compatibility (no fetch required).
+					aiImages = takeFirst(unique(manifest.ai || []), 100);
+					realImages = takeFirst(unique(manifest.real || []), 100);
+				} else {
+					// Fallback: try to scrape a directory listing (works only when served by a web server that
+					// exposes directory indexes). This usually won't work under file://.
+					setScanStatus('Scanning folders for images...');
+					const [aiResponse, realResponse] = await Promise.all([
+						fetch('ai/'),
+						fetch('real/'),
+					]);
+					const [aiText, realText] = await Promise.all([
+						aiResponse.text(),
+						realResponse.text(),
+					]);
+					aiImages = takeFirst(unique(extractImageFilenames(aiText, 'ai/')), 100);
+					realImages = takeFirst(unique(extractImageFilenames(realText, 'real/')), 100);
+				}
+
+				// Set total rounds based on available images
+				totalRounds = Math.min(aiImages.length, realImages.length);
+
+				console.log('Loaded image lists:', { ai: aiImages.length, real: realImages.length });
+				console.log(`Game will have ${totalRounds} rounds`);
+			} catch (error) {
+				console.error('Could not load images.');
+				setScanStatus(
+					'Could not load images. If you are opening this as a local file, make sure image_manifest.js exists next to this HTML (real_or_ai/image_manifest.js).'
+				);
+				aiImages = [];
+				realImages = [];
+				totalRounds = 0;
+			}
+		}
+
+		// Extract image filenames from directory listing HTML
+		function extractImageFilenames(html, folder) {
+			const imageExtensions = /\.(jpg|jpeg|png|gif|bmp|webp)$/i;
+			const images = [];
+
+			// Look for href links in directory listing
+			const hrefRegex = /href="([^"]+)"/gi;
+			let match;
+
+			while ((match = hrefRegex.exec(html)) !== null) {
+				const filename = match[1];
+				// Skip parent directory links and non-image files
+				if (filename !== '../' && imageExtensions.test(filename)) {
+					images.push(folder + filename);
+				}
+			}
+
+			return images;
+		}
+		let pairs = [];
+		let currentRound = 0;
+		let score = 0;
+
+		function shuffle(arr) {
+			for (let i = arr.length - 1; i > 0; i--) {
+				const j = Math.floor(Math.random() * (i + 1));
+				[arr[i], arr[j]] = [arr[j], arr[i]];
+			}
+			return arr;
+		}
+
+		function extractNumericId(path, prefix) {
+			// Matches: ai/ai_1234.jpg or real/real_1234.png
+			// Also tolerant of different folder names and extensions.
+			const rx = new RegExp(String.raw`(?:^|/)${prefix}_(\d+)\.[a-z0-9]+$`, 'i');
+			const m = path.match(rx);
+			return m ? Number(m[1]) : null;
+		}
+
+		function pickPairs() {
+			// Preferred approach: pair ai_1234.* with real_1234.* when both exist.
+			// Falls back to random pairing if IDs can't be extracted.
+			const aiById = new Map();
+			for (const p of aiImages) {
+				const id = extractNumericId(p, 'ai');
+				if (id !== null && !aiById.has(id)) aiById.set(id, p);
+			}
+			const realById = new Map();
+			for (const p of realImages) {
+				const id = extractNumericId(p, 'real');
+				if (id !== null && !realById.has(id)) realById.set(id, p);
+			}
+
+			const commonIds = [];
+			for (const id of aiById.keys()) {
+				if (realById.has(id)) commonIds.push(id);
+			}
+
+			pairs = [];
+			if (commonIds.length > 0) {
+				shuffle(commonIds);
+				for (let i = 0; i < Math.min(totalRounds, commonIds.length); i++) {
+					const id = commonIds[i];
+					pairs.push({ ai: aiById.get(id), real: realById.get(id) });
+				}
+			} else {
+				// Fallback: randomly pair any AI image with any Real image
+				const shuffledAI = shuffle([...aiImages]);
+				const shuffledReal = shuffle([...realImages]);
+				for (let i = 0; i < totalRounds; i++) {
+					pairs.push({ ai: shuffledAI[i], real: shuffledReal[i] });
+				}
+			}
+		}
+
+		function showRound() {
+			document.getElementById('feedback').textContent = '';
+			document.getElementById('nextBtn').style.display = 'none';
+			document.getElementById('restartBtn').style.display = 'none';
+			document.getElementById('score').textContent = `Score: ${score} / ${pairs.length}`;
+			document.getElementById('round-info').textContent = `Round ${currentRound + 1} of ${pairs.length}`;
+			const pair = pairs[currentRound];
+			// Randomize left/right
+			const leftIsAI = Math.random() < 0.5;
+			const leftImg = leftIsAI ? pair.ai : pair.real;
+			const rightImg = leftIsAI ? pair.real : pair.ai;
+			const imagesDiv = document.getElementById('images');
+			imagesDiv.innerHTML = '';
+			// Create image elements
+			const left = document.createElement('img');
+			left.src = leftImg;
+			left.alt = 'Left Image';
+			left.onclick = () => handleChoice(leftIsAI ? 'ai' : 'real', left);
+			left.oncontextmenu = (e) => e.preventDefault();
+			const right = document.createElement('img');
+			right.src = rightImg;
+			right.alt = 'Right Image';
+			right.onclick = () => handleChoice(leftIsAI ? 'real' : 'ai', right);
+			right.oncontextmenu = (e) => e.preventDefault();
+			imagesDiv.appendChild(left);
+			imagesDiv.appendChild(right);
+		}
+
+		function handleChoice(selected, imgElem) {
+			// Only allow one selection
+			const images = document.querySelectorAll('.images img');
+			images.forEach(img => img.onclick = null);
+			if (selected === 'real') {
+				score++;
+				imgElem.classList.add('right');
+				document.getElementById('feedback').textContent = 'Correct! That is the real image.';
+			} else {
+				imgElem.classList.add('wrong');
+				document.getElementById('feedback').textContent = 'Wrong! That is an AI image.';
+			}
+			document.getElementById('score').textContent = `Score: ${score} / ${pairs.length}`;
+			document.getElementById('nextBtn').style.display = 'inline-block';
+			if (currentRound === pairs.length - 1) {
+				document.getElementById('nextBtn').textContent = 'See Results';
+			} else {
+				document.getElementById('nextBtn').textContent = 'Next';
+			}
+		}
+
+		document.getElementById('nextBtn').onclick = function () {
+			currentRound++;
+			if (currentRound < pairs.length) {
+				showRound();
+			} else {
+				showResults();
+			}
+		};
+
+		function showResults() {
+			document.getElementById('images').innerHTML = '';
+			document.getElementById('round-info').textContent = 'Game Over!';
+			document.getElementById('feedback').textContent = `Your final score: ${score} / ${pairs.length}`;
+			document.getElementById('score').textContent = '';
+			document.getElementById('nextBtn').style.display = 'none';
+			document.getElementById('restartBtn').style.display = 'inline-block';
+		}
+
+		document.getElementById('restartBtn').onclick = function () {
+			startGame();
+		};
+
+		async function startGame() {
+			// Show loading message
+			document.getElementById('round-info').textContent = 'Loading images...';
+			document.getElementById('images').innerHTML = '<p>Scanning folders for images...</p>';
+
+			// Load images from folders
+			await loadImagesFromFolders();
+
+			// Check if we have enough images to play
+			if (aiImages.length === 0 || realImages.length === 0) {
+				document.getElementById('round-info').textContent = 'Error: No images found!';
+				document.getElementById('images').innerHTML = '<p>Please make sure you have images in both ai/ and real/ folders.</p>';
+				return;
+			}
+
+			// Start the game
+			pickPairs();
+			currentRound = 0;
+			score = 0;
+			showRound();
+		}
+
+		// Start the game on load
+		startGame();
+	</script>
+</body>
+
+</html>

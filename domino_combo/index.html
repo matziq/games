@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
+    <title>Domino Combo</title>
+    <style>
+        /* === Reset === */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        /* === Game Layout === */
+        #game {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 420px;
+            width: 100%;
+            height: 100%;
+            margin: 0 auto;
+            padding: 10px 12px;
+        }
+
+        /* === Score === */
+        #score-display {
+            font-size: clamp(40px, 11vw, 68px);
+            font-weight: 900;
+            font-style: italic;
+            color: #29B6F6;
+            text-align: center;
+            margin: 8px 0 4px;
+            text-shadow: 0 0 25px rgba(41, 182, 246, 0.3);
+            letter-spacing: -2px;
+            line-height: 1;
+        }
+
+        #high-score {
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        /* === Board === */
+        #board {
+            display: grid;
+            gap: 5px;
+            padding: 8px;
+            border: 3px solid #555;
+            border-radius: 10px;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background: #1a1a1a;
+        }
+
+        .cell {
+            background: #0d0d0d;
+            border-radius: 8px;
+            position: relative;
+            aspect-ratio: 1 / 1;
+            border: 1px solid #2a2a2a;
+            transition: border-color 0.15s, background-color 0.15s;
+            overflow: hidden;
+        }
+
+        .cell.hl-valid {
+            border-color: #29B6F6;
+            background: rgba(41, 182, 246, 0.15);
+        }
+
+        .cell.hl-invalid {
+            border-color: #F44336;
+            background: rgba(244, 67, 54, 0.12);
+        }
+
+        /* === Die Face (board) === */
+        .die {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            padding: 17%;
+        }
+
+        .die::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.13) 0%, transparent 45%, rgba(0, 0, 0, 0.13) 100%);
+            pointer-events: none;
+        }
+
+        .dot {
+            width: 62%;
+            height: 62%;
+            border-radius: 50%;
+            background: #1a1a1a;
+            align-self: center;
+            justify-self: center;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+        }
+
+        /* === Piece Preview Area === */
+        #piece-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 85px;
+            margin: 16px 0 4px;
+        }
+
+        #current-piece {
+            display: flex;
+            gap: 4px;
+            cursor: grab;
+            touch-action: none;
+            transition: transform 0.25s ease;
+        }
+
+        .piece-die {
+            width: clamp(52px, 13vw, 68px);
+            height: clamp(52px, 13vw, 68px);
+            border-radius: 10px;
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            padding: 17%;
+            animation: pieceIn 0.28s ease-out;
+        }
+
+        .piece-die.no-anim {
+            animation: none;
+        }
+
+        .piece-die::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.13) 0%, transparent 45%, rgba(0, 0, 0, 0.13) 100%);
+            pointer-events: none;
+        }
+
+        .piece-die .dot {
+            width: 62%;
+            height: 62%;
+            border-radius: 50%;
+            background: #1a1a1a;
+            align-self: center;
+            justify-self: center;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+        }
+
+        /* === Drag Ghost === */
+        .drag-ghost {
+            position: fixed;
+            display: flex;
+            gap: 4px;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0.88;
+            filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.6));
+        }
+
+        /* === Buttons === */
+        #buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            width: 100%;
+            margin-top: auto;
+            padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
+        }
+
+        .game-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            background: none;
+            border: none;
+            color: #29B6F6;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .btn-circle {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            transition: transform 0.12s;
+        }
+
+        .btn-circle:active {
+            transform: scale(0.9);
+        }
+
+        .new-game-btn .btn-circle {
+            background: #29B6F6;
+            color: #000;
+        }
+
+        .settings-btn .btn-circle {
+            border: 2.5px solid #29B6F6;
+            color: #29B6F6;
+            font-size: 24px;
+        }
+
+        /* === Animations === */
+        @keyframes pieceIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            60% {
+                transform: scale(1.08);
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes placeBounce {
+            0% {
+                transform: scale(0.82);
+            }
+
+            55% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .just-placed .die {
+            animation: placeBounce 0.22s ease-out;
+        }
+
+        @keyframes mergeAppear {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            50% {
+                transform: scale(1.35);
+                opacity: 1;
+            }
+
+            75% {
+                transform: scale(0.92);
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .merge-result .die {
+            animation: mergeAppear 0.38s ease-out;
+        }
+
+        @keyframes clearPulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            35% {
+                transform: scale(1.18);
+                opacity: 0.85;
+            }
+
+            100% {
+                transform: scale(0);
+                opacity: 0;
+            }
+        }
+
+        .clearing .die {
+            animation: clearPulse 0.42s ease-out forwards;
+        }
+
+        /* === Special 6s Clearing Effect === */
+        @keyframes explode6 {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+                filter: brightness(1);
+            }
+
+            15% {
+                transform: scale(1.35);
+                filter: brightness(2.5);
+                box-shadow: 0 0 20px #FF5252, 0 0 40px #FF8A80;
+            }
+
+            40% {
+                transform: scale(1.5);
+                opacity: 0.9;
+                filter: brightness(3);
+                box-shadow: 0 0 35px #FFAB40, 0 0 60px #FF6D00;
+            }
+
+            100% {
+                transform: scale(0);
+                opacity: 0;
+                filter: brightness(0);
+            }
+        }
+
+        .clearing-6 .die {
+            animation: explode6 0.55s ease-out forwards !important;
+        }
+
+        .clearing-6::before {
+            content: '';
+            position: absolute;
+            inset: -50%;
+            background: radial-gradient(circle, rgba(255, 82, 82, 0.6) 0%, rgba(255, 109, 0, 0.3) 40%, transparent 70%);
+            border-radius: 50%;
+            animation: flashGlow 0.5s ease-out forwards;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        @keyframes flashGlow {
+            0% {
+                transform: scale(0.3);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.8);
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+
+        .explosion-particle {
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 900;
+            animation: particleFly 0.6s ease-out forwards;
+        }
+
+        @keyframes particleFly {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes popUp {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-55px) scale(1.35);
+                opacity: 0;
+            }
+        }
+
+        .score-popup {
+            position: fixed;
+            font-size: 26px;
+            font-weight: 900;
+            font-style: italic;
+            color: #FFD600;
+            pointer-events: none;
+            z-index: 800;
+            animation: popUp 0.85s ease-out forwards;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+            white-space: nowrap;
+        }
+
+        .score-popup.combo {
+            color: #FF6D00;
+            font-size: 30px;
+        }
+
+        .score-popup.chain {
+            color: #FF1744;
+            font-size: 34px;
+            text-shadow: 0 0 12px rgba(255, 23, 68, 0.6), 0 2px 8px rgba(0, 0, 0, 0.7);
+        }
+
+        /* === Overlays === */
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.88);
+            z-index: 2000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        .overlay.show {
+            display: flex;
+        }
+
+        #game-over h1 {
+            font-size: 40px;
+            color: #F44336;
+            font-weight: 900;
+        }
+
+        .final-score-label {
+            font-size: 16px;
+            color: #888;
+        }
+
+        .final-score {
+            font-size: 60px;
+            font-weight: 900;
+            font-style: italic;
+            color: #29B6F6;
+            line-height: 1;
+        }
+
+        .hs-label {
+            font-size: 15px;
+            color: #FFD600;
+        }
+
+        .overlay-btn {
+            padding: 13px 46px;
+            font-size: 17px;
+            font-weight: 700;
+            background: #29B6F6;
+            color: #000;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: transform 0.12s;
+        }
+
+        .overlay-btn:active {
+            transform: scale(0.94);
+        }
+
+        /* === Settings === */
+        .settings-content {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: 26px;
+            min-width: 290px;
+            max-width: 88%;
+        }
+
+        .settings-content h2 {
+            text-align: center;
+            margin-bottom: 18px;
+            font-size: 22px;
+            color: #29B6F6;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #2a2a2a;
+            font-size: 15px;
+        }
+
+        .setting-row select {
+            background: #111;
+            color: #fff;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+
+        .close-settings {
+            width: 100%;
+            padding: 11px;
+            margin-top: 18px;
+            background: #29B6F6;
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* === Flip hint === */
+        #flip-hint {
+            font-size: 12px;
+            color: #444;
+            margin-top: -2px;
+            margin-bottom: 12px;
+            height: 16px;
+            line-height: 16px;
+            min-height: 16px;
+            max-height: 16px;
+            overflow: hidden;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="game">
+        <div id="score-display">0</div>
+        <div id="high-score">Best: 0</div>
+        <div id="high-score-name" style="font-size:11px;color:#666;margin-bottom:4px;"></div>
+        <div id="board"></div>
+        <div id="piece-area"></div>
+        <div id="flip-hint"></div>
+        <div id="buttons">
+            <button class="game-btn new-game-btn" onclick="newGame()">
+                <div class="btn-circle">+</div>
+                New Game
+            </button>
+            <button class="game-btn settings-btn" onclick="toggleHelp()">
+                <div class="btn-circle">?</div>
+                How To
+            </button>
+            <button class="game-btn settings-btn" onclick="toggleSettings()">
+                <div class="btn-circle">&#9881;</div>
+                Settings
+            </button>
+        </div>
+    </div>
+
+    <div id="game-over" class="overlay">
+        <h1>Game Over</h1>
+        <div class="final-score-label">Score</div>
+        <div class="final-score" id="final-score">0</div>
+        <div class="hs-label" id="go-hs"></div>
+        <div id="name-entry" style="display:none;margin:10px 0;text-align:center;">
+            <div style="font-size:14px;color:#FFD600;margin-bottom:8px;">Enter your name:</div>
+            <input id="hs-name" type="text" maxlength="6" autocomplete="off" spellcheck="false" style="width:140px;padding:8px 12px;font-size:20px;font-weight:bold;text-align:center;
+                background:#222;color:#fff;border:2px solid #29B6F6;border-radius:8px;outline:none;
+                text-transform:uppercase;letter-spacing:2px;font-family:inherit;" placeholder="______">
+            <div style="font-size:11px;color:#555;margin-top:4px;">Up to 6 letters</div>
+        </div>
+        <button class="overlay-btn" onclick="submitHighScore()">Play Again</button>
+    </div>
+
+    <div id="help-modal" class="overlay">
+        <div class="settings-content" style="max-width:340px;">
+            <h2>How To Play</h2>
+            <div style="font-size:14px;line-height:1.7;color:#ccc;">
+                <p style="margin-bottom:10px;"><b style="color:#29B6F6;">Drag</b> dominos onto the board.</p>
+                <p style="margin-bottom:10px;"><b style="color:#29B6F6;">Tap</b> a domino to rotate it.</p>
+                <p style="margin-bottom:10px;">Match <b style="color:#29B6F6;">3+</b> same tiles to merge them into the
+                    next value.</p>
+                <p style="margin-bottom:10px;">Chain reactions earn <b style="color:#FF6D00;">bonus points</b>!</p>
+                <p style="margin-bottom:10px;">Red <b style="color:#EF5350;">6s</b> explode and vanish when matched.</p>
+                <p style="margin-bottom:0;">Game ends when no moves remain.</p>
+            </div>
+            <button class="close-settings" onclick="toggleHelp()" style="margin-top:14px;">Got It</button>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="overlay">
+        <div class="settings-content">
+            <h2>&#9881; Settings</h2>
+            <div class="setting-row">
+                <span>Board Size</span>
+                <select id="opt-size">
+                    <option value="5" selected>5 &times; 5 (Normal)</option>
+                    <option value="6">6 &times; 6</option>
+                    <option value="7">7 &times; 7</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <span>Match Needed</span>
+                <select id="opt-match">
+                    <option value="2">2 (Easy)</option>
+                    <option value="3" selected>3 (Normal)</option>
+                    <option value="4">4 (Hard)</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <span>Sound</span>
+                <select id="opt-sound">
+                    <option value="1" selected>On</option>
+                    <option value="0">Off</option>
+                </select>
+            </div>
+            <button class="close-settings" onclick="applySettings()">Apply &amp; Close</button>
+        </div>
+    </div>
+
+    <script>
+        /* =========================================================
+           DOMINO COMBO – A match-3 dice placement game
+           ========================================================= */
+
+        // ── Constants ──────────────────────────────────────────────
+        const COLORS = {
+            1: '#BDBDBD',   // gray
+            2: '#42A5F5',   // blue
+            3: '#66BB6A',   // green
+            4: '#AB47BC',   // purple
+            5: '#FFEE58',   // yellow
+            6: '#EF5350',   // red
+        };
+
+        // Dot positions within a 3×3 grid  [row, col]
+        const DOTS = {
+            1: [[1, 1]],
+            2: [[0, 2], [2, 0]],
+            3: [[0, 2], [1, 1], [2, 0]],
+            4: [[0, 0], [0, 2], [2, 0], [2, 2]],
+            5: [[0, 0], [0, 2], [1, 1], [2, 0], [2, 2]],
+            6: [[0, 0], [1, 0], [2, 0], [0, 2], [1, 2], [2, 2]],
+        };
+
+        // ── State ──────────────────────────────────────────────────
+        let gridSize = 5;
+        let matchCount = 3;
+        let soundOn = true;
+
+        let board = [];
+        let score = 0;
+        // Per-config high scores: keyed by "gridSize_matchCount"
+        // Each entry: { score: number, name: string }
+        let allHighScores = JSON.parse(localStorage.getItem('dcHighScores') || '{}');
+        // Clear legacy single high score
+        localStorage.removeItem('dcHighScore');
+
+        function hsKey() { return gridSize + '_' + matchCount; }
+        function getHighScore() {
+            const entry = allHighScores[hsKey()];
+            return entry ? entry.score : 0;
+        }
+        function getHighScoreName() {
+            const entry = allHighScores[hsKey()];
+            return entry ? entry.name : '';
+        }
+        function setHighScore(s, name) {
+            allHighScores[hsKey()] = { score: s, name: name || '' };
+            localStorage.setItem('dcHighScores', JSON.stringify(allHighScores));
+        }
+        let highScore = 0;
+        let piece = null;   // current piece to place
+        let drag = null;   // active drag state
+        let processing = false;  // lock while clearing matches
+        let lastPlacedCells = [];  // track where pieces were placed for merge targeting
+        let maxSpawnVal = 1;  // highest value that can appear in spawned pieces
+        let chainDepth = 0;   // tracks successive chain reactions
+
+        // ── Audio (Web Audio API – no files needed) ────────────────
+        let _actx = null;
+        function actx() {
+            if (!_actx) _actx = new (window.AudioContext || window.webkitAudioContext)();
+            return _actx;
+        }
+
+        function sfx(type) {
+            if (!soundOn) return;
+            try {
+                const c = actx(), o = c.createOscillator(), g = c.createGain();
+                o.connect(g); g.connect(c.destination);
+                const t = c.currentTime;
+                switch (type) {
+                    case 'place':
+                        o.type = 'sine'; o.frequency.setValueAtTime(330, t);
+                        g.gain.setValueAtTime(0.04, t);
+                        g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+                        o.start(t); o.stop(t + 0.06); break;
+                    case 'match':
+                        o.type = 'sine'; o.frequency.setValueAtTime(659, t);
+                        o.frequency.linearRampToValueAtTime(880, t + 0.18);
+                        g.gain.setValueAtTime(0.09, t);
+                        g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+                        o.start(t); o.stop(t + 0.22); break;
+                    case 'combo':
+                        o.type = 'triangle'; o.frequency.setValueAtTime(523, t);
+                        o.frequency.setValueAtTime(659, t + 0.08);
+                        o.frequency.setValueAtTime(784, t + 0.16);
+                        o.frequency.setValueAtTime(1047, t + 0.24);
+                        g.gain.setValueAtTime(0.11, t);
+                        g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+                        o.start(t); o.stop(t + 0.35); break;
+                    case 'flip':
+                        o.type = 'sine'; o.frequency.setValueAtTime(800, t);
+                        g.gain.setValueAtTime(0.03, t);
+                        g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+                        o.start(t); o.stop(t + 0.04); break;
+                    case 'chain':
+                        o.type = 'triangle'; o.frequency.setValueAtTime(659, t);
+                        o.frequency.linearRampToValueAtTime(1047, t + 0.12);
+                        o.frequency.setValueAtTime(1175, t + 0.18);
+                        o.frequency.linearRampToValueAtTime(1397, t + 0.3);
+                        g.gain.setValueAtTime(0.13, t);
+                        g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+                        o.start(t); o.stop(t + 0.4); break;
+                    case 'explode6':
+                        o.type = 'sawtooth'; o.frequency.setValueAtTime(880, t);
+                        o.frequency.exponentialRampToValueAtTime(110, t + 0.4);
+                        g.gain.setValueAtTime(0.12, t);
+                        g.gain.linearRampToValueAtTime(0.08, t + 0.1);
+                        g.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+                        o.start(t); o.stop(t + 0.45);
+                        // Add a second oscillator for shimmer
+                        {
+                            const o2 = c.createOscillator(), g2 = c.createGain();
+                            o2.connect(g2); g2.connect(c.destination);
+                            o2.type = 'sine'; o2.frequency.setValueAtTime(1760, t);
+                            o2.frequency.exponentialRampToValueAtTime(440, t + 0.35);
+                            g2.gain.setValueAtTime(0.06, t);
+                            g2.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+                            o2.start(t); o2.stop(t + 0.35);
+                        }
+                        break;
+                    case 'over':
+                        o.type = 'sawtooth'; o.frequency.setValueAtTime(440, t);
+                        o.frequency.linearRampToValueAtTime(220, t + 0.5);
+                        g.gain.setValueAtTime(0.07, t);
+                        g.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+                        o.start(t); o.stop(t + 0.5); break;
+                }
+            } catch (e) { /* silent */ }
+        }
+
+        // ── Init ───────────────────────────────────────────────────
+        function init() {
+            score = 0;
+            processing = false;
+            maxSpawnVal = 3;
+            highScore = getHighScore();
+            board = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
+            updateScore();
+            renderBoard();
+            spawnPiece();
+        }
+
+        // ── Rendering ──────────────────────────────────────────────
+        function renderBoard(placed, mergeTargets) {
+            const el = document.getElementById('board');
+            el.innerHTML = '';
+            el.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.r = r;
+                    cell.dataset.c = c;
+
+                    if (board[r][c] !== null) {
+                        cell.appendChild(makeDie(board[r][c]));
+                    }
+                    if (placed && placed.some(p => p.r === r && p.c === c)) {
+                        cell.classList.add('just-placed');
+                    }
+                    if (mergeTargets && mergeTargets.some(p => p.r === r && p.c === c)) {
+                        cell.classList.add('merge-result');
+                    }
+                    el.appendChild(cell);
+                }
+            }
+        }
+
+        function makeDie(val, cls) {
+            const d = document.createElement('div');
+            d.className = cls || 'die';
+            d.style.background = COLORS[val];
+            const dots = DOTS[val];
+            for (let r = 0; r < 3; r++) {
+                for (let c = 0; c < 3; c++) {
+                    const s = document.createElement('div');
+                    if (dots.some(([dr, dc]) => dr === r && dc === c)) s.className = 'dot';
+                    d.appendChild(s);
+                }
+            }
+            return d;
+        }
+
+        function updateScore() {
+            document.getElementById('score-display').textContent = score;
+            const hsName = getHighScoreName();
+            document.getElementById('high-score').textContent = 'Best: ' + highScore;
+            document.getElementById('high-score-name').textContent = hsName ? hsName : '';
+        }
+
+        // ── Piece ──────────────────────────────────────────────────
+        function randVal() { return Math.floor(Math.random() * maxSpawnVal) + 1; }
+        function randValExcluding(exclude) {
+            let v;
+            do { v = randVal(); } while (v === exclude);
+            return v;
+        }
+
+        function spawnPiece() {
+            // Check if any double (2-cell) placement is possible
+            const canFitDouble = canPlaceDouble();
+            // Only allow doubles when there are at least 2 distinct values available
+            const dbl = canFitDouble && maxSpawnVal >= 2 && Math.random() < 6 / 7;
+            const firstVal = randVal();
+            piece = {
+                type: dbl ? 'double' : 'single',
+                vals: dbl ? [firstVal, randValExcluding(firstVal)] : [firstVal],
+                ori: 'h',   // 'h' = horizontal, 'v' = vertical
+                rot: 0,     // rotation angle in degrees (increments of 90)
+            };
+            renderPiece();
+
+            if (!canPlaceAnywhere()) {
+                processing = true;
+                setTimeout(gameOver, 350);
+            }
+        }
+
+        // Check if there's room for any double piece on the board
+        function canPlaceDouble() {
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    if (board[r][c] !== null) continue;
+                    // horizontal
+                    if (c + 1 < gridSize && board[r][c + 1] === null) return true;
+                    // vertical
+                    if (r + 1 < gridSize && board[r + 1][c] === null) return true;
+                }
+            }
+            return false;
+        }
+
+        function renderPiece(skipAnimation) {
+            const area = document.getElementById('piece-area');
+            area.innerHTML = '';
+            const hint = document.getElementById('flip-hint');
+            hint.textContent = '\u00A0';
+            if (!piece) return;
+
+            const box = document.createElement('div');
+            box.id = 'current-piece';
+            // Always render horizontally; CSS rotation handles visual orientation
+            // Apply accumulated rotation immediately (no transition on rebuild)
+            if (piece.rot) {
+                box.style.transition = 'none';
+                box.style.transform = `rotate(${piece.rot}deg)`;
+                // Re-enable transition after layout
+                requestAnimationFrame(() => {
+                    box.style.transition = 'transform 0.25s ease';
+                });
+            }
+
+            const dieClass = skipAnimation ? 'piece-die no-anim' : 'piece-die';
+            piece.vals.forEach(v => box.appendChild(makeDie(v, dieClass)));
+            box.addEventListener('pointerdown', ptrDown);
+            area.appendChild(box);
+
+            if (piece.type === 'double') {
+                hint.textContent = 'Tap to flip';
+            }
+        }
+
+        // ── Placement helpers ──────────────────────────────────────
+        // Get the visual order of piece values accounting for rotation
+        function visualVals() {
+            const normRot = ((piece.rot % 360) + 360) % 360;
+            // At 180° or 270°, the CSS rotation visually reverses the order
+            return (normRot === 180 || normRot === 270)
+                ? [...piece.vals].reverse()
+                : [...piece.vals];
+        }
+        function cellsFor(r, c, p) {
+            p = p || piece;
+            const out = [{ r, c }];
+            if (p.type === 'double') {
+                out.push(p.ori === 'h' ? { r, c: c + 1 } : { r: r + 1, c });
+            }
+            return out;
+        }
+
+        function validPlace(cells) {
+            return cells.every(({ r, c }) =>
+                r >= 0 && r < gridSize && c >= 0 && c < gridSize && board[r][c] === null);
+        }
+
+        function smartPlace(target) {
+            // try primary
+            let cells = cellsFor(target.r, target.c);
+            if (validPlace(cells)) return cells;
+            // try alternate (anchor shifted back)
+            if (piece.type === 'double') {
+                cells = piece.ori === 'h'
+                    ? cellsFor(target.r, target.c - 1)
+                    : cellsFor(target.r - 1, target.c);
+                if (validPlace(cells)) return cells;
+            }
+            return null;
+        }
+
+        function canPlaceAnywhere() {
+            const oris = piece.type === 'double' ? ['h', 'v'] : ['h'];
+            const saved = piece.ori;
+            for (const o of oris) {
+                piece.ori = o;
+                for (let r = 0; r < gridSize; r++)
+                    for (let c = 0; c < gridSize; c++)
+                        if (validPlace(cellsFor(r, c))) { piece.ori = saved; return true; }
+            }
+            piece.ori = saved;
+            return false;
+        }
+
+        // ── Board metric helpers ───────────────────────────────────
+        const BOARD_BORDER = 3, BOARD_PAD = 8, CELL_GAP = 5;
+
+        function boardMetrics() {
+            const el = document.getElementById('board');
+            const rc = el.getBoundingClientRect();
+            const inner = rc.width - 2 * BOARD_BORDER - 2 * BOARD_PAD;
+            const csz = (inner - CELL_GAP * (gridSize - 1)) / gridSize;
+            return { rect: rc, csz, step: csz + CELL_GAP };
+        }
+
+        function targetCell(x, y) {
+            const { rect, csz, step } = boardMetrics();
+            const rx = x - rect.left - BOARD_BORDER - BOARD_PAD;
+            const ry = y - rect.top - BOARD_BORDER - BOARD_PAD;
+            const c = Math.floor(rx / step);
+            const r = Math.floor(ry / step);
+            return (r >= 0 && r < gridSize && c >= 0 && c < gridSize) ? { r, c } : null;
+        }
+
+        function cellEl(r, c) {
+            return document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+        }
+
+        // ── Pointer / Drag ─────────────────────────────────────────
+        function ptrDown(e) {
+            if (processing) return;
+            e.preventDefault();
+            const el = document.getElementById('current-piece');
+            if (!el) return;
+            const rc = el.getBoundingClientRect();
+            drag = {
+                sx: e.clientX, sy: e.clientY,
+                st: Date.now(),
+                ox: e.clientX - rc.left,
+                oy: e.clientY - rc.top,
+                ghost: null,
+                active: false,
+            };
+            document.addEventListener('pointermove', ptrMove);
+            document.addEventListener('pointerup', ptrUp);
+            document.addEventListener('pointercancel', ptrUp);
+        }
+
+        function ptrMove(e) {
+            if (!drag) return;
+            e.preventDefault();
+            const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+
+            if (!drag.active && (Math.abs(dx) > 7 || Math.abs(dy) > 7)) {
+                drag.active = true;
+                buildGhost(e);
+            }
+            if (drag.active && drag.ghost) {
+                drag.ghost.style.left = (e.clientX - drag.ox) + 'px';
+                drag.ghost.style.top = (e.clientY - drag.oy) + 'px';
+                showHighlight(e);
+            }
+        }
+
+        function buildGhost(e) {
+            const el = document.getElementById('current-piece');
+            if (el) el.style.opacity = '0.2';
+
+            const { csz } = boardMetrics();
+            const g = document.createElement('div');
+            g.className = 'drag-ghost';
+            if (piece.type === 'double' && piece.ori === 'v') g.style.flexDirection = 'column';
+
+            const vv = visualVals();
+            vv.forEach(v => {
+                const d = makeDie(v, 'die');
+                d.style.width = csz + 'px';
+                d.style.height = csz + 'px';
+                g.appendChild(d);
+            });
+
+            document.body.appendChild(g);
+            drag.ghost = g;
+            drag.ox = csz / 2;
+            drag.oy = csz / 2;
+            g.style.left = (e.clientX - drag.ox) + 'px';
+            g.style.top = (e.clientY - drag.oy) + 'px';
+        }
+
+        function ptrUp(e) {
+            document.removeEventListener('pointermove', ptrMove);
+            document.removeEventListener('pointerup', ptrUp);
+            document.removeEventListener('pointercancel', ptrUp);
+            if (!drag) return;
+
+            if (!drag.active) {
+                // TAP → flip (rotate 90° each tap with CSS transition)
+                if (piece && piece.type === 'double') {
+                    piece.rot += 90;
+                    piece.ori = piece.ori === 'h' ? 'v' : 'h';
+                    sfx('flip');
+                    const el = document.getElementById('current-piece');
+                    if (el) el.style.transform = `rotate(${piece.rot}deg)`;
+                }
+                drag = null;
+                return;
+            }
+
+            // Attempt drop
+            const tgt = targetCell(e.clientX, e.clientY);
+            let placed = false;
+            let placedCells = null;
+
+            if (tgt) {
+                placedCells = smartPlace(tgt);
+                if (placedCells) {
+                    const vv = visualVals();
+                    placedCells.forEach((p, i) => { board[p.r][p.c] = vv[i]; });
+                    placed = true;
+                    sfx('place');
+                    renderBoard(placedCells);
+                }
+            }
+
+            if (drag.ghost) drag.ghost.remove();
+            clearHL();
+            drag = null;
+
+            if (placed) {
+                lastPlacedCells = placedCells.map(p => ({ r: p.r, c: p.c }));
+                piece = null;
+                renderPiece();
+                processing = true;
+                chainDepth = 0;
+                setTimeout(processMatches, 120);
+            } else {
+                renderPiece(true);
+            }
+        }
+
+        // ── Highlight ──────────────────────────────────────────────
+        function showHighlight(e) {
+            clearHL();
+            const tgt = targetCell(e.clientX, e.clientY);
+            if (!tgt) return;
+
+            const cells = smartPlace(tgt);
+            if (cells) {
+                cells.forEach(({ r, c }) => { const el = cellEl(r, c); if (el) el.classList.add('hl-valid'); });
+            } else {
+                const raw = cellsFor(tgt.r, tgt.c);
+                raw.forEach(({ r, c }) => {
+                    if (r >= 0 && r < gridSize && c >= 0 && c < gridSize) {
+                        const el = cellEl(r, c); if (el) el.classList.add('hl-invalid');
+                    }
+                });
+            }
+        }
+
+        function clearHL() {
+            document.querySelectorAll('.hl-valid,.hl-invalid').forEach(e =>
+                e.classList.remove('hl-valid', 'hl-invalid'));
+        }
+
+        // ── Match Detection & Clearing (Flood-Fill Adjacency) ───────
+        // Find all connected groups of 3+ same-value tiles (orthogonal)
+        function findGroups() {
+            const visited = Array.from({ length: gridSize }, () => Array(gridSize).fill(false));
+            const groups = [];
+            const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    if (visited[r][c] || board[r][c] === null) continue;
+                    // BFS flood fill
+                    const val = board[r][c];
+                    const group = [];
+                    const queue = [{ r, c }];
+                    visited[r][c] = true;
+                    while (queue.length) {
+                        const cur = queue.shift();
+                        group.push(cur);
+                        for (const [dr, dc] of dirs) {
+                            const nr = cur.r + dr, nc = cur.c + dc;
+                            if (nr >= 0 && nr < gridSize && nc >= 0 && nc < gridSize
+                                && !visited[nr][nc] && board[nr][nc] === val) {
+                                visited[nr][nc] = true;
+                                queue.push({ r: nr, c: nc });
+                            }
+                        }
+                    }
+                    if (group.length >= matchCount) {
+                        groups.push({ val, cells: group });
+                    }
+                }
+            }
+            return groups;
+        }
+
+        // Pick the merge target: prefer a lastPlacedCell that's in the group,
+        // otherwise pick the cell closest to group center
+        function pickMergeTarget(group) {
+            for (const p of lastPlacedCells) {
+                if (group.cells.some(c => c.r === p.r && c.c === p.c)) return p;
+            }
+            // fallback: center-most cell
+            let avgR = 0, avgC = 0;
+            group.cells.forEach(c => { avgR += c.r; avgC += c.c; });
+            avgR /= group.cells.length; avgC /= group.cells.length;
+            let best = group.cells[0], bestD = Infinity;
+            for (const c of group.cells) {
+                const d = Math.abs(c.r - avgR) + Math.abs(c.c - avgC);
+                if (d < bestD) { bestD = d; best = c; }
+            }
+            return best;
+        }
+
+        // Spawn particle burst from a cell element (for 6s explosion)
+        function spawnParticles(el) {
+            const rect = el.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            const colors = ['#FF5252', '#FF8A80', '#FFAB40', '#FFD600', '#FF6D00', '#FFFFFF'];
+            const count = 12;
+            for (let i = 0; i < count; i++) {
+                const p = document.createElement('div');
+                p.className = 'explosion-particle';
+                p.style.background = colors[Math.floor(Math.random() * colors.length)];
+                p.style.left = cx + 'px';
+                p.style.top = cy + 'px';
+                const angle = (Math.PI * 2 / count) * i + (Math.random() - 0.5) * 0.5;
+                const dist = 30 + Math.random() * 40;
+                const dx = Math.cos(angle) * dist;
+                const dy = Math.sin(angle) * dist;
+                const size = 3 + Math.random() * 5;
+                p.style.width = size + 'px';
+                p.style.height = size + 'px';
+                p.style.setProperty('--dx', dx + 'px');
+                p.style.setProperty('--dy', dy + 'px');
+                p.style.animation = 'none'; // reset
+                document.body.appendChild(p);
+                // Use custom translate for each particle
+                requestAnimationFrame(() => {
+                    p.style.transition = 'transform 0.5s ease-out, opacity 0.5s ease-out';
+                    p.style.transform = `translate(${dx}px, ${dy}px) scale(0)`;
+                    p.style.opacity = '0';
+                });
+                setTimeout(() => p.remove(), 600);
+            }
+        }
+
+        function processMatches() {
+            const groups = findGroups();
+
+            if (groups.length === 0) {
+                processing = false;
+                spawnPiece();
+                return;
+            }
+
+            chainDepth++;
+            const numSets = groups.length;
+            const isChain = chainDepth > 1;
+
+            // Points: face-value of all cleared tiles + combo/chain bonus
+            let pts = 0;
+            const allClear = new Set();    // cells to animate clearing
+            const mergeResults = [];       // {r, c, newVal} for upgrades
+
+            for (const grp of groups) {
+                grp.cells.forEach(({ r, c }) => {
+                    pts += board[r][c];
+                    allClear.add(r + ',' + c);
+                });
+
+                // If value < 6 → merge into next value at trigger cell
+                if (grp.val < 6) {
+                    const target = pickMergeTarget(grp);
+                    mergeResults.push({ r: target.r, c: target.c, newVal: grp.val + 1 });
+                    // Unlock the new value for spawning
+                    if (grp.val + 1 > maxSpawnVal && grp.val + 1 <= 6) {
+                        maxSpawnVal = grp.val + 1;
+                    }
+                }
+                // If value === 6 (red) → they just disappear
+            }
+
+            // Bonus for multiple simultaneous groups
+            const multiBonus = numSets >= 2 ? 25 * (numSets - 1) : 0;
+            const basePts = pts + multiBonus;
+            // Chain bonus: escalating for successive chain reactions
+            const chainBonus = isChain ? 25 * (chainDepth - 1) : 0;
+            const totalPts = basePts + chainBonus;
+
+            score += totalPts;
+            if (score > highScore) {
+                highScore = score;
+            }
+            updateScore();
+
+            const isCombo = numSets >= 2;
+            sfx(isChain ? 'chain' : (isCombo ? 'combo' : 'match'));
+            // Show base tile points
+            showPopup(basePts, isCombo ? numSets : 0, false);
+            // Show chain bonus as separate floating number
+            if (chainBonus > 0) {
+                setTimeout(() => showPopup(chainBonus, chainDepth, true, 40), 350);
+            }
+
+            // Track which groups are 6s for special effect
+            const sixCells = new Set();
+            for (const grp of groups) {
+                if (grp.val === 6) {
+                    grp.cells.forEach(({ r, c }) => sixCells.add(r + ',' + c));
+                }
+            }
+
+            // Animate clearing
+            allClear.forEach(k => {
+                const [r, c] = k.split(',').map(Number);
+                const el = cellEl(r, c);
+                if (el) {
+                    if (sixCells.has(k)) {
+                        el.classList.add('clearing-6');
+                        spawnParticles(el);
+                    } else {
+                        el.classList.add('clearing');
+                    }
+                }
+            });
+
+            if (sixCells.size > 0) sfx('explode6');
+
+            setTimeout(() => {
+                // Clear all matched cells
+                allClear.forEach(k => {
+                    const [r, c] = k.split(',').map(Number);
+                    board[r][c] = null;
+                });
+
+                // Place merged results (upgraded tiles)
+                const newPlaced = [];
+                for (const m of mergeResults) {
+                    board[m.r][m.c] = m.newVal;
+                    newPlaced.push({ r: m.r, c: m.c });
+                }
+
+                // Update trigger cells for next chain reaction
+                lastPlacedCells = newPlaced;
+
+                renderBoard(null, newPlaced);
+                setTimeout(processMatches, 250);   // chain reaction
+            }, 420);
+        }
+
+        function showPopup(pts, comboN, isChain, offsetY) {
+            const brd = document.getElementById('board').getBoundingClientRect();
+            const p = document.createElement('div');
+            p.className = 'score-popup' + (comboN ? ' combo' : '') + (isChain ? ' chain' : '');
+            let label = '+' + pts;
+            if (isChain) label += '  CHAIN ×' + comboN;
+            else if (comboN) label += '  COMBO ×' + comboN;
+            p.textContent = label;
+            p.style.left = (brd.left + brd.width / 2 - 50) + 'px';
+            p.style.top = (brd.top + brd.height / 2 + (offsetY || 0)) + 'px';
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 950);
+        }
+
+        // ── Game Over ──────────────────────────────────────────────
+        function gameOver() {
+            sfx('over');
+            document.getElementById('final-score').textContent = score;
+            const hs = document.getElementById('go-hs');
+            const isNewHigh = score > 0 && score >= highScore && score > getHighScore();
+            const nameEntry = document.getElementById('name-entry');
+            const nameInput = document.getElementById('hs-name');
+            if (isNewHigh) {
+                hs.textContent = '\u{1F3C6} New High Score!';
+                nameEntry.style.display = 'block';
+                nameInput.value = '';
+                setTimeout(() => nameInput.focus(), 100);
+            } else {
+                hs.textContent = 'Best: ' + getHighScore() + (getHighScoreName() ? ' (' + getHighScoreName() + ')' : '');
+                nameEntry.style.display = 'none';
+            }
+            document.getElementById('game-over').classList.add('show');
+            processing = false;
+        }
+
+        function submitHighScore() {
+            const nameEntry = document.getElementById('name-entry');
+            const nameInput = document.getElementById('hs-name');
+            if (nameEntry.style.display !== 'none') {
+                const name = nameInput.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase();
+                if (score > getHighScore()) {
+                    setHighScore(score, name);
+                    highScore = score;
+                }
+            }
+            newGame();
+        }
+
+        // ── Controls ───────────────────────────────────────────────
+        function newGame() {
+            document.getElementById('game-over').classList.remove('show');
+            document.getElementById('settings-modal').classList.remove('show');
+            document.getElementById('name-entry').style.display = 'none';
+            init();
+        }
+
+        function toggleHelp() {
+            document.getElementById('help-modal').classList.toggle('show');
+        }
+
+        function toggleSettings() {
+            const m = document.getElementById('settings-modal');
+            m.classList.toggle('show');
+            document.getElementById('opt-size').value = String(gridSize);
+            document.getElementById('opt-match').value = String(matchCount);
+            document.getElementById('opt-sound').value = soundOn ? '1' : '0';
+        }
+
+        function applySettings() {
+            gridSize = parseInt(document.getElementById('opt-size').value);
+            matchCount = parseInt(document.getElementById('opt-match').value);
+            soundOn = document.getElementById('opt-sound').value === '1';
+            document.getElementById('settings-modal').classList.remove('show');
+            init();
+        }
+
+        // ── Global event guards ────────────────────────────────────
+        document.addEventListener('contextmenu', e => e.preventDefault());
+
+        // Close overlays on Escape
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                document.getElementById('settings-modal').classList.remove('show');
+                document.getElementById('help-modal').classList.remove('show');
+            }
+        });
+
+        // ── Start ──────────────────────────────────────────────────
+        init();
+    </script>
+</body>
+
+</html>

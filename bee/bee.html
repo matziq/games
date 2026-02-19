@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Beehive Construction Simulation — Standalone</title>
+    <style>
+        :root {
+            --bg: #0e0f12;
+            --panel: #151821;
+            --accent: #ffc400;
+            --accent2: #ff8a00;
+            --text: #e8eef8;
+            --muted: #9aa3b2;
+            --grid: #2a2f3a;
+            --flower: #8ce99a;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+            overflow: hidden;
+        }
+
+        #ui {
+            position: fixed;
+            inset: 16px auto auto 16px;
+            z-index: 10;
+            background: linear-gradient(180deg, rgba(21, 24, 33, 0.86), rgba(21, 24, 33, 0.78));
+            backdrop-filter: blur(6px);
+            border: 1px solid #222838;
+            border-radius: 12px;
+            padding: 14px 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+        }
+
+        #ui h1 {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+            letter-spacing: .3px;
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #ui h1 .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #fff, var(--accent2));
+            box-shadow: 0 0 10px var(--accent2);
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 140px 220px 60px;
+            gap: 10px;
+            align-items: center;
+            margin: 8px 0;
+        }
+
+        .row .label {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent2);
+        }
+
+        .toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .stats {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #cfd7e6;
+            display: grid;
+            gap: 4px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+            font-size: 11px;
+            color: #c4ccdb;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: #1b2030;
+            border: 1px solid #262d3f;
+        }
+
+        .pill .swatch {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .swatch.bee {
+            background: linear-gradient(90deg, #111 0 35%, #ffcd00 35% 65%, #111 65%);
+            border: 1px solid #0007;
+        }
+
+        .swatch.path {
+            background: linear-gradient(90deg, #00d1ff 0 100%);
+            box-shadow: 0 0 6px #00d1ff66;
+        }
+
+        .swatch.flower {
+            background: var(--flower);
+            box-shadow: 0 0 6px #8ce99a66;
+        }
+
+        .swatch.hive {
+            background: var(--accent);
+            box-shadow: 0 0 6px #ffc40088;
+        }
+
+        #canvas {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            background:
+                radial-gradient(1200px 800px at 50% 50%, #141824, #0d1017 60%, #0a0c12);
+        }
+
+        .menu-link {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 20;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-weight: 800;
+            font-size: 12px;
+            color: var(--text);
+            background: linear-gradient(180deg, rgba(21, 24, 33, 0.86), rgba(21, 24, 33, 0.78));
+            border: 1px solid #222838;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+            backdrop-filter: blur(6px);
+        }
+
+        .menu-link:hover {
+            background: linear-gradient(180deg, rgba(34, 40, 56, 0.86), rgba(21, 24, 33, 0.78));
+        }
+
+        .menu-link:focus-visible {
+            outline: 3px solid rgba(255, 196, 0, .5);
+            outline-offset: 2px;
+        }
+
+        .btns {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        button {
+            background: #1d2333;
+            color: #dbe4ff;
+            border: 1px solid #2a3146;
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #222a3d;
+        }
+
+        @media (max-width: 640px) {
+            #ui {
+                inset: auto 8px 8px 8px;
+            }
+
+            .row {
+                grid-template-columns: 1fr 1fr 42px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <a class="menu-link" href="../gamemenu.html" aria-label="Back to games menu">← Menu</a>
+    <div id="ui">
+        <h1><span class="dot"></span>Beehive Construction</h1>
+
+        <div class="row">
+            <div class="label">Resource density</div>
+            <input id="resourceSlider" type="range" min="0" max="100" value="55" />
+            <div id="resourceVal">55</div>
+        </div>
+
+        <div class="row">
+            <div class="label">Simulation speed</div>
+            <input id="speedSlider" type="range" min="25" max="400" value="120" />
+            <div id="speedVal">1.2×</div>
+        </div>
+
+        <label class="toggle">
+            <input id="pathsToggle" type="checkbox" checked />
+            Show worker bee paths
+        </label>
+
+        <div class="btns">
+            <button id="pauseBtn">Pause</button>
+            <button id="resetBtn">Reset</button>
+        </div>
+
+        <div class="legend">
+            <span class="pill"><i class="swatch bee"></i> Worker Bee</span>
+            <span class="pill"><i class="swatch path"></i> Path</span>
+            <span class="pill"><i class="swatch flower"></i> Flowers</span>
+            <span class="pill"><i class="swatch hive"></i> Hive Cells</span>
+        </div>
+
+        <div class="stats" id="stats">
+            <!-- populated dynamically -->
+        </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+        (() => {
+            // ====== Config ======
+            const cfg = {
+                bees: 28,
+                beeBaseSpeed: 55,       // px/s base (scaled by speed slider)
+                beeTurnRate: 6.0,       // rad/s for smooth steering
+                beeCapacity: 10,        // nectar capacity per trip
+                hiveRadius: 26,         // radius to consider "at hive"
+                siteBuildTime: 10,      // seconds to complete one cell with one builder
+                siteMaxBuilders: 6,     // cap concurrent builders contributing
+                cellCost: 100,          // nectar units required to start a cell
+                hexSize: 18,            // hex radius in px
+                trailKeep: 28,          // number of points in trail
+                trailStep: 0.045,       // seconds between stored trail points
+                worldPadding: 64,       // keep flowers clear of edges
+                flowerNectarRange: [20, 80],
+                gridAlpha: 0.06
+            };
+
+            // ====== DOM ======
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+
+            const resourceSlider = document.getElementById('resourceSlider');
+            const resourceVal = document.getElementById('resourceVal');
+            const speedSlider = document.getElementById('speedSlider');
+            const speedVal = document.getElementById('speedVal');
+            const pathsToggle = document.getElementById('pathsToggle');
+            const statsEl = document.getElementById('stats');
+            const pauseBtn = document.getElementById('pauseBtn');
+            const resetBtn = document.getElementById('resetBtn');
+
+            // ====== Canvas Size ======
+            let W = 0, H = 0, CX = 0, CY = 0;
+            function resize() {
+                const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+                canvas.width = Math.floor(innerWidth * dpr);
+                canvas.height = Math.floor(innerHeight * dpr);
+                canvas.style.width = innerWidth + 'px';
+                canvas.style.height = innerHeight + 'px';
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                W = innerWidth; H = innerHeight; CX = W / 2; CY = H / 2;
+            }
+            addEventListener('resize', resize, { passive: true });
+            resize();
+
+            // ====== Utils ======
+            const rand = (a = 1, b = 0) => Math.random() * (a - b) + b;
+            const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+            const lerp = (a, b, t) => a + (b - a) * t;
+            const len = (x, y) => Math.hypot(x, y);
+            const dist = (x1, y1, x2, y2) => Math.hypot(x2 - x1, y2 - y1);
+            const angle = (x, y) => Math.atan2(y, x);
+            const wrapAngle = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+            const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+
+            function polyline(points, color, width = 1, alpha = 1) {
+                if (points.length < 2) return;
+                ctx.globalAlpha = alpha;
+                ctx.strokeStyle = color;
+                ctx.lineWidth = width;
+                ctx.beginPath();
+                ctx.moveTo(points[0].x, points[0].y);
+                for (let i = 1; i < points.length; i++) {
+                    ctx.lineTo(points[i].x, points[i].y);
+                }
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+            }
+
+            // ====== Hex Math (pointy-top axial) ======
+            const SQRT3 = Math.sqrt(3);
+            function axialToPixel(q, r, size = cfg.hexSize) {
+                const x = size * (SQRT3 * (q + r / 2));
+                const y = size * (1.5 * r);
+                return { x, y };
+            }
+            const hexDirs = [
+                { q: 1, r: 0 }, { q: 1, r: -1 }, { q: 0, r: -1 },
+                { q: -1, r: 0 }, { q: -1, r: 1 }, { q: 0, r: 1 }
+            ];
+            const hexAdd = (a, b) => ({ q: a.q + b.q, r: a.r + b.r });
+            function axialDistance(a, b = { q: 0, r: 0 }) {
+                const dq = a.q - b.q, dr = a.r - b.r;
+                const ds = -a.q - a.r - (-b.q - b.r);
+                return (Math.abs(dq) + Math.abs(dr) + Math.abs(ds)) / 2;
+            }
+
+            function drawHex(x, y, size, fill, stroke, alpha = 1, progress = 1) {
+                // progress: [0..1] radial fill
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    const a = Math.PI / 6 + i * Math.PI / 3;
+                    const vx = x + size * Math.cos(a);
+                    const vy = y + size * Math.sin(a);
+                    if (i === 0) ctx.moveTo(vx, vy); else ctx.lineTo(vx, vy);
+                }
+                ctx.closePath();
+                if (fill) {
+                    // Clip to fill progress
+                    if (progress < 1) {
+                        ctx.save();
+                        ctx.clip();
+                        const r = size * progress;
+                        const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+                        grad.addColorStop(0, fill);
+                        grad.addColorStop(1, fill);
+                        ctx.fillStyle = grad;
+                        ctx.beginPath();
+                        ctx.arc(x, y, r, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                    } else {
+                        ctx.fillStyle = fill;
+                        ctx.fill();
+                    }
+                }
+                if (stroke) {
+                    ctx.strokeStyle = stroke;
+                    ctx.lineWidth = 1.25;
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+
+            // ====== World State ======
+            let timeScale = 1.2;
+            let paused = false;
+            let nectarPool = 0;
+            let builtCells = new Set();   // "q,r"
+            let frontier = new Set();
+            let activeSite = null;        // {q,r, progress:[0..1], builders:Set<beeId>}
+            let flowers = [];             // [{x,y,nectar,max}]
+            let bees = [];                // bee objects
+
+            // ====== Initialization ======
+            function key(q, r) { return `${q},${r}`; }
+            function dekey(s) { const [q, r] = s.split(',').map(Number); return { q, r }; }
+
+            function initHive() {
+                builtCells.clear();
+                frontier.clear();
+                activeSite = null;
+                nectarPool = 0;
+                // Start with center cell built
+                builtCells.add(key(0, 0));
+                updateFrontier();
+            }
+
+            function packStats() {
+                const builtCount = builtCells.size;
+                const frontierCount = frontier.size;
+                const flowerCount = flowers.filter(f => f.nectar > 0).length;
+                const builders = activeSite ? activeSite.builders.size : 0;
+                statsEl.innerHTML = `
+        <div><b>Nectar pool:</b> ${nectarPool.toFixed(0)} u</div>
+        <div><b>Built cells:</b> ${builtCount}</div>
+        <div><b>Frontier cells:</b> ${frontierCount}</div>
+        <div><b>Active site builders:</b> ${builders}</div>
+        <div><b>Flowers (with nectar):</b> ${flowerCount}</div>
+      `;
+            }
+
+            // Close the IIFE wrapper
+        })();
+    </script>
+    <script>
+        (() => {
+            // Colors from CSS variables
+            const css = getComputedStyle(document.documentElement);
+            const COLORS = {
+                accent: (css.getPropertyValue('--accent') || '#ffc400').trim(),
+                accent2: (css.getPropertyValue('--accent2') || '#ff8a00').trim(),
+                text: (css.getPropertyValue('--text') || '#e8eef8').trim(),
+                grid: (css.getPropertyValue('--grid') || '#2a2f3a').trim(),
+                flower: (css.getPropertyValue('--flower') || '#8ce99a').trim()
+            };
+
+            // UI
+            const el = {
+                cvs: document.querySelector('#canvas'),
+                resource: document.querySelector('#resourceSlider'),
+                resourceVal: document.querySelector('#resourceVal'),
+                speed: document.querySelector('#speedSlider'),
+                speedVal: document.querySelector('#speedVal'),
+                paths: document.querySelector('#pathsToggle'),
+                stats: document.querySelector('#stats'),
+                pause: document.querySelector('#pauseBtn'),
+                reset: document.querySelector('#resetBtn')
+            };
+            const ctx = el.cvs.getContext('2d');
+
+            // Viewport
+            let W = 0, H = 0, CX = 0, CY = 0, DPR = 1;
+            function setSize() {
+                DPR = Math.min(2, Math.max(1, devicePixelRatio || 1));
+                W = innerWidth; H = innerHeight; CX = W / 2; CY = H / 2;
+                el.cvs.width = Math.floor(W * DPR);
+                el.cvs.height = Math.floor(H * DPR);
+                el.cvs.style.width = W + 'px';
+                el.cvs.style.height = H + 'px';
+                ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+                // Clear trails on large layout changes so they don't misalign
+                bees.forEach(b => b.trail.length = 0);
+            }
+            addEventListener('resize', setSize, { passive: true });
+            setSize();
+
+            // Math helpers
+            const RND = (a = 1, b = 0) => Math.random() * (a - b) + b;
+            const CLAMP = (v, a, b) => v < a ? a : v > b ? b : v;
+            const HYP = Math.hypot;
+            const ANG = Math.atan2;
+            const LERP = (a, b, t) => a + (b - a) * t;
+            const WRAP = a => Math.atan2(Math.sin(a), Math.cos(a));
+
+            // Hex axial helpers (pointy-top)
+            const SQ3 = Math.sqrt(3);
+            const HEX = {
+                size: 18,
+                toXY(q, r) { return { x: HEX.size * (SQ3 * (q + r / 2)), y: HEX.size * (1.5 * r) }; },
+                dirs: [{ q: 1, r: 0 }, { q: 1, r: -1 }, { q: 0, r: -1 }, { q: -1, r: 0 }, { q: -1, r: 1 }, { q: 0, r: 1 }],
+                add(a, b) { return { q: a.q + b.q, r: a.r + b.r }; },
+                key(q, r) { return q + ',' + r; },
+                dekey(s) { const [q, r] = s.split(',').map(Number); return { q, r }; },
+                dist(a, b = { q: 0, r: 0 }) {
+                    const dq = a.q - b.q, dr = a.r - b.r, ds = (-a.q - a.r) - (-b.q - b.r);
+                    return (Math.abs(dq) + Math.abs(dr) + Math.abs(ds)) / 2;
+                }
+            };
+
+            // Config
+            const CFG = {
+                bees: 28,
+                baseSpeed: 55,          // px/s
+                turnRate: 6.0,          // rad/s
+                capacity: 10,           // nectar units per trip
+                hiveRadius: 26,
+                buildSeconds: 10,       // time to finish a cell with one builder
+                maxBuilders: 6,
+                cellCost: 100,          // nectar cost
+                trailKeep: 28,
+                trailStep: 0.045,
+                padding: 64,
+                nectarMinMax: [20, 80],
+                gridAlpha: 0.06
+            };
+
+            // World state
+            let tScale = Number(el.speed.value) / 100; // 1.2 by default
+            let paused = false;
+            let nectar = 0;
+            let built = new Set();        // "q,r"
+            let frontier = new Set();     // "q,r"
+            let flowers = [];             // {x,y,nectar,max}
+            let bees = [];                // bee objects
+            let activeSite = null;        // {q,r,progress:[0..1],builders:Set}
+
+            // Drawing helpers
+            function drawHex(x, y, r, { fill = null, stroke = '#000', alpha = 1, progress = 1 } = {}) {
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    const a = Math.PI / 6 + i * Math.PI / 3;
+                    const px = x + r * Math.cos(a);
+                    const py = y + r * Math.sin(a);
+                    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                if (fill) {
+                    if (progress < 1) {
+                        ctx.save();
+                        ctx.clip();
+                        const rr = r * progress;
+                        const g = ctx.createRadialGradient(x, y, 0, x, y, rr);
+                        g.addColorStop(0, fill); g.addColorStop(1, fill);
+                        ctx.fillStyle = g;
+                        ctx.beginPath();
+                        ctx.arc(x, y, rr, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                    } else {
+                        ctx.fillStyle = fill;
+                        ctx.fill();
+                    }
+                }
+                if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.25; ctx.stroke(); }
+                ctx.restore();
+            }
+
+            function drawTrail(trail, color = '#00d1ff') {
+                if (trail.length < 2) return;
+                ctx.save();
+                ctx.strokeStyle = color;
+                ctx.globalAlpha = 0.55;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(trail[0].x, trail[0].y);
+                for (let i = 1; i < trail.length; i++) ctx.lineTo(trail[i].x, trail[i].y);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            function drawBee(b) {
+                ctx.save();
+                ctx.translate(b.x, b.y);
+                ctx.rotate(b.a);
+                // body
+                ctx.fillStyle = '#ffcd00';
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(8, 0);
+                ctx.lineTo(-8, 5);
+                ctx.lineTo(-6, 0);
+                ctx.lineTo(-8, -5);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                // stripes
+                ctx.strokeStyle = '#111';
+                ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(-4, -4); ctx.lineTo(-2, 4); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, -4); ctx.lineTo(2, 4); ctx.stroke();
+                // wings
+                ctx.globalAlpha = 0.5;
+                ctx.fillStyle = '#cfe9ff';
+                ctx.beginPath(); ctx.ellipse(-2, -5, 3, 6, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(-2, 5, 3, 6, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            }
+
+            // Frontier
+            function refreshFrontier() {
+                frontier.clear();
+                for (const k of built) {
+                    const { q, r } = HEX.dekey(k);
+                    for (const d of HEX.dirs) {
+                        const n = HEX.add({ q, r }, d);
+                        const nk = HEX.key(n.q, n.r);
+                        if (!built.has(nk)) frontier.add(nk);
+                    }
+                }
+                // Do not include the center if it's already built
+                frontier.delete(HEX.key(0, 0));
+            }
+
+            // Active site management
+            function startSiteIfPossible() {
+                if (activeSite || nectar < CFG.cellCost || frontier.size === 0) return;
+                // Pick a frontier cell with minimal distance from center (compact growth)
+                let best = null, bestD = Infinity;
+                for (const k of frontier) {
+                    const h = HEX.dekey(k);
+                    const d = HEX.dist(h, { q: 0, r: 0 });
+                    if (d < bestD) { bestD = d; best = h; }
+                }
+                if (!best) return;
+                activeSite = { q: best.q, r: best.r, progress: 0, builders: new Set() };
+                nectar -= CFG.cellCost;
+            }
+
+            // Flowers
+            function genFlowers() {
+                const density = Number(el.resource.value); // 0..100
+                el.resourceVal.textContent = density.toFixed(0);
+                const area = (W - 2 * CFG.padding) * (H - 2 * CFG.padding);
+                // Map density to a practical count for screen sizes
+                const count = Math.round((area / 80000) * (density / 50)); // ~30..150 typical
+                flowers = [];
+                for (let i = 0; i < count; i++) {
+                    const x = RND(W - CFG.padding, CFG.padding);
+                    const y = RND(H - CFG.padding, CFG.padding);
+                    const max = RND(CFG.nectarMinMax[1], CFG.nectarMinMax[0]);
+                    const amt = RND(max, max * 0.4);
+                    flowers.push({ x, y, nectar: amt, max });
+                }
+            }
+
+            // Bees
+            function makeBees() {
+                bees = [];
+                for (let i = 0; i < CFG.bees; i++) {
+                    bees.push({
+                        id: i,
+                        x: CX + RND(-20, 20),
+                        y: CY + RND(-20, 20),
+                        a: RND(Math.PI, -Math.PI),
+                        state: 'forage',
+                        target: null,      // {x,y} or {q,r}
+                        carrying: 0,
+                        trail: [],
+                        trailT: 0
+                    });
+                }
+            }
+
+            // Targets
+            function pickFlower() {
+                const available = flowers.filter(f => f.nectar > 0);
+                if (!available.length) return null;
+                return available[(Math.random() * available.length) | 0];
+            }
+            function hiveXY() { return { x: CX, y: CY }; }
+            function siteXY(q, r) {
+                const p = HEX.toXY(q, r);
+                return { x: p.x + CX, y: p.y + CY };
+            }
+
+            // Bee logic
+            function steerTo(b, tx, ty, dt) {
+                const desired = ANG(ty - b.y, tx - b.x);
+                let da = WRAP(desired - b.a);
+                const maxTurn = CFG.turnRate * dt;
+                da = CLAMP(da, -maxTurn, maxTurn);
+                b.a = WRAP(b.a + da);
+            }
+
+            function stepBee(b, dt) {
+                const speed = CFG.baseSpeed * tScale;
+
+                // Trail
+                b.trailT += dt;
+                if (b.trailT >= CFG.trailStep) {
+                    b.trailT = 0;
+                    b.trail.push({ x: b.x, y: b.y });
+                    if (b.trail.length > CFG.trailKeep) b.trail.shift();
+                }
+
+                // State machine
+                if (b.state === 'forage') {
+                    if (!b.target || b.target.nectar <= 0) b.target = pickFlower();
+                    const tgt = b.target;
+                    if (!tgt) {
+                        // wander near hive
+                        const wtx = CX + Math.cos((performance.now() / 800) + b.id) * 80;
+                        const wty = CY + Math.sin((performance.now() / 900) + b.id) * 80;
+                        steerTo(b, wtx, wty, dt);
+                    } else {
+                        steerTo(b, tgt.x, tgt.y, dt);
+                        const nx = b.x + Math.cos(b.a) * speed * dt;
+                        const ny = b.y + Math.sin(b.a) * speed * dt;
+                        b.x = nx; b.y = ny;
+
+                        if (HYP(tgt.x - b.x, tgt.y - b.y) < 10) {
+                            // harvest
+                            const rate = 40; // units/s
+                            const take = Math.min(rate * dt, CFG.capacity - b.carrying, tgt.nectar);
+                            if (take > 0) {
+                                tgt.nectar -= take;
+                                b.carrying += take;
+                            }
+                            if (b.carrying >= CFG.capacity || tgt.nectar <= 0) {
+                                b.state = 'return';
+                                b.target = null;
+                            }
+                        }
+                        return;
+                    }
+                }
+
+                if (b.state === 'return') {
+                    const h = hiveXY();
+                    steerTo(b, h.x, h.y, dt);
+                    b.x += Math.cos(b.a) * speed * dt;
+                    b.y += Math.sin(b.a) * speed * dt;
+                    if (HYP(h.x - b.x, h.y - b.y) < CFG.hiveRadius) {
+                        nectar += b.carrying;
+                        b.carrying = 0;
+                        startSiteIfPossible();
+                        if (activeSite && activeSite.builders.size < CFG.maxBuilders) {
+                            activeSite.builders.add(b.id);
+                            b.state = 'build';
+                        } else {
+                            b.state = 'forage';
+                        }
+                    }
+                    return;
+                }
+
+                if (b.state === 'build') {
+                    if (!activeSite) {
+                        b.state = 'forage';
+                        return;
+                    }
+                    const p = siteXY(activeSite.q, activeSite.r);
+                    steerTo(b, p.x, p.y, dt);
+                    b.x += Math.cos(b.a) * speed * dt;
+                    b.y += Math.sin(b.a) * speed * dt;
+
+                    if (HYP(p.x - b.x, p.y - b.y) < HEX.size + 6) {
+                        // contribute
+                        const builders = Math.min(activeSite.builders.size || 1, CFG.maxBuilders);
+                        const perSec = 1 / CFG.buildSeconds;
+                        activeSite.progress += perSec * dt * builders;
+                        if (activeSite.progress >= 1) {
+                            // finalize cell
+                            const kk = HEX.key(activeSite.q, activeSite.r);
+                            built.add(kk);
+                            frontier.delete(kk);
+                            activeSite.builders.clear();
+                            activeSite = null;
+                            refreshFrontier();
+                            startSiteIfPossible();
+                            b.state = 'forage';
+                        }
+                    }
+                    return;
+                }
+
+                // Default movement
+                b.x += Math.cos(b.a) * speed * dt;
+                b.y += Math.sin(b.a) * speed * dt;
+            }
+
+            // Rendering
+            function drawBackgroundGrid() {
+                ctx.save();
+                ctx.globalAlpha = CFG.gridAlpha;
+                ctx.strokeStyle = COLORS.grid;
+                const radius = 8; // rings around center to show
+                for (let r = -radius; r <= radius; r++) {
+                    for (let q = -radius; q <= radius; q++) {
+                        const s = -q - r;
+                        if (Math.abs(s) > radius) continue;
+                        const { x, y } = HEX.toXY(q, r);
+                        drawHex(x + CX, y + CY, HEX.size, { fill: null, stroke: COLORS.grid, alpha: CFG.gridAlpha });
+                    }
+                }
+                ctx.restore();
+            }
+
+            function drawHive() {
+                // built cells
+                for (const k of built) {
+                    const { q, r } = HEX.dekey(k);
+                    const p = HEX.toXY(q, r);
+                    drawHex(p.x + CX, p.y + CY, HEX.size, { fill: COLORS.accent, stroke: '#00000055', alpha: 0.9 });
+                }
+                // active site
+                if (activeSite) {
+                    const p = HEX.toXY(activeSite.q, activeSite.r);
+                    drawHex(p.x + CX, p.y + CY, HEX.size, { fill: COLORS.accent2, stroke: '#000', alpha: 0.9, progress: CLAMP(activeSite.progress, 0, 1) });
+                }
+                // center marker
+                ctx.save();
+                ctx.strokeStyle = COLORS.accent;
+                ctx.globalAlpha = 0.9;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(CX, CY, CFG.hiveRadius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            function drawFlowers() {
+                for (const f of flowers) {
+                    // stem glow
+                    ctx.save();
+                    ctx.fillStyle = COLORS.flower;
+                    ctx.globalAlpha = 0.08;
+                    ctx.beginPath();
+                    ctx.arc(f.x, f.y, 18, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+
+                    // head
+                    const pct = f.nectar / f.max;
+                    const r = LERP(3, 7, pct);
+                    ctx.save();
+                    ctx.fillStyle = COLORS.flower;
+                    ctx.strokeStyle = '#0a1';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.arc(f.x, f.y, r, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+
+            function drawBees() {
+                for (const b of bees) {
+                    if (el.paths.checked) drawTrail(b.trail);
+                    drawBee(b);
+                }
+            }
+
+            // Stats
+            function updateStats() {
+                const builders = activeSite ? activeSite.builders.size : 0;
+                const aliveFlowers = flowers.filter(f => f.nectar > 0).length;
+                el.stats.innerHTML =
+                    '<div><b>Nectar pool:</b> ' + Math.floor(nectar) + ' u</div>' +
+                    '<div><b>Built cells:</b> ' + built.size + '</div>' +
+                    '<div><b>Frontier cells:</b> ' + frontier.size + '</div>' +
+                    '<div><b>Active site builders:</b> ' + builders + '</div>' +
+                    '<div><b>Flowers (with nectar):</b> ' + aliveFlowers + '</div>';
+            }
+
+            // Init / Reset
+            function resetWorld() {
+                nectar = 0;
+                built.clear();
+                frontier.clear();
+                activeSite = null;
+                built.add(HEX.key(0, 0));
+                refreshFrontier();
+                genFlowers();
+                makeBees();
+                updateStats();
+            }
+
+            // UI events
+            el.speed.addEventListener('input', () => {
+                tScale = Number(el.speed.value) / 100;
+                el.speedVal.textContent = tScale.toFixed(1) + '×';
+            });
+            el.resource.addEventListener('input', () => {
+                el.resourceVal.textContent = Number(el.resource.value).toFixed(0);
+                genFlowers();
+            });
+            el.paths.addEventListener('change', () => { });
+            el.pause.addEventListener('click', () => {
+                paused = !paused;
+                el.pause.textContent = paused ? 'Resume' : 'Pause';
+            });
+            el.reset.addEventListener('click', () => {
+                resetWorld();
+            });
+
+            // Boot
+            resetWorld();
+
+            // Loop
+            let last = performance.now();
+            function frame(now) {
+                const dt = Math.min(0.05, (now - last) / 1000) * (paused ? 0 : 1);
+                last = now;
+
+                // Update
+                if (dt > 0) {
+                    for (const b of bees) stepBee(b, dt);
+                    // Slight nectar regen to keep scene lively
+                    for (const f of flowers) {
+                        if (f.nectar < f.max) {
+                            f.nectar = Math.min(f.max, f.nectar + 2 * dt);
+                        }
+                    }
+                    // Progress site without builders decay? keep as-is
+                }
+
+                // Render
+                ctx.clearRect(0, 0, W, H);
+                drawBackgroundGrid();
+                drawFlowers();
+                drawHive();
+                drawBees();
+                updateStats();
+
+                requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+        })();
+    </script>
+    <script>
+        (() => {
+            // Grab UI and canvas
+            const el = {
+                c: document.getElementById('canvas'),
+                res: document.getElementById('resourceSlider'),
+                resVal: document.getElementById('resourceVal'),
+                spd: document.getElementById('speedSlider'),
+                spdVal: document.getElementById('speedVal'),
+                paths: document.getElementById('pathsToggle'),
+                stats: document.getElementById('stats'),
+                pause: document.getElementById('pauseBtn'),
+                reset: document.getElementById('resetBtn')
+            };
+            const ctx = el.c.getContext('2d');
+            const css = getComputedStyle(document.documentElement);
+            const COL = {
+                accent: (css.getPropertyValue('--accent') || '#ffc400').trim(),
+                accent2: (css.getPropertyValue('--accent2') || '#ff8a00').trim(),
+                text: (css.getPropertyValue('--text') || '#e8eef8').trim(),
+                grid: (css.getPropertyValue('--grid') || '#2a2f3a').trim(),
+                flower: (css.getPropertyValue('--flower') || '#8ce99a').trim()
+            };
+
+            // Viewport
+            let W = 0, H = 0, CX = 0, CY = 0, DPR = 1;
+            function fit() {
+                DPR = Math.min(2, Math.max(1, devicePixelRatio || 1));
+                W = innerWidth; H = innerHeight; CX = W / 2; CY = H / 2;
+                el.c.width = Math.floor(W * DPR);
+                el.c.height = Math.floor(H * DPR);
+                el.c.style.width = W + 'px';
+                el.c.style.height = H + 'px';
+                ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+            }
+            addEventListener('resize', fit, { passive: true });
+            fit();
+
+            // Helpers
+            const R = (a = 1, b = 0) => Math.random() * (a - b) + b;
+            const CLAMP = (v, a, b) => v < a ? a : v > b ? b : v;
+            const LERP = (a, b, t) => a + (b - a) * t;
+            const HYP = Math.hypot;
+            const ANG = Math.atan2;
+            const WRAP = a => Math.atan2(Math.sin(a), Math.cos(a));
+            const PI = Math.PI;
+            const SQ3 = Math.sqrt(3);
+
+            // Hex axial (pointy top)
+            const HEX = {
+                R: 18,
+                dirs: [{ q: 1, r: 0 }, { q: 1, r: -1 }, { q: 0, r: -1 }, { q: -1, r: 0 }, { q: -1, r: 1 }, { q: 0, r: 1 }],
+                xy(q, r) { return { x: HEX.R * (SQ3 * (q + r / 2)), y: HEX.R * (1.5 * r) }; },
+                key(q, r) { return q + ',' + r; },
+                unkey(k) { const [q, r] = k.split(',').map(Number); return { q, r }; },
+                add(a, b) { return { q: a.q + b.q, r: a.r + b.r }; },
+                dist(a, b = { q: 0, r: 0 }) {
+                    const dq = a.q - b.q, dr = a.r - b.r, ds = (-a.q - a.r) - (-b.q - b.r);
+                    return (Math.abs(dq) + Math.abs(dr) + Math.abs(ds)) / 2;
+                }
+            };
+
+            // Draw bits
+            function hexPath(x, y, r) {
+                ctx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    const a = PI / 6 + i * PI / 3;
+                    const px = x + r * Math.cos(a);
+                    const py = y + r * Math.sin(a);
+                    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+            }
+            function drawHexCell(x, y, r, fill, stroke, alpha = 1, progress = 1) {
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                hexPath(x, y, r);
+                if (fill) {
+                    if (progress < 1) {
+                        ctx.save();
+                        ctx.clip();
+                        const rr = r * progress;
+                        const g = ctx.createRadialGradient(x, y, 0, x, y, rr);
+                        g.addColorStop(0, fill); g.addColorStop(1, fill);
+                        ctx.fillStyle = g;
+                        ctx.beginPath(); ctx.arc(x, y, rr, 0, PI * 2); ctx.fill();
+                        ctx.restore();
+                    } else {
+                        ctx.fillStyle = fill; ctx.fill();
+                    }
+                }
+                if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.2; ctx.stroke(); }
+                ctx.restore();
+            }
+            function drawTrail(trail, color = '#00d1ff') {
+                if (trail.length < 2) return;
+                ctx.save();
+                ctx.globalAlpha = 0.55;
+                ctx.strokeStyle = color; ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(trail[0].x, trail[0].y);
+                for (let i = 1; i < trail.length; i++) ctx.lineTo(trail[i].x, trail[i].y);
+                ctx.stroke();
+                ctx.restore();
+            }
+            function drawBee(b) {
+                ctx.save();
+                ctx.translate(b.x, b.y); ctx.rotate(b.a);
+                // body
+                ctx.fillStyle = '#ffcd00'; ctx.strokeStyle = '#000'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(-8, 5); ctx.lineTo(-6, 0); ctx.lineTo(-8, -5); ctx.closePath();
+                ctx.fill(); ctx.stroke();
+                // stripes
+                ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(-4, -4); ctx.lineTo(-2, 4); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, -4); ctx.lineTo(2, 4); ctx.stroke();
+                // wings
+                ctx.globalAlpha = 0.5; ctx.fillStyle = '#cfe9ff';
+                ctx.beginPath(); ctx.ellipse(-2, -5, 3, 6, 0, 0, PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(-2, 5, 3, 6, 0, 0, PI * 2); ctx.fill();
+                ctx.restore();
+            }
+
+            // Config
+            const CFG = {
+                bees: 26,
+                speed: 55,
+                turn: 6.0,
+                carry: 10,
+                hiveR: 26,
+                buildSeconds: 10,
+                maxBuilders: 6,
+                cost: 100,
+                trailKeep: 28,
+                trailStep: 0.045,
+                padding: 64,
+                nectarMin: 20,
+                nectarMax: 80,
+                gridAlpha: 0.06
+            };
+
+            // State
+            let tScale = Number(el.spd.value) / 100;
+            let paused = false;
+            let nectar = 0;
+            let built = new Set([HEX.key(0, 0)]);
+            let frontier = new Set();
+            let site = null; // {q,r,progress,builders:Set}
+            let flowers = [];
+            let bees = [];
+
+            function updateFrontier() {
+                frontier.clear();
+                for (const k of built) {
+                    const h = HEX.unkey(k);
+                    for (const d of HEX.dirs) {
+                        const n = HEX.add(h, d);
+                        const nk = HEX.key(n.q, n.r);
+                        if (!built.has(nk)) frontier.add(nk);
+                    }
+                }
+                frontier.delete(HEX.key(0, 0));
+            }
+
+            function pickSite() {
+                if (site || nectar < CFG.cost || frontier.size === 0) return;
+                let best = null, bd = 1e9;
+                for (const k of frontier) {
+                    const h = HEX.unkey(k);
+                    const d = HEX.dist(h);
+                    if (d < bd) { bd = d; best = h; }
+                }
+                if (!best) return;
+                nectar -= CFG.cost;
+                site = { q: best.q, r: best.r, progress: 0, builders: new Set() };
+            }
+
+            function makeFlowers() {
+                const density = Number(el.res.value);
+                el.resVal.textContent = density.toFixed(0);
+                const area = (W - 2 * CFG.padding) * (H - 2 * CFG.padding);
+                const count = Math.max(10, Math.round((area / 80000) * (density / 50)));
+                flowers.length = 0;
+                for (let i = 0; i < count; i++) {
+                    const x = R(W - CFG.padding, CFG.padding);
+                    const y = R(H - CFG.padding, CFG.padding);
+                    const max = R(CFG.nectarMax, CFG.nectarMin);
+                    const amt = R(max, max * 0.4);
+                    flowers.push({ x, y, nectar: amt, max });
+                }
+            }
+
+            function makeBees() {
+                bees.length = 0;
+                for (let i = 0; i < CFG.bees; i++) {
+                    bees.push({
+                        id: i,
+                        x: CX + R(20, -20),
+                        y: CY + R(20, -20),
+                        a: R(PI, -PI),
+                        mode: 'forage', // forage -> return -> build
+                        target: null,
+                        carrying: 0,
+                        trail: [],
+                        trailT: 0
+                    });
+                }
+            }
+
+            function nearestFlower() {
+                let f = null, bd = 1e9;
+                for (const fl of flowers) {
+                    if (fl.nectar <= 0) continue;
+                    const d = HYP(fl.x - CX, fl.y - CY); // bias: closer to hive on average
+                    if (d < bd) { bd = d; f = fl; }
+                }
+                return f || flowers.find(x => x.nectar > 0) || null;
+            }
+
+            function steer(b, tx, ty, dt) {
+                const want = ANG(ty - b.y, tx - b.x);
+                const delta = WRAP(want - b.a);
+                const limit = CFG.turn * dt;
+                b.a = WRAP(b.a + CLAMP(delta, -limit, limit));
+            }
+
+            function stepBee(b, dt) {
+                const v = CFG.speed * tScale;
+
+                // trail
+                b.trailT += dt;
+                if (b.trailT >= CFG.trailStep) {
+                    b.trailT = 0;
+                    b.trail.push({ x: b.x, y: b.y });
+                    if (b.trail.length > CFG.trailKeep) b.trail.shift();
+                }
+
+                if (b.mode === 'forage') {
+                    if (!b.target || b.target.nectar <= 0) b.target = nearestFlower();
+                    const tgt = b.target;
+                    if (!tgt) {
+                        // idle orbit
+                        const ox = CX + Math.cos((performance.now() / 800) + b.id) * 80;
+                        const oy = CY + Math.sin((performance.now() / 900) + b.id) * 80;
+                        steer(b, ox, oy, dt);
+                    } else {
+                        steer(b, tgt.x, tgt.y, dt);
+                        b.x += Math.cos(b.a) * v * dt;
+                        b.y += Math.sin(b.a) * v * dt;
+                        if (HYP(tgt.x - b.x, tgt.y - b.y) < 10) {
+                            const rate = 40;
+                            const take = Math.min(rate * dt, CFG.carry - b.carrying, tgt.nectar);
+                            if (take > 0) { tgt.nectar -= take; b.carrying += take; }
+                            if (b.carrying >= CFG.carry || tgt.nectar <= 0) { b.mode = 'return'; b.target = null; }
+                        }
+                        return;
+                    }
+                }
+
+                if (b.mode === 'return') {
+                    steer(b, CX, CY, dt);
+                    b.x += Math.cos(b.a) * v * dt;
+                    b.y += Math.sin(b.a) * v * dt;
+                    if (HYP(CX - b.x, CY - b.y) < CFG.hiveR) {
+                        nectar += b.carrying; b.carrying = 0;
+                        pickSite();
+                        if (site && site.builders.size < CFG.maxBuilders) {
+                            site.builders.add(b.id);
+                            b.mode = 'build';
+                        } else {
+                            b.mode = 'forage';
+                        }
+                    }
+                    return;
+                }
+
+                if (b.mode === 'build') {
+                    if (!site) { b.mode = 'forage'; return; }
+                    const p = HEX.xy(site.q, site.r);
+                    const tx = CX + p.x, ty = CY + p.y;
+                    steer(b, tx, ty, dt);
+                    b.x += Math.cos(b.a) * v * dt;
+                    b.y += Math.sin(b.a) * v * dt;
+                    if (HYP(tx - b.x, ty - b.y) < HEX.R + 6) {
+                        const builders = Math.min(site.builders.size || 1, CFG.maxBuilders);
+                        site.progress += (dt / CFG.buildSeconds) * builders;
+                        if (site.progress >= 1) {
+                            const kk = HEX.key(site.q, site.r);
+                            built.add(kk);
+                            frontier.delete(kk);
+                            site.builders.clear();
+                            site = null;
+                            updateFrontier();
+                            pickSite();
+                            b.mode = 'forage';
+                        }
+                    }
+                    return;
+                }
+
+                b.x += Math.cos(b.a) * v * dt;
+                b.y += Math.sin(b.a) * v * dt;
+            }
+
+            // Rendering
+            function drawGrid() {
+                ctx.save();
+                ctx.globalAlpha = CFG.gridAlpha;
+                ctx.strokeStyle = COL.grid;
+                const rings = 8;
+                for (let r = -rings; r <= rings; r++) {
+                    for (let q = -rings; q <= rings; q++) {
+                        const s = -q - r;
+                        if (Math.abs(s) > rings) continue;
+                        const p = HEX.xy(q, r);
+                        drawHexCell(CX + p.x, CY + p.y, HEX.R, null, COL.grid, CFG.gridAlpha);
+                    }
+                }
+                ctx.restore();
+            }
+            function drawFlowers() {
+                for (const f of flowers) {
+                    // glow
+                    ctx.save();
+                    ctx.fillStyle = COL.flower; ctx.globalAlpha = 0.08;
+                    ctx.beginPath(); ctx.arc(f.x, f.y, 18, 0, PI * 2); ctx.fill(); ctx.restore();
+                    // head
+                    const pct = f.nectar / f.max;
+                    const rr = LERP(3, 7, pct);
+                    ctx.save();
+                    ctx.fillStyle = COL.flower; ctx.strokeStyle = '#0a1'; ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.arc(f.x, f.y, rr, 0, PI * 2); ctx.fill(); ctx.stroke(); ctx.restore();
+                }
+            }
+            function drawHive() {
+                for (const k of built) {
+                    const h = HEX.unkey(k);
+                    const p = HEX.xy(h.q, h.r);
+                    drawHexCell(CX + p.x, CY + p.y, HEX.R, COL.accent, '#00000055', 0.9);
+                }
+                if (site) {
+                    const p = HEX.xy(site.q, site.r);
+                    drawHexCell(CX + p.x, CY + p.y, HEX.R, COL.accent2, '#000', 0.9, CLAMP(site.progress, 0, 1));
+                }
+                // hive radius
+                ctx.save();
+                ctx.strokeStyle = COL.accent; ctx.globalAlpha = 0.9; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(CX, CY, CFG.hiveR, 0, PI * 2); ctx.stroke(); ctx.restore();
+            }
+            function drawBees() {
+                for (const b of bees) {
+                    if (el.paths.checked) drawTrail(b.trail);
+                    drawBee(b);
+                }
+            }
+            function stats() {
+                const builders = site ? site.builders.size : 0;
+                const alive = flowers.filter(f => f.nectar > 0).length;
+                el.stats.innerHTML =
+                    '<div><b>Nectar pool:</b> ' + Math.floor(nectar) + ' u</div>' +
+                    '<div><b>Built cells:</b> ' + built.size + '</div>' +
+                    '<div><b>Frontier cells:</b> ' + frontier.size + '</div>' +
+                    '<div><b>Active site builders:</b> ' + builders + '</div>' +
+                    '<div><b>Flowers (with nectar):</b> ' + alive + '</div>';
+            }
+
+            // Reset/Init
+            function resetWorld() {
+                nectar = 0;
+                built = new Set([HEX.key(0, 0)]);
+                frontier.clear?.();
+                frontier = new Set();
+                site = null;
+                updateFrontier();
+                makeFlowers();
+                makeBees();
+                stats();
+            }
+
+            // UI
+            el.spd.addEventListener('input', () => {
+                tScale = Number(el.spd.value) / 100;
+                el.spdVal.textContent = tScale.toFixed(1) + '×';
+            });
+            el.res.addEventListener('input', () => {
+                el.resVal.textContent = Number(el.res.value).toFixed(0);
+                makeFlowers();
+            });
+            el.pause.addEventListener('click', () => {
+                paused = !paused;
+                el.pause.textContent = paused ? 'Resume' : 'Pause';
+            });
+            el.reset.addEventListener('click', resetWorld);
+
+            // Boot
+            resetWorld();
+
+            // Loop
+            let last = performance.now();
+            function frame(now) {
+                const dt = Math.min(0.05, (now - last) / 1000) * (paused ? 0 : 1);
+                last = now;
+
+                if (dt > 0) {
+                    for (const b of bees) stepBee(b, dt);
+                    for (const f of flowers) {
+                        if (f.nectar < f.max) f.nectar = Math.min(f.max, f.nectar + 2 * dt);
+                    }
+                }
+
+                ctx.clearRect(0, 0, W, H);
+                drawGrid();
+                drawFlowers();
+                drawHive();
+                drawBees();
+                stats();
+
+                requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+        })();
+    </script>
+    <script>
+        (() => {
+            const ui = document.getElementById('ui');
+            if (!ui) return;
+
+            // Inject styles for minimize/hide controls
+            const style = document.createElement('style');
+            style.textContent = `
+        #ui.minimized > :not(h1){ display:none !important; }
+        #ui.minimized{ padding-bottom:10px; }
+        #ui.hidden{ display:none !important; }
+
+        #ui h1 .ui-btn{
+            margin-left:auto;
+            background:#1d2333;
+            color:#dbe4ff;
+            border:1px solid #2a3146;
+            border-radius:6px;
+            padding:2px 6px;
+            font-size:12px;
+            cursor:pointer;
+        }
+        #ui h1 .ui-btn + .ui-btn{ margin-left:6px; }
+
+        .ui-fab{
+            position:fixed;
+            left:16px; top:16px;
+            z-index:1000;
+            background:#1d2333;
+            color:#dbe4ff;
+            border:1px solid #2a3146;
+            border-radius:8px;
+            padding:6px 10px;
+            font-size:12px;
+            cursor:pointer;
+            box-shadow:0 10px 30px rgba(0,0,0,0.28);
+            display:none;
+        }
+        .ui-fab.show{ display:block; }
+    `;
+            document.head.appendChild(style);
+
+            // Header buttons
+            const h1 = ui.querySelector('h1');
+            const minBtn = document.createElement('button');
+            minBtn.type = 'button';
+            minBtn.className = 'ui-btn';
+            minBtn.textContent = 'Min';
+            minBtn.title = 'Minimize controls';
+            minBtn.style.marginLeft = 'auto';
+
+            const hideBtn = document.createElement('button');
+            hideBtn.type = 'button';
+            hideBtn.className = 'ui-btn';
+            hideBtn.textContent = 'Hide';
+            hideBtn.title = 'Hide controls';
+
+            h1.appendChild(minBtn);
+            h1.appendChild(hideBtn);
+
+            // Floating restore button
+            const fab = document.createElement('button');
+            fab.type = 'button';
+            fab.className = 'ui-fab';
+            fab.textContent = 'Show Controls';
+            document.body.appendChild(fab);
+
+            // Interactions
+            minBtn.addEventListener('click', () => {
+                ui.classList.toggle('minimized');
+                minBtn.textContent = ui.classList.contains('minimized') ? 'Max' : 'Min';
+                minBtn.title = ui.classList.contains('minimized') ? 'Maximize controls' : 'Minimize controls';
+            });
+
+            hideBtn.addEventListener('click', () => {
+                ui.classList.add('hidden');
+                fab.classList.add('show');
+            });
+
+            fab.addEventListener('click', () => {
+                ui.classList.remove('hidden');
+                fab.classList.remove('show');
+            });
+
+            // Keyboard shortcuts: M = minimize, H = hide/show
+            addEventListener('keydown', (e) => {
+                if (e.key === 'm' || e.key === 'M') {
+                    minBtn.click();
+                } else if (e.key === 'h' || e.key === 'H') {
+                    if (ui.classList.contains('hidden')) {
+                        fab.click();
+                    } else {
+                        hideBtn.click();
+                    }
+                }
+            });
+        })();
+    </script>
+    <script>
+        (() => {
+            const ui = document.getElementById('ui');
+            if (!ui) return;
+            const stats = document.getElementById('stats');
+            const pauseBtn = document.getElementById('pauseBtn');
+            const resetBtn = document.getElementById('resetBtn');
+
+            const elapsedEl = document.createElement('div');
+            elapsedEl.id = 'elapsedTime';
+            elapsedEl.style.marginTop = '8px';
+            elapsedEl.style.fontSize = '12px';
+            elapsedEl.style.color = '#cfd7e6';
+            elapsedEl.textContent = 'Elapsed: 00:00';
+            ui.insertBefore(elapsedEl, stats);
+
+            let startTime = performance.now();
+            let pausedAccum = 0;
+            let pauseStarted = null;
+
+            function format(tSec) {
+                const s = Math.floor(tSec);
+                const h = Math.floor(s / 3600);
+                const m = Math.floor((s % 3600) / 60);
+                const sec = s % 60;
+                return (h > 0 ? String(h).padStart(2, '0') + ':' : '') +
+                    String(m).padStart(2, '0') + ':' +
+                    String(sec).padStart(2, '0');
+            }
+
+            function tick() {
+                const now = performance.now();
+                const base = pauseStarted ? pauseStarted : now;
+                let elapsedMs = base - startTime - pausedAccum;
+                if (elapsedMs < 0) elapsedMs = 0;
+                elapsedEl.textContent = 'Elapsed: ' + format(elapsedMs / 1000);
+                requestAnimationFrame(tick);
+            }
+            tick();
+
+            pauseBtn.addEventListener('click', () => {
+                queueMicrotask(() => {
+                    if (pauseBtn.textContent === 'Resume') {
+                        // Just entered paused state
+                        if (!pauseStarted) pauseStarted = performance.now();
+                    } else {
+                        // Resumed
+                        if (pauseStarted) {
+                            pausedAccum += performance.now() - pauseStarted;
+                            pauseStarted = null;
+                        }
+                    }
+                });
+            });
+
+            resetBtn.addEventListener('click', () => {
+                startTime = performance.now();
+                pausedAccum = 0;
+                pauseStarted = (pauseBtn.textContent === 'Resume') ? performance.now() : null;
+            });
+        })();
+    </script>

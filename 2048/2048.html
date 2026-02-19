@@ -1,0 +1,1261 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>2048</title>
+    <style>
+        :root {
+            --bg: #faf8ef;
+            --board: #bbada0;
+            --cell: #cdc1b4;
+            --text: #776e65;
+            --textLight: #f9f6f2;
+            --gap: 12px;
+            --radius: 12px;
+            --tileRadius: 10px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .menu-link {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 9999;
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 10px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-weight: 800;
+            font-size: 13px;
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.72);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+        }
+
+        .menu-link:hover {
+            background: rgba(255, 255, 255, 0.82);
+        }
+
+        .menu-link:focus-visible {
+            outline: 3px solid rgba(143, 122, 102, 0.6);
+            outline-offset: 2px;
+        }
+
+        .app {
+            width: min(520px, 100%);
+            user-select: none;
+        }
+
+        header {
+            display: flex;
+            gap: 16px;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .title {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 44px;
+            line-height: 1;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #8f887f;
+        }
+
+        .scores {
+            display: flex;
+            gap: 10px;
+        }
+
+        .scorebox {
+            min-width: 92px;
+            padding: 10px 12px;
+            background: #bbada0;
+            color: #fff;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .scorebox .label {
+            font-size: 11px;
+            opacity: 0.85;
+            letter-spacing: 0.6px;
+        }
+
+        .scorebox .value {
+            font-size: 22px;
+            font-weight: 800;
+            margin-top: 2px;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .hint {
+            font-size: 13px;
+            color: #8f887f;
+            line-height: 1.25;
+        }
+
+        button {
+            appearance: none;
+            border: 0;
+            background: #8f7a66;
+            color: #fff;
+            font-weight: 700;
+            padding: 10px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .boardWrap {
+            position: relative;
+        }
+
+        .board {
+            background: var(--board);
+            border-radius: var(--radius);
+            padding: var(--gap);
+            touch-action: none;
+            /* enable swipe/drag without browser panning */
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            z-index: 1;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: var(--gap);
+            height: 100%;
+        }
+
+        .cell {
+            width: 100%;
+            height: 100%;
+            background: var(--cell);
+            border-radius: var(--tileRadius);
+        }
+
+        .tiles {
+            position: absolute;
+            inset: var(--gap);
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .confetti {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            border-radius: var(--radius);
+            z-index: 5;
+        }
+
+        .tile {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--tileRadius);
+            font-weight: 900;
+            font-size: clamp(20px, 6vw, 42px);
+            color: var(--text);
+            background: #eee4da;
+            transition: transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1), background 160ms ease;
+            transform-origin: center;
+            will-change: transform;
+        }
+
+        /* Tile colors */
+        .v2 {
+            background: #eee4da;
+            color: #776e65;
+        }
+
+        .v4 {
+            background: #ede0c8;
+            color: #776e65;
+        }
+
+        .v8 {
+            background: #f2b179;
+            color: #f9f6f2;
+        }
+
+        .v16 {
+            background: #f59563;
+            color: #f9f6f2;
+        }
+
+        .v32 {
+            background: #f67c5f;
+            color: #f9f6f2;
+        }
+
+        .v64 {
+            background: #f65e3b;
+            color: #f9f6f2;
+        }
+
+        .v128 {
+            background: #edcf72;
+            color: #f9f6f2;
+            font-size: clamp(18px, 5vw, 36px);
+        }
+
+        .v256 {
+            background: #edcc61;
+            color: #f9f6f2;
+            font-size: clamp(18px, 5vw, 36px);
+        }
+
+        .v512 {
+            background: #edc850;
+            color: #f9f6f2;
+            font-size: clamp(18px, 5vw, 36px);
+        }
+
+        .v1024 {
+            background: #edc53f;
+            color: #f9f6f2;
+            font-size: clamp(16px, 4.6vw, 32px);
+        }
+
+        .v2048 {
+            background: #edc22e;
+            color: #f9f6f2;
+            font-size: clamp(16px, 4.6vw, 32px);
+        }
+
+        .overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(250, 248, 239, 0.78);
+            border-radius: var(--radius);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 18px;
+            z-index: 10;
+        }
+
+        .overlay.show {
+            display: flex;
+        }
+
+        .overlay .panel {
+            background: #fff;
+            border-radius: 14px;
+            padding: 16px 16px 14px;
+            width: min(360px, 95%);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .overlay h2 {
+            margin: 0 0 6px;
+            font-size: 22px;
+            color: #5f5750;
+        }
+
+        .overlay p {
+            margin: 0 0 12px;
+            color: #7b7269;
+            font-size: 14px;
+        }
+
+        .overlay .row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .small {
+            font-size: 12px;
+            color: #8f887f;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .tile {
+                transition: none;
+            }
+
+            button:active {
+                transform: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <a class="menu-link" href="../gamemenu.html" aria-label="Back to games menu">← Menu</a>
+    <main class="app" aria-label="2048 game">
+        <header>
+            <div class="title">
+                <h1>2048</h1>
+                <div class="subtitle">Slide tiles to combine matching numbers.</div>
+            </div>
+            <div class="scores" aria-label="Scores">
+                <div class="scorebox" aria-label="Score">
+                    <div class="label">SCORE</div>
+                    <div class="value" id="score">0</div>
+                </div>
+                <div class="scorebox" aria-label="Best score">
+                    <div class="label">BEST</div>
+                    <div class="value" id="best">0</div>
+                </div>
+            </div>
+        </header>
+
+        <section class="controls">
+            <div class="hint">
+                Use <b>swipe</b> (touch) or <b>drag</b> (mouse) on the board to move <br />
+                tiles left/right/up/down. (Arrow keys also work.)
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <button id="soundToggle" type="button" aria-pressed="true">Sound: On</button>
+                <button id="newGame" type="button">New Game</button>
+            </div>
+        </section>
+
+        <section class="boardWrap" aria-label="Game board">
+            <div class="board" id="board" tabindex="0" aria-label="2048 board" role="application">
+                <div class="grid" aria-hidden="true" id="grid"></div>
+                <div class="tiles" aria-live="polite" aria-atomic="true" id="tiles"></div>
+            </div>
+
+            <canvas id="confetti" class="confetti" aria-hidden="true"></canvas>
+
+            <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-label="Game status">
+                <div class="panel">
+                    <h2 id="overlayTitle">Game Over</h2>
+                    <p id="overlayBody">No more moves.</p>
+                    <div class="row">
+                        <button id="tryAgain" type="button">Try Again</button>
+                        <button id="keepPlaying" type="button">Keep Playing</button>
+                    </div>
+                    <div class="small">Tip: on desktop, click + drag a little in the direction you want.</div>
+                </div>
+            </div>
+        </section>
+
+        <div class="small">Single-file HTML implementation. No external assets.</div>
+    </main>
+
+    <script>
+        (() => {
+            'use strict';
+
+            const SIZE = 4;
+            const STORAGE_KEY_BEST = 'singlehtml2048_best';
+            const SWIPE_THRESHOLD = 22; // px
+            const STORAGE_KEY_SOUND = 'singlehtml2048_sound_enabled';
+
+            /** @typedef {{id:number, value:number}} Tile */
+
+            /** @type {(Tile|null)[][]} */
+            let grid = makeEmptyGrid();
+            let score = 0;
+            let best = loadBest();
+            let bestAtGameStart = best;
+            let bestCelebratedThisGame = false;
+            let gameOver = false;
+            let hasWon = false;
+            let allowContinueAfterWin = false;
+
+            let nextTileId = 1;
+
+            /** @type {Map<number, HTMLDivElement>} */
+            const tileEls = new Map();
+
+            /** @type {Set<number>} */
+            let popIds = new Set();
+
+            let cellSize = 0;
+            let gapPx = 12;
+
+            let soundEnabled = loadSoundEnabled();
+            let pendingStartSound = true; // will play on first user gesture
+
+            /** @type {AudioContext|null} */
+            let audioCtx = null;
+            /** @type {GainNode|null} */
+            let masterGain = null;
+
+            const els = {
+                score: document.getElementById('score'),
+                best: document.getElementById('best'),
+                board: document.getElementById('board'),
+                grid: document.getElementById('grid'),
+                tiles: document.getElementById('tiles'),
+                overlay: document.getElementById('overlay'),
+                overlayTitle: document.getElementById('overlayTitle'),
+                overlayBody: document.getElementById('overlayBody'),
+                confetti: document.getElementById('confetti'),
+                soundToggle: document.getElementById('soundToggle'),
+                newGame: document.getElementById('newGame'),
+                tryAgain: document.getElementById('tryAgain'),
+                keepPlaying: document.getElementById('keepPlaying'),
+            };
+
+            // Confetti
+            /** @type {CanvasRenderingContext2D|null} */
+            const confettiCtx = els.confetti ? els.confetti.getContext('2d') : null;
+            /** @type {{x:number,y:number,vx:number,vy:number,rot:number,vr:number,w:number,h:number,color:string,life:number}[]} */
+            let confettiParticles = [];
+            let confettiRunning = false;
+            let confettiLastT = 0;
+
+            function resizeConfettiCanvas() {
+                if (!els.confetti) return;
+                const rect = els.confetti.getBoundingClientRect();
+                const dpr = Math.max(1, window.devicePixelRatio || 1);
+                els.confetti.width = Math.floor(rect.width * dpr);
+                els.confetti.height = Math.floor(rect.height * dpr);
+                if (confettiCtx) confettiCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+
+            function confettiBurst() {
+                if (!els.confetti || !confettiCtx) return;
+                resizeConfettiCanvas();
+
+                const rect = els.confetti.getBoundingClientRect();
+                const cx = rect.width * 0.5;
+                const cy = rect.height * 0.28;
+
+                const colors = ['#ff4757', '#ffa502', '#2ed573', '#1e90ff', '#a55eea', '#ff6b81', '#70a1ff'];
+                const count = 120;
+                confettiParticles = [];
+                for (let i = 0; i < count; i++) {
+                    const a = (Math.random() * Math.PI) - Math.PI; // -pi..0 (upward-ish)
+                    const sp = 220 + Math.random() * 420;
+                    confettiParticles.push({
+                        x: cx + (Math.random() - 0.5) * 20,
+                        y: cy + (Math.random() - 0.5) * 10,
+                        vx: Math.cos(a) * sp,
+                        vy: Math.sin(a) * sp,
+                        rot: Math.random() * Math.PI * 2,
+                        vr: (Math.random() - 0.5) * 10,
+                        w: 6 + Math.random() * 7,
+                        h: 4 + Math.random() * 6,
+                        color: colors[(Math.random() * colors.length) | 0],
+                        life: 1.4 + Math.random() * 0.6,
+                    });
+                }
+
+                const shouldStartLoop = !confettiRunning;
+                confettiRunning = true;
+                confettiLastT = performance.now();
+                if (shouldStartLoop) requestAnimationFrame(tickConfetti);
+            }
+
+            function tickConfetti(t) {
+                if (!confettiRunning || !els.confetti || !confettiCtx) return;
+                const dt = Math.min(0.033, Math.max(0.001, (t - confettiLastT) / 1000));
+                confettiLastT = t;
+
+                const rect = els.confetti.getBoundingClientRect();
+                confettiCtx.clearRect(0, 0, rect.width, rect.height);
+
+                const gravity = 820;
+                const drag = 0.985;
+
+                let alive = 0;
+                for (const p of confettiParticles) {
+                    p.life -= dt;
+                    if (p.life <= 0) continue;
+                    alive++;
+
+                    p.vy += gravity * dt;
+                    p.vx *= Math.pow(drag, dt * 60);
+                    p.vy *= Math.pow(drag, dt * 60);
+                    p.x += p.vx * dt;
+                    p.y += p.vy * dt;
+                    p.rot += p.vr * dt;
+
+                    // Draw
+                    confettiCtx.save();
+                    confettiCtx.translate(p.x, p.y);
+                    confettiCtx.rotate(p.rot);
+                    confettiCtx.fillStyle = p.color;
+                    confettiCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                    confettiCtx.restore();
+                }
+
+                if (alive === 0) {
+                    confettiRunning = false;
+                    confettiCtx.clearRect(0, 0, rect.width, rect.height);
+                    return;
+                }
+
+                requestAnimationFrame(tickConfetti);
+            }
+
+            function loadSoundEnabled() {
+                const raw = localStorage.getItem(STORAGE_KEY_SOUND);
+                if (raw === null) return true;
+                return raw === '1';
+            }
+
+            function saveSoundEnabled() {
+                localStorage.setItem(STORAGE_KEY_SOUND, soundEnabled ? '1' : '0');
+            }
+
+            function updateSoundToggleUI() {
+                if (!els.soundToggle) return;
+                els.soundToggle.textContent = soundEnabled ? 'Sound: On' : 'Sound: Off';
+                els.soundToggle.setAttribute('aria-pressed', soundEnabled ? 'true' : 'false');
+            }
+
+            async function ensureAudioUnlocked() {
+                if (!soundEnabled) return false;
+                const Ctx = window.AudioContext || window.webkitAudioContext;
+                if (!Ctx) return false;
+
+                if (!audioCtx) {
+                    audioCtx = new Ctx();
+                    masterGain = audioCtx.createGain();
+                    masterGain.gain.value = 0.25;
+                    masterGain.connect(audioCtx.destination);
+                }
+
+                try {
+                    if (audioCtx.state === 'suspended') {
+                        // Must be called in a user gesture; callers await this in gesture handlers.
+                        await audioCtx.resume();
+                    }
+                } catch {
+                    // ignore
+                }
+
+                if (audioCtx.state !== 'running') return false;
+
+                if (pendingStartSound) {
+                    pendingStartSound = false;
+                    playDiceRoll();
+                }
+
+                return true;
+            }
+
+            function withAudio(fn) {
+                if (!soundEnabled) return;
+                if (!audioCtx || !masterGain) return;
+                if (audioCtx.state === 'running') {
+                    fn(audioCtx, masterGain);
+                    return;
+                }
+
+                // If resume is still in-flight, don't drop the sound; schedule it right after resume.
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume()
+                        .then(() => {
+                            if (audioCtx && masterGain && audioCtx.state === 'running') fn(audioCtx, masterGain);
+                        })
+                        .catch(() => { /* ignore */ });
+                }
+            }
+
+            function makeNoiseBuffer(ctx, durationSec) {
+                const len = Math.max(1, Math.floor(ctx.sampleRate * durationSec));
+                const buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1);
+                return buffer;
+            }
+
+            function playDiceRoll() {
+                withAudio((ctx, master) => {
+                    const now = ctx.currentTime;
+
+                    // Noise bed
+                    const src = ctx.createBufferSource();
+                    src.buffer = makeNoiseBuffer(ctx, 0.65);
+
+                    const bp = ctx.createBiquadFilter();
+                    bp.type = 'bandpass';
+                    bp.frequency.value = 260;
+                    bp.Q.value = 0.9;
+
+                    const lp = ctx.createBiquadFilter();
+                    lp.type = 'lowpass';
+                    lp.frequency.value = 1400;
+
+                    const gain = ctx.createGain();
+                    gain.gain.setValueAtTime(0.0001, now);
+
+                    // Quick "rattle" envelope
+                    const steps = 10;
+                    for (let i = 0; i < steps; i++) {
+                        const t = now + i * 0.045;
+                        const a = 0.22 * (1 - i / steps);
+                        gain.gain.linearRampToValueAtTime(a, t + 0.01);
+                        gain.gain.linearRampToValueAtTime(0.0001, t + 0.045);
+                    }
+
+                    // Low thump
+                    const osc = ctx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(70, now);
+                    osc.frequency.exponentialRampToValueAtTime(40, now + 0.45);
+                    const og = ctx.createGain();
+                    og.gain.setValueAtTime(0.0001, now);
+                    og.gain.linearRampToValueAtTime(0.08, now + 0.02);
+                    og.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+
+                    src.connect(bp);
+                    bp.connect(lp);
+                    lp.connect(gain);
+                    gain.connect(master);
+
+                    osc.connect(og);
+                    og.connect(master);
+
+                    src.start(now);
+                    src.stop(now + 0.65);
+                    osc.start(now);
+                    osc.stop(now + 0.55);
+                });
+            }
+
+            function playPageFlip() {
+                withAudio((ctx, master) => {
+                    const now = ctx.currentTime;
+
+                    const src = ctx.createBufferSource();
+                    src.buffer = makeNoiseBuffer(ctx, 0.14);
+
+                    const hp = ctx.createBiquadFilter();
+                    hp.type = 'highpass';
+                    hp.frequency.value = 550;
+                    const bp = ctx.createBiquadFilter();
+                    bp.type = 'bandpass';
+                    bp.frequency.setValueAtTime(1200, now);
+                    bp.Q.value = 1.2;
+
+                    const gain = ctx.createGain();
+                    gain.gain.setValueAtTime(0.0001, now);
+                    gain.gain.linearRampToValueAtTime(0.11, now + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+
+                    src.connect(hp);
+                    hp.connect(bp);
+                    bp.connect(gain);
+                    gain.connect(master);
+
+                    src.start(now);
+                    src.stop(now + 0.14);
+                });
+            }
+
+            function playPing(value, offsetSec = 0) {
+                withAudio((ctx, master) => {
+                    const now = ctx.currentTime + offsetSec;
+                    const base = 520;
+                    const step = Math.log2(Math.max(2, value)) * 40;
+                    const freq = Math.min(1400, base + step);
+
+                    const osc1 = ctx.createOscillator();
+                    osc1.type = 'sine';
+                    osc1.frequency.setValueAtTime(freq, now);
+                    const osc2 = ctx.createOscillator();
+                    osc2.type = 'triangle';
+                    osc2.frequency.setValueAtTime(freq * 2.01, now);
+
+                    const gain = ctx.createGain();
+                    gain.gain.setValueAtTime(0.0001, now);
+                    gain.gain.linearRampToValueAtTime(0.08, now + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+
+                    const lp = ctx.createBiquadFilter();
+                    lp.type = 'lowpass';
+                    lp.frequency.value = 2000;
+
+                    osc1.connect(lp);
+                    osc2.connect(lp);
+                    lp.connect(gain);
+                    gain.connect(master);
+
+                    osc1.start(now);
+                    osc2.start(now);
+                    osc1.stop(now + 0.2);
+                    osc2.stop(now + 0.2);
+                });
+            }
+
+            function playWompWomp() {
+                withAudio((ctx, master) => {
+                    const now = ctx.currentTime;
+
+                    const playDrop = (start, f0, f1, dur) => {
+                        const osc = ctx.createOscillator();
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(f0, start);
+                        osc.frequency.exponentialRampToValueAtTime(f1, start + dur);
+
+                        const gain = ctx.createGain();
+                        gain.gain.setValueAtTime(0.0001, start);
+                        gain.gain.linearRampToValueAtTime(0.11, start + 0.02);
+                        gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+
+                        const lp = ctx.createBiquadFilter();
+                        lp.type = 'lowpass';
+                        lp.frequency.setValueAtTime(900, start);
+                        lp.frequency.exponentialRampToValueAtTime(450, start + dur);
+
+                        osc.connect(lp);
+                        lp.connect(gain);
+                        gain.connect(master);
+
+                        osc.start(start);
+                        osc.stop(start + dur);
+                    };
+
+                    // Two sad descending "trombone" drops
+                    playDrop(now, 420, 150, 0.28);
+                    playDrop(now + 0.20, 320, 120, 0.32);
+                });
+            }
+
+            function playBestFanfare() {
+                withAudio((ctx, master) => {
+                    const now = ctx.currentTime;
+                    const notes = [659.25, 783.99, 987.77]; // E5, G5, B5
+                    for (let i = 0; i < notes.length; i++) {
+                        const start = now + i * 0.055;
+                        const osc = ctx.createOscillator();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(notes[i], start);
+
+                        const g = ctx.createGain();
+                        g.gain.setValueAtTime(0.0001, start);
+                        g.gain.linearRampToValueAtTime(0.11, start + 0.01);
+                        g.gain.exponentialRampToValueAtTime(0.0001, start + 0.22);
+
+                        osc.connect(g);
+                        g.connect(master);
+                        osc.start(start);
+                        osc.stop(start + 0.23);
+                    }
+
+                    // Tiny sparkle on top
+                    const sparkle = ctx.createOscillator();
+                    sparkle.type = 'triangle';
+                    sparkle.frequency.setValueAtTime(1760, now + 0.12);
+                    const sg = ctx.createGain();
+                    sg.gain.setValueAtTime(0.0001, now + 0.12);
+                    sg.gain.linearRampToValueAtTime(0.06, now + 0.13);
+                    sg.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+                    sparkle.connect(sg);
+                    sg.connect(master);
+                    sparkle.start(now + 0.12);
+                    sparkle.stop(now + 0.30);
+                });
+            }
+
+            // Build background grid cells
+            for (let i = 0; i < SIZE * SIZE; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                els.grid.appendChild(cell);
+            }
+
+            function makeEmptyGrid() {
+                return Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
+            }
+
+            function loadBest() {
+                const v = Number(localStorage.getItem(STORAGE_KEY_BEST) || '0');
+                return Number.isFinite(v) ? v : 0;
+            }
+
+            function saveBest() {
+                localStorage.setItem(STORAGE_KEY_BEST, String(best));
+            }
+
+            function setOverlay(show, title = '', body = '') {
+                if (!show) {
+                    els.overlay.classList.remove('show');
+                    return;
+                }
+                els.overlayTitle.textContent = title;
+                els.overlayBody.textContent = body;
+                els.overlay.classList.add('show');
+            }
+
+            function updateScore(delta) {
+                score += delta;
+
+                // Celebrate once per game when surpassing the saved BEST from the start of this game.
+                if (!bestCelebratedThisGame && score > bestAtGameStart) {
+                    bestCelebratedThisGame = true;
+                    playBestFanfare();
+                    confettiBurst();
+                }
+
+                if (score > best) {
+                    best = score;
+                    saveBest();
+                }
+                els.score.textContent = String(score);
+                els.best.textContent = String(best);
+            }
+
+            function getEmptyCells(g) {
+                /** @type {{r:number,c:number}[]} */
+                const cells = [];
+                for (let r = 0; r < SIZE; r++) {
+                    for (let c = 0; c < SIZE; c++) {
+                        if (g[r][c] === null) cells.push({ r, c });
+                    }
+                }
+                return cells;
+            }
+
+            /**
+             * @param {(Tile|null)[][]} g
+             * @param {number=} forcedValue
+             */
+            function addRandomTile(g, forcedValue) {
+                const empties = getEmptyCells(g);
+                if (empties.length === 0) return false;
+                const pick = empties[Math.floor(Math.random() * empties.length)];
+                const value = (typeof forcedValue === 'number') ? forcedValue : (Math.random() < 0.9 ? 2 : 4);
+                const tile = { id: nextTileId++, value };
+                g[pick.r][pick.c] = tile;
+                popIds.add(tile.id);
+                return true;
+            }
+
+            function cloneGrid(g) {
+                return g.map(row => row.slice());
+            }
+
+            function gridsEqual(a, b) {
+                for (let r = 0; r < SIZE; r++) {
+                    for (let c = 0; c < SIZE; c++) {
+                        const ta = a[r][c];
+                        const tb = b[r][c];
+                        const ida = ta ? ta.id : 0;
+                        const idb = tb ? tb.id : 0;
+                        if (ida !== idb) return false;
+                        if (ta && tb && ta.value !== tb.value) return false;
+                    }
+                }
+                return true;
+            }
+
+            /**
+             * Slides a line to the left and merges equal adjacent numbers once per move.
+             * @param {(Tile|null)[]} line
+             * @returns {{line:(Tile|null)[], gained:number, createdIds:Set<number>}}
+             */
+            function slideAndMerge(line) {
+                /** @type {Tile[]} */
+                const nonzero = line.filter(v => v !== null);
+                /** @type {(Tile|null)[]} */
+                const out = [];
+                let gained = 0;
+                /** @type {Set<number>} */
+                const createdIds = new Set();
+
+                for (let i = 0; i < nonzero.length; i++) {
+                    const t = nonzero[i];
+                    const next = (i + 1 < nonzero.length) ? nonzero[i + 1] : null;
+                    if (next && next.value === t.value) {
+                        const merged = { id: nextTileId++, value: t.value * 2 };
+                        out.push(merged);
+                        createdIds.add(merged.id);
+                        gained += merged.value;
+                        i++;
+                    } else {
+                        out.push(t);
+                    }
+                }
+
+                while (out.length < SIZE) out.push(null);
+                return { line: out, gained, createdIds };
+            }
+
+            /**
+             * @param {'left'|'right'|'up'|'down'} dir
+             */
+            function move(dir) {
+                if (gameOver) return;
+                if (hasWon && !allowContinueAfterWin) return;
+
+                const before = cloneGrid(grid);
+                let totalGained = 0;
+                /** @type {Set<number>} */
+                const createdIds = new Set();
+
+                const applyLine = (getter, setter) => {
+                    for (let i = 0; i < SIZE; i++) {
+                        const line = getter(i);
+                        const { line: newLine, gained, createdIds: newIds } = slideAndMerge(line);
+                        totalGained += gained;
+                        for (const id of newIds) createdIds.add(id);
+                        setter(i, newLine);
+                    }
+                };
+
+                if (dir === 'left') {
+                    applyLine(
+                        r => grid[r].slice(),
+                        (r, line) => { grid[r] = line; }
+                    );
+                } else if (dir === 'right') {
+                    applyLine(
+                        r => grid[r].slice().reverse(),
+                        (r, line) => { grid[r] = line.slice().reverse(); }
+                    );
+                } else if (dir === 'up') {
+                    applyLine(
+                        c => Array.from({ length: SIZE }, (_, r) => grid[r][c]),
+                        (c, line) => { for (let r = 0; r < SIZE; r++) grid[r][c] = line[r]; }
+                    );
+                } else if (dir === 'down') {
+                    applyLine(
+                        c => Array.from({ length: SIZE }, (_, r) => grid[r][c]).reverse(),
+                        (c, line) => {
+                            const back = line.slice().reverse();
+                            for (let r = 0; r < SIZE; r++) grid[r][c] = back[r];
+                        }
+                    );
+                }
+
+                if (gridsEqual(before, grid)) {
+                    return;
+                }
+
+                // Successful move sound
+                playPageFlip();
+
+                // Collect merge values for pings (before spawning the new tile)
+                /** @type {number[]} */
+                const mergeValues = [];
+                if (createdIds.size) {
+                    for (let r = 0; r < SIZE; r++) {
+                        for (let c = 0; c < SIZE; c++) {
+                            const t = grid[r][c];
+                            if (t && createdIds.has(t.id)) mergeValues.push(t.value);
+                        }
+                    }
+                    // Stagger a few pings so multiple merges don't sound like a single click
+                    mergeValues.sort((a, b) => a - b);
+                    const cap = Math.min(6, mergeValues.length);
+                    for (let i = 0; i < cap; i++) {
+                        playPing(mergeValues[i], i * 0.035);
+                    }
+                }
+
+                if (totalGained) updateScore(totalGained);
+
+                // Pop merged tiles (and later the spawned tile)
+                popIds = createdIds;
+                addRandomTile(grid);
+
+                if (!hasWon && maxTile(grid) >= 2048) {
+                    hasWon = true;
+                    setOverlay(true, 'You win!', 'You reached 2048. You can keep playing if you want.');
+                }
+
+                if (!canMove(grid)) {
+                    gameOver = true;
+                    setOverlay(true, 'Game Over', 'No more moves.');
+                    playWompWomp();
+                }
+
+                render();
+            }
+
+            function maxTile(g) {
+                let m = 0;
+                for (let r = 0; r < SIZE; r++) {
+                    for (let c = 0; c < SIZE; c++) {
+                        const t = g[r][c];
+                        if (t) m = Math.max(m, t.value);
+                    }
+                }
+                return m;
+            }
+
+            function canMove(g) {
+                if (getEmptyCells(g).length > 0) return true;
+                for (let r = 0; r < SIZE; r++) {
+                    for (let c = 0; c < SIZE; c++) {
+                        const t = g[r][c];
+                        if (!t) continue;
+                        const down = (r + 1 < SIZE) ? g[r + 1][c] : null;
+                        const right = (c + 1 < SIZE) ? g[r][c + 1] : null;
+                        if (down && down.value === t.value) return true;
+                        if (right && right.value === t.value) return true;
+                    }
+                }
+                return false;
+            }
+
+            function readGapPx() {
+                const raw = getComputedStyle(document.documentElement).getPropertyValue('--gap').trim();
+                const n = parseFloat(raw);
+                gapPx = Number.isFinite(n) ? n : 12;
+            }
+
+            function measureLayout() {
+                readGapPx();
+                const w = els.tiles.clientWidth;
+                cellSize = (w - gapPx * (SIZE - 1)) / SIZE;
+            }
+
+            function tileTranslate(r, c) {
+                const x = c * (cellSize + gapPx);
+                const y = r * (cellSize + gapPx);
+                return `translate(${x}px, ${y}px)`;
+            }
+
+            function render() {
+                measureLayout();
+
+                /** @type {Set<number>} */
+                const aliveIds = new Set();
+
+                for (let r = 0; r < SIZE; r++) {
+                    for (let c = 0; c < SIZE; c++) {
+                        const t = grid[r][c];
+                        if (!t) continue;
+                        aliveIds.add(t.id);
+
+                        let el = tileEls.get(t.id);
+                        const isNew = !el;
+                        if (!el) {
+                            el = document.createElement('div');
+                            el.className = `tile v${t.value}`;
+                            el.textContent = String(t.value);
+                            el.style.width = `${cellSize}px`;
+                            el.style.height = `${cellSize}px`;
+                            el.style.transform = `${tileTranslate(r, c)} scale(0.85)`;
+                            els.tiles.appendChild(el);
+                            tileEls.set(t.id, el);
+                        } else {
+                            el.className = `tile v${t.value}`;
+                            el.textContent = String(t.value);
+                            el.style.width = `${cellSize}px`;
+                            el.style.height = `${cellSize}px`;
+                        }
+
+                        const pop = popIds.has(t.id);
+                        const scale = pop ? 1.12 : 1;
+                        el.style.transform = `${tileTranslate(r, c)} scale(${scale})`;
+
+                        if (isNew || pop) {
+                            requestAnimationFrame(() => {
+                                const still = tileEls.get(t.id);
+                                if (!still) return;
+                                still.style.transform = `${tileTranslate(r, c)} scale(1)`;
+                            });
+                        }
+                    }
+                }
+
+                for (const [id, el] of tileEls) {
+                    if (aliveIds.has(id)) continue;
+                    el.remove();
+                    tileEls.delete(id);
+                }
+
+                els.score.textContent = String(score);
+                els.best.textContent = String(best);
+            }
+
+            function newGame() {
+                grid = makeEmptyGrid();
+                score = 0;
+                gameOver = false;
+                hasWon = false;
+                allowContinueAfterWin = false;
+                popIds = new Set();
+
+                // Refresh BEST from storage so each new game uses the latest baseline.
+                best = loadBest();
+                bestAtGameStart = best;
+                bestCelebratedThisGame = false;
+
+                for (const [, el] of tileEls) el.remove();
+                tileEls.clear();
+
+                // Always start with two separate 2-tiles (never a "combined" 4 at start).
+                addRandomTile(grid, 2);
+                addRandomTile(grid, 2);
+                setOverlay(false);
+                render();
+                els.board.focus({ preventScroll: true });
+            }
+
+            async function newGameFromUser() {
+                // User explicitly started a new game; don't also trigger the one-time pending start sound.
+                pendingStartSound = false;
+                await ensureAudioUnlocked();
+                playDiceRoll();
+                newGame();
+            }
+
+            // Input handling (touch + mouse) using Pointer Events
+            const swipe = {
+                active: false,
+                id: 0,
+                startX: 0,
+                startY: 0,
+                lastX: 0,
+                lastY: 0,
+            };
+
+            async function onPointerDown(e) {
+                if (e.pointerType === 'mouse' && e.button !== 0) return;
+                await ensureAudioUnlocked();
+                swipe.active = true;
+                swipe.id = e.pointerId;
+                swipe.startX = e.clientX;
+                swipe.startY = e.clientY;
+                swipe.lastX = e.clientX;
+                swipe.lastY = e.clientY;
+                try { els.board.setPointerCapture(e.pointerId); } catch { /* ignore */ }
+            }
+
+            function onPointerMove(e) {
+                if (!swipe.active || e.pointerId !== swipe.id) return;
+                swipe.lastX = e.clientX;
+                swipe.lastY = e.clientY;
+            }
+
+            function endSwipe(e) {
+                if (!swipe.active || e.pointerId !== swipe.id) return;
+                swipe.active = false;
+
+                const dx = swipe.lastX - swipe.startX;
+                const dy = swipe.lastY - swipe.startY;
+                const adx = Math.abs(dx);
+                const ady = Math.abs(dy);
+
+                if (Math.max(adx, ady) < SWIPE_THRESHOLD) return;
+
+                if (adx > ady) {
+                    move(dx > 0 ? 'right' : 'left');
+                } else {
+                    move(dy > 0 ? 'down' : 'up');
+                }
+            }
+
+            els.board.addEventListener('pointerdown', onPointerDown);
+            els.board.addEventListener('pointermove', onPointerMove);
+            els.board.addEventListener('pointerup', endSwipe);
+            els.board.addEventListener('pointercancel', endSwipe);
+            els.board.addEventListener('contextmenu', e => e.preventDefault());
+
+            // Keyboard (optional but handy)
+            els.board.addEventListener('keydown', async (e) => {
+                await ensureAudioUnlocked();
+                const k = e.key;
+                /** @type {('left'|'right'|'up'|'down'|null)} */
+                let dir = null;
+                if (k === 'ArrowLeft') dir = 'left';
+                else if (k === 'ArrowRight') dir = 'right';
+                else if (k === 'ArrowUp') dir = 'up';
+                else if (k === 'ArrowDown') dir = 'down';
+                if (dir) {
+                    e.preventDefault();
+                    move(dir);
+                }
+            });
+
+            // Buttons
+            els.newGame.addEventListener('click', newGameFromUser);
+            els.tryAgain.addEventListener('click', newGameFromUser);
+            els.keepPlaying.addEventListener('click', () => {
+                allowContinueAfterWin = true;
+                setOverlay(false);
+            });
+
+            els.soundToggle.addEventListener('click', () => {
+                soundEnabled = !soundEnabled;
+                saveSoundEnabled();
+                updateSoundToggleUI();
+                if (soundEnabled) {
+                    // Attempt to unlock immediately (button click is a gesture)
+                    void ensureAudioUnlocked();
+                }
+            });
+
+            els.overlay.addEventListener('click', (e) => {
+                if (e.target !== els.overlay) return;
+                if (hasWon && !gameOver) {
+                    allowContinueAfterWin = true;
+                    setOverlay(false);
+                }
+            });
+
+            // Keep layout crisp on resize
+            window.addEventListener('resize', () => {
+                render();
+                resizeConfettiCanvas();
+            });
+
+            // Start
+            els.best.textContent = String(best);
+            updateSoundToggleUI();
+            resizeConfettiCanvas();
+            newGame();
+        })();
+    </script>
+</body>
+
+</html>
