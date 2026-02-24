@@ -319,6 +319,16 @@
             animation: clearPulse 0.42s ease-out forwards;
         }
 
+        /* === Merge-toward animation: pieces slide into the merge target === */
+        .merge-toward {
+            transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.28s ease-in;
+            z-index: 5;
+        }
+
+        .merge-toward.go {
+            opacity: 0;
+        }
+
         /* === Special 6s Clearing Effect === */
         @keyframes explode6 {
             0% {
@@ -542,6 +552,24 @@
             cursor: pointer;
         }
 
+        /* === Return to Menu === */
+        #menu-link {
+            display: block;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            text-decoration: none;
+            padding: 4px 0;
+            transition: color 0.15s;
+            letter-spacing: 0.3px;
+        }
+
+        #menu-link:hover,
+        #menu-link:active {
+            color: #29B6F6;
+        }
+
         /* === Flip hint === */
         #flip-hint {
             font-size: 12px;
@@ -561,6 +589,7 @@
 <body>
 
     <div id="game">
+        <a id="menu-link" href="../gamemenu.html">← Menu</a>
         <div id="score-display">0</div>
         <div id="high-score">Best: 0</div>
         <div id="high-score-name" style="font-size:11px;color:#666;margin-bottom:4px;"></div>
@@ -1273,17 +1302,42 @@
                 }
             }
 
-            // Animate clearing
+            // Build a map of merge targets for the slide-toward animation
+            const mergeTargetMap = new Map(); // 'r,c' -> {tr, tc}
+            for (const grp of groups) {
+                if (grp.val < 6) {
+                    const target = pickMergeTarget(grp);
+                    for (const cell of grp.cells) {
+                        const key = cell.r + ',' + cell.c;
+                        if (cell.r !== target.r || cell.c !== target.c) {
+                            mergeTargetMap.set(key, { tr: target.r, tc: target.c });
+                        }
+                    }
+                }
+            }
+
+            // Animate clearing – non-target merge cells slide toward the target
+            const { csz, step } = boardMetrics();
             allClear.forEach(k => {
                 const [r, c] = k.split(',').map(Number);
                 const el = cellEl(r, c);
-                if (el) {
-                    if (sixCells.has(k)) {
-                        el.classList.add('clearing-6');
-                        spawnParticles(el);
-                    } else {
-                        el.classList.add('clearing');
-                    }
+                if (!el) return;
+
+                if (sixCells.has(k)) {
+                    el.classList.add('clearing-6');
+                    spawnParticles(el);
+                } else if (mergeTargetMap.has(k)) {
+                    // Slide this cell toward the merge target
+                    const { tr, tc } = mergeTargetMap.get(k);
+                    const dx = (tc - c) * step;
+                    const dy = (tr - r) * step;
+                    el.classList.add('merge-toward');
+                    requestAnimationFrame(() => {
+                        el.classList.add('go');
+                        el.style.transform = `translate(${dx}px, ${dy}px) scale(0.3)`;
+                    });
+                } else {
+                    el.classList.add('clearing');
                 }
             });
 
