@@ -12,7 +12,7 @@ declare global {
 }
 
 const config: Phaser.Types.Core.GameConfig = {
-  type: Phaser.CANVAS,
+  type: Phaser.AUTO,
   parent: 'app',
   width: 320,
   height: 180,
