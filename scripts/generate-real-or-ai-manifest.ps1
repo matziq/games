@@ -15,9 +15,9 @@ function Get-ImageList([string]$folderName, [string]$prefix) {
     }
 
     # Expected filenames (case-insensitive):
-    #   ai_1234.jpg / ai_1234.png
-    #   real_1234.jpg / real_1234.png
-    $rx = [regex]::new("^" + [regex]::Escape($prefix) + "_(\d+)\.(jpg|jpeg|png|gif|webp)$", [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    #   ai_1234.jpg / ai_ 1234.jpg / ai_1234.png
+    #   real_1234.jpg / real_ 1234.jpg / real_1234.png
+    $rx = [regex]::new("^" + [regex]::Escape($prefix) + "_\s*(\d+)\.(jpg|jpeg|png|gif|webp)$", [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
 
     $items = Get-ChildItem -LiteralPath $folderPath -File |
     ForEach-Object {
