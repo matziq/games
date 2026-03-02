@@ -69,11 +69,20 @@
             white-space: nowrap;
         }
 
-        /* === Board === */
+        /* === Board Row (board + next panel side by side) === */
+        #board-row {
+            display: flex;
+            flex: 1 1 auto;
+            min-height: 0;
+            width: 100%;
+            justify-content: center;
+            align-items: stretch;
+            gap: 8px;
+        }
+
         #board-wrap {
             position: relative;
-            width: 100%;
-            flex: 1 1 auto;
+            flex: 0 1 auto;
             min-height: 0;
             display: flex;
             justify-content: center;
@@ -89,22 +98,25 @@
             max-height: 100%;
         }
 
-        /* === Next Piece === */
+        /* === Next Piece (side panel) === */
         #next-wrap {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 8px 4px;
+            background: #111;
             border: 1px solid #333;
             border-radius: 10px;
-            padding: 6px;
+            flex-shrink: 0;
         }
 
         #next-label {
             font-size: 10px;
             color: #555;
             text-align: center;
-            margin-bottom: 3px;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
         }
 
         canvas#next-canvas {
@@ -431,13 +443,15 @@
             <span>Level: <b id="level-display">1</b></span>
         </div>
 
-        <div id="board-wrap">
-            <canvas id="board"></canvas>
+        <div id="board-row">
+            <div id="board-wrap">
+                <canvas id="board"></canvas>
+                <div id="pause-indicator">❚❚</div>
+            </div>
             <div id="next-wrap">
                 <div id="next-label">NEXT</div>
                 <canvas id="next-canvas"></canvas>
             </div>
-            <div id="pause-indicator">❚❚</div>
         </div>
 
         <div id="touch-controls">
@@ -672,9 +686,11 @@
         let cellSize = 0;
 
         function resize() {
-            const wrap = document.getElementById('board-wrap');
-            const availW = wrap.clientWidth - 16;
-            const availH = wrap.clientHeight - 16;
+            const row = document.getElementById('board-row');
+            const nextWrap = document.getElementById('next-wrap');
+            const availH = row.clientHeight - 16;
+            // Reserve width for the next-piece panel (~70px) plus gap
+            const availW = row.clientWidth - 16 - 80;
 
             // Calculate cell size to fit
             const cs = Math.floor(Math.min(availW / COLS, availH / ROWS));
@@ -683,13 +699,17 @@
             canvas.width = cellSize * COLS;
             canvas.height = cellSize * ROWS;
 
-            // Next piece canvas
-            const ncs = Math.floor(cellSize * 0.7);
+            // Next piece canvas — scale relative to cell size
+            const ncs = Math.max(Math.floor(cellSize * 0.65), 10);
             nextCanvas.width = ncs * 4;
             nextCanvas.height = ncs * 4;
             nextCanvas.dataset.cs = ncs;
 
+            // Set next-wrap min-width so it doesn't collapse
+            nextWrap.style.minWidth = (ncs * 4 + 16) + 'px';
+
             draw();
+            drawNext();
         }
 
         // ── Audio ──────────────────────────────────────────────────
