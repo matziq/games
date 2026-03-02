@@ -65,7 +65,8 @@
   <div id="app"></div>
   <div id="debug">Booting…</div>
   <div class="hint">Move: <kbd>A</kbd>/<kbd>D</kbd> or <kbd>←</kbd>/<kbd>→</kbd> · Jump: <kbd>Space</kbd> · Interact:
-    <kbd>E</kbd></div>
+    <kbd>E</kbd>
+  </div>
   <script>
     (() => {
       const el = document.getElementById('debug');
@@ -87,7 +88,183 @@
         log(`Unhandled promise rejection:\n${e.reason}`);
       });
     })();
-  </script>
+  </script>
+
+  <!-- Mobile touch controls -->
+  <div id="touch-controls">
+    <div id="tc-dpad">
+      <button id="tc-up" class="tc-btn" data-key="ArrowUp" aria-label="Up">▲</button>
+      <div class="tc-dpad-row">
+        <button id="tc-left" class="tc-btn" data-key="ArrowLeft" aria-label="Left">◀</button>
+        <button id="tc-down" class="tc-btn" data-key="ArrowDown" aria-label="Down">▼</button>
+        <button id="tc-right" class="tc-btn" data-key="ArrowRight" aria-label="Right">▶</button>
+      </div>
+    </div>
+    <div id="tc-actions">
+      <button id="tc-jump" class="tc-btn tc-action" data-key=" " aria-label="Jump">JUMP</button>
+      <button id="tc-interact" class="tc-btn tc-action tc-interact" data-key="e" aria-label="Interact">E</button>
+    </div>
+  </div>
+  <style>
+    #touch-controls {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 12px 16px;
+      z-index: 9000;
+      pointer-events: none;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      #touch-controls {
+        display: none;
+      }
+    }
+
+    #touch-controls * {
+      pointer-events: auto;
+    }
+
+    #tc-dpad {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .tc-dpad-row {
+      display: flex;
+      gap: 4px;
+    }
+
+    .tc-btn {
+      all: unset;
+      cursor: pointer;
+      width: 54px;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      font-size: 20px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .tc-btn:active,
+    .tc-btn.pressed {
+      background: rgba(255, 255, 255, 0.28);
+      transform: scale(0.93);
+    }
+
+    #tc-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .tc-action {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      font-size: 14px;
+      font-weight: 800;
+      background: rgba(100, 200, 100, 0.18);
+      border-color: rgba(100, 200, 100, 0.35);
+    }
+
+    .tc-interact {
+      width: 54px;
+      height: 54px;
+      font-size: 16px;
+      background: rgba(200, 160, 60, 0.18);
+      border-color: rgba(200, 160, 60, 0.35);
+    }
+  </style>
+  <script>
+    /** Virtual touch controls — dispatches real keyboard events */
+    (() => {
+      const controls = document.getElementById('touch-controls');
+      if (!controls) return;
+      const activeKeys = new Set();
+
+      function fireKey(key, code, type) {
+        const ev = new KeyboardEvent(type, {
+          key, code, bubbles: true, cancelable: true
+        });
+        document.dispatchEvent(ev);
+        window.dispatchEvent(ev);
+      }
+
+      function keyCode(key) {
+        const map = {
+          'ArrowUp': 'ArrowUp', 'ArrowDown': 'ArrowDown',
+          'ArrowLeft': 'ArrowLeft', 'ArrowRight': 'ArrowRight',
+          ' ': 'Space', 'e': 'KeyE'
+        };
+        return map[key] || key;
+      }
+
+      controls.querySelectorAll('.tc-btn').forEach(btn => {
+        const key = btn.dataset.key;
+        if (!key) return;
+
+        function startPress(e) {
+          e.preventDefault();
+          if (!activeKeys.has(key)) {
+            activeKeys.add(key);
+            btn.classList.add('pressed');
+            fireKey(key, keyCode(key), 'keydown');
+          }
+        }
+        function endPress(e) {
+          e.preventDefault();
+          if (activeKeys.has(key)) {
+            activeKeys.delete(key);
+            btn.classList.remove('pressed');
+            fireKey(key, keyCode(key), 'keyup');
+          }
+        }
+
+        btn.addEventListener('touchstart', startPress, { passive: false });
+        btn.addEventListener('touchend', endPress, { passive: false });
+        btn.addEventListener('touchcancel', endPress, { passive: false });
+        btn.addEventListener('mousedown', startPress);
+        btn.addEventListener('mouseup', endPress);
+        btn.addEventListener('mouseleave', endPress);
+      });
+
+      controls.addEventListener('touchmove', (e) => {
+        const touch = e.changedTouches[0];
+        if (!touch) return;
+        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+        activeKeys.forEach(key => {
+          const btn = controls.querySelector(`[data-key="${key}"]`);
+          if (btn && el !== btn && !btn.contains(el)) {
+            activeKeys.delete(key);
+            btn.classList.remove('pressed');
+            fireKey(key, keyCode(key), 'keyup');
+          }
+        });
+      }, { passive: true });
+    })();
+  </script>
+
+  <script src="../../scripts/mobile-controls.js"></script>
+
 </body>
 
 </html>

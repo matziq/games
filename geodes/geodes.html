@@ -39,10 +39,17 @@
 
     #game {
       position: fixed;
-      inset: 0;
-      width: 100vw;
-      height: 100vh;
+      /* Constrain the play area so it doesn't fill huge screens */
+      width: min(100vw, 800px);
+      height: min(100vh, 700px);
+      max-width: 800px;
+      max-height: 700px;
+      /* Center the canvas */
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       display: block;
+      border-radius: 12px;
     }
 
     #hud {
@@ -485,14 +492,16 @@
       }
 
       function resize() {
-        const { innerWidth, innerHeight } = window;
-        W = canvas.width = Math.floor(innerWidth * DPR);
-        H = canvas.height = Math.floor(innerHeight * DPR);
-        canvas.style.width = `${innerWidth}px`;
-        canvas.style.height = `${innerHeight}px`;
+        // Use the canvas's CSS-constrained size (capped at 800×700)
+        const cw = canvas.clientWidth;
+        const ch = canvas.clientHeight;
+        W = canvas.width = Math.floor(cw * DPR);
+        H = canvas.height = Math.floor(ch * DPR);
+        canvas.style.width = `${cw}px`;
+        canvas.style.height = `${ch}px`;
         ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-        volcano.x = innerWidth / 2;
-        volcano.y = innerHeight - 40; // Position volcano at bottom of screen
+        volcano.x = cw / 2;
+        volcano.y = ch - 40; // Position volcano at bottom of container
       }
       window.addEventListener('resize', resize, { passive: true });
       resize();
@@ -1671,8 +1680,9 @@
       if (!canvas) return;
 
       // Apply visual scale to the canvas only (HUD/controls unaffected)
+      // Compose with the centering transform already on #game
       canvas.style.transformOrigin = 'center center';
-      canvas.style.transform = `scale(${SCALE})`;
+      canvas.style.transform = `translate(-50%, -50%) scale(${SCALE})`;
       // canvas.style.pointerEvents = 'none'; // we'll proxy input
 
       // Only create and append the proxy if the canvas exists
@@ -1753,6 +1763,7 @@
       // canvas.style.transform = 'none';
     })();
   </script>
+  <script src="../scripts/mobile-controls.js"></script>
 </body>
 
 </html>

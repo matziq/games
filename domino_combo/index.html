@@ -742,21 +742,55 @@
         function sfx(type) {
             if (!soundOn) return;
             try {
-                const c = actx(), o = c.createOscillator(), g = c.createGain();
+                const c = actx(), t = c.currentTime;
+                // Paper-crunch style sounds use noise buffers
+                if (type === 'match') {
+                    const dur = 0.18;
+                    const vol = 0.13;
+                    const rate = 1.0;
+
+                    // Create noise buffer (crunch texture)
+                    const len = Math.ceil(c.sampleRate * dur);
+                    const buf = c.createBuffer(1, len, c.sampleRate);
+                    const data = buf.getChannelData(0);
+                    // Shaped noise: bursts of varying amplitude for crinkle feel
+                    for (let i = 0; i < len; i++) {
+                        const env = Math.exp(-i / (len * 0.25)); // fast decay
+                        const burst = Math.sin(i * 0.07) > 0.3 ? 1.0 : 0.3; // crackling bursts
+                        data[i] = (Math.random() * 2 - 1) * env * burst;
+                    }
+                    const src = c.createBufferSource();
+                    src.buffer = buf;
+                    src.playbackRate.value = rate;
+
+                    // Bandpass filter to sound more like paper
+                    const bp = c.createBiquadFilter();
+                    bp.type = 'bandpass';
+                    bp.frequency.value = 3200;
+                    bp.Q.value = 0.8;
+
+                    // Highpass to remove rumble
+                    const hp = c.createBiquadFilter();
+                    hp.type = 'highpass';
+                    hp.frequency.value = 800;
+
+                    const g = c.createGain();
+                    g.gain.setValueAtTime(vol, t);
+                    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+
+                    src.connect(bp); bp.connect(hp); hp.connect(g); g.connect(c.destination);
+                    src.start(t); src.stop(t + dur);
+                    return;
+                }
+
+                const o = c.createOscillator(), g = c.createGain();
                 o.connect(g); g.connect(c.destination);
-                const t = c.currentTime;
                 switch (type) {
                     case 'place':
                         o.type = 'sine'; o.frequency.setValueAtTime(330, t);
                         g.gain.setValueAtTime(0.04, t);
                         g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
                         o.start(t); o.stop(t + 0.06); break;
-                    case 'match':
-                        o.type = 'sine'; o.frequency.setValueAtTime(659, t);
-                        o.frequency.linearRampToValueAtTime(880, t + 0.18);
-                        g.gain.setValueAtTime(0.09, t);
-                        g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
-                        o.start(t); o.stop(t + 0.22); break;
                     case 'combo':
                         o.type = 'triangle'; o.frequency.setValueAtTime(523, t);
                         o.frequency.setValueAtTime(659, t + 0.08);
@@ -973,6 +1007,23 @@
                     : cellsFor(target.r - 1, target.c);
                 if (validPlace(cells)) return cells;
             }
+            // try all adjacent cells as forgiving fallback
+            const neighbors = [
+                { r: target.r - 1, c: target.c },
+                { r: target.r + 1, c: target.c },
+                { r: target.r, c: target.c - 1 },
+                { r: target.r, c: target.c + 1 },
+            ];
+            for (const nb of neighbors) {
+                cells = cellsFor(nb.r, nb.c);
+                if (validPlace(cells)) return cells;
+                if (piece.type === 'double') {
+                    cells = piece.ori === 'h'
+                        ? cellsFor(nb.r, nb.c - 1)
+                        : cellsFor(nb.r - 1, nb.c);
+                    if (validPlace(cells)) return cells;
+                }
+            }
             return null;
         }
 
@@ -1002,11 +1053,21 @@
 
         function targetCell(x, y) {
             const { rect, csz, step } = boardMetrics();
+            const margin = csz * 0.45; // forgiving margin around board edges
             const rx = x - rect.left - BOARD_BORDER - BOARD_PAD;
             const ry = y - rect.top - BOARD_BORDER - BOARD_PAD;
-            const c = Math.floor(rx / step);
-            const r = Math.floor(ry / step);
-            return (r >= 0 && r < gridSize && c >= 0 && c < gridSize) ? { r, c } : null;
+            // Use nearest-cell center (round) instead of strict floor,
+            // then clamp so near-misses at edges still register
+            let c = Math.round((rx - csz / 2) / step);
+            let r = Math.round((ry - csz / 2) / step);
+            c = Math.max(0, Math.min(gridSize - 1, c));
+            r = Math.max(0, Math.min(gridSize - 1, r));
+            // Only reject if pointer is well outside the board
+            if (rx < -margin || ry < -margin ||
+                rx > (step * gridSize + margin) || ry > (step * gridSize + margin)) {
+                return null;
+            }
+            return { r, c };
         }
 
         function cellEl(r, c) {
@@ -1455,6 +1516,7 @@
         // ── Start ──────────────────────────────────────────────────
         init();
     </script>
+    <script src="../scripts/mobile-controls.js"></script>
 </body>
 
 </html>
