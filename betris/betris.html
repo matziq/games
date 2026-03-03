@@ -76,7 +76,7 @@
             min-height: 0;
             width: 100%;
             justify-content: center;
-            align-items: stretch;
+            align-items: flex-start;
             gap: 8px;
         }
 
@@ -175,16 +175,10 @@
 
         /* === Touch Controls === */
         #touch-controls {
-            display: none;
+            display: flex;
             width: 100%;
             flex-shrink: 0;
             padding: 4px 0;
-        }
-
-        @media (hover: none) and (pointer: coarse) {
-            #touch-controls {
-                display: flex;
-            }
         }
 
         #touch-controls .tc-row {
