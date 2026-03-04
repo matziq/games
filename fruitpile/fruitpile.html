@@ -376,6 +376,7 @@
                 <button id="btnNew" title="New game">New</button>
                 <button id="btnSound" aria-pressed="true" title="Toggle sound">Sound</button>
                 <button id="btnInfo" title="How To Play">How To Play</button>
+                <button id="btnScores" title="High Scores">🏆 Scores</button>
             </div>
         </div>
 
@@ -394,6 +395,24 @@
                 <div class="row">
                     <button id="btnPlay">Play</button>
                     <button id="btnHow">How it works</button>
+                </div>
+                <div class="row" id="goHsRow" style="display:none;">
+                    <button id="btnGoHs">🏆 High Scores</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="hs-modal"
+            style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,0.7);z-index:5;">
+            <div class="card" style="max-height:80vh;overflow-y:auto;">
+                <h1>🏆 High Scores</h1>
+                <div id="fp-hs-config" style="font-size:12px;color:var(--ui-muted);margin-bottom:12px;"></div>
+                <div id="fp-hs-wrap"></div>
+                <div class="row">
+                    <button id="fpHsClose">Close</button>
+                    <button id="fpHsClear"
+                        style="background:transparent;border-color:rgba(255,107,122,0.4);color:var(--danger);">Clear
+                        Scores</button>
                 </div>
             </div>
         </div>
@@ -450,6 +469,82 @@
 
             function saveMode(v) {
                 try { window.localStorage.setItem('fruitpile.mode', v); } catch { /* ignore */ }
+            }
+
+            // ── High Score System ───────────────────────────────
+            const FP_HS_KEY = 'fruitpile.highscores';
+            const FP_HS_MAX = 10;
+            let fpLastNewHsIdx = -1;
+            let fpPendingScore = null;
+
+            function fpHsKey() { return gameMode; }
+
+            function getFpAllHs() {
+                try { return JSON.parse(localStorage.getItem(FP_HS_KEY)) || {}; }
+                catch { return {}; }
+            }
+
+            function getFpHighScores() { return getFpAllHs()[fpHsKey()] || []; }
+
+            function addFpHighScore(scoreVal, nameVal) {
+                const all = getFpAllHs();
+                const key = fpHsKey();
+                const list = all[key] || [];
+                const entry = { score: scoreVal, name: (nameVal || '').toUpperCase(), mode: gameMode, date: new Date().toISOString() };
+                let inserted = false;
+                for (let i = 0; i < list.length; i++) {
+                    if (scoreVal > list[i].score) { list.splice(i, 0, entry); inserted = true; fpLastNewHsIdx = i; break; }
+                }
+                if (!inserted && list.length < FP_HS_MAX) { fpLastNewHsIdx = list.length; list.push(entry); inserted = true; }
+                else if (!inserted) { fpLastNewHsIdx = -1; return false; }
+                if (list.length > FP_HS_MAX) list.length = FP_HS_MAX;
+                all[key] = list;
+                localStorage.setItem(FP_HS_KEY, JSON.stringify(all));
+                return true;
+            }
+
+            function renderFpHighScores() {
+                const list = getFpHighScores();
+                const wrap = document.getElementById('fp-hs-wrap');
+                document.getElementById('fp-hs-config').textContent = 'Mode: ' + (gameMode === 'merge' ? 'Merge' : 'Explosion');
+                if (list.length === 0) { wrap.innerHTML = '<p style="text-align:center;color:var(--ui-muted);">No scores yet.</p>'; return; }
+                const medals = ['hs-gold', 'hs-silver', 'hs-bronze'];
+                let html = '<table class="fruitTable"><thead><tr><th>#</th><th>Score</th><th>Name</th><th>Date</th></tr></thead><tbody>';
+                list.forEach((e, i) => {
+                    const mc = i < 3 ? 'color:' + ['#edc53f', '#c0c0c0', '#cd7f32'][i] : '';
+                    const bg = i === fpLastNewHsIdx ? 'background:rgba(124,247,196,0.06);' : '';
+                    const d = new Date(e.date);
+                    const ds = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' });
+                    html += `<tr style="${bg}"><td style="text-align:center;font-weight:700;${mc}">${i + 1}</td><td style="font-weight:900;color:var(--accent);">${e.score.toLocaleString()}</td><td style="font-weight:700;">${e.name || '---'}</td><td style="font-size:11px;color:var(--ui-muted);">${ds}</td></tr>`;
+                });
+                html += '</tbody></table>';
+                wrap.innerHTML = html;
+            }
+
+            function showFpHighScores() {
+                renderFpHighScores();
+                document.getElementById('hs-modal').style.display = 'flex';
+            }
+
+            function hideFpHighScores() {
+                document.getElementById('hs-modal').style.display = 'none';
+                fpLastNewHsIdx = -1;
+            }
+
+            function saveFpName() {
+                const inp = document.getElementById('fp-hs-name');
+                if (!inp || inp.disabled) return;
+                const name = inp.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase();
+                if (fpPendingScore !== null) { addFpHighScore(fpPendingScore, name); fpPendingScore = null; }
+                inp.disabled = true;
+                inp.value = name || '------';
+                inp.style.borderColor = '#6ab04c';
+                const btn = document.getElementById('fp-save-name');
+                if (btn) { btn.textContent = '\u2713'; btn.style.background = '#6ab04c'; btn.disabled = true; }
+                const msg = document.getElementById('fp-name-saved');
+                if (msg) msg.style.display = 'block';
+                const hint = document.getElementById('fp-name-hint');
+                if (hint) hint.style.display = 'none';
             }
 
             const Matter = window.Matter;
@@ -2547,7 +2642,53 @@
 
             function endGame() {
                 running = false;
-                setModal(true, 'Game over', `Final score: ${Math.floor(score)}. Want another round?`);
+                const finalScore = Math.floor(score);
+                const list = getFpHighScores();
+                const makesLb = finalScore > 0 && (list.length < 10 || finalScore > list[list.length - 1].score);
+                fpPendingScore = finalScore;
+
+                let bodyHtml = `Final score: ${finalScore}.`;
+                if (makesLb) {
+                    const isNewBest = list.length === 0 || finalScore > list[0].score;
+                    bodyHtml += isNewBest ? ' \ud83c\udfc6 New High Score!' : ' \ud83d\udccb You made the leaderboard!';
+                }
+
+                modalTitle.textContent = 'Game over';
+                modalBody.innerHTML = bodyHtml;
+                if (infoBodyEl) infoBodyEl.style.display = 'none';
+
+                // Name entry
+                let nameDiv = document.getElementById('fp-name-entry');
+                if (!nameDiv) {
+                    nameDiv = document.createElement('div');
+                    nameDiv.id = 'fp-name-entry';
+                    nameDiv.style.cssText = 'margin:10px 0;text-align:center;';
+                    modalBody.parentNode.insertBefore(nameDiv, modalBody.nextSibling);
+                }
+                if (makesLb) {
+                    nameDiv.style.display = 'block';
+                    nameDiv.innerHTML = `<div style="font-size:13px;color:var(--accent);margin-bottom:6px;">Enter your name:</div>
+                        <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+                            <input id="fp-hs-name" type="text" maxlength="6" autocomplete="off" spellcheck="false" style="width:120px;padding:6px 10px;font-size:18px;font-weight:bold;text-align:center;
+                                background:rgba(255,255,255,0.08);color:#fff;border:2px solid var(--accent);border-radius:8px;outline:none;
+                                text-transform:uppercase;letter-spacing:2px;font-family:inherit;" placeholder="______">
+                            <button id="fp-save-name" style="padding:6px 14px;font-size:14px;font-weight:700;
+                                background:var(--accent);color:#000;border:none;border-radius:8px;cursor:pointer;">Save</button>
+                        </div>
+                        <div id="fp-name-saved" style="font-size:11px;color:#6ab04c;margin-top:4px;display:none;">&#10003; Name saved!</div>
+                        <div id="fp-name-hint" style="font-size:10px;color:var(--ui-muted);margin-top:3px;">Up to 6 letters</div>`;
+                    document.getElementById('fp-save-name').addEventListener('click', saveFpName);
+                    document.getElementById('fp-hs-name').addEventListener('keydown', e => {
+                        if (e.key === 'Enter') { e.preventDefault(); saveFpName(); }
+                    });
+                    setTimeout(() => document.getElementById('fp-hs-name').focus(), 100);
+                } else {
+                    nameDiv.style.display = 'none';
+                    addFpHighScore(finalScore, '');
+                }
+
+                document.getElementById('goHsRow').style.display = 'flex';
+                modal.classList.add('show');
             }
 
             // --- Rendering ---
@@ -3789,8 +3930,26 @@
             });
 
             btnPlay.addEventListener('click', () => {
+                // Auto-save pending score
+                if (fpPendingScore !== null) {
+                    const inp = document.getElementById('fp-hs-name');
+                    const name = inp && !inp.disabled ? inp.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase() : '';
+                    addFpHighScore(fpPendingScore, name);
+                    fpPendingScore = null;
+                }
+                fpLastNewHsIdx = -1;
+                document.getElementById('goHsRow').style.display = 'none';
                 newGame();
             });
+
+            document.getElementById('btnScores').addEventListener('click', showFpHighScores);
+            document.getElementById('fpHsClose').addEventListener('click', hideFpHighScores);
+            document.getElementById('fpHsClear').addEventListener('click', () => {
+                if (confirm('Clear all high scores for this mode?')) {
+                    const all = getFpAllHs(); delete all[fpHsKey()]; localStorage.setItem(FP_HS_KEY, JSON.stringify(all)); renderFpHighScores();
+                }
+            });
+            document.getElementById('btnGoHs').addEventListener('click', showFpHighScores);
 
             if (btnInfo) {
                 btnInfo.addEventListener('click', () => {

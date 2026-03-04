@@ -129,7 +129,7 @@
             justify-content: space-between;
             align-items: flex-end;
             width: 100%;
-            padding: 6px 0 max(8px, env(safe-area-inset-bottom, 8px));
+            padding: 4px 0 max(60px, calc(env(safe-area-inset-bottom, 8px) + 56px));
             flex-shrink: 0;
         }
 
@@ -137,24 +137,24 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            gap: 2px;
             background: none;
             border: none;
             color: #29B6F6;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 700;
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
         }
 
         .btn-circle {
-            width: 44px;
-            height: 44px;
+            width: 38px;
+            height: 38px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 20px;
             transition: transform 0.12s;
         }
 
@@ -170,7 +170,7 @@
         .settings-btn .btn-circle {
             border: 2.5px solid #29B6F6;
             color: #29B6F6;
-            font-size: 20px;
+            font-size: 17px;
         }
 
         /* === Touch Controls === */
@@ -178,7 +178,7 @@
             display: flex;
             width: 100%;
             flex-shrink: 0;
-            padding: 4px 0;
+            padding: 4px 0 2px;
         }
 
         #touch-controls .tc-row {
@@ -199,13 +199,13 @@
         }
 
         .tc-btn {
-            width: 52px;
-            height: 52px;
-            border-radius: 14px;
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
             border: 2px solid #333;
             background: rgba(255, 255, 255, 0.06);
             color: #29B6F6;
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 700;
             display: flex;
             align-items: center;
@@ -223,10 +223,10 @@
         }
 
         .tc-btn.drop-btn {
-            width: 64px;
+            width: 56px;
             background: rgba(41, 182, 246, 0.08);
             border-color: #29B6F6;
-            font-size: 16px;
+            font-size: 14px;
         }
 
         .tc-btn.down-btn {
@@ -573,23 +573,23 @@
             }
 
             #buttons {
-                padding: 4px 0 max(4px, env(safe-area-inset-bottom, 4px));
+                padding: 2px 0 max(56px, calc(env(safe-area-inset-bottom, 4px) + 52px));
                 gap: 2px;
             }
 
             .game-btn {
-                font-size: 10px;
-                gap: 2px;
+                font-size: 9px;
+                gap: 1px;
             }
 
             .btn-circle {
-                width: 38px;
-                height: 38px;
-                font-size: 20px;
+                width: 34px;
+                height: 34px;
+                font-size: 18px;
             }
 
             .settings-btn .btn-circle {
-                font-size: 17px;
+                font-size: 15px;
             }
 
             #touch-controls {
@@ -597,15 +597,15 @@
             }
 
             .tc-btn {
-                width: 44px;
-                height: 44px;
-                border-radius: 12px;
-                font-size: 18px;
+                width: 42px;
+                height: 42px;
+                border-radius: 11px;
+                font-size: 17px;
             }
 
             .tc-btn.drop-btn {
-                width: 54px;
-                font-size: 13px;
+                width: 50px;
+                font-size: 12px;
             }
 
             #menu-link {
@@ -626,6 +626,32 @@
             }
         }
 
+        @media (max-height: 700px) {
+            #buttons {
+                padding-bottom: max(56px, calc(env(safe-area-inset-bottom, 4px) + 52px));
+            }
+
+            .btn-circle {
+                width: 34px;
+                height: 34px;
+                font-size: 18px;
+            }
+
+            .game-btn {
+                font-size: 9px;
+                gap: 1px;
+            }
+
+            .tc-btn {
+                width: 42px;
+                height: 42px;
+            }
+
+            .tc-btn.drop-btn {
+                width: 50px;
+            }
+        }
+
         @media (max-height: 600px) {
             #score-display {
                 font-size: clamp(24px, 6vw, 36px);
@@ -638,22 +664,36 @@
             }
 
             #buttons {
-                padding: 2px 0;
+                padding: 2px 0 max(52px, calc(env(safe-area-inset-bottom, 2px) + 48px));
             }
 
             .btn-circle {
-                width: 34px;
-                height: 34px;
-                font-size: 18px;
+                width: 30px;
+                height: 30px;
+                font-size: 16px;
+            }
+
+            .settings-btn .btn-circle {
+                font-size: 13px;
+            }
+
+            .game-btn {
+                font-size: 8px;
             }
 
             .tc-btn {
-                width: 42px;
-                height: 42px;
+                width: 38px;
+                height: 38px;
+                font-size: 15px;
             }
 
             .tc-btn.drop-btn {
-                width: 52px;
+                width: 46px;
+                font-size: 11px;
+            }
+
+            #touch-controls {
+                padding: 1px 0;
             }
 
             #menu-link {
@@ -693,6 +733,10 @@
             .tc-btn.drop-btn {
                 width: 44px;
                 font-size: 12px;
+            }
+
+            #buttons {
+                padding-bottom: max(48px, calc(env(safe-area-inset-bottom, 2px) + 44px));
             }
         }
     </style>
@@ -765,6 +809,20 @@
         <div class="final-score" id="final-score">0</div>
         <div class="final-lines" id="final-lines">Lines: 0</div>
         <div class="hs-label" id="go-hs"></div>
+        <div id="betris-name-entry" style="display:none;margin:10px 0;text-align:center;">
+            <div style="font-size:14px;color:#FFD600;margin-bottom:8px;">Enter your name:</div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+                <input id="betris-hs-name" type="text" maxlength="6" autocomplete="off" spellcheck="false" style="width:140px;padding:8px 12px;font-size:20px;font-weight:bold;text-align:center;
+                    background:#222;color:#fff;border:2px solid #29B6F6;border-radius:8px;outline:none;
+                    text-transform:uppercase;letter-spacing:2px;font-family:inherit;" placeholder="______">
+                <button id="betris-save-name" onclick="saveBetrisName()" style="padding:8px 16px;font-size:15px;font-weight:700;
+                    background:#29B6F6;color:#000;border:none;border-radius:8px;cursor:pointer;
+                    transition:transform 0.12s,background 0.15s;white-space:nowrap;">Save</button>
+            </div>
+            <div id="betris-name-saved" style="font-size:12px;color:#66BB6A;margin-top:6px;display:none;">&#10003; Name
+                saved!</div>
+            <div id="betris-name-hint" style="font-size:11px;color:#555;margin-top:4px;">Up to 6 letters</div>
+        </div>
         <button class="overlay-btn" onclick="newGame()">Play Again</button>
         <button class="hs-list-btn" onclick="showHighScores()">🏆 High Scores</button>
     </div>
@@ -1500,7 +1558,15 @@
             document.getElementById('help-modal').classList.remove('show');
             document.getElementById('settings-modal').classList.remove('show');
             document.getElementById('hs-modal').classList.remove('show');
+            document.getElementById('betris-name-entry').style.display = 'none';
+            // Auto-save pending score if user didn't save name
+            if (pendingScore) {
+                const nameInput = document.getElementById('betris-hs-name');
+                const name = nameInput.disabled ? '' : nameInput.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase();
+                addHighScore(pendingScore.score, pendingScore.lines, pendingScore.level, name);
+            }
             lastNewHsIndex = -1;
+            pendingScore = null;
             document.getElementById('pause-indicator').style.display = 'none';
 
             createBoard();
@@ -1520,7 +1586,10 @@
             clearTimeout(lockTimer);
             sfxGameOver();
 
-            const madeList = addHighScore(score, lines, level);
+            // Check if score makes leaderboard before adding
+            const currentList = getHighScores();
+            const makesLeaderboard = score > 0 && (currentList.length < HS_MAX || score > currentList[currentList.length - 1].score);
+            pendingScore = { score, lines, level };
 
             if (score > highScore) {
                 highScore = score;
@@ -1528,12 +1597,54 @@
 
             document.getElementById('final-score').textContent = score.toLocaleString();
             document.getElementById('final-lines').textContent = `Lines: ${lines}  •  Level: ${level}`;
-            document.getElementById('go-hs').textContent = (lastNewHsIndex === 0) ? '🏆 New High Score!' :
-                madeList ? `📋 #${lastNewHsIndex + 1} on leaderboard!` : `Best: ${highScore.toLocaleString()}`;
+
+            const nameEntry = document.getElementById('betris-name-entry');
+            const nameInput = document.getElementById('betris-hs-name');
+
+            if (makesLeaderboard) {
+                const isNewBest = score > 0 && (currentList.length === 0 || score > currentList[0].score);
+                document.getElementById('go-hs').textContent = isNewBest ? '🏆 New High Score!' : '📋 You made the leaderboard!';
+                nameEntry.style.display = 'block';
+                nameInput.value = '';
+                nameInput.disabled = false;
+                nameInput.style.borderColor = '#29B6F6';
+                document.getElementById('betris-save-name').style.display = '';
+                document.getElementById('betris-save-name').textContent = 'Save';
+                document.getElementById('betris-save-name').style.background = '#29B6F6';
+                document.getElementById('betris-save-name').disabled = false;
+                document.getElementById('betris-name-saved').style.display = 'none';
+                document.getElementById('betris-name-hint').style.display = '';
+                setTimeout(() => nameInput.focus(), 700);
+            } else {
+                document.getElementById('go-hs').textContent = `Best: ${highScore.toLocaleString()}`;
+                nameEntry.style.display = 'none';
+                // Still add score without name
+                addHighScore(score, lines, level, '');
+            }
 
             setTimeout(() => {
                 document.getElementById('game-over').classList.add('show');
             }, 600);
+        }
+
+        let pendingScore = null;
+
+        function saveBetrisName() {
+            const nameInput = document.getElementById('betris-hs-name');
+            const name = nameInput.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase();
+            if (pendingScore) {
+                addHighScore(pendingScore.score, pendingScore.lines, pendingScore.level, name);
+                pendingScore = null;
+            }
+            nameInput.disabled = true;
+            nameInput.value = name || '------';
+            nameInput.style.borderColor = '#66BB6A';
+            const btn = document.getElementById('betris-save-name');
+            btn.textContent = '\u2713';
+            btn.style.background = '#66BB6A';
+            btn.disabled = true;
+            document.getElementById('betris-name-saved').style.display = 'block';
+            document.getElementById('betris-name-hint').style.display = 'none';
         }
 
         function togglePause() {
@@ -1619,12 +1730,13 @@
             localStorage.setItem(HS_KEY, JSON.stringify(list));
         }
 
-        function addHighScore(scoreVal, linesVal, levelVal) {
+        function addHighScore(scoreVal, linesVal, levelVal, nameVal) {
             const list = getHighScores();
             const entry = {
                 score: scoreVal,
                 lines: linesVal,
                 level: levelVal,
+                name: (nameVal || '').toUpperCase(),
                 date: new Date().toISOString()
             };
 
@@ -1668,7 +1780,7 @@
             }
 
             const medals = ['hs-gold', 'hs-silver', 'hs-bronze'];
-            let html = '<table class="hs-table"><thead><tr><th>#</th><th>Score</th><th>Details</th><th>Date</th></tr></thead><tbody>';
+            let html = '<table class="hs-table"><thead><tr><th>#</th><th>Score</th><th>Name</th><th>Details</th><th>Date</th></tr></thead><tbody>';
 
             list.forEach((entry, i) => {
                 const medalClass = i < 3 ? medals[i] : '';
@@ -1678,6 +1790,7 @@
                 html += `<tr class="${medalClass} ${newClass}">`;
                 html += `<td>${i + 1}</td>`;
                 html += `<td class="hs-score">${entry.score.toLocaleString()}</td>`;
+                html += `<td style="font-weight:700;color:#ccc;">${entry.name || '---'}</td>`;
                 html += `<td class="hs-details">L${entry.level} · ${entry.lines} lines</td>`;
                 html += `<td class="hs-date">${dateStr}</td>`;
                 html += `</tr>`;
@@ -1935,6 +2048,15 @@
         // Sync highScore from the leaderboard
         const hsList = getHighScores();
         if (hsList.length > 0) highScore = hsList[0].score;
+
+        // Enter key saves name in Betris
+        document.getElementById('betris-hs-name').addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const btn = document.getElementById('betris-save-name');
+                if (!btn.disabled) saveBetrisName();
+            }
+        });
     </script>
 
     <script src="../scripts/mobile-controls.js"></script>

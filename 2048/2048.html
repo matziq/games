@@ -7,10 +7,10 @@
     <title>2048</title>
     <style>
         :root {
-            --bg: #faf8ef;
-            --board: #bbada0;
-            --cell: #cdc1b4;
-            --text: #776e65;
+            --bg: #000;
+            --board: #1a1a1a;
+            --cell: #0d0d0d;
+            --text: #fff;
             --textLight: #f9f6f2;
             --gap: 12px;
             --radius: 12px;
@@ -49,18 +49,18 @@
             text-decoration: none;
             font-weight: 800;
             font-size: 13px;
-            color: var(--text);
-            background: rgba(255, 255, 255, 0.72);
-            border: 1px solid rgba(0, 0, 0, 0.08);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+            color: #fff;
+            background: rgba(0, 0, 0, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
         }
 
         .menu-link:hover {
-            background: rgba(255, 255, 255, 0.82);
+            background: rgba(0, 0, 0, 0.7);
         }
 
         .menu-link:focus-visible {
-            outline: 3px solid rgba(143, 122, 102, 0.6);
+            outline: 3px solid rgba(41, 182, 246, 0.6);
             outline-offset: 2px;
         }
 
@@ -92,7 +92,7 @@
 
         .subtitle {
             font-size: 14px;
-            color: #8f887f;
+            color: #555;
         }
 
         .scores {
@@ -103,16 +103,18 @@
         .scorebox {
             min-width: 92px;
             padding: 10px 12px;
-            background: #bbada0;
-            color: #fff;
+            background: #111;
+            color: #29B6F6;
+            border: 1px solid #333;
             border-radius: 10px;
             text-align: center;
         }
 
         .scorebox .label {
             font-size: 11px;
-            opacity: 0.85;
+            opacity: 0.7;
             letter-spacing: 0.6px;
+            color: #888;
         }
 
         .scorebox .value {
@@ -131,15 +133,15 @@
 
         .hint {
             font-size: 13px;
-            color: #8f887f;
+            color: #555;
             line-height: 1.25;
         }
 
         button {
             appearance: none;
             border: 0;
-            background: #8f7a66;
-            color: #fff;
+            background: #29B6F6;
+            color: #000;
             font-weight: 700;
             padding: 10px 12px;
             border-radius: 10px;
@@ -156,6 +158,7 @@
 
         .board {
             background: var(--board);
+            border: 3px solid #555;
             border-radius: var(--radius);
             padding: var(--gap);
             touch-action: none;
@@ -179,6 +182,7 @@
             height: 100%;
             background: var(--cell);
             border-radius: var(--tileRadius);
+            border: 1px solid #2a2a2a;
         }
 
         .tiles {
@@ -206,78 +210,78 @@
             border-radius: var(--tileRadius);
             font-weight: 900;
             font-size: clamp(20px, 6vw, 42px);
-            color: var(--text);
-            background: #eee4da;
+            color: #000;
+            background: #333;
             transition: transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1), background 160ms ease;
             transform-origin: center;
             will-change: transform;
         }
 
-        /* Tile colors */
+        /* Tile colors — dark theme */
         .v2 {
-            background: #eee4da;
-            color: #776e65;
+            background: #BDBDBD;
+            color: #1a1a1a;
         }
 
         .v4 {
-            background: #ede0c8;
-            color: #776e65;
+            background: #42A5F5;
+            color: #000;
         }
 
         .v8 {
-            background: #f2b179;
-            color: #f9f6f2;
+            background: #66BB6A;
+            color: #000;
         }
 
         .v16 {
-            background: #f59563;
-            color: #f9f6f2;
+            background: #AB47BC;
+            color: #fff;
         }
 
         .v32 {
-            background: #f67c5f;
-            color: #f9f6f2;
+            background: #FFEE58;
+            color: #000;
         }
 
         .v64 {
-            background: #f65e3b;
-            color: #f9f6f2;
+            background: #EF5350;
+            color: #fff;
         }
 
         .v128 {
-            background: #edcf72;
-            color: #f9f6f2;
+            background: #FF9800;
+            color: #000;
             font-size: clamp(18px, 5vw, 36px);
         }
 
         .v256 {
-            background: #edcc61;
-            color: #f9f6f2;
+            background: #29B6F6;
+            color: #000;
             font-size: clamp(18px, 5vw, 36px);
         }
 
         .v512 {
-            background: #edc850;
-            color: #f9f6f2;
+            background: #FFD600;
+            color: #000;
             font-size: clamp(18px, 5vw, 36px);
         }
 
         .v1024 {
-            background: #edc53f;
-            color: #f9f6f2;
+            background: #FF1744;
+            color: #fff;
             font-size: clamp(16px, 4.6vw, 32px);
         }
 
         .v2048 {
-            background: #edc22e;
-            color: #f9f6f2;
+            background: #00E676;
+            color: #000;
             font-size: clamp(16px, 4.6vw, 32px);
         }
 
         .overlay {
             position: absolute;
             inset: 0;
-            background: rgba(250, 248, 239, 0.78);
+            background: rgba(0, 0, 0, 0.85);
             border-radius: var(--radius);
             display: none;
             align-items: center;
@@ -292,22 +296,23 @@
         }
 
         .overlay .panel {
-            background: #fff;
+            background: #1a1a1a;
+            border: 1px solid #333;
             border-radius: 14px;
             padding: 16px 16px 14px;
             width: min(360px, 95%);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
         }
 
         .overlay h2 {
             margin: 0 0 6px;
             font-size: 22px;
-            color: #5f5750;
+            color: #29B6F6;
         }
 
         .overlay p {
             margin: 0 0 12px;
-            color: #7b7269;
+            color: #888;
             font-size: 14px;
         }
 
@@ -320,7 +325,7 @@
 
         .small {
             font-size: 12px;
-            color: #8f887f;
+            color: #555;
             margin-top: 10px;
             text-align: center;
         }
@@ -333,6 +338,157 @@
             button:active {
                 transform: none;
             }
+        }
+
+        /* === High Scores Modal === */
+        .hs-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .hs-overlay.show {
+            display: flex;
+        }
+
+        .hs-content {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: 26px;
+            min-width: 290px;
+            max-width: 88%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .hs-content h2 {
+            text-align: center;
+            margin: 0 0 18px;
+            font-size: 22px;
+            color: #FFD600;
+        }
+
+        .hs-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .hs-table th {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666;
+            padding: 6px 8px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+
+        .hs-table th:first-child {
+            width: 36px;
+            text-align: center;
+        }
+
+        .hs-table td {
+            padding: 10px 8px;
+            font-size: 14px;
+            border-bottom: 1px solid #222;
+            color: var(--text);
+        }
+
+        .hs-table td:first-child {
+            text-align: center;
+            font-weight: 700;
+            color: #666;
+        }
+
+        .hs-table tr.hs-gold td:first-child {
+            color: #edc53f;
+        }
+
+        .hs-table tr.hs-silver td:first-child {
+            color: #c0c0c0;
+        }
+
+        .hs-table tr.hs-bronze td:first-child {
+            color: #cd7f32;
+        }
+
+        .hs-table .hs-score {
+            font-weight: 900;
+            color: #29B6F6;
+        }
+
+        .hs-table .hs-name {
+            font-weight: 700;
+            color: #ccc;
+        }
+
+        .hs-table .hs-date {
+            font-size: 11px;
+            color: #555;
+        }
+
+        .hs-table tr.hs-new td {
+            background: rgba(255, 214, 0, 0.08);
+        }
+
+        .hs-empty {
+            text-align: center;
+            color: #555;
+            font-size: 14px;
+            padding: 30px 0;
+        }
+
+        .hs-close-btn {
+            width: 100%;
+            padding: 11px;
+            margin-top: 18px;
+            background: #29B6F6;
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .hs-clear-btn {
+            display: block;
+            margin: 10px auto 0;
+            padding: 6px 18px;
+            font-size: 12px;
+            background: transparent;
+            color: #555;
+            border: 1px solid #333;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .hs-clear-btn:hover {
+            color: #F44336;
+            border-color: #F44336;
+        }
+
+        .hs-list-btn {
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            background: transparent;
+            color: #FFD600;
+            border: 2px solid #FFD600;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .hs-list-btn:hover {
+            background: rgba(255, 214, 0, 0.1);
         }
     </style>
 </head>
@@ -365,6 +521,7 @@
             <div style="display:flex; gap:10px; align-items:center;">
                 <button id="soundToggle" type="button" aria-pressed="true">Sound: On</button>
                 <button id="newGame" type="button">New Game</button>
+                <button id="showScores" type="button">🏆 Scores</button>
             </div>
         </section>
 
@@ -380,9 +537,27 @@
                 <div class="panel">
                     <h2 id="overlayTitle">Game Over</h2>
                     <p id="overlayBody">No more moves.</p>
+                    <div id="hs2048-name-entry" style="display:none;margin:8px 0;text-align:center;">
+                        <div style="font-size:13px;color:#8f7a66;margin-bottom:6px;">Enter your name:</div>
+                        <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+                            <input id="hs2048-name" type="text" maxlength="6" autocomplete="off" spellcheck="false"
+                                style="width:120px;padding:6px 10px;font-size:18px;font-weight:bold;text-align:center;
+                                background:#f0e8e0;color:#776e65;border:2px solid #8f7a66;border-radius:8px;outline:none;
+                                text-transform:uppercase;letter-spacing:2px;font-family:inherit;" placeholder="______">
+                            <button id="hs2048-save" type="button"
+                                style="padding:6px 14px;font-size:14px;font-weight:700;
+                                background:#8f7a66;color:#fff;border:none;border-radius:8px;cursor:pointer;">Save</button>
+                        </div>
+                        <div id="hs2048-saved-msg" style="font-size:11px;color:#6ab04c;margin-top:4px;display:none;">
+                            &#10003; Name saved!</div>
+                        <div id="hs2048-hint" style="font-size:10px;color:#bbada0;margin-top:3px;">Up to 6 letters</div>
+                    </div>
                     <div class="row">
                         <button id="tryAgain" type="button">Try Again</button>
                         <button id="keepPlaying" type="button">Keep Playing</button>
+                    </div>
+                    <div class="row" style="margin-top:8px;">
+                        <button class="hs-list-btn" id="goShowScores" type="button">🏆 High Scores</button>
                     </div>
                     <div class="small">Tip: on desktop, click + drag a little in the direction you want.</div>
                 </div>
@@ -391,6 +566,15 @@
 
         <div class="small">Single-file HTML implementation. No external assets.</div>
     </main>
+
+    <div class="hs-overlay" id="hs-modal">
+        <div class="hs-content">
+            <h2>🏆 High Scores</h2>
+            <div id="hs-table-wrap"></div>
+            <button class="hs-close-btn" id="hsClose">Close</button>
+            <button class="hs-clear-btn" id="hsClear">Clear All Scores</button>
+        </div>
+    </div>
 
     <script>
         (() => {
@@ -426,6 +610,108 @@
 
             let soundEnabled = loadSoundEnabled();
             let pendingStartSound = true; // will play on first user gesture
+
+            // ── High Scores ────────────────────────────────────
+            const HS_KEY_2048 = 'singlehtml2048_highscores';
+            const HS_MAX_2048 = 10;
+            let lastNewHsIndex2048 = -1;
+            let pendingHsScore2048 = null;
+
+            function getHighScores2048() {
+                try { return JSON.parse(localStorage.getItem(HS_KEY_2048)) || []; }
+                catch (e) { return []; }
+            }
+
+            function saveHighScores2048(list) {
+                localStorage.setItem(HS_KEY_2048, JSON.stringify(list));
+            }
+
+            function addHighScore2048(scoreVal, nameVal) {
+                const list = getHighScores2048();
+                const mt = maxTile(grid);
+                const entry = { score: scoreVal, name: (nameVal || '').toUpperCase(), maxTile: mt, date: new Date().toISOString() };
+                let inserted = false;
+                for (let i = 0; i < list.length; i++) {
+                    if (scoreVal > list[i].score) {
+                        list.splice(i, 0, entry);
+                        inserted = true;
+                        lastNewHsIndex2048 = i;
+                        break;
+                    }
+                }
+                if (!inserted && list.length < HS_MAX_2048) {
+                    lastNewHsIndex2048 = list.length;
+                    list.push(entry);
+                    inserted = true;
+                } else if (!inserted) {
+                    lastNewHsIndex2048 = -1;
+                    return false;
+                }
+                if (list.length > HS_MAX_2048) list.length = HS_MAX_2048;
+                saveHighScores2048(list);
+                return true;
+            }
+
+            function makesLeaderboard2048(scoreVal) {
+                if (scoreVal <= 0) return false;
+                const list = getHighScores2048();
+                return list.length < HS_MAX_2048 || scoreVal > list[list.length - 1].score;
+            }
+
+            function renderHighScores2048() {
+                const list = getHighScores2048();
+                const wrap = document.getElementById('hs-table-wrap');
+                if (list.length === 0) {
+                    wrap.innerHTML = '<div class="hs-empty">No scores yet. Play a game!</div>';
+                    return;
+                }
+                const medals = ['hs-gold', 'hs-silver', 'hs-bronze'];
+                let html = '<table class="hs-table"><thead><tr><th>#</th><th>Score</th><th>Name</th><th>Best Tile</th><th>Date</th></tr></thead><tbody>';
+                list.forEach((entry, i) => {
+                    const mc = i < 3 ? medals[i] : '';
+                    const nc = i === lastNewHsIndex2048 ? 'hs-new' : '';
+                    const d = new Date(entry.date);
+                    const ds = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' });
+                    html += `<tr class="${mc} ${nc}"><td>${i + 1}</td><td class="hs-score">${entry.score.toLocaleString()}</td><td class="hs-name">${entry.name || '---'}</td><td>${entry.maxTile || '?'}</td><td class="hs-date">${ds}</td></tr>`;
+                });
+                html += '</tbody></table>';
+                wrap.innerHTML = html;
+            }
+
+            function showHighScores2048() {
+                renderHighScores2048();
+                document.getElementById('hs-modal').classList.add('show');
+            }
+
+            function hideHighScores2048() {
+                document.getElementById('hs-modal').classList.remove('show');
+                lastNewHsIndex2048 = -1;
+            }
+
+            function clearHighScores2048() {
+                if (confirm('Clear all high scores?')) {
+                    localStorage.removeItem(HS_KEY_2048);
+                    renderHighScores2048();
+                }
+            }
+
+            function saveHsName2048() {
+                const inp = document.getElementById('hs2048-name');
+                const name = inp.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase();
+                if (pendingHsScore2048 !== null) {
+                    addHighScore2048(pendingHsScore2048, name);
+                    pendingHsScore2048 = null;
+                }
+                inp.disabled = true;
+                inp.value = name || '------';
+                inp.style.borderColor = '#6ab04c';
+                const btn = document.getElementById('hs2048-save');
+                btn.textContent = '\u2713';
+                btn.style.background = '#6ab04c';
+                btn.disabled = true;
+                document.getElementById('hs2048-saved-msg').style.display = 'block';
+                document.getElementById('hs2048-hint').style.display = 'none';
+            }
 
             /** @type {AudioContext|null} */
             let audioCtx = null;
@@ -1012,7 +1298,27 @@
 
                 if (!canMove(grid)) {
                     gameOver = true;
-                    setOverlay(true, 'Game Over', 'No more moves.');
+                    const nameEntry = document.getElementById('hs2048-name-entry');
+                    const nameInput = document.getElementById('hs2048-name');
+                    if (makesLeaderboard2048(score)) {
+                        const isNewBest = score > 0 && (getHighScores2048().length === 0 || score > getHighScores2048()[0].score);
+                        pendingHsScore2048 = score;
+                        setOverlay(true, 'Game Over', isNewBest ? '\ud83c\udfc6 New High Score!' : '\ud83d\udccb You made the leaderboard!');
+                        nameEntry.style.display = 'block';
+                        nameInput.value = '';
+                        nameInput.disabled = false;
+                        nameInput.style.borderColor = '#8f7a66';
+                        document.getElementById('hs2048-save').textContent = 'Save';
+                        document.getElementById('hs2048-save').style.background = '#8f7a66';
+                        document.getElementById('hs2048-save').disabled = false;
+                        document.getElementById('hs2048-saved-msg').style.display = 'none';
+                        document.getElementById('hs2048-hint').style.display = '';
+                        setTimeout(() => nameInput.focus(), 100);
+                    } else {
+                        setOverlay(true, 'Game Over', 'No more moves.');
+                        nameEntry.style.display = 'none';
+                        addHighScore2048(score, '');
+                    }
                     playWompWomp();
                 }
 
@@ -1118,6 +1424,16 @@
             }
 
             function newGame() {
+                // Auto-save pending score if user didn't save name
+                if (pendingHsScore2048 !== null) {
+                    const inp = document.getElementById('hs2048-name');
+                    const name = inp && !inp.disabled ? inp.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase() : '';
+                    addHighScore2048(pendingHsScore2048, name);
+                    pendingHsScore2048 = null;
+                }
+                document.getElementById('hs2048-name-entry').style.display = 'none';
+                lastNewHsIndex2048 = -1;
+
                 grid = makeEmptyGrid();
                 score = 0;
                 gameOver = false;
@@ -1223,6 +1539,15 @@
             els.keepPlaying.addEventListener('click', () => {
                 allowContinueAfterWin = true;
                 setOverlay(false);
+            });
+
+            document.getElementById('showScores').addEventListener('click', showHighScores2048);
+            document.getElementById('goShowScores').addEventListener('click', showHighScores2048);
+            document.getElementById('hsClose').addEventListener('click', hideHighScores2048);
+            document.getElementById('hsClear').addEventListener('click', clearHighScores2048);
+            document.getElementById('hs2048-save').addEventListener('click', saveHsName2048);
+            document.getElementById('hs2048-name').addEventListener('keydown', e => {
+                if (e.key === 'Enter') { e.preventDefault(); const btn = document.getElementById('hs2048-save'); if (!btn.disabled) saveHsName2048(); }
             });
 
             els.soundToggle.addEventListener('click', () => {

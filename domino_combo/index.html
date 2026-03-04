@@ -195,31 +195,31 @@
             align-items: flex-end;
             width: 100%;
             margin-top: auto;
-            padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
+            padding-bottom: max(60px, calc(env(safe-area-inset-bottom, 16px) + 56px));
         }
 
         .game-btn {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
             background: none;
             border: none;
             color: #29B6F6;
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 700;
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
         }
 
         .btn-circle {
-            width: 50px;
-            height: 50px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
+            font-size: 24px;
             transition: transform 0.12s;
         }
 
@@ -235,7 +235,7 @@
         .settings-btn .btn-circle {
             border: 2.5px solid #29B6F6;
             color: #29B6F6;
-            font-size: 24px;
+            font-size: 20px;
         }
 
         /* === Animations === */
@@ -273,29 +273,61 @@
             animation: placeBounce 0.22s ease-out;
         }
 
-        @keyframes mergeAppear {
+        /* === Merge flip animation === */
+        .merge-flip-cell {
+            perspective: 400px;
+        }
+
+        .merge-flip-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            animation: mergeFlip 0.5s ease-in-out forwards;
+        }
+
+        .merge-flip-front,
+        .merge-flip-back {
+            position: absolute;
+            inset: 0;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+
+        .merge-flip-front .die,
+        .merge-flip-back .die {
+            width: 100%;
+            height: 100%;
+        }
+
+        .merge-flip-front {
+            transform: rotateY(0deg);
+        }
+
+        .merge-flip-back {
+            transform: rotateY(180deg);
+        }
+
+        @keyframes mergeFlip {
             0% {
-                transform: scale(0);
-                opacity: 0;
+                transform: rotateY(0deg) scale(1);
             }
 
-            50% {
-                transform: scale(1.35);
-                opacity: 1;
+            40% {
+                transform: rotateY(90deg) scale(1.15);
             }
 
-            75% {
-                transform: scale(0.92);
+            70% {
+                transform: rotateY(180deg) scale(1.25);
+            }
+
+            85% {
+                transform: rotateY(180deg) scale(0.95);
             }
 
             100% {
-                transform: scale(1);
-                opacity: 1;
+                transform: rotateY(180deg) scale(1);
             }
-        }
-
-        .merge-result .die {
-            animation: mergeAppear 0.38s ease-out;
         }
 
         @keyframes clearPulse {
@@ -717,7 +749,7 @@
             }
 
             #buttons {
-                padding-bottom: max(8px, env(safe-area-inset-bottom, 8px));
+                padding-bottom: max(56px, calc(env(safe-area-inset-bottom, 8px) + 52px));
                 gap: 4px;
             }
 
@@ -727,13 +759,13 @@
             }
 
             .btn-circle {
-                width: 40px;
-                height: 40px;
-                font-size: 22px;
+                width: 36px;
+                height: 36px;
+                font-size: 20px;
             }
 
             .settings-btn .btn-circle {
-                font-size: 18px;
+                font-size: 16px;
             }
 
             .settings-content,
@@ -785,13 +817,13 @@
             }
 
             #buttons {
-                padding-bottom: max(4px, env(safe-area-inset-bottom, 4px));
+                padding-bottom: max(56px, calc(env(safe-area-inset-bottom, 4px) + 52px));
             }
 
             .btn-circle {
-                width: 36px;
-                height: 36px;
-                font-size: 20px;
+                width: 34px;
+                height: 34px;
+                font-size: 18px;
             }
 
             .game-btn {
@@ -831,13 +863,18 @@
             }
 
             #buttons {
-                padding-bottom: max(2px, env(safe-area-inset-bottom, 2px));
+                padding-bottom: max(52px, calc(env(safe-area-inset-bottom, 2px) + 48px));
             }
 
             .btn-circle {
-                width: 32px;
-                height: 32px;
-                font-size: 17px;
+                width: 30px;
+                height: 30px;
+                font-size: 15px;
+            }
+
+            .game-btn {
+                font-size: 8px;
+                gap: 1px;
             }
 
             #menu-link {
@@ -917,10 +954,17 @@
         <div class="hs-label" id="go-hs"></div>
         <div id="name-entry" style="display:none;margin:10px 0;text-align:center;">
             <div style="font-size:14px;color:#FFD600;margin-bottom:8px;">Enter your name:</div>
-            <input id="hs-name" type="text" maxlength="6" autocomplete="off" spellcheck="false" style="width:140px;padding:8px 12px;font-size:20px;font-weight:bold;text-align:center;
-                background:#222;color:#fff;border:2px solid #29B6F6;border-radius:8px;outline:none;
-                text-transform:uppercase;letter-spacing:2px;font-family:inherit;" placeholder="______">
-            <div style="font-size:11px;color:#555;margin-top:4px;">Up to 6 letters</div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+                <input id="hs-name" type="text" maxlength="6" autocomplete="off" spellcheck="false" style="width:140px;padding:8px 12px;font-size:20px;font-weight:bold;text-align:center;
+                    background:#222;color:#fff;border:2px solid #29B6F6;border-radius:8px;outline:none;
+                    text-transform:uppercase;letter-spacing:2px;font-family:inherit;" placeholder="______">
+                <button id="save-name-btn" onclick="saveName()" style="padding:8px 16px;font-size:15px;font-weight:700;
+                    background:#29B6F6;color:#000;border:none;border-radius:8px;cursor:pointer;
+                    transition:transform 0.12s,background 0.15s;white-space:nowrap;">Save</button>
+            </div>
+            <div id="name-saved-msg" style="font-size:12px;color:#66BB6A;margin-top:6px;display:none;">&#10003; Name
+                saved!</div>
+            <div id="name-hint" style="font-size:11px;color:#555;margin-top:4px;">Up to 6 letters</div>
         </div>
         <button class="overlay-btn" onclick="submitHighScore()">Play Again</button>
         <button class="hs-list-btn" onclick="showHighScores()">🏆 High Scores</button>
@@ -1741,7 +1785,7 @@
                 // If value < 6 → merge into next value at trigger cell
                 if (grp.val < 6) {
                     const target = pickMergeTarget(grp);
-                    mergeResults.push({ r: target.r, c: target.c, newVal: grp.val + 1 });
+                    mergeResults.push({ r: target.r, c: target.c, newVal: grp.val + 1, oldVal: grp.val });
                     // Unlock the new value for spawning
                     if (grp.val + 1 > maxSpawnVal && grp.val + 1 <= 6) {
                         maxSpawnVal = grp.val + 1;
@@ -1832,14 +1876,45 @@
                 const newPlaced = [];
                 for (const m of mergeResults) {
                     board[m.r][m.c] = m.newVal;
-                    newPlaced.push({ r: m.r, c: m.c });
+                    newPlaced.push({ r: m.r, c: m.c, oldVal: m.oldVal, newVal: m.newVal });
                 }
 
                 // Update trigger cells for next chain reaction
                 lastPlacedCells = newPlaced;
 
-                renderBoard(null, newPlaced);
-                setTimeout(processMatches, 250);   // chain reaction
+                renderBoard(null, null);
+
+                // Apply flip animation to merge target cells
+                for (const m of newPlaced) {
+                    const el = cellEl(m.r, m.c);
+                    if (!el || m.oldVal === undefined) continue;
+                    // Build flip container: front = old value, back = new value
+                    el.innerHTML = '';
+                    el.classList.add('merge-flip-cell');
+                    const inner = document.createElement('div');
+                    inner.className = 'merge-flip-inner';
+
+                    const front = document.createElement('div');
+                    front.className = 'merge-flip-front';
+                    front.appendChild(makeDie(m.oldVal));
+
+                    const back = document.createElement('div');
+                    back.className = 'merge-flip-back';
+                    back.appendChild(makeDie(m.newVal));
+
+                    inner.appendChild(front);
+                    inner.appendChild(back);
+                    el.appendChild(inner);
+
+                    // After animation completes, replace with normal die
+                    inner.addEventListener('animationend', () => {
+                        el.classList.remove('merge-flip-cell');
+                        el.innerHTML = '';
+                        el.appendChild(makeDie(m.newVal));
+                    }, { once: true });
+                }
+
+                setTimeout(processMatches, 550);   // chain reaction (longer to let flip finish)
             }, 420);
         }
 
@@ -1874,6 +1949,12 @@
                 hs.textContent = isNewBest ? '\u{1F3C6} New High Score!' : '\u{1F4CB} You made the leaderboard!';
                 nameEntry.style.display = 'block';
                 nameInput.value = '';
+                nameInput.disabled = false;
+                nameInput.style.borderColor = '#29B6F6';
+                document.getElementById('save-name-btn').style.display = '';
+                document.getElementById('save-name-btn').textContent = 'Save';
+                document.getElementById('name-saved-msg').style.display = 'none';
+                document.getElementById('name-hint').style.display = '';
                 setTimeout(() => nameInput.focus(), 100);
             } else {
                 hs.textContent = 'Best: ' + getHighScore() + (getHighScoreName() ? ' (' + getHighScoreName() + ')' : '');
@@ -1883,10 +1964,30 @@
             processing = false;
         }
 
+        function saveName() {
+            const nameInput = document.getElementById('hs-name');
+            const name = nameInput.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase();
+            addHighScoreEntry(score, name);
+            highScore = getHighScore();
+            updateScore();
+
+            // Visual confirmation
+            nameInput.disabled = true;
+            nameInput.value = name || '------';
+            nameInput.style.borderColor = '#66BB6A';
+            const btn = document.getElementById('save-name-btn');
+            btn.textContent = '\u2713';
+            btn.style.background = '#66BB6A';
+            btn.disabled = true;
+            document.getElementById('name-saved-msg').style.display = 'block';
+            document.getElementById('name-hint').style.display = 'none';
+        }
+
         function submitHighScore() {
             const nameEntry = document.getElementById('name-entry');
             const nameInput = document.getElementById('hs-name');
-            if (nameEntry.style.display !== 'none') {
+            // If name wasn't saved yet, save it now
+            if (nameEntry.style.display !== 'none' && !nameInput.disabled) {
                 const name = nameInput.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase();
                 addHighScoreEntry(score, name);
                 highScore = getHighScore();
@@ -1949,6 +2050,15 @@
 
         // ── Global event guards ────────────────────────────────────
         document.addEventListener('contextmenu', e => e.preventDefault());
+
+        // Enter key saves name
+        document.getElementById('hs-name').addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const btn = document.getElementById('save-name-btn');
+                if (!btn.disabled) saveName();
+            }
+        });
 
         // Close overlays on Escape
         document.addEventListener('keydown', e => {

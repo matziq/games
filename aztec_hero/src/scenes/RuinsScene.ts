@@ -425,6 +425,8 @@ export class RuinsScene extends Phaser.Scene{
     this.tweens.add({targets:t1,alpha:1,duration:800,delay:500});
     this.tweens.add({targets:t2,alpha:1,duration:800,delay:1000});
     this.tweens.add({targets:t3,alpha:1,duration:800,delay:1500,onComplete:()=>{
+      // Notify global high score system
+      if((window as any).__aztecGameEnd) (window as any).__aztecGameEnd(this.treasureCount, true);
       this.input.keyboard!.once('keydown-SPACE',()=>{this.scene.restart();});
     }});
   }

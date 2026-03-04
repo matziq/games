@@ -39,17 +39,16 @@
 
     #game {
       position: fixed;
-      /* Constrain the play area so it doesn't fill huge screens */
-      width: min(100vw, 800px);
-      height: min(100vh, 700px);
-      max-width: 800px;
-      max-height: 700px;
-      /* Center the canvas */
-      top: 50%;
+      /* Portrait mode: constrain width, let height fill */
+      width: min(100vw, 1024px);
+      height: 100vh;
+      max-width: 1024px;
+      /* Center horizontally */
+      top: 0;
       left: 50%;
-      transform: translate(-50%, -50%);
+      transform: translateX(-50%);
       display: block;
-      border-radius: 12px;
+      border-radius: 0;
     }
 
     #hud {
@@ -380,6 +379,7 @@
     <button id="pauseBtn" title="Pause">Pause</button>
     <button id="resetBtn" title="Reset">Reset</button>
     <button id="muteBtn" title="Mute / Unmute Audio">🔊</button>
+    <button id="scoresBtn" title="High Scores">🏆</button>
   </div>
 
   <div id="overlay">
@@ -411,6 +411,20 @@
         <div class="pill">Most rare ➜ Diamond → Ruby → Emerald → Sapphire → Amethyst → Amber</div>
       </div>
       <button class="cta" id="playBtn">Play</button>
+    </div>
+  </div>
+
+  <div id="geo-hs-modal"
+    style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.8);z-index:20;">
+    <div
+      style="background:#121722;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:26px;min-width:290px;max-width:88%;max-height:80vh;overflow-y:auto;color:#e8ecf1;font-family:inherit;">
+      <h2 style="text-align:center;margin:0 0 18px;font-size:22px;color:#ff6a00;">🏆 High Scores</h2>
+      <div id="geo-hs-wrap"></div>
+      <button id="geoHsClose"
+        style="width:100%;padding:11px;margin-top:18px;background:#ff6a00;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">Close</button>
+      <button id="geoHsClear"
+        style="display:block;margin:10px auto 0;padding:6px 18px;font-size:12px;background:transparent;color:#555;border:1px solid #333;border-radius:8px;cursor:pointer;">Clear
+        Scores</button>
     </div>
   </div>
 
@@ -1312,16 +1326,117 @@
         overlay.querySelector('h1').textContent = 'Game Over';
         overlay.querySelector('.cta').textContent = 'Play Again';
         const infoP = overlay.querySelector('p.big');
-        infoP.innerHTML = `Final Score: <strong>${score}</strong> — Geodes escaped: <strong>${missed}</strong>. Click <em>Play Again</em> to restart.`;
+
+        const list = getGeoHighScores();
+        const makesLb = score > 0 && (list.length < 10 || score > list[list.length - 1].score);
+        geoPendingScore = score;
+
+        let bodyHtml = `Final Score: <strong>${score}</strong> — Geodes escaped: <strong>${missed}</strong>.`;
+        if (makesLb) {
+          const isNewBest = list.length === 0 || score > list[0].score;
+          bodyHtml += isNewBest ? '<br>\ud83c\udfc6 New High Score!' : '<br>\ud83d\udccb You made the leaderboard!';
+          bodyHtml += `<div id="geo-name-entry" style="margin:10px 0;text-align:center;">
+            <div style="font-size:13px;color:#ff6a00;margin-bottom:6px;">Enter your name:</div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+              <input id="geo-hs-name" type="text" maxlength="6" autocomplete="off" spellcheck="false" style="width:120px;padding:6px 10px;font-size:18px;font-weight:bold;text-align:center;
+                background:#1a1f2c;color:#e8ecf1;border:2px solid #ff6a00;border-radius:8px;outline:none;
+                text-transform:uppercase;letter-spacing:2px;font-family:inherit;" placeholder="______">
+              <button id="geo-save-name" style="padding:6px 14px;font-size:14px;font-weight:700;
+                background:#ff6a00;color:#000;border:none;border-radius:8px;cursor:pointer;">Save</button>
+            </div>
+            <div id="geo-name-saved" style="font-size:11px;color:#35dd8a;margin-top:4px;display:none;">&#10003; Name saved!</div>
+            <div style="font-size:10px;color:#90a0b7;margin-top:3px;">Up to 6 letters</div>
+          </div>`;
+        } else {
+          bodyHtml += ' Click <em>Play Again</em> to restart.';
+          addGeoHighScore(score, '');
+        }
+        infoP.innerHTML = bodyHtml;
+
+        if (makesLb) {
+          setTimeout(() => {
+            const saveBtn = document.getElementById('geo-save-name');
+            const nameInp = document.getElementById('geo-hs-name');
+            if (saveBtn) saveBtn.addEventListener('click', saveGeoName);
+            if (nameInp) {
+              nameInp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); saveGeoName(); } });
+              nameInp.focus();
+            }
+          }, 50);
+        }
       }
 
       // Buttons
+      // ── High Score System ───────────────────
+      const GEO_HS_KEY = 'geodes-highscores';
+      let geoLastNewHsIdx = -1;
+      let geoPendingScore = null;
+
+      function getGeoHighScores() {
+        try { return JSON.parse(localStorage.getItem(GEO_HS_KEY)) || []; } catch { return []; }
+      }
+      function addGeoHighScore(scoreVal, nameVal) {
+        const list = getGeoHighScores();
+        const entry = { score: scoreVal, name: (nameVal || '').toUpperCase(), missed, date: new Date().toISOString() };
+        let inserted = false;
+        for (let i = 0; i < list.length; i++) {
+          if (scoreVal > list[i].score) { list.splice(i, 0, entry); inserted = true; geoLastNewHsIdx = i; break; }
+        }
+        if (!inserted && list.length < 10) { geoLastNewHsIdx = list.length; list.push(entry); inserted = true; }
+        else if (!inserted) { geoLastNewHsIdx = -1; return false; }
+        if (list.length > 10) list.length = 10;
+        localStorage.setItem(GEO_HS_KEY, JSON.stringify(list));
+        return true;
+      }
+      function renderGeoHighScores() {
+        const list = getGeoHighScores();
+        const wrap = document.getElementById('geo-hs-wrap');
+        if (list.length === 0) { wrap.innerHTML = '<p style="text-align:center;color:#90a0b7;padding:30px 0;">No scores yet. Play a game!</p>'; return; }
+        const mc = ['#edc53f', '#c0c0c0', '#cd7f32'];
+        let html = '<table style="width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;"><thead><tr><th style="font-size:11px;text-transform:uppercase;color:#90a0b7;padding:6px 8px;text-align:center;border-bottom:1px solid #333;width:36px;">#</th><th style="font-size:11px;text-transform:uppercase;color:#90a0b7;padding:6px 8px;text-align:left;border-bottom:1px solid #333;">Score</th><th style="font-size:11px;text-transform:uppercase;color:#90a0b7;padding:6px 8px;text-align:left;border-bottom:1px solid #333;">Name</th><th style="font-size:11px;text-transform:uppercase;color:#90a0b7;padding:6px 8px;text-align:left;border-bottom:1px solid #333;">Date</th></tr></thead><tbody>';
+        list.forEach((e, i) => {
+          const bg = i === geoLastNewHsIdx ? 'background:rgba(255,106,0,0.06);' : '';
+          const col = i < 3 ? `color:${mc[i]};` : '';
+          const d = new Date(e.date);
+          const ds = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' });
+          html += `<tr style="${bg}"><td style="text-align:center;font-weight:700;padding:10px 8px;border-bottom:1px solid #222;${col}">${i + 1}</td><td style="font-weight:900;color:#ff6a00;padding:10px 8px;border-bottom:1px solid #222;">${e.score.toLocaleString()}</td><td style="font-weight:700;padding:10px 8px;border-bottom:1px solid #222;">${e.name || '---'}</td><td style="font-size:11px;color:#555;padding:10px 8px;border-bottom:1px solid #222;">${ds}</td></tr>`;
+        });
+        html += '</tbody></table>';
+        wrap.innerHTML = html;
+      }
+      function showGeoHighScores() { renderGeoHighScores(); document.getElementById('geo-hs-modal').style.display = 'flex'; }
+      function hideGeoHighScores() { document.getElementById('geo-hs-modal').style.display = 'none'; geoLastNewHsIdx = -1; }
+      function saveGeoName() {
+        const inp = document.getElementById('geo-hs-name');
+        if (!inp || inp.disabled) return;
+        const name = inp.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase();
+        if (geoPendingScore !== null) { addGeoHighScore(geoPendingScore, name); geoPendingScore = null; }
+        inp.disabled = true; inp.value = name || '------'; inp.style.borderColor = '#35dd8a';
+        const btn = document.getElementById('geo-save-name');
+        if (btn) { btn.textContent = '\u2713'; btn.style.background = '#35dd8a'; btn.disabled = true; }
+        const msg = document.getElementById('geo-name-saved');
+        if (msg) msg.style.display = 'block';
+      }
+
       playBtn.addEventListener('click', () => {
+        // Auto-save pending
+        if (geoPendingScore !== null) {
+          const inp = document.getElementById('geo-hs-name');
+          const name = inp && !inp.disabled ? inp.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase() : '';
+          addGeoHighScore(geoPendingScore, name); geoPendingScore = null;
+        }
+        geoLastNewHsIdx = -1;
         if (gameOver) resetGame();
         startGame();
       });
       playBtn.addEventListener('touchend', (e) => {
         e.preventDefault();
+        if (geoPendingScore !== null) {
+          const inp = document.getElementById('geo-hs-name');
+          const name = inp && !inp.disabled ? inp.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase() : '';
+          addGeoHighScore(geoPendingScore, name); geoPendingScore = null;
+        }
+        geoLastNewHsIdx = -1;
         if (gameOver) resetGame();
         startGame();
       });
@@ -1356,6 +1471,12 @@
         muteBtn.textContent = window.audioMuted ? '🔇' : '🔊';
         muteBtn.classList.toggle('muted', window.audioMuted);
         muteBtn.title = window.audioMuted ? 'Unmute Audio' : 'Mute Audio';
+      });
+
+      document.getElementById('scoresBtn').addEventListener('click', showGeoHighScores);
+      document.getElementById('geoHsClose').addEventListener('click', hideGeoHighScores);
+      document.getElementById('geoHsClear').addEventListener('click', () => {
+        if (confirm('Clear all high scores?')) { localStorage.removeItem(GEO_HS_KEY); renderGeoHighScores(); }
       });
 
       // Keyboard shortcuts

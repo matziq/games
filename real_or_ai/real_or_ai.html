@@ -150,6 +150,21 @@
 		<div class="score" id="score"></div>
 		<button class="btn" id="nextBtn" style="display:none;">Next</button>
 		<button class="btn" id="restartBtn" style="display:none;">Restart</button>
+		<button class="btn" id="roaiScoresBtn" style="background:#ffd700;color:#222;margin-top:12px;">🏆 High
+			Scores</button>
+	</div>
+
+	<div id="roai-hs-modal"
+		style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.8);z-index:20;">
+		<div
+			style="background:#333;border:1px solid #555;border-radius:16px;padding:26px;min-width:290px;max-width:88%;max-height:80vh;overflow-y:auto;color:#fff;font-family:inherit;text-align:left;">
+			<h2 style="text-align:center;margin:0 0 18px;font-size:22px;color:#ffd700;">🏆 High Scores</h2>
+			<div id="roai-hs-wrap"></div>
+			<button class="btn" id="roaiHsClose" style="width:100%;margin-top:18px;">Close</button>
+			<button id="roaiHsClear"
+				style="display:block;margin:10px auto 0;padding:6px 18px;font-size:12px;background:transparent;color:#888;border:1px solid #555;border-radius:8px;cursor:pointer;">Clear
+				Scores</button>
+		</div>
 	</div>
 	<script src="image_manifest.js"></script>
 	<script>
@@ -240,6 +255,63 @@
 		let pairs = [];
 		let currentRound = 0;
 		let score = 0;
+
+		// ── High Score System ─────────────────────
+		const ROAI_HS_KEY = 'realOrAi-highscores';
+		let roaiLastNewHsIdx = -1;
+		let roaiPendingScore = null;
+
+		function getRoaiHighScores() {
+			try { return JSON.parse(localStorage.getItem(ROAI_HS_KEY)) || []; } catch { return []; }
+		}
+		function addRoaiHighScore(scoreVal, totalVal, nameVal) {
+			const list = getRoaiHighScores();
+			const entry = { score: scoreVal, total: totalVal, name: (nameVal || '').toUpperCase(), date: new Date().toISOString() };
+			let inserted = false;
+			for (let i = 0; i < list.length; i++) {
+				if (scoreVal > list[i].score) { list.splice(i, 0, entry); inserted = true; roaiLastNewHsIdx = i; break; }
+			}
+			if (!inserted && list.length < 10) { roaiLastNewHsIdx = list.length; list.push(entry); inserted = true; }
+			else if (!inserted) { roaiLastNewHsIdx = -1; return false; }
+			if (list.length > 10) list.length = 10;
+			localStorage.setItem(ROAI_HS_KEY, JSON.stringify(list));
+			return true;
+		}
+		function renderRoaiHighScores() {
+			const list = getRoaiHighScores();
+			const wrap = document.getElementById('roai-hs-wrap');
+			if (list.length === 0) { wrap.innerHTML = '<p style="text-align:center;color:#888;padding:30px 0;">No scores yet.</p>'; return; }
+			const mc = ['#ffd700', '#c0c0c0', '#cd7f32'];
+			let html = '<table style="width:100%;border-collapse:collapse;"><thead><tr><th style="font-size:11px;text-transform:uppercase;color:#999;padding:6px 8px;text-align:center;border-bottom:1px solid #555;">#</th><th style="font-size:11px;text-transform:uppercase;color:#999;padding:6px 8px;text-align:left;border-bottom:1px solid #555;">Score</th><th style="font-size:11px;text-transform:uppercase;color:#999;padding:6px 8px;text-align:left;border-bottom:1px solid #555;">Name</th><th style="font-size:11px;text-transform:uppercase;color:#999;padding:6px 8px;text-align:left;border-bottom:1px solid #555;">Date</th></tr></thead><tbody>';
+			list.forEach((e, i) => {
+				const bg = i === roaiLastNewHsIdx ? 'background:rgba(255,215,0,0.06);' : '';
+				const col = i < 3 ? `color:${mc[i]};` : '';
+				const d = new Date(e.date);
+				const ds = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' });
+				html += `<tr style="${bg}"><td style="text-align:center;font-weight:700;padding:10px 8px;border-bottom:1px solid #444;${col}">${i + 1}</td><td style="font-weight:900;color:#09f;padding:10px 8px;border-bottom:1px solid #444;">${e.score}/${e.total}</td><td style="font-weight:700;padding:10px 8px;border-bottom:1px solid #444;">${e.name || '---'}</td><td style="font-size:11px;color:#888;padding:10px 8px;border-bottom:1px solid #444;">${ds}</td></tr>`;
+			});
+			html += '</tbody></table>';
+			wrap.innerHTML = html;
+		}
+		function showRoaiHighScores() { renderRoaiHighScores(); document.getElementById('roai-hs-modal').style.display = 'flex'; }
+		function hideRoaiHighScores() { document.getElementById('roai-hs-modal').style.display = 'none'; roaiLastNewHsIdx = -1; }
+		function saveRoaiName() {
+			const inp = document.getElementById('roai-hs-name');
+			if (!inp || inp.disabled) return;
+			const name = inp.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase();
+			if (roaiPendingScore !== null) { addRoaiHighScore(roaiPendingScore.score, roaiPendingScore.total, name); roaiPendingScore = null; }
+			inp.disabled = true; inp.value = name || '------'; inp.style.borderColor = '#3f3';
+			const btn = document.getElementById('roai-save-name');
+			if (btn) { btn.textContent = '\u2713'; btn.style.background = '#3f3'; btn.style.color = '#222'; btn.disabled = true; }
+			const msg = document.getElementById('roai-name-saved');
+			if (msg) msg.style.display = 'block';
+		}
+
+		document.getElementById('roaiScoresBtn').addEventListener('click', showRoaiHighScores);
+		document.getElementById('roaiHsClose').addEventListener('click', hideRoaiHighScores);
+		document.getElementById('roaiHsClear').addEventListener('click', () => {
+			if (confirm('Clear all high scores?')) { localStorage.removeItem(ROAI_HS_KEY); renderRoaiHighScores(); }
+		});
 
 		function shuffle(arr) {
 			for (let i = arr.length - 1; i > 0; i--) {
@@ -354,13 +426,57 @@
 		function showResults() {
 			document.getElementById('images').innerHTML = '';
 			document.getElementById('round-info').textContent = 'Game Over!';
-			document.getElementById('feedback').textContent = `Your final score: ${score} / ${pairs.length}`;
 			document.getElementById('score').textContent = '';
 			document.getElementById('nextBtn').style.display = 'none';
+
+			const list = getRoaiHighScores();
+			const makesLb = score > 0 && (list.length < 10 || score > list[list.length - 1].score);
+			roaiPendingScore = { score, total: pairs.length };
+
+			let feedHtml = `Your final score: ${score} / ${pairs.length}`;
+			if (makesLb) {
+				const isNewBest = list.length === 0 || score > list[0].score;
+				feedHtml += isNewBest ? '<br>\ud83c\udfc6 New High Score!' : '<br>\ud83d\udccb You made the leaderboard!';
+				feedHtml += `<div style="margin:10px 0;">
+					<div style="font-size:13px;color:#ffd700;margin-bottom:6px;">Enter your name:</div>
+					<div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+						<input id="roai-hs-name" type="text" maxlength="6" autocomplete="off" spellcheck="false" style="width:120px;padding:6px 10px;font-size:18px;font-weight:bold;text-align:center;
+							background:#444;color:#fff;border:2px solid #09f;border-radius:8px;outline:none;
+							text-transform:uppercase;letter-spacing:2px;font-family:inherit;" placeholder="______">
+						<button id="roai-save-name" class="btn" style="margin-top:0;padding:6px 14px;font-size:14px;">Save</button>
+					</div>
+					<div id="roai-name-saved" style="font-size:11px;color:#3f3;margin-top:4px;display:none;">&#10003; Name saved!</div>
+					<div style="font-size:10px;color:#888;margin-top:3px;">Up to 6 letters</div>
+				</div>`;
+			} else {
+				addRoaiHighScore(score, pairs.length, '');
+			}
+
+			document.getElementById('feedback').innerHTML = feedHtml;
 			document.getElementById('restartBtn').style.display = 'inline-block';
+
+			if (makesLb) {
+				setTimeout(() => {
+					const saveBtn = document.getElementById('roai-save-name');
+					const nameInp = document.getElementById('roai-hs-name');
+					if (saveBtn) saveBtn.addEventListener('click', saveRoaiName);
+					if (nameInp) {
+						nameInp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); saveRoaiName(); } });
+						nameInp.focus();
+					}
+				}, 50);
+			}
 		}
 
 		document.getElementById('restartBtn').onclick = function () {
+			// Auto-save pending
+			if (roaiPendingScore !== null) {
+				const inp = document.getElementById('roai-hs-name');
+				const name = inp && !inp.disabled ? inp.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase() : '';
+				addRoaiHighScore(roaiPendingScore.score, roaiPendingScore.total, name);
+				roaiPendingScore = null;
+			}
+			roaiLastNewHsIdx = -1;
 			startGame();
 		};
 
