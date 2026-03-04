@@ -279,6 +279,133 @@
             color: #FFD600;
         }
 
+        .hs-list-btn {
+            padding: 10px 30px;
+            font-size: 14px;
+            font-weight: 700;
+            background: transparent;
+            color: #FFD600;
+            border: 2px solid #FFD600;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: transform 0.12s, background 0.15s;
+        }
+
+        .hs-list-btn:hover {
+            background: rgba(255, 214, 0, 0.1);
+        }
+
+        .hs-list-btn:active {
+            transform: scale(0.94);
+        }
+
+        /* === High Scores Modal === */
+        .hs-content {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: 26px;
+            min-width: 290px;
+            max-width: 88%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .hs-content h2 {
+            text-align: center;
+            margin-bottom: 18px;
+            font-size: 22px;
+            color: #FFD600;
+        }
+
+        .hs-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .hs-table th {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666;
+            padding: 6px 8px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+
+        .hs-table th:first-child {
+            width: 36px;
+            text-align: center;
+        }
+
+        .hs-table td {
+            padding: 10px 8px;
+            font-size: 14px;
+            border-bottom: 1px solid #222;
+        }
+
+        .hs-table td:first-child {
+            text-align: center;
+            color: #666;
+            font-weight: 700;
+        }
+
+        .hs-table tr.hs-gold td:first-child {
+            color: #FFD600;
+        }
+
+        .hs-table tr.hs-silver td:first-child {
+            color: #c0c0c0;
+        }
+
+        .hs-table tr.hs-bronze td:first-child {
+            color: #cd7f32;
+        }
+
+        .hs-table .hs-score {
+            font-weight: 900;
+            color: #29B6F6;
+        }
+
+        .hs-table .hs-details {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .hs-table .hs-date {
+            font-size: 11px;
+            color: #555;
+        }
+
+        .hs-table tr.hs-new td {
+            background: rgba(255, 214, 0, 0.08);
+        }
+
+        .hs-empty {
+            text-align: center;
+            color: #555;
+            font-size: 14px;
+            padding: 30px 0;
+        }
+
+        .hs-clear-btn {
+            display: block;
+            margin: 14px auto 0;
+            padding: 6px 18px;
+            font-size: 12px;
+            background: transparent;
+            color: #555;
+            border: 1px solid #333;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .hs-clear-btn:hover {
+            color: #F44336;
+            border-color: #F44336;
+        }
+
         .overlay-btn {
             padding: 13px 46px;
             font-size: 17px;
@@ -423,6 +550,151 @@
             z-index: 10;
             pointer-events: none;
         }
+
+        /* === Mobile Layout Fixes === */
+        @media (max-width: 480px) {
+            #game {
+                padding: 4px 6px;
+            }
+
+            #score-display {
+                font-size: clamp(28px, 8vw, 44px);
+                margin: 2px 0 1px;
+            }
+
+            #stats-row {
+                gap: 10px;
+                font-size: 11px;
+                margin-bottom: 2px;
+            }
+
+            #board-row {
+                gap: 4px;
+            }
+
+            #buttons {
+                padding: 4px 0 max(4px, env(safe-area-inset-bottom, 4px));
+                gap: 2px;
+            }
+
+            .game-btn {
+                font-size: 10px;
+                gap: 2px;
+            }
+
+            .btn-circle {
+                width: 38px;
+                height: 38px;
+                font-size: 20px;
+            }
+
+            .settings-btn .btn-circle {
+                font-size: 17px;
+            }
+
+            #touch-controls {
+                padding: 2px 0;
+            }
+
+            .tc-btn {
+                width: 44px;
+                height: 44px;
+                border-radius: 12px;
+                font-size: 18px;
+            }
+
+            .tc-btn.drop-btn {
+                width: 54px;
+                font-size: 13px;
+            }
+
+            #menu-link {
+                font-size: 11px;
+                padding: 1px 0;
+            }
+
+            .settings-content,
+            .hs-content {
+                padding: 18px;
+                min-width: auto;
+                max-width: 92%;
+            }
+
+            .setting-row {
+                font-size: 14px;
+                padding: 10px 0;
+            }
+        }
+
+        @media (max-height: 600px) {
+            #score-display {
+                font-size: clamp(24px, 6vw, 36px);
+                margin: 1px 0;
+            }
+
+            #stats-row {
+                font-size: 10px;
+                margin-bottom: 1px;
+            }
+
+            #buttons {
+                padding: 2px 0;
+            }
+
+            .btn-circle {
+                width: 34px;
+                height: 34px;
+                font-size: 18px;
+            }
+
+            .tc-btn {
+                width: 42px;
+                height: 42px;
+            }
+
+            .tc-btn.drop-btn {
+                width: 52px;
+            }
+
+            #menu-link {
+                font-size: 10px;
+            }
+        }
+
+        @media (max-height: 500px) and (orientation: landscape) {
+            #game {
+                flex-direction: row;
+                flex-wrap: wrap;
+                max-width: 100%;
+                padding: 4px 8px;
+            }
+
+            #score-display {
+                font-size: 24px;
+                width: 100%;
+                margin: 0;
+            }
+
+            #stats-row {
+                width: 100%;
+                margin-bottom: 2px;
+            }
+
+            #touch-controls {
+                padding: 2px 0;
+            }
+
+            .tc-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 16px;
+            }
+
+            .tc-btn.drop-btn {
+                width: 44px;
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 
@@ -480,6 +752,10 @@
                 <div class="btn-circle">&#9881;</div>
                 Settings
             </button>
+            <button class="game-btn settings-btn" onclick="showHighScores()">
+                <div class="btn-circle">🏆</div>
+                Scores
+            </button>
         </div>
     </div>
 
@@ -490,6 +766,16 @@
         <div class="final-lines" id="final-lines">Lines: 0</div>
         <div class="hs-label" id="go-hs"></div>
         <button class="overlay-btn" onclick="newGame()">Play Again</button>
+        <button class="hs-list-btn" onclick="showHighScores()">🏆 High Scores</button>
+    </div>
+
+    <div id="hs-modal" class="overlay">
+        <div class="hs-content">
+            <h2>🏆 High Scores</h2>
+            <div id="hs-table-wrap"></div>
+            <button class="close-settings" onclick="hideHighScores()">Close</button>
+            <button class="hs-clear-btn" onclick="clearHighScores()">Clear All Scores</button>
+        </div>
     </div>
 
     <div id="help-modal" class="overlay">
@@ -646,6 +932,7 @@
         let level = 1;
         let startLevel = 1;
         let highScore = parseInt(localStorage.getItem('betris-hs') || '0');
+        let lastNewHsIndex = -1; // track most recently added high score for highlighting
         let gameOver = false;
         let paused = false;
         let showGhost = true;
@@ -1212,6 +1499,8 @@
             document.getElementById('game-over').classList.remove('show');
             document.getElementById('help-modal').classList.remove('show');
             document.getElementById('settings-modal').classList.remove('show');
+            document.getElementById('hs-modal').classList.remove('show');
+            lastNewHsIndex = -1;
             document.getElementById('pause-indicator').style.display = 'none';
 
             createBoard();
@@ -1231,14 +1520,16 @@
             clearTimeout(lockTimer);
             sfxGameOver();
 
+            const madeList = addHighScore(score, lines, level);
+
             if (score > highScore) {
                 highScore = score;
-                localStorage.setItem('betris-hs', highScore.toString());
             }
 
             document.getElementById('final-score').textContent = score.toLocaleString();
             document.getElementById('final-lines').textContent = `Lines: ${lines}  •  Level: ${level}`;
-            document.getElementById('go-hs').textContent = score >= highScore ? '🏆 New High Score!' : `Best: ${highScore.toLocaleString()}`;
+            document.getElementById('go-hs').textContent = (lastNewHsIndex === 0) ? '🏆 New High Score!' :
+                madeList ? `📋 #${lastNewHsIndex + 1} on leaderboard!` : `Best: ${highScore.toLocaleString()}`;
 
             setTimeout(() => {
                 document.getElementById('game-over').classList.add('show');
@@ -1284,10 +1575,145 @@
             soundOn = document.getElementById('opt-sound').value === '1';
             document.getElementById('settings-modal').classList.remove('show');
 
+            // Persist settings to localStorage
+            localStorage.setItem('betris-settings', JSON.stringify({
+                startLevel,
+                showGhost,
+                soundOn
+            }));
+
             if (!gameOver) {
                 paused = false;
                 resetDropTimer();
                 draw();
+            }
+        }
+
+        function loadSettings() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('betris-settings'));
+                if (saved) {
+                    startLevel = saved.startLevel || 1;
+                    showGhost = saved.showGhost !== undefined ? saved.showGhost : true;
+                    soundOn = saved.soundOn !== undefined ? saved.soundOn : true;
+
+                    // Sync UI selects
+                    document.getElementById('opt-level').value = startLevel;
+                    document.getElementById('opt-ghost').value = showGhost ? '1' : '0';
+                    document.getElementById('opt-sound').value = soundOn ? '1' : '0';
+                }
+            } catch (e) { /* ignore corrupt data */ }
+        }
+
+        // ── High Score List ─────────────────────────────────────────
+        const HS_KEY = 'betris-highscores';
+        const HS_MAX = 10;
+
+        function getHighScores() {
+            try {
+                return JSON.parse(localStorage.getItem(HS_KEY)) || [];
+            } catch (e) { return []; }
+        }
+
+        function saveHighScores(list) {
+            localStorage.setItem(HS_KEY, JSON.stringify(list));
+        }
+
+        function addHighScore(scoreVal, linesVal, levelVal) {
+            const list = getHighScores();
+            const entry = {
+                score: scoreVal,
+                lines: linesVal,
+                level: levelVal,
+                date: new Date().toISOString()
+            };
+
+            // Insert in sorted position
+            let inserted = false;
+            for (let i = 0; i < list.length; i++) {
+                if (scoreVal > list[i].score) {
+                    list.splice(i, 0, entry);
+                    inserted = true;
+                    lastNewHsIndex = i;
+                    break;
+                }
+            }
+            if (!inserted && list.length < HS_MAX) {
+                lastNewHsIndex = list.length;
+                list.push(entry);
+            } else if (!inserted) {
+                lastNewHsIndex = -1;
+                return false; // didn't make the list
+            }
+
+            // Trim to top 10
+            if (list.length > HS_MAX) list.length = HS_MAX;
+            saveHighScores(list);
+
+            // Also keep single best score in sync
+            if (list.length > 0) {
+                highScore = list[0].score;
+                localStorage.setItem('betris-hs', highScore.toString());
+            }
+            return true;
+        }
+
+        function renderHighScores() {
+            const list = getHighScores();
+            const wrap = document.getElementById('hs-table-wrap');
+
+            if (list.length === 0) {
+                wrap.innerHTML = '<div class="hs-empty">No scores yet. Play a game!</div>';
+                return;
+            }
+
+            const medals = ['hs-gold', 'hs-silver', 'hs-bronze'];
+            let html = '<table class="hs-table"><thead><tr><th>#</th><th>Score</th><th>Details</th><th>Date</th></tr></thead><tbody>';
+
+            list.forEach((entry, i) => {
+                const medalClass = i < 3 ? medals[i] : '';
+                const newClass = i === lastNewHsIndex ? 'hs-new' : '';
+                const d = new Date(entry.date);
+                const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' });
+                html += `<tr class="${medalClass} ${newClass}">`;
+                html += `<td>${i + 1}</td>`;
+                html += `<td class="hs-score">${entry.score.toLocaleString()}</td>`;
+                html += `<td class="hs-details">L${entry.level} · ${entry.lines} lines</td>`;
+                html += `<td class="hs-date">${dateStr}</td>`;
+                html += `</tr>`;
+            });
+
+            html += '</tbody></table>';
+            wrap.innerHTML = html;
+        }
+
+        function showHighScores() {
+            renderHighScores();
+            document.getElementById('hs-modal').classList.add('show');
+            if (!gameOver) {
+                paused = true;
+                clearTimeout(dropTimer);
+                document.getElementById('pause-indicator').style.display = 'none';
+            }
+        }
+
+        function hideHighScores() {
+            document.getElementById('hs-modal').classList.remove('show');
+            lastNewHsIndex = -1;
+            if (!gameOver) {
+                paused = false;
+                resetDropTimer();
+                draw();
+            }
+        }
+
+        function clearHighScores() {
+            if (confirm('Clear all high scores?')) {
+                localStorage.removeItem(HS_KEY);
+                localStorage.removeItem('betris-hs');
+                highScore = 0;
+                updateDisplay();
+                renderHighScores();
             }
         }
 
@@ -1502,8 +1928,13 @@
         window.addEventListener('resize', resize);
 
         // ── Init ───────────────────────────────────────────────────
+        loadSettings();
         resize();
         newGame();
+
+        // Sync highScore from the leaderboard
+        const hsList = getHighScores();
+        if (hsList.length > 0) highScore = hsList[0].score;
     </script>
 
     <script src="../scripts/mobile-controls.js"></script>

@@ -552,6 +552,300 @@
             cursor: pointer;
         }
 
+        /* === High Scores Modal === */
+        .hs-content {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: 26px;
+            min-width: 290px;
+            max-width: 88%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .hs-content h2 {
+            text-align: center;
+            margin-bottom: 18px;
+            font-size: 22px;
+            color: #FFD600;
+        }
+
+        .hs-config-label {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 12px;
+        }
+
+        .hs-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .hs-table th {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666;
+            padding: 6px 8px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+
+        .hs-table th:first-child {
+            width: 36px;
+            text-align: center;
+        }
+
+        .hs-table td {
+            padding: 10px 8px;
+            font-size: 14px;
+            border-bottom: 1px solid #222;
+        }
+
+        .hs-table td:first-child {
+            text-align: center;
+            color: #666;
+            font-weight: 700;
+        }
+
+        .hs-table tr.hs-gold td:first-child {
+            color: #FFD600;
+        }
+
+        .hs-table tr.hs-silver td:first-child {
+            color: #c0c0c0;
+        }
+
+        .hs-table tr.hs-bronze td:first-child {
+            color: #cd7f32;
+        }
+
+        .hs-table .hs-score {
+            font-weight: 900;
+            color: #29B6F6;
+        }
+
+        .hs-table .hs-name {
+            font-weight: 700;
+            color: #ccc;
+        }
+
+        .hs-table .hs-date {
+            font-size: 11px;
+            color: #555;
+        }
+
+        .hs-table tr.hs-new td {
+            background: rgba(255, 214, 0, 0.08);
+        }
+
+        .hs-empty {
+            text-align: center;
+            color: #555;
+            font-size: 14px;
+            padding: 30px 0;
+        }
+
+        .hs-clear-btn {
+            display: block;
+            margin: 14px auto 0;
+            padding: 6px 18px;
+            font-size: 12px;
+            background: transparent;
+            color: #555;
+            border: 1px solid #333;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .hs-clear-btn:hover {
+            color: #F44336;
+            border-color: #F44336;
+        }
+
+        .hs-list-btn {
+            padding: 10px 30px;
+            font-size: 14px;
+            font-weight: 700;
+            background: transparent;
+            color: #FFD600;
+            border: 2px solid #FFD600;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: transform 0.12s, background 0.15s;
+        }
+
+        .hs-list-btn:hover {
+            background: rgba(255, 214, 0, 0.1);
+        }
+
+        .hs-list-btn:active {
+            transform: scale(0.94);
+        }
+
+        /* === Mobile Layout Fixes === */
+        @media (max-width: 480px) {
+            #game {
+                padding: 4px 8px;
+            }
+
+            #score-display {
+                font-size: clamp(28px, 9vw, 48px);
+                margin: 2px 0 1px;
+            }
+
+            #high-score {
+                font-size: 11px;
+                margin-bottom: 4px;
+            }
+
+            #piece-area {
+                min-height: 60px;
+                margin: 8px 0 2px;
+            }
+
+            .piece-die {
+                width: clamp(44px, 11vw, 56px);
+                height: clamp(44px, 11vw, 56px);
+            }
+
+            #flip-hint {
+                margin-bottom: 4px;
+            }
+
+            #buttons {
+                padding-bottom: max(8px, env(safe-area-inset-bottom, 8px));
+                gap: 4px;
+            }
+
+            .game-btn {
+                font-size: 10px;
+                gap: 3px;
+            }
+
+            .btn-circle {
+                width: 40px;
+                height: 40px;
+                font-size: 22px;
+            }
+
+            .settings-btn .btn-circle {
+                font-size: 18px;
+            }
+
+            .settings-content,
+            .hs-content {
+                padding: 18px;
+                min-width: auto;
+                max-width: 92%;
+            }
+
+            .setting-row {
+                font-size: 14px;
+                padding: 10px 0;
+            }
+
+            #board {
+                gap: 3px;
+                padding: 6px;
+            }
+        }
+
+        @media (max-height: 640px) {
+            #game {
+                padding: 2px 8px;
+            }
+
+            #score-display {
+                font-size: clamp(24px, 7vw, 36px);
+                margin: 1px 0;
+            }
+
+            #high-score {
+                font-size: 10px;
+                margin-bottom: 2px;
+            }
+
+            #piece-area {
+                min-height: 50px;
+                margin: 4px 0 2px;
+            }
+
+            .piece-die {
+                width: clamp(38px, 10vw, 50px);
+                height: clamp(38px, 10vw, 50px);
+            }
+
+            #flip-hint {
+                margin-bottom: 2px;
+                font-size: 10px;
+            }
+
+            #buttons {
+                padding-bottom: max(4px, env(safe-area-inset-bottom, 4px));
+            }
+
+            .btn-circle {
+                width: 36px;
+                height: 36px;
+                font-size: 20px;
+            }
+
+            .game-btn {
+                font-size: 9px;
+                gap: 2px;
+            }
+
+            #menu-link {
+                font-size: 11px;
+                padding: 1px 0;
+            }
+        }
+
+        @media (max-height: 540px) {
+            #score-display {
+                font-size: clamp(20px, 6vw, 30px);
+                margin: 0;
+            }
+
+            #high-score {
+                font-size: 9px;
+                margin-bottom: 1px;
+            }
+
+            #piece-area {
+                min-height: 42px;
+                margin: 2px 0 1px;
+            }
+
+            .piece-die {
+                width: clamp(34px, 8vw, 42px);
+                height: clamp(34px, 8vw, 42px);
+            }
+
+            #flip-hint {
+                display: none;
+            }
+
+            #buttons {
+                padding-bottom: max(2px, env(safe-area-inset-bottom, 2px));
+            }
+
+            .btn-circle {
+                width: 32px;
+                height: 32px;
+                font-size: 17px;
+            }
+
+            #menu-link {
+                font-size: 10px;
+                padding: 0;
+            }
+        }
+
         /* === Return to Menu === */
         #menu-link {
             display: block;
@@ -609,6 +903,10 @@
                 <div class="btn-circle">&#9881;</div>
                 Settings
             </button>
+            <button class="game-btn settings-btn" onclick="showHighScores()">
+                <div class="btn-circle">🏆</div>
+                Scores
+            </button>
         </div>
     </div>
 
@@ -625,6 +923,7 @@
             <div style="font-size:11px;color:#555;margin-top:4px;">Up to 6 letters</div>
         </div>
         <button class="overlay-btn" onclick="submitHighScore()">Play Again</button>
+        <button class="hs-list-btn" onclick="showHighScores()">🏆 High Scores</button>
     </div>
 
     <div id="help-modal" class="overlay">
@@ -640,6 +939,16 @@
                 <p style="margin-bottom:0;">Game ends when no moves remain.</p>
             </div>
             <button class="close-settings" onclick="toggleHelp()" style="margin-top:14px;">Got It</button>
+        </div>
+    </div>
+
+    <div id="hs-modal" class="overlay">
+        <div class="hs-content">
+            <h2>🏆 High Scores</h2>
+            <div class="hs-config-label" id="hs-config-label"></div>
+            <div id="hs-table-wrap"></div>
+            <button class="close-settings" onclick="hideHighScores()">Close</button>
+            <button class="hs-clear-btn" onclick="clearHighScores()">Clear All Scores</button>
         </div>
     </div>
 
@@ -706,24 +1015,132 @@
         let board = [];
         let score = 0;
         // Per-config high scores: keyed by "gridSize_matchCount"
-        // Each entry: { score: number, name: string }
-        let allHighScores = JSON.parse(localStorage.getItem('dcHighScores') || '{}');
-        // Clear legacy single high score
-        localStorage.removeItem('dcHighScore');
+        // Each entry is an array of { score, name, date }
+        const HS_STORAGE_KEY = 'dcHighScoresList';
+        const HS_MAX = 10;
+        let lastNewHsIndex = -1;
+
+        // Migrate legacy single-entry format
+        (function migrateLegacy() {
+            const legacy = JSON.parse(localStorage.getItem('dcHighScores') || '{}');
+            if (Object.keys(legacy).length > 0 && !localStorage.getItem(HS_STORAGE_KEY)) {
+                const migrated = {};
+                for (const [key, entry] of Object.entries(legacy)) {
+                    migrated[key] = [{ score: entry.score, name: entry.name || '', date: new Date().toISOString() }];
+                }
+                localStorage.setItem(HS_STORAGE_KEY, JSON.stringify(migrated));
+            }
+            localStorage.removeItem('dcHighScores');
+            localStorage.removeItem('dcHighScore');
+        })();
 
         function hsKey() { return gridSize + '_' + matchCount; }
+
+        function getAllHighScores() {
+            try { return JSON.parse(localStorage.getItem(HS_STORAGE_KEY)) || {}; }
+            catch (e) { return {}; }
+        }
+
+        function getHighScoreList() {
+            return getAllHighScores()[hsKey()] || [];
+        }
+
         function getHighScore() {
-            const entry = allHighScores[hsKey()];
-            return entry ? entry.score : 0;
+            const list = getHighScoreList();
+            return list.length > 0 ? list[0].score : 0;
         }
+
         function getHighScoreName() {
-            const entry = allHighScores[hsKey()];
-            return entry ? entry.name : '';
+            const list = getHighScoreList();
+            return list.length > 0 ? (list[0].name || '') : '';
         }
-        function setHighScore(s, name) {
-            allHighScores[hsKey()] = { score: s, name: name || '' };
-            localStorage.setItem('dcHighScores', JSON.stringify(allHighScores));
+
+        function addHighScoreEntry(scoreVal, name) {
+            const all = getAllHighScores();
+            const key = hsKey();
+            const list = all[key] || [];
+            const entry = {
+                score: scoreVal,
+                name: (name || '').toUpperCase(),
+                date: new Date().toISOString()
+            };
+
+            let inserted = false;
+            for (let i = 0; i < list.length; i++) {
+                if (scoreVal > list[i].score) {
+                    list.splice(i, 0, entry);
+                    inserted = true;
+                    lastNewHsIndex = i;
+                    break;
+                }
+            }
+            if (!inserted && list.length < HS_MAX) {
+                lastNewHsIndex = list.length;
+                list.push(entry);
+                inserted = true;
+            } else if (!inserted) {
+                lastNewHsIndex = -1;
+                return false;
+            }
+
+            if (list.length > HS_MAX) list.length = HS_MAX;
+            all[key] = list;
+            localStorage.setItem(HS_STORAGE_KEY, JSON.stringify(all));
+            return true;
         }
+
+        function renderHighScores() {
+            const list = getHighScoreList();
+            const wrap = document.getElementById('hs-table-wrap');
+            document.getElementById('hs-config-label').textContent =
+                gridSize + '\u00D7' + gridSize + ' board, match ' + matchCount;
+
+            if (list.length === 0) {
+                wrap.innerHTML = '<div class="hs-empty">No scores yet. Play a game!</div>';
+                return;
+            }
+
+            const medals = ['hs-gold', 'hs-silver', 'hs-bronze'];
+            let html = '<table class="hs-table"><thead><tr><th>#</th><th>Score</th><th>Name</th><th>Date</th></tr></thead><tbody>';
+
+            list.forEach((entry, i) => {
+                const medalClass = i < 3 ? medals[i] : '';
+                const newClass = i === lastNewHsIndex ? 'hs-new' : '';
+                const d = new Date(entry.date);
+                const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' });
+                html += '<tr class="' + medalClass + ' ' + newClass + '">';
+                html += '<td>' + (i + 1) + '</td>';
+                html += '<td class="hs-score">' + entry.score.toLocaleString() + '</td>';
+                html += '<td class="hs-name">' + (entry.name || '---') + '</td>';
+                html += '<td class="hs-date">' + dateStr + '</td>';
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            wrap.innerHTML = html;
+        }
+
+        function showHighScores() {
+            renderHighScores();
+            document.getElementById('hs-modal').classList.add('show');
+        }
+
+        function hideHighScores() {
+            document.getElementById('hs-modal').classList.remove('show');
+            lastNewHsIndex = -1;
+        }
+
+        function clearHighScores() {
+            if (confirm('Clear all high scores for this configuration?')) {
+                const all = getAllHighScores();
+                delete all[hsKey()];
+                localStorage.setItem(HS_STORAGE_KEY, JSON.stringify(all));
+                highScore = 0;
+                updateScore();
+                renderHighScores();
+            }
+        }
+
         let highScore = 0;
         let piece = null;   // current piece to place
         let drag = null;   // active drag state
@@ -1445,11 +1862,16 @@
             sfx('over');
             document.getElementById('final-score').textContent = score;
             const hs = document.getElementById('go-hs');
-            const isNewHigh = score > 0 && score >= highScore && score > getHighScore();
             const nameEntry = document.getElementById('name-entry');
             const nameInput = document.getElementById('hs-name');
-            if (isNewHigh) {
-                hs.textContent = '\u{1F3C6} New High Score!';
+
+            // Check if score makes the top 10
+            const currentList = getHighScoreList();
+            const makesLeaderboard = score > 0 && (currentList.length < HS_MAX || score > currentList[currentList.length - 1].score);
+
+            if (makesLeaderboard) {
+                const isNewBest = score > getHighScore();
+                hs.textContent = isNewBest ? '\u{1F3C6} New High Score!' : '\u{1F4CB} You made the leaderboard!';
                 nameEntry.style.display = 'block';
                 nameInput.value = '';
                 setTimeout(() => nameInput.focus(), 100);
@@ -1466,10 +1888,8 @@
             const nameInput = document.getElementById('hs-name');
             if (nameEntry.style.display !== 'none') {
                 const name = nameInput.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase();
-                if (score > getHighScore()) {
-                    setHighScore(score, name);
-                    highScore = score;
-                }
+                addHighScoreEntry(score, name);
+                highScore = getHighScore();
             }
             newGame();
         }
@@ -1478,7 +1898,9 @@
         function newGame() {
             document.getElementById('game-over').classList.remove('show');
             document.getElementById('settings-modal').classList.remove('show');
+            document.getElementById('hs-modal').classList.remove('show');
             document.getElementById('name-entry').style.display = 'none';
+            lastNewHsIndex = -1;
             init();
         }
 
@@ -1498,8 +1920,31 @@
             gridSize = parseInt(document.getElementById('opt-size').value);
             matchCount = parseInt(document.getElementById('opt-match').value);
             soundOn = document.getElementById('opt-sound').value === '1';
+            saveSettings();
             document.getElementById('settings-modal').classList.remove('show');
             init();
+        }
+
+        function saveSettings() {
+            localStorage.setItem('dcSettings', JSON.stringify({
+                gridSize,
+                matchCount,
+                soundOn
+            }));
+        }
+
+        function loadSettings() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('dcSettings'));
+                if (saved) {
+                    gridSize = saved.gridSize || 5;
+                    matchCount = saved.matchCount || 3;
+                    soundOn = saved.soundOn !== undefined ? saved.soundOn : true;
+                    document.getElementById('opt-size').value = String(gridSize);
+                    document.getElementById('opt-match').value = String(matchCount);
+                    document.getElementById('opt-sound').value = soundOn ? '1' : '0';
+                }
+            } catch (e) { /* ignore corrupt data */ }
         }
 
         // ── Global event guards ────────────────────────────────────
@@ -1510,10 +1955,12 @@
             if (e.key === 'Escape') {
                 document.getElementById('settings-modal').classList.remove('show');
                 document.getElementById('help-modal').classList.remove('show');
+                document.getElementById('hs-modal').classList.remove('show');
             }
         });
 
         // ── Start ──────────────────────────────────────────────────
+        loadSettings();
         init();
     </script>
     <script src="../scripts/mobile-controls.js"></script>
