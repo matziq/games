@@ -103,7 +103,6 @@
             border: 1px solid var(--ui-border);
             box-shadow: 0 12px 40px var(--shadow);
             border-radius: 14px;
-            backdrop-filter: blur(10px);
         }
 
         .panel .label {
@@ -157,7 +156,6 @@
             border-radius: 14px;
             color: var(--ui-muted);
             box-shadow: 0 12px 40px var(--shadow);
-            backdrop-filter: blur(10px);
             pointer-events: none;
             opacity: 0;
             transition: opacity 250ms ease;
@@ -190,7 +188,6 @@
             border-radius: 18px;
             box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
             padding: 18px;
-            backdrop-filter: blur(10px);
         }
 
         .card h1 {
@@ -2749,7 +2746,6 @@
                 const tt = (t || 0) + ((seed || 0) % 1000);
 
                 ctx.save();
-                ctx.globalCompositeOperation = 'lighter';
 
                 // Slow sweeping “facet band”.
                 {
@@ -2812,12 +2808,9 @@
             }
 
             function drawBackground() {
-                // Background is handled by CSS on #app.
-                // We only draw a subtle vignette + danger line.
                 const w = viewW || window.innerWidth;
                 const h = viewH || window.innerHeight;
 
-                // Playfield shadow + outline so it reads as a "lane".
                 const l = playfield.left || 0;
                 const r = playfield.right || w;
                 const fw = playfield.width || w;
@@ -2829,23 +2822,10 @@
                 ctx.save();
                 ctx.globalAlpha = 0.30;
                 ctx.fillStyle = 'rgba(0,0,0,0.55)';
-                // Top gutter
                 ctx.fillRect(0, 0, w, pt);
-                // Side gutters (only over playfield height)
                 ctx.fillRect(0, pt, l, ph);
                 ctx.fillRect(r, pt, w - r, ph);
-                // Bottom gutter (usually none since playfield is bottom-anchored, but safe)
                 if (pb < h) ctx.fillRect(0, pb, w, h - pb);
-                ctx.restore();
-
-                // Soft inner glow.
-                ctx.save();
-                const glow = ctx.createLinearGradient(l, 0, r, 0);
-                glow.addColorStop(0, 'rgba(255,255,255,0.03)');
-                glow.addColorStop(0.5, 'rgba(255,255,255,0.015)');
-                glow.addColorStop(1, 'rgba(255,255,255,0.03)');
-                ctx.fillStyle = glow;
-                ctx.fillRect(l, pt, fw, ph);
                 ctx.restore();
 
                 // Border.
@@ -2867,31 +2847,19 @@
                 ctx.lineTo((playfield.right || w) - 12, dangerLinePx);
                 ctx.stroke();
                 ctx.restore();
-
-                // Vignette.
-                const grd = ctx.createRadialGradient(w * 0.5, h * 0.35, 40, w * 0.5, h * 0.5, Math.max(w, h));
-                grd.addColorStop(0, 'rgba(0,0,0,0.0)');
-                grd.addColorStop(1, 'rgba(0,0,0,0.35)');
-                ctx.fillStyle = grd;
-                ctx.fillRect(0, 0, w, h);
             }
 
             function drawBowlRails() {
-                // Draw the physical rails as visible "glass" sides.
-                // Kept separate from drawBackground so it stays visible even under overlays/vignette.
                 if (!bounds || !bounds.bowl || !bounds.bowl.length) return;
 
                 ctx.save();
-                ctx.globalCompositeOperation = 'lighter';
                 ctx.lineJoin = 'round';
                 ctx.lineCap = 'round';
 
-                // Outer glow stroke.
-                ctx.globalAlpha = 0.55;
+                // Outer colored stroke.
+                ctx.globalAlpha = 0.45;
                 ctx.strokeStyle = 'rgba(90, 220, 255, 0.55)';
-                ctx.lineWidth = 6;
-                ctx.shadowColor = 'rgba(90, 220, 255, 0.35)';
-                ctx.shadowBlur = 10;
+                ctx.lineWidth = 4;
 
                 for (const seg of bounds.bowl) {
                     if (!seg || !seg.vertices || !seg.plugin?.isBowlRail) continue;
@@ -2904,10 +2872,9 @@
                 }
 
                 // Inner crisp edge.
-                ctx.shadowBlur = 0;
-                ctx.globalAlpha = 0.85;
-                ctx.strokeStyle = 'rgba(255,255,255,0.28)';
-                ctx.lineWidth = 2.25;
+                ctx.globalAlpha = 0.75;
+                ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+                ctx.lineWidth = 1.5;
 
                 for (const seg of bounds.bowl) {
                     if (!seg || !seg.vertices || !seg.plugin?.isBowlRail) continue;
@@ -2944,12 +2911,10 @@
                 ctx.translate(x + sx, y + sy);
                 ctx.rotate(a);
 
-                // "Armed" indicator: pulsing ring + glow while waiting to pop.
+                // "Armed" indicator: pulsing ring while waiting to pop.
                 if (isArmed) {
                     ctx.save();
-                    ctx.shadowColor = fruit.accent;
-                    ctx.shadowBlur = 18 + 18 * pulse;
-                    ctx.globalAlpha = 0.22 + 0.30 * pulse;
+                    ctx.globalAlpha = 0.35 + 0.35 * pulse;
                     ctx.strokeStyle = fruit.accent;
                     ctx.lineWidth = 2.4 + 1.6 * pulse;
                     ctx.beginPath();
@@ -2958,23 +2923,27 @@
                     ctx.restore();
                 }
 
-                // Base fill (shaded).
-                const g = ctx.createRadialGradient(-r * 0.35, -r * 0.4, r * 0.2, 0, 0, r * 1.15);
-                g.addColorStop(0, fruit.accent);
-                g.addColorStop(0.55, fruit.color);
-                g.addColorStop(1, 'rgba(0,0,0,0.18)');
-
-                ctx.fillStyle = g;
+                // Base fill (flat color).
+                ctx.fillStyle = fruit.color;
                 ctx.beginPath();
                 ctx.arc(0, 0, r, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Texture overlay.
+                // Simple glossy highlight (like Betris/Domino cells).
                 ctx.save();
-                ctx.globalAlpha = 0.45;
-                ctx.fillStyle = createPattern(ctx, fruit);
+                ctx.globalAlpha = 0.18;
+                ctx.fillStyle = 'white';
                 ctx.beginPath();
-                ctx.arc(0, 0, r, 0, Math.PI * 2);
+                ctx.arc(-r * 0.2, -r * 0.2, r * 0.55, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+
+                // Darker bottom edge.
+                ctx.save();
+                ctx.globalAlpha = 0.18;
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(r * 0.1, r * 0.15, r * 0.6, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.restore();
 
@@ -3006,7 +2975,6 @@
 
             function drawParticles(dt) {
                 ctx.save();
-                ctx.globalCompositeOperation = 'lighter';
                 for (let i = particles.length - 1; i >= 0; i--) {
                     const p = particles[i];
                     p.life -= dt;
@@ -3031,7 +2999,6 @@
 
             function drawBursts(dt) {
                 ctx.save();
-                ctx.globalCompositeOperation = 'lighter';
                 for (let i = bursts.length - 1; i >= 0; i--) {
                     const b = bursts[i];
                     b.t += dt;
