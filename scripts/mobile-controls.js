@@ -213,13 +213,11 @@
             else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
         }
         // Remove listeners after first trigger
-        document.removeEventListener('click', tryAutoFullscreen);
-        document.removeEventListener('touchstart', tryAutoFullscreen);
+        document.removeEventListener('pointerdown', tryAutoFullscreen);
         document.removeEventListener('keydown', tryAutoFullscreen);
     }
-    // Attach to first user gesture
-    document.addEventListener('click', tryAutoFullscreen, { once: true });
-    document.addEventListener('touchstart', tryAutoFullscreen, { once: true });
+    // Attach to first user gesture — pointerdown fires on any press (click, drag, tap)
+    document.addEventListener('pointerdown', tryAutoFullscreen, { once: true });
     document.addEventListener('keydown', tryAutoFullscreen, { once: true });
 
     /* ------------------------------------------------------------------ */
