@@ -1132,6 +1132,7 @@
             if (list.length > HS_MAX) list.length = HS_MAX;
             all[key] = list;
             localStorage.setItem(HS_STORAGE_KEY, JSON.stringify(all));
+            if (window.GHScores) GHScores.save('domino_combo', HS_STORAGE_KEY);
             return true;
         }
 
@@ -2096,6 +2097,10 @@
         // ── Start ──────────────────────────────────────────────────
         loadSettings();
         init();
+    </script>
+    <script src="../scripts/github-scores.js"></script>
+    <script>
+        if (window.GHScores) GHScores.load('domino_combo', 'dcHighScoresList', 5).then(() => { highScore = getHighScore(); updateScore(); }).catch(() => { });
     </script>
     <script src="../scripts/mobile-controls.js"></script>
 </body>

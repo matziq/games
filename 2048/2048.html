@@ -627,6 +627,7 @@
 
             function saveHighScores2048(list) {
                 localStorage.setItem(HS_KEY_2048, JSON.stringify(list));
+                if (window.GHScores) GHScores.save('2048', HS_KEY_2048);
             }
 
             function addHighScore2048(scoreVal, nameVal) {
@@ -1575,6 +1576,10 @@
             resizeConfettiCanvas();
             newGame();
         })();
+    </script>
+    <script src="../scripts/github-scores.js"></script>
+    <script>
+        if (window.GHScores) GHScores.load('2048', 'singlehtml2048_highscores', 5).catch(() => { });
     </script>
     <script src="../scripts/mobile-controls.js"></script>
 </body>

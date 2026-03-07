@@ -1728,6 +1728,7 @@
 
         function saveHighScores(list) {
             localStorage.setItem(HS_KEY, JSON.stringify(list));
+            if (window.GHScores) GHScores.save('betris', HS_KEY);
         }
 
         function addHighScore(scoreVal, linesVal, levelVal, nameVal) {
@@ -2049,6 +2050,10 @@
         });
     </script>
 
+    <script src="../scripts/github-scores.js"></script>
+    <script>
+        if (window.GHScores) GHScores.load('betris', 'betris-highscores', 5).catch(() => { });
+    </script>
     <script src="../scripts/mobile-controls.js"></script>
 </body>
 

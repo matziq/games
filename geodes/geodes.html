@@ -1385,6 +1385,7 @@
           else if (!inserted) { geoLastNewHsIdx = -1; return false; }
           if (list.length > 5) list.length = 5;
           localStorage.setItem(GEO_HS_KEY, JSON.stringify(list));
+          if (window.GHScores) GHScores.save('geodes', GEO_HS_KEY);
           return true;
         }
         function renderGeoHighScores() {
@@ -1879,6 +1880,10 @@
         // If you still can't see gems, try disabling the canvas transform (temporary debug)
         // canvas.style.transform = 'none';
       })();
+    </script>
+    <script src="../scripts/github-scores.js"></script>
+    <script>
+      if (window.GHScores) GHScores.load('geodes', 'geodes-highscores', 5).catch(() => { });
     </script>
     <script src="../scripts/mobile-controls.js"></script>
 </body>

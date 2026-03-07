@@ -274,6 +274,7 @@
 			else if (!inserted) { roaiLastNewHsIdx = -1; return false; }
 			if (list.length > 5) list.length = 5;
 			localStorage.setItem(ROAI_HS_KEY, JSON.stringify(list));
+			if (window.GHScores) GHScores.save('real_or_ai', ROAI_HS_KEY);
 			return true;
 		}
 		function renderRoaiHighScores() {
@@ -502,6 +503,10 @@
 
 		// Start the game on load
 		startGame();
+	</script>
+	<script src="../scripts/github-scores.js"></script>
+	<script>
+		if (window.GHScores) GHScores.load('real_or_ai', 'realOrAi-highscores', 5).catch(() => { });
 	</script>
 	<script src="../scripts/mobile-controls.js"></script>
 </body>

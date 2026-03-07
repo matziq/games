@@ -307,6 +307,7 @@
         else if (!ins) { azLastIdx = -1; return false; }
         if (list.length > 5) list.length = 5;
         localStorage.setItem(AZ_HS_KEY, JSON.stringify(list));
+        if (window.GHScores) GHScores.save('aztec_hero', AZ_HS_KEY);
         return true;
       }
       function renderAzHs() {
@@ -367,6 +368,10 @@
       document.getElementById('aztec-save-name').addEventListener('click', saveAzName);
       document.getElementById('aztec-hs-name').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); saveAzName(); } });
     })();
+  </script>
+  <script src="../scripts/github-scores.js"></script>
+  <script>
+    if (window.GHScores) GHScores.load('aztec_hero', 'aztecHero-highscores', 5).catch(() => { });
   </script>
 </body>
 

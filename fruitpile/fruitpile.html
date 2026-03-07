@@ -501,6 +501,7 @@
                 if (list.length > FP_HS_MAX) list.length = FP_HS_MAX;
                 all[key] = list;
                 localStorage.setItem(FP_HS_KEY, JSON.stringify(all));
+                if (window.GHScores) GHScores.save('fruitpile', FP_HS_KEY);
                 return true;
             }
 
@@ -3992,6 +3993,10 @@
 
             start();
         })();
+    </script>
+    <script src="../scripts/github-scores.js"></script>
+    <script>
+        if (window.GHScores) GHScores.load('fruitpile', 'fruitpile.highscores', 5).catch(() => { });
     </script>
     <script src="../scripts/mobile-controls.js"></script>
 </body>
