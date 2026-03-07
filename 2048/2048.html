@@ -576,7 +576,6 @@
             <h2>🏆 High Scores</h2>
             <div id="hs-table-wrap"></div>
             <button class="hs-close-btn" id="hsClose">Close</button>
-            <button class="hs-clear-btn" id="hsClear">Clear All Scores</button>
         </div>
     </div>
 
@@ -690,13 +689,6 @@
             function hideHighScores2048() {
                 document.getElementById('hs-modal').classList.remove('show');
                 lastNewHsIndex2048 = -1;
-            }
-
-            function clearHighScores2048() {
-                if (confirm('Clear all high scores?')) {
-                    localStorage.removeItem(HS_KEY_2048);
-                    renderHighScores2048();
-                }
             }
 
             function saveHsName2048() {
@@ -1548,7 +1540,6 @@
             document.getElementById('showScores').addEventListener('click', showHighScores2048);
             document.getElementById('goShowScores').addEventListener('click', showHighScores2048);
             document.getElementById('hsClose').addEventListener('click', hideHighScores2048);
-            document.getElementById('hsClear').addEventListener('click', clearHighScores2048);
             document.getElementById('hs2048-save').addEventListener('click', saveHsName2048);
             document.getElementById('hs2048-name').addEventListener('keydown', e => {
                 if (e.key === 'Enter') { e.preventDefault(); const btn = document.getElementById('hs2048-save'); if (!btn.disabled) saveHsName2048(); }

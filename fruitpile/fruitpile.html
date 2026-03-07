@@ -414,9 +414,6 @@
                 <div id="fp-hs-wrap"></div>
                 <div class="row">
                     <button id="fpHsClose">Close</button>
-                    <button id="fpHsClear"
-                        style="background:transparent;border-color:rgba(255,107,122,0.4);color:var(--danger);">Clear
-                        Scores</button>
                 </div>
             </div>
         </div>
@@ -3948,11 +3945,6 @@
 
             document.getElementById('btnScores').addEventListener('click', showFpHighScores);
             document.getElementById('fpHsClose').addEventListener('click', hideFpHighScores);
-            document.getElementById('fpHsClear').addEventListener('click', () => {
-                if (confirm('Clear all high scores for this mode?')) {
-                    const all = getFpAllHs(); delete all[fpHsKey()]; localStorage.setItem(FP_HS_KEY, JSON.stringify(all)); renderFpHighScores();
-                }
-            });
             document.getElementById('btnGoHs').addEventListener('click', showFpHighScores);
 
             if (btnInfo) {

@@ -424,9 +424,6 @@
         <div id="geo-hs-wrap"></div>
         <button id="geoHsClose"
           style="width:100%;padding:11px;margin-top:18px;background:#ff6a00;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">Close</button>
-        <button id="geoHsClear"
-          style="display:block;margin:10px auto 0;padding:6px 18px;font-size:12px;background:transparent;color:#555;border:1px solid #333;border-radius:8px;cursor:pointer;">Clear
-          Scores</button>
       </div>
     </div>
 
@@ -1477,9 +1474,6 @@
 
         document.getElementById('scoresBtn').addEventListener('click', showGeoHighScores);
         document.getElementById('geoHsClose').addEventListener('click', hideGeoHighScores);
-        document.getElementById('geoHsClear').addEventListener('click', () => {
-          if (confirm('Clear all high scores?')) { localStorage.removeItem(GEO_HS_KEY); renderGeoHighScores(); }
-        });
 
         // Keyboard shortcuts
         window.addEventListener('keydown', (e) => {

@@ -163,9 +163,6 @@
 			<h2 style="text-align:center;margin:0 0 18px;font-size:22px;color:#ffd700;">🏆 High Scores</h2>
 			<div id="roai-hs-wrap"></div>
 			<button class="btn" id="roaiHsClose" style="width:100%;margin-top:18px;">Close</button>
-			<button id="roaiHsClear"
-				style="display:block;margin:10px auto 0;padding:6px 18px;font-size:12px;background:transparent;color:#888;border:1px solid #555;border-radius:8px;cursor:pointer;">Clear
-				Scores</button>
 		</div>
 	</div>
 	<script src="image_manifest.js"></script>
@@ -311,9 +308,6 @@
 
 		document.getElementById('roaiScoresBtn').addEventListener('click', showRoaiHighScores);
 		document.getElementById('roaiHsClose').addEventListener('click', hideRoaiHighScores);
-		document.getElementById('roaiHsClear').addEventListener('click', () => {
-			if (confirm('Clear all high scores?')) { localStorage.removeItem(ROAI_HS_KEY); renderRoaiHighScores(); }
-		});
 
 		function shuffle(arr) {
 			for (let i = arr.length - 1; i > 0; i--) {

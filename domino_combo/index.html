@@ -995,7 +995,6 @@
             <div class="hs-config-label" id="hs-config-label"></div>
             <div id="hs-table-wrap"></div>
             <button class="close-settings" onclick="hideHighScores()">Close</button>
-            <button class="hs-clear-btn" onclick="clearHighScores()">Clear All Scores</button>
         </div>
     </div>
 
@@ -1175,17 +1174,6 @@
         function hideHighScores() {
             document.getElementById('hs-modal').classList.remove('show');
             lastNewHsIndex = -1;
-        }
-
-        function clearHighScores() {
-            if (confirm('Clear all high scores for this configuration?')) {
-                const all = getAllHighScores();
-                delete all[hsKey()];
-                localStorage.setItem(HS_STORAGE_KEY, JSON.stringify(all));
-                highScore = 0;
-                updateScore();
-                renderHighScores();
-            }
         }
 
         let highScore = 0;

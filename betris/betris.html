@@ -833,7 +833,6 @@
         <h2>🏆 High Scores</h2>
         <div id="hs-table-wrap"></div>
         <button class="close-settings" onclick="hideHighScores()">Close</button>
-        <button class="hs-clear-btn" onclick="clearHighScores()">Clear All Scores</button>
     </div>
     </div>
 
@@ -1818,16 +1817,6 @@
                 paused = false;
                 resetDropTimer();
                 draw();
-            }
-        }
-
-        function clearHighScores() {
-            if (confirm('Clear all high scores?')) {
-                localStorage.removeItem(HS_KEY);
-                localStorage.removeItem('betris-hs');
-                highScore = 0;
-                updateDisplay();
-                renderHighScores();
             }
         }
 
