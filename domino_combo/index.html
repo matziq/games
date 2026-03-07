@@ -1277,21 +1277,34 @@
                         g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
                         o.start(t); o.stop(t + 0.4); break;
                     case 'explode6':
-                        o.type = 'sawtooth'; o.frequency.setValueAtTime(880, t);
-                        o.frequency.exponentialRampToValueAtTime(110, t + 0.4);
-                        g.gain.setValueAtTime(0.12, t);
-                        g.gain.linearRampToValueAtTime(0.08, t + 0.1);
-                        g.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
-                        o.start(t); o.stop(t + 0.45);
-                        // Add a second oscillator for shimmer
+                        // Balloon pop: short noise burst with sharp attack, fast decay
                         {
-                            const o2 = c.createOscillator(), g2 = c.createGain();
-                            o2.connect(g2); g2.connect(c.destination);
-                            o2.type = 'sine'; o2.frequency.setValueAtTime(1760, t);
-                            o2.frequency.exponentialRampToValueAtTime(440, t + 0.35);
-                            g2.gain.setValueAtTime(0.06, t);
-                            g2.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
-                            o2.start(t); o2.stop(t + 0.35);
+                            const dur = 0.12;
+                            const len = Math.ceil(c.sampleRate * dur);
+                            const buf = c.createBuffer(1, len, c.sampleRate);
+                            const data = buf.getChannelData(0);
+                            for (let i = 0; i < len; i++) {
+                                const env = Math.exp(-i / (len * 0.08));
+                                data[i] = (Math.random() * 2 - 1) * env;
+                            }
+                            const src = c.createBufferSource();
+                            src.buffer = buf;
+                            // Bandpass filter for that hollow pop character
+                            const bp = c.createBiquadFilter();
+                            bp.type = 'bandpass';
+                            bp.frequency.value = 1800;
+                            bp.Q.value = 1.2;
+                            const gn = c.createGain();
+                            gn.gain.setValueAtTime(0.25, t);
+                            gn.gain.exponentialRampToValueAtTime(0.001, t + dur);
+                            src.connect(bp); bp.connect(gn); gn.connect(c.destination);
+                            src.start(t); src.stop(t + dur);
+                            // Tiny tonal thump for the initial "pop" impact
+                            o.type = 'sine'; o.frequency.setValueAtTime(400, t);
+                            o.frequency.exponentialRampToValueAtTime(80, t + 0.06);
+                            g.gain.setValueAtTime(0.15, t);
+                            g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+                            o.start(t); o.stop(t + 0.08);
                         }
                         break;
                     case 'over':
