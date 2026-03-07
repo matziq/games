@@ -150,6 +150,8 @@
 		<div class="score" id="score"></div>
 		<button class="btn" id="nextBtn" style="display:none;">Next</button>
 		<button class="btn" id="restartBtn" style="display:none;">Restart</button>
+		<a class="btn" id="menuBtnGO" href="../gamemenu.html"
+			style="display:none;text-decoration:none;text-align:center;background:#555;">← Menu</a>
 		<button class="btn" id="roaiScoresBtn" style="background:#ffd700;color:#222;margin-top:12px;">🏆 High
 			Scores</button>
 	</div>
@@ -369,6 +371,7 @@
 			document.getElementById('feedback').textContent = '';
 			document.getElementById('nextBtn').style.display = 'none';
 			document.getElementById('restartBtn').style.display = 'none';
+			document.getElementById('menuBtnGO').style.display = 'none';
 			document.getElementById('score').textContent = `Score: ${score} / ${pairs.length}`;
 			document.getElementById('round-info').textContent = `Round ${currentRound + 1} of ${pairs.length}`;
 			const pair = pairs[currentRound];
@@ -454,6 +457,7 @@
 
 			document.getElementById('feedback').innerHTML = feedHtml;
 			document.getElementById('restartBtn').style.display = 'inline-block';
+			document.getElementById('menuBtnGO').style.display = 'inline-block';
 
 			if (makesLb) {
 				setTimeout(() => {

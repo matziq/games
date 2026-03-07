@@ -745,7 +745,7 @@
 <body>
 
     <div id="game">
-        <a id="menu-link" href="../index.html">← Menu</a>
+        <a id="menu-link" href="../gamemenu.html">← Menu</a>
         <div id="score-display">0</div>
         <div id="stats-row">
             <span>Best: <b id="high-score">0</b></span>
@@ -825,15 +825,16 @@
         </div>
         <button class="overlay-btn" onclick="newGame()">Play Again</button>
         <button class="hs-list-btn" onclick="showHighScores()">🏆 High Scores</button>
+        <a href="../gamemenu.html"
+            style="display:inline-block;margin-top:10px;font-size:14px;font-weight:700;color:#888;text-decoration:none;">←
+            Menu</a>
     </div>
-
-    <div id="hs-modal" class="overlay">
-        <div class="hs-content">
-            <h2>🏆 High Scores</h2>
-            <div id="hs-table-wrap"></div>
-            <button class="close-settings" onclick="hideHighScores()">Close</button>
-            <button class="hs-clear-btn" onclick="clearHighScores()">Clear All Scores</button>
-        </div>
+    <div class="hs-content">
+        <h2>🏆 High Scores</h2>
+        <div id="hs-table-wrap"></div>
+        <button class="close-settings" onclick="hideHighScores()">Close</button>
+        <button class="hs-clear-btn" onclick="clearHighScores()">Clear All Scores</button>
+    </div>
     </div>
 
     <div id="help-modal" class="overlay">
