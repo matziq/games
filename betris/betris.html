@@ -829,11 +829,13 @@
             style="display:inline-block;margin-top:10px;font-size:14px;font-weight:700;color:#888;text-decoration:none;">←
             Menu</a>
     </div>
-    <div class="hs-content">
-        <h2>🏆 High Scores</h2>
-        <div id="hs-table-wrap"></div>
-        <button class="close-settings" onclick="hideHighScores()">Close</button>
-    </div>
+
+    <div id="hs-modal" class="overlay">
+        <div class="hs-content">
+            <h2>🏆 High Scores</h2>
+            <div id="hs-table-wrap"></div>
+            <button class="close-settings" onclick="hideHighScores()">Close</button>
+        </div>
     </div>
 
     <div id="help-modal" class="overlay">
