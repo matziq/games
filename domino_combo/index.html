@@ -1063,7 +1063,7 @@
         // Per-config high scores: keyed by "gridSize_matchCount"
         // Each entry is an array of { score, name, date }
         const HS_STORAGE_KEY = 'dcHighScoresList';
-        const HS_MAX = 10;
+        const HS_MAX = 5;
         let lastNewHsIndex = -1;
 
         // Migrate legacy single-entry format
@@ -1959,7 +1959,7 @@
             const nameEntry = document.getElementById('name-entry');
             const nameInput = document.getElementById('hs-name');
 
-            // Check if score makes the top 10
+            // Check if score makes the top 5
             const currentList = getHighScoreList();
             const makesLeaderboard = score > 0 && (currentList.length < HS_MAX || score > currentList[currentList.length - 1].score);
 
@@ -1970,8 +1970,11 @@
                 nameInput.value = '';
                 nameInput.disabled = false;
                 nameInput.style.borderColor = '#29B6F6';
-                document.getElementById('save-name-btn').style.display = '';
-                document.getElementById('save-name-btn').textContent = 'Save';
+                const saveBtn = document.getElementById('save-name-btn');
+                saveBtn.style.display = '';
+                saveBtn.textContent = 'Save';
+                saveBtn.disabled = false;
+                saveBtn.style.background = '#29B6F6';
                 document.getElementById('name-saved-msg').style.display = 'none';
                 document.getElementById('name-hint').style.display = '';
                 setTimeout(() => nameInput.focus(), 100);

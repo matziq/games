@@ -1328,7 +1328,7 @@
         const infoP = overlay.querySelector('p.big');
 
         const list = getGeoHighScores();
-        const makesLb = score > 0 && (list.length < 10 || score > list[list.length - 1].score);
+        const makesLb = score > 0 && (list.length < 5 || score > list[list.length - 1].score);
         geoPendingScore = score;
 
         let bodyHtml = `Final Score: <strong>${score}</strong> — Geodes escaped: <strong>${missed}</strong>.`;
@@ -1382,9 +1382,9 @@
         for (let i = 0; i < list.length; i++) {
           if (scoreVal > list[i].score) { list.splice(i, 0, entry); inserted = true; geoLastNewHsIdx = i; break; }
         }
-        if (!inserted && list.length < 10) { geoLastNewHsIdx = list.length; list.push(entry); inserted = true; }
+        if (!inserted && list.length < 5) { geoLastNewHsIdx = list.length; list.push(entry); inserted = true; }
         else if (!inserted) { geoLastNewHsIdx = -1; return false; }
-        if (list.length > 10) list.length = 10;
+        if (list.length > 5) list.length = 5;
         localStorage.setItem(GEO_HS_KEY, JSON.stringify(list));
         return true;
       }

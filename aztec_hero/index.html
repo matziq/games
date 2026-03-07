@@ -306,9 +306,9 @@
         for (let i = 0; i < list.length; i++) {
           if (gems > list[i].score) { list.splice(i, 0, entry); ins = true; azLastIdx = i; break; }
         }
-        if (!ins && list.length < 10) { azLastIdx = list.length; list.push(entry); ins = true; }
+        if (!ins && list.length < 5) { azLastIdx = list.length; list.push(entry); ins = true; }
         else if (!ins) { azLastIdx = -1; return false; }
-        if (list.length > 10) list.length = 10;
+        if (list.length > 5) list.length = 5;
         localStorage.setItem(AZ_HS_KEY, JSON.stringify(list));
         return true;
       }
@@ -344,7 +344,7 @@
       // Called from Phaser scene
       window.__aztecGameEnd = function (gems, escaped) {
         const list = getAzHs();
-        const makesLb = gems > 0 && (list.length < 10 || gems > list[list.length - 1].score);
+        const makesLb = gems > 0 && (list.length < 5 || gems > list[list.length - 1].score);
         if (makesLb) {
           azPending = { gems, escaped };
           document.getElementById('aztec-name-entry').style.display = 'block';

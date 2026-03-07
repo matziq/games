@@ -271,9 +271,9 @@
 			for (let i = 0; i < list.length; i++) {
 				if (scoreVal > list[i].score) { list.splice(i, 0, entry); inserted = true; roaiLastNewHsIdx = i; break; }
 			}
-			if (!inserted && list.length < 10) { roaiLastNewHsIdx = list.length; list.push(entry); inserted = true; }
+			if (!inserted && list.length < 5) { roaiLastNewHsIdx = list.length; list.push(entry); inserted = true; }
 			else if (!inserted) { roaiLastNewHsIdx = -1; return false; }
-			if (list.length > 10) list.length = 10;
+			if (list.length > 5) list.length = 5;
 			localStorage.setItem(ROAI_HS_KEY, JSON.stringify(list));
 			return true;
 		}
@@ -430,7 +430,7 @@
 			document.getElementById('nextBtn').style.display = 'none';
 
 			const list = getRoaiHighScores();
-			const makesLb = score > 0 && (list.length < 10 || score > list[list.length - 1].score);
+			const makesLb = score > 0 && (list.length < 5 || score > list[list.length - 1].score);
 			roaiPendingScore = { score, total: pairs.length };
 
 			let feedHtml = `Your final score: ${score} / ${pairs.length}`;
