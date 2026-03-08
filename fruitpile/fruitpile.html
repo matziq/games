@@ -2395,8 +2395,6 @@
                 const candidates = [];
                 for (const b of list) {
                     if (!isFruitBody(b)) continue;
-                    // With staged explosions, bodies are marked in explodedIds before they are removed.
-                    // We must still consider them part of the touching component until they're actually gone.
                     if (removedIds.has(b.id)) continue;
                     if (b.plugin?.fruitKey !== fruitKey) continue;
                     candidates.push(b);
@@ -2416,15 +2414,22 @@
                 push(seedA);
                 push(seedB);
 
+                // Proximity tolerance: fruit within (sumOfRadii + gap) are considered touching.
+                // This prevents micro-bounces from excluding fruit that were just in contact.
+                const TOUCH_GAP = 6;
+
                 for (let qi = 0; qi < queue.length; qi++) {
                     const cur = queue[qi];
-                    // Query.collides returns collision pairs between this body and the candidate set.
-                    const collisions = Query.collides(cur, candidates);
-                    for (const c of collisions) {
-                        const a = c.bodyA;
-                        const b = c.bodyB;
-                        const other = (a && a.id === cur.id) ? b : a;
-                        if (other) push(other);
+                    const curR = cur.circleRadius || (cur.plugin?.radius) || 14;
+                    for (const cand of candidates) {
+                        if (seen.has(cand.id)) continue;
+                        const candR = cand.circleRadius || (cand.plugin?.radius) || 14;
+                        const dx = cur.position.x - cand.position.x;
+                        const dy = cur.position.y - cand.position.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist <= curR + candR + TOUCH_GAP) {
+                            push(cand);
+                        }
                     }
                 }
 
@@ -3613,15 +3618,13 @@
 
                                     mergeCluster(cluster, bodies);
 
-                                    // Remove any other *already-due* queue items that reference a body in the cluster.
-                                    // This is cheaper than recomputing clusters for each item and ensures the cluster
-                                    // can't immediately "re-merge" from stale pairs.
+                                    // Remove ALL queue items that reference a body in the cluster
+                                    // (including not-yet-due ones) so no stale pairs remain.
                                     const idsInCluster = new Set();
                                     for (const b of cluster) idsInCluster.add(b.id);
                                     for (let j = explodeQueue.length - 1; j >= 0; j--) {
                                         const other = explodeQueue[j];
                                         if (!other) continue;
-                                        if (other.at > now) continue;
                                         if (other.fruitKey !== item.fruitKey) continue;
                                         if (!idsInCluster.has(other.aId) && !idsInCluster.has(other.bId)) continue;
                                         try { scheduledPairs.delete(pairKey(other.aId, other.bId)); } catch { /* ignore */ }
@@ -3636,15 +3639,12 @@
                                     explodedClusterRootsThisTick.add(rootId);
                                     stageExplosionCluster(cluster, bodies, item.fruitKey);
 
-                                    // Remove other due items for this cluster so they can't invalidate or leave
-                                    // a remaining fruit armed.
+                                    // Remove ALL queue items for this cluster's bodies.
                                     const idsInCluster = new Set();
-                                    // Only need to guarantee correctness up to 5; but this is cheap anyway.
                                     for (const b of cluster) idsInCluster.add(b.id);
                                     for (let j = explodeQueue.length - 1; j >= 0; j--) {
                                         const other = explodeQueue[j];
                                         if (!other) continue;
-                                        if (other.at > now) continue;
                                         if (other.fruitKey !== item.fruitKey) continue;
                                         if (!idsInCluster.has(other.aId) && !idsInCluster.has(other.bId)) continue;
                                         try { scheduledPairs.delete(pairKey(other.aId, other.bId)); } catch { /* ignore */ }
