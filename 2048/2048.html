@@ -38,25 +38,19 @@
         }
 
         .menu-link {
-            position: fixed;
-            top: 12px;
-            left: 12px;
-            z-index: 9999;
-            display: inline-flex;
-            align-items: center;
-            padding: 8px 10px;
-            border-radius: 999px;
-            text-decoration: none;
-            font-weight: 800;
+            display: block;
+            text-align: center;
             font-size: 13px;
-            color: #fff;
-            background: rgba(0, 0, 0, 0.55);
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+            font-weight: 700;
+            color: #8f7a66;
+            text-decoration: none;
+            padding: 4px 0;
+            transition: color 0.15s;
+            letter-spacing: 0.3px;
         }
 
         .menu-link:hover {
-            background: rgba(0, 0, 0, 0.7);
+            color: #bbada0;
         }
 
         .menu-link:focus-visible {
@@ -494,8 +488,8 @@
 </head>
 
 <body>
-    <a class="menu-link" href="../gamemenu.html" aria-label="Back to games menu">← Menu</a>
     <main class="app" aria-label="2048 game">
+        <a class="menu-link" href="../gamemenu.html" aria-label="Back to games menu">← Games Menu</a>
         <header>
             <div class="title">
                 <h1>2048</h1>
@@ -561,7 +555,8 @@
                     </div>
                     <div class="row" style="margin-top:8px;">
                         <a href="../gamemenu.html"
-                            style="font-size:14px;font-weight:700;color:#999;text-decoration:none;">← Menu</a>
+                            style="padding:8px 20px;font-size:14px;font-weight:700;color:#8f7a66;text-decoration:none;border:1px solid rgba(143,122,102,0.3);border-radius:10px;">←
+                            Games Menu</a>
                     </div>
                     <div class="small">Tip: on desktop, click + drag a little in the direction you want.</div>
                 </div>

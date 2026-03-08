@@ -151,26 +151,19 @@
 
         .menu-link {
             position: fixed;
-            top: 16px;
+            top: 10px;
             right: 16px;
             z-index: 20;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 10px;
-            border-radius: 999px;
             text-decoration: none;
-            font-weight: 800;
-            font-size: 12px;
-            color: var(--text);
-            background: linear-gradient(180deg, rgba(21, 24, 33, 0.86), rgba(21, 24, 33, 0.78));
-            border: 1px solid #222838;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
-            backdrop-filter: blur(6px);
+            font-weight: 700;
+            font-size: 13px;
+            color: #ffc400;
+            transition: color 0.15s;
+            letter-spacing: 0.3px;
         }
 
         .menu-link:hover {
-            background: linear-gradient(180deg, rgba(34, 40, 56, 0.86), rgba(21, 24, 33, 0.78));
+            color: #ffe066;
         }
 
         .menu-link:focus-visible {
@@ -211,7 +204,7 @@
 </head>
 
 <body>
-    <a class="menu-link" href="../gamemenu.html" aria-label="Back to games menu">← Menu</a>
+    <a class="menu-link" href="../gamemenu.html" aria-label="Back to games menu">← Games Menu</a>
     <div id="ui">
         <h1><span class="dot"></span>Beehive Construction</h1>
 

@@ -12,27 +12,19 @@
 		}
 
 		.menu-link {
-			position: fixed;
-			top: 12px;
-			left: 12px;
-			z-index: 10;
-			display: inline-flex;
-			align-items: center;
-			gap: 8px;
-			padding: 8px 10px;
-			border-radius: 999px;
+			display: block;
+			text-align: center;
+			font-size: 13px;
+			font-weight: 700;
+			color: #09f;
 			text-decoration: none;
-			font-weight: 800;
-			font-size: 12px;
-			color: #fff;
-			background: rgba(0, 0, 0, .35);
-			border: 1px solid rgba(255, 255, 255, .14);
-			box-shadow: 0 10px 24px rgba(0, 0, 0, .35);
-			backdrop-filter: blur(6px);
+			padding: 4px 0;
+			transition: color 0.15s;
+			letter-spacing: 0.3px;
 		}
 
 		.menu-link:hover {
-			background: rgba(0, 0, 0, .5);
+			color: #4dc3ff;
 		}
 
 		.menu-link:focus-visible {
@@ -207,8 +199,8 @@
 </head>
 
 <body>
-	<a class="menu-link" href="../gamemenu.html" aria-label="Back to games menu">← Menu</a>
 	<div class="game-container">
+		<a class="menu-link" href="../gamemenu.html" aria-label="Back to games menu">← Games Menu</a>
 		<h1>Real or AI?</h1>
 		<div id="round-info"></div>
 		<div id="instructions">Choose the <span class="ai-emphasis">AI</span> image</div>
@@ -218,7 +210,8 @@
 		<button class="btn" id="nextBtn" style="display:none;">Next</button>
 		<button class="btn" id="restartBtn" style="display:none;">Restart</button>
 		<a class="btn" id="menuBtnGO" href="../gamemenu.html"
-			style="display:none;text-decoration:none;text-align:center;background:#555;">← Menu</a>
+			style="display:none;text-decoration:none;text-align:center;background:transparent;color:#09f;border:1px solid rgba(0,153,255,0.3);">←
+			Games Menu</a>
 		<button class="btn" id="roaiScoresBtn" style="background:#ffd700;color:#222;margin-top:12px;">🏆 High
 			Scores</button>
 	</div>
