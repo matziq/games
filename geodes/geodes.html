@@ -41,7 +41,9 @@
       position: fixed;
       /* Portrait mode: constrain width, let height fill */
       width: min(100vw, 1024px);
+      height: 100dvh;
       height: 100vh;
+      /* fallback for browsers without dvh */
       max-width: 1024px;
       /* Center horizontally, anchor to bottom */
       bottom: 0;
@@ -497,18 +499,19 @@
         }
 
         function resize() {
-          // Use the canvas's CSS-constrained size (capped at 800×700)
-          const cw = canvas.clientWidth;
-          const ch = canvas.clientHeight;
-          W = canvas.width = Math.floor(cw * DPR);
-          H = canvas.height = Math.floor(ch * DPR);
+          // Use window.innerHeight for reliable visible viewport on mobile
+          const cw = Math.min(window.innerWidth, 1024);
+          const ch = window.innerHeight;
           canvas.style.width = `${cw}px`;
           canvas.style.height = `${ch}px`;
+          W = canvas.width = Math.floor(cw * DPR);
+          H = canvas.height = Math.floor(ch * DPR);
           ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
           volcano.x = cw / 2;
-          volcano.y = ch - 40; // Position volcano at bottom of container
+          volcano.y = ch - 40; // Position volcano at bottom of visible viewport
         }
         window.addEventListener('resize', resize, { passive: true });
+        if (window.visualViewport) window.visualViewport.addEventListener('resize', resize, { passive: true });
         resize();
 
         // Utility
