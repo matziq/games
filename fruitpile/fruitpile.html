@@ -3132,20 +3132,25 @@
                 ctx.translate(x, y);
 
                 const r = fruit.radius;
-                const g = ctx.createRadialGradient(-r * 0.35, -r * 0.4, r * 0.2, 0, 0, r * 1.15);
-                g.addColorStop(0, fruit.accent);
-                g.addColorStop(0.55, fruit.color);
-                g.addColorStop(1, 'rgba(0,0,0,0.18)');
 
-                ctx.fillStyle = g;
+                // Base fill (flat color, matching in-game style).
+                ctx.fillStyle = fruit.color;
                 ctx.beginPath();
                 ctx.arc(0, 0, r, 0, Math.PI * 2);
                 ctx.fill();
 
-                ctx.globalAlpha = 0.28;
-                ctx.fillStyle = createPattern(ctx, fruit);
+                // Simple glossy highlight.
+                ctx.globalAlpha = 0.14;
+                ctx.fillStyle = 'white';
                 ctx.beginPath();
-                ctx.arc(0, 0, r, 0, Math.PI * 2);
+                ctx.arc(-r * 0.2, -r * 0.2, r * 0.55, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Darker bottom edge.
+                ctx.globalAlpha = 0.14;
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(r * 0.1, r * 0.15, r * 0.6, 0, Math.PI * 2);
                 ctx.fill();
 
                 // Highlight.
@@ -3935,6 +3940,7 @@
             });
 
             btnPlay.addEventListener('click', () => {
+                modalIsInfo = false;
                 // Auto-save pending score
                 if (fpPendingScore !== null) {
                     const inp = document.getElementById('fp-hs-name');
@@ -3951,13 +3957,17 @@
             document.getElementById('fpHsClose').addEventListener('click', hideFpHighScores);
             document.getElementById('btnGoHs').addEventListener('click', showFpHighScores);
 
+            let modalIsInfo = false; // true when showing How to Play / info content
+
             if (btnInfo) {
                 btnInfo.addEventListener('click', () => {
+                    modalIsInfo = true;
                     setInfoModal('How To Play');
                 });
             }
 
             btnHow.addEventListener('click', () => {
+                modalIsInfo = true;
                 const help = (gameMode === GAME_MODES.MERGE)
                     ? 'Fruit Merge: start with only Cherries dropping. Once you create a Grape by merging, Grapes unlock and can drop too (and so on as you merge up the chain). If 2+ of the SAME fruit touch, they merge into the next bigger fruit after a fuse (1.5s base, +0.5s per extra fruit in the touching group). Watermelon merges into Diamonds. Make 20 Diamonds to win. If two Diamonds touch, they trigger a massive shockwave. If the pile creeps above the dashed line for too long, it’s game over.'
                     : 'Fruit Explosion: drop fruit into the pile. If 2+ of the SAME fruit touch, they pop after a fuse (1.5s base, +0.5s per extra fruit in the touching group) and you score points. Smaller fruit = more points. Chain pops/merges to build a combo multiplier (caps at 5x). If the pile creeps above the dashed line for too long, it’s game over.';
@@ -3966,9 +3976,12 @@
 
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {
-                    // Click outside card: start immediately.
                     setModal(false, '', '');
-                    newGame();
+                    // Only start a new game if this was the initial/game-over modal, not How to Play.
+                    if (!modalIsInfo) {
+                        newGame();
+                    }
+                    modalIsInfo = false;
                 }
             });
 
