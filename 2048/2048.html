@@ -1455,6 +1455,9 @@
             }
 
             async function newGameFromUser() {
+                // Confirm if a game is in progress
+                if (!gameOver && grid.some(row => row.some(v => v !== 0)) && !confirm('Start a new game?')) return;
+
                 // User explicitly started a new game; don't also trigger the one-time pending start sound.
                 pendingStartSound = false;
                 await ensureAudioUnlocked();

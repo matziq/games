@@ -1541,7 +1541,10 @@
         }
 
         // ── Game flow ──────────────────────────────────────────────
-        function newGame() {
+        function newGame(skipConfirm) {
+            // Confirm if a game is actively in progress
+            if (!skipConfirm && !gameOver && score > 0 && !confirm('Start a new game?')) return;
+
             ensureAudio();
             gameOver = false;
             paused = false;

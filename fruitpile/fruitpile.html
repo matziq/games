@@ -3884,7 +3884,10 @@
             }, { passive: false });
 
             // --- Buttons ---
-            btnNew.addEventListener('click', () => newGame());
+            btnNew.addEventListener('click', () => {
+                if (running && !confirm('Start a new game?')) return;
+                newGame();
+            });
 
             btnSound.addEventListener('click', async () => {
                 audio.enabled = !audio.enabled;

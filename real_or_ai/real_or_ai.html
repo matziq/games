@@ -136,6 +136,73 @@
 				0 0 6px rgba(255, 77, 166, 0.8),
 				0 0 18px rgba(255, 77, 166, 0.5);
 		}
+
+		/* Image wrapper for fullscreen toggle */
+		.img-wrap {
+			position: relative;
+			display: inline-block;
+			width: min(320px, calc(50% - 16px));
+		}
+
+		.img-wrap img {
+			width: 100%;
+		}
+
+		.img-zoom-btn {
+			position: absolute;
+			top: 8px;
+			right: 8px;
+			width: 32px;
+			height: 32px;
+			border-radius: 8px;
+			border: none;
+			background: rgba(0, 0, 0, 0.55);
+			color: #fff;
+			font-size: 16px;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			z-index: 5;
+			opacity: 0.7;
+			transition: opacity 0.15s;
+		}
+
+		.img-zoom-btn:hover {
+			opacity: 1;
+		}
+
+		/* Fullscreen overlay for zoomed image */
+		#img-fullscreen {
+			display: none;
+			position: fixed;
+			inset: 0;
+			z-index: 100;
+			background: rgba(0, 0, 0, 0.92);
+			align-items: center;
+			justify-content: center;
+			cursor: pointer;
+		}
+
+		#img-fullscreen.show {
+			display: flex;
+		}
+
+		#img-fullscreen img {
+			max-width: 96vw;
+			max-height: 96vh;
+			object-fit: contain;
+			border-radius: 8px;
+			pointer-events: none;
+			-webkit-user-drag: none;
+			user-select: none;
+		}
+
+		@media (max-width: 720px) {
+			.img-wrap {
+				width: 100%;
+			}
+		}
 	</style>
 </head>
 
@@ -154,6 +221,10 @@
 			style="display:none;text-decoration:none;text-align:center;background:#555;">← Menu</a>
 		<button class="btn" id="roaiScoresBtn" style="background:#ffd700;color:#222;margin-top:12px;">🏆 High
 			Scores</button>
+	</div>
+
+	<div id="img-fullscreen" oncontextmenu="return false">
+		<img id="fs-img" src="" alt="Fullscreen image">
 	</div>
 
 	<div id="roai-hs-modal"
@@ -376,20 +447,43 @@
 			const rightImg = leftIsAI ? pair.real : pair.ai;
 			const imagesDiv = document.getElementById('images');
 			imagesDiv.innerHTML = '';
-			// Create image elements
-			const left = document.createElement('img');
-			left.src = leftImg;
-			left.alt = 'Left Image';
-			left.onclick = () => handleChoice(leftIsAI ? 'ai' : 'real', left);
-			left.oncontextmenu = (e) => e.preventDefault();
-			const right = document.createElement('img');
-			right.src = rightImg;
-			right.alt = 'Right Image';
-			right.onclick = () => handleChoice(leftIsAI ? 'real' : 'ai', right);
-			right.oncontextmenu = (e) => e.preventDefault();
-			imagesDiv.appendChild(left);
-			imagesDiv.appendChild(right);
+			// Create image elements with wrappers and zoom buttons
+			function makeImgWrap(src, alt, choiceType) {
+				const wrap = document.createElement('div');
+				wrap.className = 'img-wrap';
+				const img = document.createElement('img');
+				img.src = src;
+				img.alt = alt;
+				img.draggable = false;
+				img.onclick = () => handleChoice(choiceType, img);
+				img.oncontextmenu = (e) => e.preventDefault();
+				img.addEventListener('touchstart', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+				const zoomBtn = document.createElement('button');
+				zoomBtn.className = 'img-zoom-btn';
+				zoomBtn.textContent = '⛶';
+				zoomBtn.title = 'View fullscreen';
+				zoomBtn.onclick = (e) => { e.stopPropagation(); toggleFullscreenImg(src); };
+				wrap.appendChild(img);
+				wrap.appendChild(zoomBtn);
+				return wrap;
+			}
+			imagesDiv.appendChild(makeImgWrap(leftImg, 'Left Image', leftIsAI ? 'ai' : 'real'));
+			imagesDiv.appendChild(makeImgWrap(rightImg, 'Right Image', leftIsAI ? 'real' : 'ai'));
 		}
+
+		function toggleFullscreenImg(src) {
+			const overlay = document.getElementById('img-fullscreen');
+			const fsImg = document.getElementById('fs-img');
+			if (overlay.classList.contains('show') && fsImg.src.endsWith(src)) {
+				overlay.classList.remove('show');
+			} else {
+				fsImg.src = src;
+				overlay.classList.add('show');
+			}
+		}
+		document.getElementById('img-fullscreen').addEventListener('click', () => {
+			document.getElementById('img-fullscreen').classList.remove('show');
+		});
 
 		function handleChoice(selected, imgElem) {
 			// Only allow one selection

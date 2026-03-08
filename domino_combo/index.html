@@ -1618,6 +1618,7 @@
             const touchLift = drag.isTouch ? csz * 1.1 : 0;
             drag.ox = csz / 2;
             drag.oy = csz / 2 + touchLift;
+            drag.touchLift = touchLift;
             g.style.left = (e.clientX - drag.ox) + 'px';
             g.style.top = (e.clientY - drag.oy) + 'px';
         }
@@ -1641,8 +1642,9 @@
                 return;
             }
 
-            // Attempt drop
-            const tgt = targetCell(e.clientX, e.clientY);
+            // Attempt drop — use ghost's visual position (offset by touch lift)
+            const lift = drag.touchLift || 0;
+            const tgt = targetCell(e.clientX, e.clientY - lift);
             let placed = false;
             let placedCells = null;
 
@@ -1676,9 +1678,9 @@
         // ── Highlight ──────────────────────────────────────────────
         function showHighlight(e) {
             clearHL();
-            // Use snap-aware target: only highlight when pointer is mostly
-            // over a cell (within 65% of cell size from center)
-            const tgt = targetCellSnap(e.clientX, e.clientY, 0.65);
+            // Use the ghost's visual center, not the raw pointer (accounts for touch lift)
+            const lift = (drag && drag.touchLift) || 0;
+            const tgt = targetCellSnap(e.clientX, e.clientY - lift, 0.65);
             if (!tgt) return;
 
             const cells = smartPlace(tgt);
@@ -2022,6 +2024,11 @@
 
         // ── Controls ───────────────────────────────────────────────
         function newGame() {
+            // Confirm if a game is in progress (board has pieces and game-over not showing)
+            const isOver = document.getElementById('game-over').classList.contains('show');
+            const hasPieces = board.some(row => row.some(v => v !== null));
+            if (!isOver && hasPieces && !confirm('Start a new game?')) return;
+
             document.getElementById('game-over').classList.remove('show');
             document.getElementById('settings-modal').classList.remove('show');
             document.getElementById('hs-modal').classList.remove('show');
