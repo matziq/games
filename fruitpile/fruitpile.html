@@ -822,12 +822,16 @@
                 mergeUnlockMaxIndex = Math.max(mergeUnlockMaxIndex, capped);
             }
 
-            // Check if all fruits in a tier have been merged at least once
+            // Check if all fruits in a tier have been combined at least once.
+            // "Combined" = merged (merge mode) or exploded (explosion mode).
+            // We track the SOURCE fruit key (what was combined), so:
+            //   small tier: cherry, grape, strawberry
+            //   medium tier: orange, apple, peach
             function allSmallMerged() {
-                return mergedFruits.has('grape') && mergedFruits.has('strawberry') && mergedFruits.has('orange');
+                return mergedFruits.has('cherry') && mergedFruits.has('grape') && mergedFruits.has('strawberry');
             }
             function allMediumMerged() {
-                return mergedFruits.has('apple') && mergedFruits.has('peach') && mergedFruits.has('cantaloupe');
+                return mergedFruits.has('orange') && mergedFruits.has('apple') && mergedFruits.has('peach');
             }
 
             function assertKnownFruitKey(k) {
@@ -861,24 +865,36 @@
             function randomFruitForCurrentMode() {
                 if (gameMode !== GAME_MODES.MERGE) return weightedRandomFruit();
 
-                // Tier-based spawning:
-                // Small (0-2): always available
-                // Medium (3-5): 30% chance once all small have been combined
-                // Large (6-7): 10% chance once all medium have been combined
+                // Tier-based spawning for merge mode:
+                // As higher tiers unlock, small fruit frequency decreases.
+                //   Small only:   100% small
+                //   Medium unlocked: 55% small, 35% medium, 10% any unlocked
+                //   Large unlocked:  40% small, 30% medium, 20% large, 10% any unlocked
                 const roll = Math.random();
                 const canMedium = allSmallMerged();
                 const canLarge = canMedium && allMediumMerged();
 
                 let pool;
-                if (canLarge && roll < 0.10) {
-                    // 10% large
-                    pool = FRUITS.slice(6, 8); // cantaloupe, watermelon
-                } else if (canMedium && roll < 0.40) {
-                    // 30% medium (0.10 to 0.40 range, or all 0.40 if large not unlocked)
-                    pool = FRUITS.slice(3, 6); // orange, apple, peach
+                if (canLarge) {
+                    if (roll < 0.20) {
+                        pool = FRUITS.slice(6, 8); // large
+                    } else if (roll < 0.50) {
+                        pool = FRUITS.slice(3, 6); // medium
+                    } else if (roll < 0.90) {
+                        pool = FRUITS.slice(0, 3); // small
+                    } else {
+                        pool = FRUITS.slice(0, 8); // any unlocked
+                    }
+                } else if (canMedium) {
+                    if (roll < 0.35) {
+                        pool = FRUITS.slice(3, 6); // medium
+                    } else if (roll < 0.90) {
+                        pool = FRUITS.slice(0, 3); // small
+                    } else {
+                        pool = FRUITS.slice(0, 6); // any unlocked
+                    }
                 } else {
-                    // Small
-                    pool = FRUITS.slice(0, 3); // cherry, grape, strawberry
+                    pool = FRUITS.slice(0, 3); // small only
                 }
                 return pool[Math.floor(Math.random() * pool.length)];
             }
@@ -1779,6 +1795,11 @@
 
                 maybeAwardComboDiamond(cx, cy);
 
+                // Track the exploded fruit for tier-based spawning unlock.
+                maybeAdvanceMergeUnlockForFruitKey(fruitKey);
+                currentFruit = clampQueuedFruitToUnlockedPool(currentFruit);
+                nextFruit = clampQueuedFruitToUnlockedPool(nextFruit);
+
                 const minFruitR = FRUITS[0]?.radius ?? 14;
                 const maxFruitR = FRUITS[FRUITS.length - 1]?.radius ?? 58;
                 const srcSizeP = clamp01((fruit.radius - minFruitR) / Math.max(1, (maxFruitR - minFruitR)));
@@ -2212,8 +2233,8 @@
                 Body.setVelocity(merged, { x: vx, y: vy });
                 Body.setAngularVelocity(merged, (Math.random() - 0.5) * 0.08);
 
-                // Track which fruits have been created via merge (for tier-based spawning).
-                maybeAdvanceMergeUnlockForFruitKey(dstFruit.key);
+                // Track the SOURCE fruit that was combined (for tier-based spawning).
+                maybeAdvanceMergeUnlockForFruitKey(srcFruit.key);
                 // Clamp queued fruits if they're outside the unlocked pool.
                 currentFruit = clampQueuedFruitToUnlockedPool(currentFruit);
                 nextFruit = clampQueuedFruitToUnlockedPool(nextFruit);
