@@ -1184,10 +1184,10 @@
                 comboUntil = t + 1200;
             }
 
-            function maybeAwardComboDiamond(cx, cy) {
+            function maybeAwardComboDiamond(cx, cy, fruitKey) {
                 if (gameMode !== GAME_MODES.EXPLODE) return;
-                if (comboDiamondAwardedForChain) return;
-                if (comboCount < 4) return;
+                // Diamonds only appear when watermelons are exploded.
+                if (fruitKey !== 'watermelon') return;
 
                 const diamond = fruitByKey.get('diamond');
                 if (!diamond) return;
@@ -1198,8 +1198,6 @@
                 World.add(world, d);
                 Body.setVelocity(d, { x: (Math.random() - 0.5) * 2.4, y: -3.0 });
                 Body.setAngularVelocity(d, (Math.random() - 0.5) * 0.18);
-
-                comboDiamondAwardedForChain = true;
             }
 
             function setModal(show, title, body) {
@@ -1793,7 +1791,7 @@
                 cx /= cluster.length;
                 cy /= cluster.length;
 
-                maybeAwardComboDiamond(cx, cy);
+                maybeAwardComboDiamond(cx, cy, fruitKey);
 
                 // Track the exploded fruit for tier-based spawning unlock.
                 maybeAdvanceMergeUnlockForFruitKey(fruitKey);
@@ -2478,8 +2476,8 @@
                 cx /= cluster.length;
                 cy /= cluster.length;
 
-                // Reward: in Explosion mode, reaching a 4-combo spawns a diamond.
-                maybeAwardComboDiamond(cx, cy);
+                // Reward: in Explosion mode, exploding watermelons spawns a diamond.
+                maybeAwardComboDiamond(cx, cy, fruitKey);
 
                 const minFruitR = FRUITS[0]?.radius ?? 14;
                 const maxFruitR = FRUITS[FRUITS.length - 1]?.radius ?? 58;
@@ -3490,6 +3488,16 @@
 
                     // Enforce flashing contract: overdue armed fruit must resolve.
                     resolveOverdueArmedBodies(bodies);
+
+                    // Safety: if the drop-gate body was removed (exploded) before it
+                    // collided with anything, the gate would stay locked forever.
+                    if (dropGate.awaitingImpact && dropGate.body) {
+                        if (removedIds.has(dropGate.body.id) || !Composite.get(world, dropGate.body.id, 'body')) {
+                            dropGate.awaitingImpact = false;
+                            dropGate.body = null;
+                            dropGate.credits = 2;
+                        }
+                    }
 
                     maybeStartWind(t);
                     applyWindForces(t, bodies);
