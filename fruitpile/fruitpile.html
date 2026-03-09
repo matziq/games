@@ -361,7 +361,7 @@
                     <span class="label">Mode</span>
                     <div class="modeToggle" role="group" aria-label="Game mode">
                         <button id="btnModeExplode" type="button" aria-pressed="true"
-                            title="Fruit Explosion">Explosion</button>
+                            title="Fruit Explode">Explode</button>
                         <button id="btnModeMerge" type="button" aria-pressed="false" title="Fruit Merge">Merge</button>
                     </div>
                 </div>
@@ -509,7 +509,7 @@
             function renderFpHighScores() {
                 const list = getFpHighScores();
                 const wrap = document.getElementById('fp-hs-wrap');
-                document.getElementById('fp-hs-config').textContent = 'Mode: ' + (gameMode === 'merge' ? 'Merge' : 'Explosion');
+                document.getElementById('fp-hs-config').textContent = 'Mode: ' + (gameMode === 'merge' ? 'Merge' : 'Explode');
                 if (list.length === 0) { wrap.innerHTML = '<p style="text-align:center;color:var(--ui-muted);">No scores yet.</p>'; return; }
                 const medals = ['hs-gold', 'hs-silver', 'hs-bronze'];
                 let html = '<table class="fruitTable"><thead><tr><th>#</th><th>Score</th><th>Name</th><th>Date</th></tr></thead><tbody>';
@@ -798,7 +798,16 @@
                 { key: 'diamond', name: 'Diamond', radius: 64, color: '#7dd3ff', accent: '#e8fbff', texture: 'diamond' }
             ];
 
+            // Dried cherry: non-combinable husk that just takes up space.
+            const DRIED_CHERRY = { key: 'dried_cherry', name: 'Dried Cherry', radius: 10, color: '#5a2020', accent: '#8b4040', texture: 'speckle' };
+
+            // Fruit fly decay constants
+            const FLY_IDLE_MS = 10000;       // 10 seconds before fly appears
+            const FLY_SHRINK_MS = 2000;      // 2 seconds of fly buzzing before shrink
+            const DRIED_CHERRY_LIFE_MS = 10000; // dried cherry vanishes after 10s
+
             const fruitByKey = new Map(FRUITS.map(f => [f.key, f]));
+            fruitByKey.set(DRIED_CHERRY.key, DRIED_CHERRY);
 
             // Merge mode: tier-based spawn unlocks.
             // Tiers: small (cherry/grape/strawberry), medium (orange/apple/peach), large (melon/watermelon).
@@ -1219,12 +1228,12 @@
                 rules.className = 'note';
                 rules.innerHTML = `
                     <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
-                        <span class="pill">Explosion: POP matching fruit</span>
+                        <span class="pill">Explode: POP matching fruit</span>
                         <span class="pill">Merge: MERGE matching fruit</span>
                         <span class="pill">Fuse: 1.5s + 0.5s per extra fruit</span>
                     </div>
                     <div style="margin-bottom:8px;">
-                        <b>Fruit Explosion</b>: when 2+ of the same fruit touch, they pop after the fuse.
+                        <b>Fruit Explode</b>: when 2+ of the same fruit touch, they pop after the fuse.
                         Bigger groups are worth more.
                     </div>
                     <div style="margin-bottom:8px;">
@@ -1256,7 +1265,7 @@
                         <tr>
                             <th>Fruit</th>
                             <th>Base points</th>
-                            <th>Explosion rule</th>
+                            <th>Explode rule</th>
                             <th>Merge rule</th>
                         </tr>
                     </thead>
@@ -1269,8 +1278,8 @@
                     // Show diamonds too (even though they don't randomly spawn).
                     const base = basePointsForFruit(fruit.key);
 
-                    // Explosion: awarded = base * (2*(n-1)) * combo
-                    const explosionExample = `2→ ${base * 2}  •  3→ ${base * 4}  •  4→ ${base * 6}`;
+                    // Explode: awarded = base * (2*(n-1)) * combo
+                    const explodeExample = `2→ ${base * 2}  •  3→ ${base * 4}  •  4→ ${base * 6}`;
                     // Merge: awarded = base * max(2,n) * combo
                     const mergeExample = `2→ ${base * 2}  •  3→ ${base * 3}  •  4→ ${base * 4}`;
 
@@ -1286,7 +1295,7 @@
                             </div>
                         </td>
                         <td><span class="pill">${base}</span></td>
-                        <td style="color: rgba(255,255,255,0.78);">${explosionExample}</td>
+                        <td style="color: rgba(255,255,255,0.78);">${explodeExample}</td>
                         <td style="color: rgba(255,255,255,0.78);">${mergeExample}</td>
                     `;
                     tbody.appendChild(tr);
@@ -1301,7 +1310,7 @@
                 foot.innerHTML = `
                     <div style="margin-top:10px;">
                         Notes: “Base points” are used as the starting value. Actual points also include group-size bonuses
-                        and the combo multiplier. In Explosion mode, bigger groups scale as 2×(n−1). In Merge mode,
+                        and the combo multiplier. In Explode mode, bigger groups scale as 2×(n−1). In Merge mode,
                         bigger groups scale as max(2,n).
                     </div>
                 `;
@@ -1655,6 +1664,7 @@
                         fruitKey: fruit.key,
                         seed,
                         bornAt: nowMs(),
+                        lastActivityAt: nowMs(),
                         blinkAt: 700 + Math.random() * 2200
                     }
                 });
@@ -1929,6 +1939,7 @@
                 if (!body || !isFruitBody(body)) return;
                 if (!body.plugin) body.plugin = {};
                 body.plugin.armedUntil = Math.max(body.plugin.armedUntil || 0, untilMs || 0);
+                body.plugin.lastActivityAt = nowMs();
             }
 
             function markArmedWithFuse(body, untilMs, fuseMs) {
@@ -1936,6 +1947,7 @@
                 if (!body.plugin) body.plugin = {};
                 body.plugin.armedUntil = Math.max(body.plugin.armedUntil || 0, untilMs || 0);
                 body.plugin._armedFuseMs = Math.max(body.plugin._armedFuseMs || 0, fuseMs || 0);
+                body.plugin.lastActivityAt = nowMs();
             }
 
             function clearArmed(body) {
@@ -2137,6 +2149,8 @@
                 const aKey = bodyA.plugin?.fruitKey;
                 const bKey = bodyB.plugin?.fruitKey;
                 if (!aKey || !bKey || aKey !== bKey) return;
+                // Dried cherries can't combine
+                if (aKey === 'dried_cherry') return;
                 if (!assertKnownFruitKey(aKey)) return;
 
                 // Track first-touch time for sequencing (Explosion mode uses this).
@@ -3027,6 +3041,47 @@
                 ctx.arc(0, 0, r, 0, Math.PI * 2);
                 ctx.stroke();
 
+                // Draw fruit fly if this fruit has one buzzing on it.
+                if (b.plugin.flyStartedAt && fruit.key !== 'dried_cherry') {
+                    const flyPhase = (timeMs * 0.012 + (b.plugin.seed || 0)) % (Math.PI * 2);
+                    const fx = Math.cos(flyPhase) * r * 0.6;
+                    const fy = Math.sin(flyPhase * 1.7) * r * 0.4 - r * 0.3;
+                    ctx.save();
+                    ctx.translate(fx, fy);
+                    // Body
+                    ctx.fillStyle = '#222';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, 3, 2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Wings
+                    ctx.globalAlpha = 0.4;
+                    ctx.fillStyle = '#ccc';
+                    const wingFlap = Math.sin(timeMs * 0.08) * 0.4;
+                    ctx.beginPath();
+                    ctx.ellipse(-2, -1.5, 3, 1.5, -0.4 + wingFlap, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.ellipse(2, -1.5, 3, 1.5, 0.4 - wingFlap, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                // Dried cherry: draw wrinkle lines
+                if (fruit.key === 'dried_cherry') {
+                    ctx.save();
+                    ctx.globalAlpha = 0.35;
+                    ctx.strokeStyle = '#3a1010';
+                    ctx.lineWidth = 0.8;
+                    for (let i = 0; i < 5; i++) {
+                        const a = (i / 5) * Math.PI * 2;
+                        ctx.beginPath();
+                        ctx.moveTo(Math.cos(a) * r * 0.2, Math.sin(a) * r * 0.2);
+                        ctx.lineTo(Math.cos(a) * r * 0.85, Math.sin(a) * r * 0.85);
+                        ctx.stroke();
+                    }
+                    ctx.restore();
+                }
+
                 ctx.restore();
             }
 
@@ -3318,6 +3373,77 @@
                 ctx.restore();
             }
 
+            // --- Fruit fly decay ---
+            function processFruitDecay(bodies) {
+                const now = nowMs();
+                for (const b of bodies) {
+                    if (!isFruitBody(b)) continue;
+                    if (removedIds.has(b.id)) continue;
+                    const p = b.plugin;
+                    if (!p) continue;
+                    const key = p.fruitKey;
+
+                    // Skip diamonds — they don't decay
+                    if (key === 'diamond') continue;
+
+                    // Dried cherries vanish after their timer
+                    if (key === 'dried_cherry') {
+                        if (now - (p.driedAt || p.bornAt || now) >= DRIED_CHERRY_LIFE_MS) {
+                            removedIds.add(b.id);
+                            removeBodyFromWorld(b);
+                            spawnParticles(b.position.x, b.position.y, '#5a2020', 6, 1.2, 0.5);
+                        }
+                        continue;
+                    }
+
+                    // Skip if armed (currently in a match fuse)
+                    if ((p.armedUntil || 0) > now) {
+                        p.lastActivityAt = now;
+                        continue;
+                    }
+
+                    const idle = now - (p.lastActivityAt || p.bornAt || now);
+
+                    // After FLY_IDLE_MS, mark as having a fly
+                    if (idle >= FLY_IDLE_MS) {
+                        if (!p.flyStartedAt) p.flyStartedAt = now;
+                        const flyTime = now - p.flyStartedAt;
+
+                        // After FLY_SHRINK_MS of fly buzzing, shrink the fruit
+                        if (flyTime >= FLY_SHRINK_MS) {
+                            const idx = FRUITS.findIndex(f => f.key === key);
+                            const x = b.position.x, y = b.position.y;
+                            const vx = b.velocity?.x || 0, vy = b.velocity?.y || 0;
+
+                            // Remove the old body
+                            removedIds.add(b.id);
+                            explodedIds.add(b.id);
+                            removeBodyFromWorld(b);
+
+                            if (idx === 0) {
+                                // Cherry → dried cherry
+                                const dc = fruitBodyAt(x, y, DRIED_CHERRY);
+                                dc.plugin.driedAt = now;
+                                dc.plugin.lastActivityAt = now + 999999; // prevent decay loop
+                                World.add(world, dc);
+                                Body.setVelocity(dc, { x: vx, y: vy });
+                            } else if (idx > 0) {
+                                // Shrink to the previous fruit type
+                                const prevFruit = FRUITS[idx - 1];
+                                const newBody = fruitBodyAt(x, y, prevFruit);
+                                newBody.plugin.lastActivityAt = now; // reset timer
+                                World.add(world, newBody);
+                                Body.setVelocity(newBody, { x: vx, y: vy });
+                            }
+                            spawnParticles(x, y, '#888', 8, 1.0, 0.6);
+                        }
+                    } else {
+                        // Reset fly if fruit became active again
+                        p.flyStartedAt = undefined;
+                    }
+                }
+            }
+
             // --- Main loop ---
             let lastT = 0;
 
@@ -3498,6 +3624,9 @@
                             dropGate.credits = 2;
                         }
                     }
+
+                    // Fruit fly decay: idle fruit shrinks over time.
+                    processFruitDecay(bodies);
 
                     maybeStartWind(t);
                     applyWindForces(t, bodies);
@@ -3999,7 +4128,7 @@
                 modalIsInfo = true;
                 const help = (gameMode === GAME_MODES.MERGE)
                     ? 'Fruit Merge: start with only Cherries dropping. Once you create a Grape by merging, Grapes unlock and can drop too (and so on as you merge up the chain). If 2+ of the SAME fruit touch, they merge into the next bigger fruit after a fuse (1.5s base, +0.5s per extra fruit in the touching group). Watermelon merges into Diamonds. Make 20 Diamonds to win. If two Diamonds touch, they trigger a massive shockwave. If the pile creeps above the dashed line for too long, it’s game over.'
-                    : 'Fruit Explosion: drop fruit into the pile. If 2+ of the SAME fruit touch, they pop after a fuse (1.5s base, +0.5s per extra fruit in the touching group) and you score points. Smaller fruit = more points. Chain pops/merges to build a combo multiplier (caps at 5x). If the pile creeps above the dashed line for too long, it’s game over.';
+                    : 'Fruit Explode: drop fruit into the pile. If 2+ of the SAME fruit touch, they pop after a fuse (1.5s base, +0.5s per extra fruit in the touching group) and you score points. Smaller fruit = more points. Chain pops/merges to build a combo multiplier (caps at 5x). If the pile creeps above the dashed line for too long, it’s game over.';
                 setModal(true, 'How it works', help);
             });
 
