@@ -652,34 +652,37 @@
                     const gain = ctx.createGain();
                     const filter = ctx.createBiquadFilter();
 
-                    // Three distinct "signatures".
+                    // Three distinct squish-like signatures.
                     if (kind === 'fruit') {
+                        // Soft wet squish: filtered noise burst + low thump
                         osc.type = 'sine';
-                        osc.frequency.setValueAtTime(520 + Math.random() * 180, t0);
-                        osc.frequency.exponentialRampToValueAtTime(260, t0 + 0.06);
+                        osc.frequency.setValueAtTime(180 + Math.random() * 60, t0);
+                        osc.frequency.exponentialRampToValueAtTime(70, t0 + 0.08);
                         filter.type = 'lowpass';
-                        filter.frequency.setValueAtTime(2200, t0);
-                        filter.frequency.exponentialRampToValueAtTime(1200, t0 + 0.06);
+                        filter.frequency.setValueAtTime(600, t0);
+                        filter.frequency.exponentialRampToValueAtTime(200, t0 + 0.08);
                     } else if (kind === 'ground') {
-                        osc.type = 'triangle';
-                        osc.frequency.setValueAtTime(210 + Math.random() * 90, t0);
-                        osc.frequency.exponentialRampToValueAtTime(95, t0 + 0.09);
+                        // Heavier splat on ground
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(140 + Math.random() * 40, t0);
+                        osc.frequency.exponentialRampToValueAtTime(55, t0 + 0.10);
                         filter.type = 'lowpass';
-                        filter.frequency.setValueAtTime(900, t0);
-                        filter.frequency.exponentialRampToValueAtTime(420, t0 + 0.09);
+                        filter.frequency.setValueAtTime(500, t0);
+                        filter.frequency.exponentialRampToValueAtTime(150, t0 + 0.10);
                     } else { // wall
-                        osc.type = 'square';
-                        osc.frequency.setValueAtTime(820 + Math.random() * 220, t0);
-                        osc.frequency.exponentialRampToValueAtTime(420, t0 + 0.05);
-                        filter.type = 'bandpass';
-                        filter.frequency.setValueAtTime(1400, t0);
-                        filter.Q.setValueAtTime(1.6, t0);
+                        // Soft thud against wall
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(220 + Math.random() * 80, t0);
+                        osc.frequency.exponentialRampToValueAtTime(90, t0 + 0.06);
+                        filter.type = 'lowpass';
+                        filter.frequency.setValueAtTime(700, t0);
+                        filter.frequency.exponentialRampToValueAtTime(250, t0 + 0.06);
                     }
 
                     const vol = clamp01(intensity);
                     gain.gain.setValueAtTime(0.0001, t0);
-                    gain.gain.exponentialRampToValueAtTime(0.14 * vol, t0 + 0.006);
-                    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.11);
+                    gain.gain.exponentialRampToValueAtTime(0.10 * vol, t0 + 0.004);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.10);
 
                     osc.connect(filter);
                     filter.connect(gain);
@@ -687,6 +690,43 @@
 
                     osc.start(t0);
                     osc.stop(t0 + 0.13);
+                },
+
+                // Fruit fly buzzing sound — short angry insect buzz
+                buzz() {
+                    if (!this.enabled) return;
+                    const ctx = this.ensure();
+                    const t0 = ctx.currentTime;
+
+                    // Two detuned square-wave oscillators for insect buzz texture
+                    const osc1 = ctx.createOscillator();
+                    const osc2 = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    const filter = ctx.createBiquadFilter();
+
+                    osc1.type = 'square';
+                    osc1.frequency.setValueAtTime(180 + Math.random() * 40, t0);
+                    osc2.type = 'square';
+                    osc2.frequency.setValueAtTime(187 + Math.random() * 40, t0); // slight detune
+
+                    filter.type = 'bandpass';
+                    filter.frequency.setValueAtTime(900, t0);
+                    filter.Q.setValueAtTime(2.0, t0);
+
+                    gain.gain.setValueAtTime(0.0001, t0);
+                    gain.gain.exponentialRampToValueAtTime(0.04, t0 + 0.02);
+                    gain.gain.setValueAtTime(0.04, t0 + 0.15);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.25);
+
+                    osc1.connect(filter);
+                    osc2.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    osc1.start(t0);
+                    osc1.stop(t0 + 0.25);
+                    osc2.start(t0);
+                    osc2.stop(t0 + 0.25);
                 },
 
                 playTune(mode) {
@@ -3406,7 +3446,10 @@
 
                     // After FLY_IDLE_MS, mark as having a fly
                     if (idle >= FLY_IDLE_MS) {
-                        if (!p.flyStartedAt) p.flyStartedAt = now;
+                        if (!p.flyStartedAt) {
+                            p.flyStartedAt = now;
+                            audio.buzz(); // buzz when fly first appears
+                        }
                         const flyTime = now - p.flyStartedAt;
 
                         // After FLY_SHRINK_MS of fly buzzing, shrink the fruit
