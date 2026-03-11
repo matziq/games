@@ -2057,14 +2057,17 @@
         }
 
         function applySettings() {
-            gridSize = parseInt(document.getElementById('opt-size').value);
-            matchCount = parseInt(document.getElementById('opt-match').value);
+            const newSize = parseInt(document.getElementById('opt-size').value);
+            const newMatch = parseInt(document.getElementById('opt-match').value);
             soundVolume = parseInt(document.getElementById('opt-volume').value) || 0;
             soundOn = soundVolume > 0;
             if (_dcMaster) _dcMaster.gain.value = soundVolume / 100;
+            const needsRestart = (newSize !== gridSize || newMatch !== matchCount);
+            gridSize = newSize;
+            matchCount = newMatch;
             saveSettings();
             document.getElementById('settings-modal').classList.remove('show');
-            init();
+            if (needsRestart) init();
         }
 
         function saveSettings() {

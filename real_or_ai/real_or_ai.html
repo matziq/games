@@ -393,14 +393,23 @@
 			return m ? Number(m[1]) : null;
 		}
 
+		// Bag-style image pools: cycle through all images before repeating
+		let aiBag = [];
+		let realBag = [];
+
+		function drawFromBag(bag, source) {
+			if (bag.length === 0) {
+				// Refill bag with all images, shuffled
+				bag.push(...shuffle([...source]));
+			}
+			return bag.pop();
+		}
+
 		function pickPairs() {
-			// Randomly pick 10 AI and 10 Real images each game, pair them randomly.
-			const count = Math.min(totalRounds, aiImages.length, realImages.length);
-			const shuffledAI = shuffle([...aiImages]).slice(0, count);
-			const shuffledReal = shuffle([...realImages]).slice(0, count);
+			const count = Math.min(10, aiImages.length, realImages.length);
 			pairs = [];
 			for (let i = 0; i < count; i++) {
-				pairs.push({ ai: shuffledAI[i], real: shuffledReal[i] });
+				pairs.push({ ai: drawFromBag(aiBag, aiImages), real: drawFromBag(realBag, realImages) });
 			}
 		}
 
