@@ -870,20 +870,20 @@
 
             // --- Fruit definitions ---
             const FRUITS = [
-                { key: 'cherry', name: 'Cherry', radius: 14, color: '#d43142', accent: '#ff7585', texture: 'speckle' },
-                { key: 'grape', name: 'Grape', radius: 18, color: '#7a4cff', accent: '#c0a3ff', texture: 'speckle' },
-                { key: 'strawberry', name: 'Strawberry', radius: 22, color: '#e63946', accent: '#ffb3b9', texture: 'seed' },
-                { key: 'orange', name: 'Orange', radius: 26, color: '#f48c06', accent: '#ffd166', texture: 'pore' },
-                { key: 'apple', name: 'Apple', radius: 30, color: '#6ab04c', accent: '#c8f7a1', texture: 'speckle' },
-                { key: 'peach', name: 'Peach', radius: 36, color: '#ff7f51', accent: '#ffe4b5', texture: 'fuzz' },
-                { key: 'cantaloupe', name: 'Melon', radius: 44, color: '#a6d49f', accent: '#f6f7c1', texture: 'net' },
-                { key: 'watermelon', name: 'Watermelon', radius: 58, color: '#2ecc71', accent: '#ff4d6d', texture: 'stripe' },
+                { key: 'cherry', name: 'Cherry', radius: 20, color: '#d43142', accent: '#ff7585', texture: 'speckle' },
+                { key: 'grape', name: 'Grape', radius: 25, color: '#7a4cff', accent: '#c0a3ff', texture: 'speckle' },
+                { key: 'strawberry', name: 'Strawberry', radius: 31, color: '#e63946', accent: '#ffb3b9', texture: 'seed' },
+                { key: 'orange', name: 'Orange', radius: 36, color: '#f48c06', accent: '#ffd166', texture: 'pore' },
+                { key: 'apple', name: 'Apple', radius: 42, color: '#6ab04c', accent: '#c8f7a1', texture: 'speckle' },
+                { key: 'peach', name: 'Peach', radius: 50, color: '#ff7f51', accent: '#ffe4b5', texture: 'fuzz' },
+                { key: 'cantaloupe', name: 'Melon', radius: 62, color: '#a6d49f', accent: '#f6f7c1', texture: 'net' },
+                { key: 'watermelon', name: 'Watermelon', radius: 80, color: '#2ecc71', accent: '#ff4d6d', texture: 'stripe' },
                 // Fruit Merge mode end-goal (post-watermelon)
-                { key: 'diamond', name: 'Diamond', radius: 64, color: '#7dd3ff', accent: '#e8fbff', texture: 'diamond' }
+                { key: 'diamond', name: 'Diamond', radius: 88, color: '#7dd3ff', accent: '#e8fbff', texture: 'diamond' }
             ];
 
             // Dried cherry: non-combinable husk that just takes up space.
-            const DRIED_CHERRY = { key: 'dried_cherry', name: 'Dried Cherry', radius: 10, color: '#5a2020', accent: '#8b4040', texture: 'speckle' };
+            const DRIED_CHERRY = { key: 'dried_cherry', name: 'Dried Cherry', radius: 14, color: '#5a2020', accent: '#8b4040', texture: 'speckle' };
 
             // Fruit fly decay constants
             const FLY_IDLE_MS = 10000;       // 10 seconds before fly appears
@@ -1173,12 +1173,12 @@
             };
 
             function computePlayfield(w, h) {
-                // Keep the game in a neat center lane, ~20% smaller than full width.
+                // Wider playfield for a bowl-of-fruit feel.
 
-                // Width.
-                const maxW = Math.min(780, Math.max(220, w - 44));
-                const minW = Math.min(340, maxW);
-                const target = Math.floor(w * 0.65);
+                // Width: use 85% of screen width for a roomier bowl.
+                const maxW = Math.min(900, Math.max(240, w - 20));
+                const minW = Math.min(300, maxW);
+                const target = Math.floor(w * 0.85);
                 const fieldW = Math.max(minW, Math.min(maxW, target));
                 const left = Math.floor((w - fieldW) / 2);
                 playfield.left = left;
@@ -1186,8 +1186,8 @@
                 playfield.right = left + fieldW;
                 playfield.centerX = left + fieldW / 2;
 
-                // Height (bottom-anchored so the bowl sits on the floor).
-                const fieldH = Math.max(200, Math.floor(h * 0.50));
+                // Height: taller play area so the bowl has depth.
+                const fieldH = Math.max(240, Math.floor(h * 0.62));
                 playfield.height = fieldH;
                 playfield.bottom = h;
                 playfield.top = Math.max(0, h - fieldH);
@@ -1481,6 +1481,7 @@
 
                 if (bounds) {
                     World.remove(world, bounds.ground);
+                    if (bounds.ceiling) World.remove(world, bounds.ceiling);
                     World.remove(world, bounds.left);
                     World.remove(world, bounds.right);
 
@@ -1491,6 +1492,9 @@
                             try { World.remove(world, b); } catch { /* ignore */ }
                         }
                     }
+                    // Remove utensils
+                    if (bounds.fork) { try { World.remove(world, bounds.fork); } catch { } }
+                    if (bounds.knife) { try { World.remove(world, bounds.knife); } catch { } }
                 }
 
                 const thickness = 80;
@@ -1577,17 +1581,24 @@
 
                 bounds = {
                     ground: Bodies.rectangle(fieldCenterX, h + thickness / 2, fieldW + 2 * thickness, thickness, { isStatic: true, friction: 0.9 }),
+                    // Invisible ceiling: keeps fruit from flying off screen during explosions
+                    ceiling: Bodies.rectangle(fieldCenterX, (playfield.top || 0) - thickness / 2, fieldW + 2 * thickness, thickness, { isStatic: true, friction: 0.0, restitution: 0.3 }),
                     // Hard containment walls aligned to the playfield edges.
-                    // (Prevents small fruit from getting knocked outside the lane.)
                     left: Bodies.rectangle((playfield.left || 0) - thickness / 2, h / 2, thickness, wallH, { isStatic: true, friction: 0.0, frictionStatic: 0, restitution: 0.0 }),
                     right: Bodies.rectangle((playfield.right || w) + thickness / 2, h / 2, thickness, wallH, { isStatic: true, friction: 0.0, frictionStatic: 0, restitution: 0.0 }),
-                    bowl
+                    bowl,
+                    // Fork and knife obstacles
+                    fork: null,
+                    knife: null
                 };
 
                 // Tag boundaries so we can distinguish ground vs walls.
                 bounds.ground.plugin = bounds.ground.plugin || {};
                 bounds.ground.plugin.isBoundary = true;
                 bounds.ground.plugin.boundaryKey = 'ground';
+                bounds.ceiling.plugin = bounds.ceiling.plugin || {};
+                bounds.ceiling.plugin.isBoundary = true;
+                bounds.ceiling.plugin.boundaryKey = 'wall';
                 bounds.left.plugin = bounds.left.plugin || {};
                 bounds.left.plugin.isBoundary = true;
                 bounds.left.plugin.boundaryKey = 'wall';
@@ -1595,7 +1606,142 @@
                 bounds.right.plugin.isBoundary = true;
                 bounds.right.plugin.boundaryKey = 'wall';
 
-                World.add(world, [bounds.ground, bounds.left, bounds.right, ...bowl]);
+                World.add(world, [bounds.ground, bounds.ceiling, bounds.left, bounds.right, ...bowl]);
+
+                // Add fork (left side) and knife (right side) obstacles
+                buildUtensils(w, h);
+            }
+
+            // --- Fork & Knife utensil obstacles ---
+            let utensilTimer = 0;
+            const UTENSIL_MOVE_INTERVAL_MS = 45000; // move every 45 seconds
+
+            function buildUtensils(w, h) {
+                if (!world || !bounds) return;
+                // Remove old utensils
+                if (bounds.fork) { try { World.remove(world, bounds.fork); } catch { } }
+                if (bounds.knife) { try { World.remove(world, bounds.knife); } catch { } }
+
+                const pf = playfield;
+                const bowlMidY = pf.top + pf.height * 0.45;
+
+                // Fork on the left side — angled plank that fruit rolls down
+                const forkLen = Math.max(60, pf.width * 0.28);
+                const forkX = pf.left + pf.width * 0.22;
+                const forkY = bowlMidY;
+                const forkAngle = -0.35 + (Math.random() - 0.5) * 0.1; // slight tilt right-downward
+                bounds.fork = Bodies.rectangle(forkX, forkY, forkLen, 8, {
+                    isStatic: true,
+                    friction: 0.15,
+                    restitution: 0.1,
+                    angle: forkAngle,
+                    render: { visible: true }
+                });
+                bounds.fork.plugin = { isUtensil: true, utensilType: 'fork' };
+
+                // Knife on the right side
+                const knifeLen = Math.max(60, pf.width * 0.28);
+                const knifeX = pf.left + pf.width * 0.78;
+                const knifeY = bowlMidY - pf.height * 0.08;
+                const knifeAngle = 0.35 + (Math.random() - 0.5) * 0.1; // slight tilt left-downward
+                bounds.knife = Bodies.rectangle(knifeX, knifeY, knifeLen, 6, {
+                    isStatic: true,
+                    friction: 0.05,
+                    restitution: 0.05,
+                    angle: knifeAngle,
+                    render: { visible: true }
+                });
+                bounds.knife.plugin = { isUtensil: true, utensilType: 'knife' };
+
+                World.add(world, [bounds.fork, bounds.knife]);
+                utensilTimer = nowMs();
+            }
+
+            function nudgeUtensils() {
+                if (!bounds || !bounds.fork || !bounds.knife) return;
+                const elapsed = nowMs() - utensilTimer;
+                if (elapsed < UTENSIL_MOVE_INTERVAL_MS) return;
+                utensilTimer = nowMs();
+
+                const pf = playfield;
+                // Slightly shift position and angle
+                const shiftX = (Math.random() - 0.5) * pf.width * 0.08;
+                const shiftY = (Math.random() - 0.5) * pf.height * 0.06;
+                const shiftAngle = (Math.random() - 0.5) * 0.15;
+
+                // Fork
+                const fx = Math.max(pf.left + pf.width * 0.12, Math.min(pf.left + pf.width * 0.35, bounds.fork.position.x + shiftX));
+                const fy = Math.max(pf.top + pf.height * 0.25, Math.min(pf.top + pf.height * 0.65, bounds.fork.position.y + shiftY));
+                Body.setPosition(bounds.fork, { x: fx, y: fy });
+                Body.setAngle(bounds.fork, bounds.fork.angle + shiftAngle);
+
+                // Knife
+                const kx = Math.max(pf.left + pf.width * 0.65, Math.min(pf.left + pf.width * 0.88, bounds.knife.position.x - shiftX));
+                const ky = Math.max(pf.top + pf.height * 0.2, Math.min(pf.top + pf.height * 0.6, bounds.knife.position.y + shiftY));
+                Body.setPosition(bounds.knife, { x: kx, y: ky });
+                Body.setAngle(bounds.knife, bounds.knife.angle - shiftAngle);
+
+                // Wake up nearby sleeping fruit
+                const allBodies = Composite.allBodies(world);
+                for (const b of allBodies) {
+                    if (isFruitBody(b)) Sleeping.set(b, false);
+                }
+            }
+
+            // Draw utensils on canvas
+            function drawUtensils(ctx) {
+                if (!bounds) return;
+                const drawUtensil = (body, type) => {
+                    if (!body) return;
+                    ctx.save();
+                    ctx.translate(body.position.x, body.position.y);
+                    ctx.rotate(body.angle);
+
+                    const hw = body.bounds.max.x - body.bounds.min.x;
+                    const hh = body.bounds.max.y - body.bounds.min.y;
+                    const len = Math.max(hw, hh) * 0.5;
+                    const thick = Math.min(hw, hh) * 0.5;
+
+                    if (type === 'fork') {
+                        // Fork: silver handle with tines
+                        ctx.fillStyle = 'rgba(180, 185, 195, 0.85)';
+                        ctx.strokeStyle = 'rgba(220, 225, 230, 0.6)';
+                        ctx.lineWidth = 1;
+                        // Handle
+                        ctx.beginPath();
+                        ctx.roundRect(-len, -thick, len * 1.2, thick * 2, 3);
+                        ctx.fill();
+                        ctx.stroke();
+                        // Tines
+                        for (let i = -1; i <= 1; i++) {
+                            ctx.beginPath();
+                            ctx.roundRect(len * 0.2, -thick + i * thick * 0.6 + thick * 0.2, len * 0.8, thick * 0.3, 2);
+                            ctx.fillStyle = 'rgba(200, 205, 215, 0.8)';
+                            ctx.fill();
+                        }
+                    } else {
+                        // Knife: silver blade with dark handle
+                        ctx.fillStyle = 'rgba(90, 75, 60, 0.85)';
+                        ctx.beginPath();
+                        ctx.roundRect(-len, -thick, len * 0.5, thick * 2, 3);
+                        ctx.fill();
+                        // Blade
+                        ctx.fillStyle = 'rgba(195, 200, 210, 0.85)';
+                        ctx.strokeStyle = 'rgba(230, 235, 240, 0.5)';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(-len * 0.5, -thick);
+                        ctx.lineTo(len, -thick * 0.3);
+                        ctx.lineTo(len, thick * 0.1);
+                        ctx.lineTo(-len * 0.5, thick);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                    }
+                    ctx.restore();
+                };
+                drawUtensil(bounds.fork, 'fork');
+                drawUtensil(bounds.knife, 'knife');
             }
 
             function applyCenterBias(bodies) {
@@ -1703,6 +1849,15 @@
                         Body.setPosition(b, { x: b.position.x, y: maxY });
                         Body.setVelocity(b, { x: b.velocity?.x || 0, y: -Math.max(0.8, Math.abs(b.velocity?.y || 0) * 0.15) });
                         Body.setAngularVelocity(b, (b.angularVelocity || 0) * 0.5);
+                    }
+
+                    // Ceiling bounce: keep fruit inside the play area during explosions
+                    const topEdge = playfield.top || 0;
+                    const minY = topEdge + r;
+                    if (b.position.y < minY) {
+                        Sleeping.set(b, false);
+                        Body.setPosition(b, { x: b.position.x, y: minY });
+                        Body.setVelocity(b, { x: b.velocity?.x || 0, y: Math.max(0.8, Math.abs(b.velocity?.y || 0) * 0.3) });
                     }
                 }
             }
@@ -3452,6 +3607,7 @@
                 drawBackground();
                 drawWind(dt, timeMs);
                 drawBowlRails();
+                drawUtensils(ctx);
                 drawScorePops(dt);
 
                 ctx.restore();
@@ -3720,6 +3876,7 @@
 
                     applyCenterBias(bodies);
                     keepFruitInPlayfield(bodies);
+                    nudgeUtensils();
 
                     // Process queued explosions.
                     if (explodeQueue.length) {
