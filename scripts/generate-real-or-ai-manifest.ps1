@@ -6,6 +6,12 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+# Rename images to sequential format before generating manifest
+$renameScript = Join-Path $PSScriptRoot 'rename-real-or-ai-images.ps1'
+if (Test-Path $renameScript) {
+    & $renameScript -GameDir $GameDir
+}
+
 $manifestPath = Join-Path $GameDir 'image_manifest.js'
 
 function Get-ImageList([string]$folderName, [string]$prefix) {

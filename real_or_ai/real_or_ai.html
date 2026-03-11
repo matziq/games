@@ -280,8 +280,8 @@
 					realImages = takeFirst(unique(extractImageFilenames(realText, 'real/')), 100);
 				}
 
-				// Set total rounds based on available images
-				totalRounds = Math.min(aiImages.length, realImages.length);
+				// Fixed 10 rounds per game
+				totalRounds = 10;
 
 				console.log('Loaded image lists:', { ai: aiImages.length, real: realImages.length });
 				console.log(`Game will have ${totalRounds} rounds`);
@@ -329,10 +329,12 @@
 		}
 		function addRoaiHighScore(scoreVal, totalVal, nameVal) {
 			const list = getRoaiHighScores();
-			const entry = { score: scoreVal, total: totalVal, name: (nameVal || '').toUpperCase(), date: new Date().toISOString() };
+			const pct = totalVal > 0 ? Math.round((scoreVal / totalVal) * 100) : 0;
+			const entry = { score: scoreVal, total: totalVal, pct: pct, name: (nameVal || '').toUpperCase(), date: new Date().toISOString() };
 			let inserted = false;
 			for (let i = 0; i < list.length; i++) {
-				if (scoreVal > list[i].score) { list.splice(i, 0, entry); inserted = true; roaiLastNewHsIdx = i; break; }
+				const existPct = list[i].pct != null ? list[i].pct : (list[i].total > 0 ? Math.round((list[i].score / list[i].total) * 100) : 0);
+				if (pct > existPct) { list.splice(i, 0, entry); inserted = true; roaiLastNewHsIdx = i; break; }
 			}
 			if (!inserted && list.length < 5) { roaiLastNewHsIdx = list.length; list.push(entry); inserted = true; }
 			else if (!inserted) { roaiLastNewHsIdx = -1; return false; }
@@ -352,7 +354,8 @@
 				const col = i < 3 ? `color:${mc[i]};` : '';
 				const d = new Date(e.date);
 				const ds = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' });
-				html += `<tr style="${bg}"><td style="text-align:center;font-weight:700;padding:10px 8px;border-bottom:1px solid #444;${col}">${i + 1}</td><td style="font-weight:900;color:#09f;padding:10px 8px;border-bottom:1px solid #444;">${e.score}/${e.total}</td><td style="font-weight:700;padding:10px 8px;border-bottom:1px solid #444;">${e.name || '---'}</td><td style="font-size:11px;color:#888;padding:10px 8px;border-bottom:1px solid #444;">${ds}</td></tr>`;
+				const ePct = e.pct != null ? e.pct : (e.total > 0 ? Math.round((e.score / e.total) * 100) : 0);
+				html += `<tr style="${bg}"><td style="text-align:center;font-weight:700;padding:10px 8px;border-bottom:1px solid #444;${col}">${i + 1}</td><td style="font-weight:900;color:#09f;padding:10px 8px;border-bottom:1px solid #444;">${ePct}%</td><td style="font-weight:700;padding:10px 8px;border-bottom:1px solid #444;">${e.name || '---'}</td><td style="font-size:11px;color:#888;padding:10px 8px;border-bottom:1px solid #444;">${ds}</td></tr>`;
 			});
 			html += '</tbody></table>';
 			wrap.innerHTML = html;
@@ -391,47 +394,37 @@
 		}
 
 		function pickPairs() {
-			// Preferred approach: pair ai_1234.* with real_1234.* when both exist.
-			// Falls back to random pairing if IDs can't be extracted.
-			const aiById = new Map();
-			for (const p of aiImages) {
-				const id = extractNumericId(p, 'ai');
-				if (id !== null && !aiById.has(id)) aiById.set(id, p);
-			}
-			const realById = new Map();
-			for (const p of realImages) {
-				const id = extractNumericId(p, 'real');
-				if (id !== null && !realById.has(id)) realById.set(id, p);
-			}
-
-			const commonIds = [];
-			for (const id of aiById.keys()) {
-				if (realById.has(id)) commonIds.push(id);
-			}
-
+			// Randomly pick 10 AI and 10 Real images each game, pair them randomly.
+			const count = Math.min(totalRounds, aiImages.length, realImages.length);
+			const shuffledAI = shuffle([...aiImages]).slice(0, count);
+			const shuffledReal = shuffle([...realImages]).slice(0, count);
 			pairs = [];
-			if (commonIds.length > 0) {
-				shuffle(commonIds);
-				for (let i = 0; i < Math.min(totalRounds, commonIds.length); i++) {
-					const id = commonIds[i];
-					pairs.push({ ai: aiById.get(id), real: realById.get(id) });
-				}
-			} else {
-				// Fallback: randomly pair any AI image with any Real image
-				const shuffledAI = shuffle([...aiImages]);
-				const shuffledReal = shuffle([...realImages]);
-				for (let i = 0; i < totalRounds; i++) {
-					pairs.push({ ai: shuffledAI[i], real: shuffledReal[i] });
-				}
+			for (let i = 0; i < count; i++) {
+				pairs.push({ ai: shuffledAI[i], real: shuffledReal[i] });
 			}
 		}
 
-		function showRound() {
+		function waitForImgLoad(img) {
+			return new Promise((resolve) => {
+				if (img.complete && img.naturalWidth > 0) { resolve(); return; }
+				img.addEventListener('load', () => resolve(), { once: true });
+				img.addEventListener('error', () => {
+					// Retry once by re-setting src with a cache-buster
+					const retrySrc = img.src + (img.src.includes('?') ? '&' : '?') + 'r=' + Date.now();
+					img.addEventListener('load', () => resolve(), { once: true });
+					img.addEventListener('error', () => resolve(), { once: true });
+					img.src = retrySrc;
+				}, { once: true });
+			});
+		}
+
+		async function showRound() {
 			document.getElementById('feedback').textContent = '';
 			document.getElementById('nextBtn').style.display = 'none';
 			document.getElementById('restartBtn').style.display = 'none';
 			document.getElementById('menuBtnGO').style.display = 'none';
-			document.getElementById('score').textContent = `Score: ${score} / ${pairs.length}`;
+			const pct = pairs.length > 0 ? Math.round((score / pairs.length) * 100) : 0;
+			document.getElementById('score').textContent = `Score: ${pct}% (${score}/${pairs.length})`;
 			document.getElementById('round-info').textContent = `Round ${currentRound + 1} of ${pairs.length}`;
 			const pair = pairs[currentRound];
 			// Randomize left/right
@@ -439,11 +432,13 @@
 			const leftImg = leftIsAI ? pair.ai : pair.real;
 			const rightImg = leftIsAI ? pair.real : pair.ai;
 			const imagesDiv = document.getElementById('images');
-			imagesDiv.innerHTML = '';
+			imagesDiv.innerHTML = '<p>Loading images...</p>';
 			// Create image elements with wrappers and zoom buttons
+			const imgElements = [];
 			function makeImgWrap(src, alt, choiceType) {
 				const wrap = document.createElement('div');
 				wrap.className = 'img-wrap';
+				wrap.style.visibility = 'hidden';
 				const img = document.createElement('img');
 				img.src = src;
 				img.alt = alt;
@@ -458,10 +453,19 @@
 				zoomBtn.onclick = (e) => { e.stopPropagation(); toggleFullscreenImg(src); };
 				wrap.appendChild(img);
 				wrap.appendChild(zoomBtn);
+				imgElements.push(img);
 				return wrap;
 			}
-			imagesDiv.appendChild(makeImgWrap(leftImg, 'Left Image', leftIsAI ? 'ai' : 'real'));
-			imagesDiv.appendChild(makeImgWrap(rightImg, 'Right Image', leftIsAI ? 'real' : 'ai'));
+			const leftWrap = makeImgWrap(leftImg, 'Left Image', leftIsAI ? 'ai' : 'real');
+			const rightWrap = makeImgWrap(rightImg, 'Right Image', leftIsAI ? 'real' : 'ai');
+			// Insert into DOM (hidden) so the browser starts loading
+			imagesDiv.innerHTML = '';
+			imagesDiv.appendChild(leftWrap);
+			imagesDiv.appendChild(rightWrap);
+			// Wait for both images to load, then reveal
+			await Promise.all(imgElements.map(waitForImgLoad));
+			leftWrap.style.visibility = '';
+			rightWrap.style.visibility = '';
 		}
 
 		function toggleFullscreenImg(src) {
@@ -490,7 +494,8 @@
 				imgElem.classList.add('wrong');
 				document.getElementById('feedback').textContent = 'Wrong! That is a real image.';
 			}
-			document.getElementById('score').textContent = `Score: ${score} / ${pairs.length}`;
+			const pctNow = pairs.length > 0 ? Math.round((score / pairs.length) * 100) : 0;
+			document.getElementById('score').textContent = `Score: ${pctNow}% (${score}/${pairs.length})`;
 			document.getElementById('nextBtn').style.display = 'inline-block';
 			if (currentRound === pairs.length - 1) {
 				document.getElementById('nextBtn').textContent = 'See Results';
@@ -499,10 +504,10 @@
 			}
 		}
 
-		document.getElementById('nextBtn').onclick = function () {
+		document.getElementById('nextBtn').onclick = async function () {
 			currentRound++;
 			if (currentRound < pairs.length) {
-				showRound();
+				await showRound();
 			} else {
 				showResults();
 			}
@@ -514,13 +519,16 @@
 			document.getElementById('score').textContent = '';
 			document.getElementById('nextBtn').style.display = 'none';
 
+			const finalPct = pairs.length > 0 ? Math.round((score / pairs.length) * 100) : 0;
 			const list = getRoaiHighScores();
-			const makesLb = score > 0 && (list.length < 5 || score > list[list.length - 1].score);
+			const lastPct = list.length > 0 ? (list[list.length - 1].pct != null ? list[list.length - 1].pct : (list[list.length - 1].total > 0 ? Math.round((list[list.length - 1].score / list[list.length - 1].total) * 100) : 0)) : 0;
+			const makesLb = score > 0 && (list.length < 5 || finalPct > lastPct);
 			roaiPendingScore = { score, total: pairs.length };
 
-			let feedHtml = `Your final score: ${score} / ${pairs.length}`;
+			let feedHtml = `Your final score: ${finalPct}% (${score}/${pairs.length})`;
 			if (makesLb) {
-				const isNewBest = list.length === 0 || score > list[0].score;
+				const topPct = list.length > 0 ? (list[0].pct != null ? list[0].pct : (list[0].total > 0 ? Math.round((list[0].score / list[0].total) * 100) : 0)) : 0;
+				const isNewBest = list.length === 0 || finalPct > topPct;
 				feedHtml += isNewBest ? '<br>\ud83c\udfc6 New High Score!' : '<br>\ud83d\udccb You made the leaderboard!';
 				feedHtml += `<div style="margin:10px 0;">
 					<div style="font-size:13px;color:#ffd700;margin-bottom:6px;">Enter your name:</div>
@@ -585,7 +593,7 @@
 			pickPairs();
 			currentRound = 0;
 			score = 0;
-			showRound();
+			await showRound();
 		}
 
 		// Start the game on load

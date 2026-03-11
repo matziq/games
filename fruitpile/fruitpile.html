@@ -78,17 +78,41 @@
 
         @media (max-width: 560px) {
             .hud {
-                flex-wrap: wrap;
-                justify-content: flex-start;
+                flex-wrap: nowrap;
+                justify-content: space-between;
+                padding: 8px;
+                gap: 6px;
             }
 
             .hud .panel {
-                width: 100%;
+                width: auto;
+                padding: 6px 8px;
+                gap: 4px;
+            }
+
+            /* Hide Current, Next, Mode, Diamond rows on mobile */
+            .hud .panel>div:nth-child(n+3) {
+                display: none !important;
             }
 
             .hud .panel.buttons {
-                justify-content: flex-start;
-                flex-wrap: wrap;
+                justify-content: flex-end;
+                flex-wrap: nowrap;
+                gap: 4px;
+            }
+
+            /* Hide menu link in HUD on mobile */
+            .hud .panel.buttons>a {
+                display: none;
+            }
+
+            .hud .panel.buttons button {
+                padding: 6px 8px;
+                font-size: 11px;
+            }
+
+            #toast {
+                display: none !important;
             }
         }
 

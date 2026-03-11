@@ -484,6 +484,75 @@
         .hs-list-btn:hover {
             background: rgba(255, 214, 0, 0.1);
         }
+
+        /* === Mobile: maximize board, hide clutter === */
+        @media (max-width: 600px) {
+            body {
+                padding: 6px 8px;
+                align-items: flex-start;
+                justify-content: flex-start;
+                height: 100dvh;
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            .menu-link {
+                display: none;
+            }
+
+            .app {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+            }
+
+            .subtitle {
+                display: none;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            header {
+                margin-bottom: 6px;
+            }
+
+            .scorebox {
+                min-width: 60px;
+                padding: 6px 8px;
+            }
+
+            .scorebox .value {
+                font-size: 18px;
+            }
+
+            .controls {
+                margin-bottom: 4px;
+                gap: 6px;
+            }
+
+            .hint {
+                display: none;
+            }
+
+            .app>.small {
+                display: none;
+            }
+
+            .boardWrap {
+                flex: 1 1 auto;
+                min-height: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .board {
+                max-height: 100%;
+                width: min(100%, calc(100dvh - 150px));
+            }
+        }
     </style>
 </head>
 
