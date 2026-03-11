@@ -57,11 +57,30 @@
       background: rgba(255, 255, 255, 0.06);
       font-weight: 650;
     }
+
+    .menu-link {
+      position: fixed;
+      top: 10px;
+      left: 12px;
+      z-index: 9998;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 13px;
+      color: #c4a060;
+      transition: color 0.15s;
+      letter-spacing: 0.3px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    }
+
+    .menu-link:hover {
+      color: #e0c080;
+    }
   </style>
-  <script type="module" crossorigin src="./assets/index-C5SHFk3k.js"></script>
+  <script type="module" crossorigin src="./assets/index-CoGdfcvt.js"></script>
 </head>
 
 <body>
+  <a class="menu-link" href="../gamemenu.html">← Games Menu</a>
   <div id="app"></div>
   <div id="debug">Booting…</div>
   <div class="hint">Move: <kbd>A</kbd>/<kbd>D</kbd> or <kbd>←</kbd>/<kbd>→</kbd> · Jump: <kbd>Space</kbd> · Interact:
@@ -265,8 +284,10 @@
   <script src="../scripts/mobile-controls.js"></script>
 
   <!-- High Score System -->
-  <div id="aztec-hs-modal" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);z-index:10000;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#e8ecf1;">
-    <div style="background:#121722;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:26px;min-width:290px;max-width:88%;max-height:80vh;overflow-y:auto;">
+  <div id="aztec-hs-modal"
+    style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);z-index:10000;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#e8ecf1;">
+    <div
+      style="background:#121722;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:26px;min-width:290px;max-width:88%;max-height:80vh;overflow-y:auto;">
       <h2 style="text-align:center;margin:0 0 18px;font-size:22px;color:#c4a060;">\ud83c\udfc6 High Scores</h2>
       <div id="aztec-hs-wrap"></div>
       <div id="aztec-name-entry" style="display:none;margin:10px 0;text-align:center;">
@@ -278,14 +299,17 @@
           <button id="aztec-save-name" style="padding:6px 14px;font-size:14px;font-weight:700;
             background:#c4a060;color:#000;border:none;border-radius:8px;cursor:pointer;">Save</button>
         </div>
-        <div id="aztec-name-saved" style="font-size:11px;color:#35dd8a;margin-top:4px;display:none;">&#10003; Name saved!</div>
+        <div id="aztec-name-saved" style="font-size:11px;color:#35dd8a;margin-top:4px;display:none;">&#10003; Name
+          saved!</div>
         <div id="aztec-name-hint" style="font-size:10px;color:#90a0b7;margin-top:3px;">Up to 6 letters</div>
       </div>
-      <button id="aztecHsClose" style="width:100%;padding:11px;margin-top:18px;background:#c4a060;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">Close</button>
-      <button id="aztecHsClear" style="display:block;margin:10px auto 0;padding:6px 18px;font-size:12px;background:transparent;color:#555;border:1px solid #333;border-radius:8px;cursor:pointer;">Clear Scores</button>
+      <button id="aztecHsClose"
+        style="width:100%;padding:11px;margin-top:18px;background:#c4a060;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">Close</button>
     </div>
   </div>
-  <button id="aztecScoresBtn" style="position:fixed;top:12px;right:12px;z-index:9999;padding:6px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.55);color:#c4a060;font-weight:700;font-size:12px;cursor:pointer;backdrop-filter:blur(4px);">\ud83c\udfc6 Scores</button>
+  <button id="aztecScoresBtn"
+    style="position:fixed;top:12px;right:12px;z-index:9999;padding:6px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.55);color:#c4a060;font-weight:700;font-size:12px;cursor:pointer;backdrop-filter:blur(4px);">\ud83c\udfc6
+    Scores</button>
   <script>
     (() => {
       const AZ_HS_KEY = 'aztecHero-highscores';
@@ -298,23 +322,24 @@
         for (let i = 0; i < list.length; i++) {
           if (gems > list[i].score) { list.splice(i, 0, entry); ins = true; azLastIdx = i; break; }
         }
-        if (!ins && list.length < 10) { azLastIdx = list.length; list.push(entry); ins = true; }
+        if (!ins && list.length < 5) { azLastIdx = list.length; list.push(entry); ins = true; }
         else if (!ins) { azLastIdx = -1; return false; }
-        if (list.length > 10) list.length = 10;
+        if (list.length > 5) list.length = 5;
         localStorage.setItem(AZ_HS_KEY, JSON.stringify(list));
+        if (window.GHScores) GHScores.save('aztec_hero', AZ_HS_KEY);
         return true;
       }
       function renderAzHs() {
         const list = getAzHs(), wrap = document.getElementById('aztec-hs-wrap');
         if (!list.length) { wrap.innerHTML = '<p style="text-align:center;color:#90a0b7;padding:30px 0;">No scores yet.</p>'; return; }
-        const mc = ['#edc53f','#c0c0c0','#cd7f32'];
+        const mc = ['#edc53f', '#c0c0c0', '#cd7f32'];
         let html = '<table style="width:100%;border-collapse:collapse;"><thead><tr><th style="font-size:11px;text-transform:uppercase;color:#90a0b7;padding:6px 8px;text-align:center;border-bottom:1px solid #333;">#</th><th style="font-size:11px;text-transform:uppercase;color:#90a0b7;padding:6px 8px;text-align:left;border-bottom:1px solid #333;">Gems</th><th style="font-size:11px;text-transform:uppercase;color:#90a0b7;padding:6px 8px;text-align:left;border-bottom:1px solid #333;">Name</th><th style="font-size:11px;text-transform:uppercase;color:#90a0b7;padding:6px 8px;text-align:left;border-bottom:1px solid #333;">Result</th><th style="font-size:11px;text-transform:uppercase;color:#90a0b7;padding:6px 8px;text-align:left;border-bottom:1px solid #333;">Date</th></tr></thead><tbody>';
         list.forEach((e, i) => {
           const bg = i === azLastIdx ? 'background:rgba(196,160,96,0.06);' : '';
           const col = i < 3 ? 'color:' + mc[i] + ';' : '';
           const d = new Date(e.date);
           const ds = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' });
-          html += '<tr style="' + bg + '"><td style="text-align:center;font-weight:700;padding:10px 8px;border-bottom:1px solid #222;' + col + '">' + (i+1) + '</td><td style="font-weight:900;color:#c4a060;padding:10px 8px;border-bottom:1px solid #222;">' + e.score + '</td><td style="font-weight:700;padding:10px 8px;border-bottom:1px solid #222;">' + (e.name || '---') + '</td><td style="padding:10px 8px;border-bottom:1px solid #222;">' + (e.escaped ? '\u2705 Escaped' : '\u274c Died') + '</td><td style="font-size:11px;color:#555;padding:10px 8px;border-bottom:1px solid #222;">' + ds + '</td></tr>';
+          html += '<tr style="' + bg + '"><td style="text-align:center;font-weight:700;padding:10px 8px;border-bottom:1px solid #222;' + col + '">' + (i + 1) + '</td><td style="font-weight:900;color:#c4a060;padding:10px 8px;border-bottom:1px solid #222;">' + e.score + '</td><td style="font-weight:700;padding:10px 8px;border-bottom:1px solid #222;">' + (e.name || '---') + '</td><td style="padding:10px 8px;border-bottom:1px solid #222;">' + (e.escaped ? '\u2705 Escaped' : '\u274c Died') + '</td><td style="font-size:11px;color:#555;padding:10px 8px;border-bottom:1px solid #222;">' + ds + '</td></tr>';
         });
         html += '</tbody></table>';
         wrap.innerHTML = html;
@@ -334,9 +359,9 @@
         renderAzHs();
       }
       // Called from Phaser scene
-      window.__aztecGameEnd = function(gems, escaped) {
+      window.__aztecGameEnd = function (gems, escaped) {
         const list = getAzHs();
-        const makesLb = gems > 0 && (list.length < 10 || gems > list[list.length - 1].score);
+        const makesLb = gems > 0 && (list.length < 5 || gems > list[list.length - 1].score);
         if (makesLb) {
           azPending = { gems, escaped };
           document.getElementById('aztec-name-entry').style.display = 'block';
@@ -359,10 +384,13 @@
         if (azPending) { const inp = document.getElementById('aztec-hs-name'); const name = inp && !inp.disabled ? inp.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase() : ''; addAzHs(azPending.gems, name, azPending.escaped); azPending = null; }
         hideAzHs();
       });
-      document.getElementById('aztecHsClear').addEventListener('click', () => { if (confirm('Clear all high scores?')) { localStorage.removeItem(AZ_HS_KEY); renderAzHs(); } });
       document.getElementById('aztec-save-name').addEventListener('click', saveAzName);
       document.getElementById('aztec-hs-name').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); saveAzName(); } });
     })();
+  </script>
+  <script src="../scripts/github-scores.js"></script>
+  <script>
+    if (window.GHScores) GHScores.load('aztec_hero', 'aztecHero-highscores', 5).catch(() => { });
   </script>
 </body>
 

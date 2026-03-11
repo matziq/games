@@ -63,7 +63,7 @@ export class RuinsScene extends Phaser.Scene{
     this.player=this.physics.add.sprite(5*TILE,WORLD_H-40,'player',0).setDepth(5);
     this.player.play('player-idle');
     this.player.setCollideWorldBounds(true);
-    this.player.body.setSize(10,18);this.player.body.setOffset(2,2);
+    this.player.body.setSize(10,14);this.player.body.setOffset(2,5);
     this.physics.add.collider(this.player,this.platforms,undefined,()=>!this.onLadder,this);
     this.physics.add.collider(this.enemies,this.platforms);
     this.physics.add.overlap(this.player,this.spikes,this.hitSpike,undefined,this);
@@ -323,6 +323,7 @@ export class RuinsScene extends Phaser.Scene{
     this.onLadder=this.physics.overlap(this.player,this.ladders);
     this.movePlayer();this.moveEnemies();this.moveWater(dt);
     this.handleTorch(delta);
+    this.unstickPlayer();
     this.updateParallax();this.updateGlows();this.updateHUD();
   }
   private movePlayer(){
@@ -395,6 +396,23 @@ export class RuinsScene extends Phaser.Scene{
     const roomNum=Math.max(1,9-Math.floor(this.player.y/(12*TILE)));
     this.hudDepth.setText('Room '+roomNum+'/9');
     this.hudAir.setColor(this.oxygen<30?'#ff4444':this.oxygen<60?'#ffaa44':'#c4a060');
+  }
+  // --- Unstick safety net ---
+  private stuckFrames=0;
+  private unstickPlayer(){
+    const body=this.player.body;
+    // If blocked above AND below simultaneously, the player is sandwiched
+    if(body.blocked.up&&body.blocked.down){
+      this.stuckFrames++;
+      if(this.stuckFrames>3){
+        // Push horizontally in facing direction to escape
+        const dir=this.facingRight?1:-1;
+        this.player.x+=dir*TILE;
+        this.stuckFrames=0;
+      }
+    }else{
+      this.stuckFrames=0;
+    }
   }
   // --- Interactions ---
   private hitSpike(){this.playerDied();}
