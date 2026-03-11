@@ -1244,8 +1244,9 @@
 
             /**
              * Slides a line to the left and merges equal adjacent numbers once per move.
+             * Returns the new line, score gained, created tile IDs, and merge source mapping.
              * @param {(Tile|null)[]} line
-             * @returns {{line:(Tile|null)[], gained:number, createdIds:Set<number>}}
+             * @returns {{line:(Tile|null)[], gained:number, createdIds:Set<number>, mergeMap:Map<number,number[]>}}
              */
             function slideAndMerge(line) {
                 /** @type {Tile[]} */
@@ -1255,6 +1256,8 @@
                 let gained = 0;
                 /** @type {Set<number>} */
                 const createdIds = new Set();
+                /** @type {Map<number,number[]>} mergedId → [sourceId1, sourceId2] */
+                const mergeMap = new Map();
 
                 for (let i = 0; i < nonzero.length; i++) {
                     const t = nonzero[i];
@@ -1263,6 +1266,7 @@
                         const merged = { id: nextTileId++, value: t.value * 2 };
                         out.push(merged);
                         createdIds.add(merged.id);
+                        mergeMap.set(merged.id, [t.id, next.id]);
                         gained += merged.value;
                         i++;
                     } else {
@@ -1271,8 +1275,15 @@
                 }
 
                 while (out.length < SIZE) out.push(null);
-                return { line: out, gained, createdIds };
+                return { line: out, gained, createdIds, mergeMap };
             }
+
+            /** @type {Map<number,{r:number,c:number}>} tile id → position before move */
+            let prevPositions = new Map();
+            /** @type {Map<number,number[]>} merged tile id → source tile ids */
+            let mergeSourceMap = new Map();
+            /** @type {Set<number>} ids of tiles spawned after a move */
+            let spawnedIds = new Set();
 
             /**
              * @param {'left'|'right'|'up'|'down'} dir
@@ -1281,17 +1292,28 @@
                 if (gameOver) return;
                 if (hasWon && !allowContinueAfterWin) return;
 
+                // Snapshot current positions
+                prevPositions = new Map();
+                for (let r = 0; r < SIZE; r++) {
+                    for (let c = 0; c < SIZE; c++) {
+                        const t = grid[r][c];
+                        if (t) prevPositions.set(t.id, { r, c });
+                    }
+                }
+
                 const before = cloneGrid(grid);
                 let totalGained = 0;
                 /** @type {Set<number>} */
                 const createdIds = new Set();
+                mergeSourceMap = new Map();
 
                 const applyLine = (getter, setter) => {
                     for (let i = 0; i < SIZE; i++) {
                         const line = getter(i);
-                        const { line: newLine, gained, createdIds: newIds } = slideAndMerge(line);
+                        const { line: newLine, gained, createdIds: newIds, mergeMap } = slideAndMerge(line);
                         totalGained += gained;
                         for (const id of newIds) createdIds.add(id);
+                        for (const [mid, sources] of mergeMap) mergeSourceMap.set(mid, sources);
                         setter(i, newLine);
                     }
                 };
@@ -1351,6 +1373,17 @@
                 // Pop merged tiles (and later the spawned tile)
                 popIds = createdIds;
                 addRandomTile(grid);
+
+                // Track which tile was just spawned
+                spawnedIds = new Set();
+                for (let r = 0; r < SIZE; r++) {
+                    for (let c = 0; c < SIZE; c++) {
+                        const t = grid[r][c];
+                        if (t && !prevPositions.has(t.id) && !createdIds.has(t.id)) {
+                            spawnedIds.add(t.id);
+                        }
+                    }
+                }
 
                 if (!hasWon && maxTile(grid) >= 2048) {
                     hasWon = true;
@@ -1430,6 +1463,9 @@
                 return `translate(${x}px, ${y}px)`;
             }
 
+            const SLIDE_MS = 150;
+            const ANIM_MS = 240;
+
             function render() {
                 measureLayout();
 
@@ -1443,42 +1479,118 @@
                         aliveIds.add(t.id);
 
                         let el = tileEls.get(t.id);
+                        const isMerged = mergeSourceMap.has(t.id);
+                        const isSpawned = spawnedIds.has(t.id);
                         const isNew = !el;
-                        if (!el) {
+
+                        if (isNew) {
                             el = document.createElement('div');
                             el.className = `tile v${t.value}`;
                             el.textContent = String(t.value);
                             el.style.width = `${cellSize}px`;
                             el.style.height = `${cellSize}px`;
-                            el.style.transform = `${tileTranslate(r, c)} scale(0.85)`;
-                            els.tiles.appendChild(el);
-                            tileEls.set(t.id, el);
+
+                            if (isMerged) {
+                                // Merged tile: start hidden, will appear after sources slide in
+                                const sources = mergeSourceMap.get(t.id) || [];
+                                const srcPos = prevPositions.get(sources[0]);
+                                const startR = srcPos ? srcPos.r : r;
+                                const startC = srcPos ? srcPos.c : c;
+                                el.style.transition = 'none';
+                                el.style.transform = `${tileTranslate(startR, startC)} scale(0)`;
+                                el.style.zIndex = '2';
+                                els.tiles.appendChild(el);
+                                tileEls.set(t.id, el);
+                                // After sources slide in, pop the merged tile into existence
+                                setTimeout(() => {
+                                    const still = tileEls.get(t.id);
+                                    if (!still) return;
+                                    still.style.transition = `transform ${ANIM_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1), background 160ms ease`;
+                                    still.style.transform = `${tileTranslate(r, c)} scale(1.2)`;
+                                    setTimeout(() => {
+                                        const s2 = tileEls.get(t.id);
+                                        if (s2) s2.style.transform = `${tileTranslate(r, c)} scale(1)`;
+                                    }, ANIM_MS);
+                                }, SLIDE_MS);
+                            } else if (isSpawned) {
+                                // Spawned tile: grow from nothing after slide completes
+                                el.style.transition = 'none';
+                                el.style.transform = `${tileTranslate(r, c)} scale(0)`;
+                                els.tiles.appendChild(el);
+                                tileEls.set(t.id, el);
+                                setTimeout(() => {
+                                    const still = tileEls.get(t.id);
+                                    if (!still) return;
+                                    still.style.transition = `transform ${ANIM_MS}ms cubic-bezier(0.34, 1.56, 0.64, 1), background 160ms ease`;
+                                    still.style.transform = `${tileTranslate(r, c)} scale(1)`;
+                                }, SLIDE_MS + 60);
+                            } else {
+                                // Initial placement (game start) — grow in
+                                el.style.transition = 'none';
+                                el.style.transform = `${tileTranslate(r, c)} scale(0)`;
+                                els.tiles.appendChild(el);
+                                tileEls.set(t.id, el);
+                                requestAnimationFrame(() => {
+                                    requestAnimationFrame(() => {
+                                        const still = tileEls.get(t.id);
+                                        if (!still) return;
+                                        still.style.transition = `transform ${ANIM_MS}ms cubic-bezier(0.34, 1.56, 0.64, 1), background 160ms ease`;
+                                        still.style.transform = `${tileTranslate(r, c)} scale(1)`;
+                                    });
+                                });
+                            }
                         } else {
+                            // Existing tile: slide to new position (CSS transition handles animation)
                             el.className = `tile v${t.value}`;
                             el.textContent = String(t.value);
                             el.style.width = `${cellSize}px`;
                             el.style.height = `${cellSize}px`;
-                        }
-
-                        const pop = popIds.has(t.id);
-                        const scale = pop ? 1.12 : 1;
-                        el.style.transform = `${tileTranslate(r, c)} scale(${scale})`;
-
-                        if (isNew || pop) {
-                            requestAnimationFrame(() => {
-                                const still = tileEls.get(t.id);
-                                if (!still) return;
-                                still.style.transform = `${tileTranslate(r, c)} scale(1)`;
-                            });
+                            el.style.transition = `transform ${SLIDE_MS}ms ease-in-out, background 160ms ease`;
+                            el.style.transform = `${tileTranslate(r, c)} scale(1)`;
                         }
                     }
                 }
 
+                // Slide consumed merge-source tiles to the merge destination, then remove
+                for (const [mergedId, sourceIds] of mergeSourceMap) {
+                    // Find where the merged tile ended up
+                    let destR = 0, destC = 0;
+                    outer: for (let r = 0; r < SIZE; r++) {
+                        for (let c = 0; c < SIZE; c++) {
+                            const t = grid[r][c];
+                            if (t && t.id === mergedId) { destR = r; destC = c; break outer; }
+                        }
+                    }
+                    for (const srcId of sourceIds) {
+                        const srcEl = tileEls.get(srcId);
+                        if (!srcEl) continue;
+                        // Slide source to destination
+                        srcEl.style.transition = `transform ${SLIDE_MS}ms ease-in-out`;
+                        srcEl.style.transform = `${tileTranslate(destR, destC)} scale(1)`;
+                        srcEl.style.zIndex = '1';
+                        // Remove after slide completes
+                        const capturedId = srcId;
+                        setTimeout(() => {
+                            const el = tileEls.get(capturedId);
+                            if (el) { el.remove(); tileEls.delete(capturedId); }
+                        }, SLIDE_MS);
+                    }
+                    // Don't delete source elements from tileEls yet (timeout handles it)
+                    // But mark them so the cleanup below doesn't remove them early
+                    for (const srcId of sourceIds) aliveIds.add(srcId);
+                }
+
+                // Remove tiles that no longer exist (non-merge cases)
                 for (const [id, el] of tileEls) {
                     if (aliveIds.has(id)) continue;
                     el.remove();
                     tileEls.delete(id);
                 }
+
+                // Reset tracking after render
+                mergeSourceMap = new Map();
+                spawnedIds = new Set();
+                popIds = new Set();
 
                 els.score.textContent = String(score);
                 els.best.textContent = String(best);
@@ -1501,6 +1613,9 @@
                 hasWon = false;
                 allowContinueAfterWin = false;
                 popIds = new Set();
+                prevPositions = new Map();
+                mergeSourceMap = new Map();
+                spawnedIds = new Set();
 
                 // Refresh BEST from storage so each new game uses the latest baseline.
                 best = loadBest();
