@@ -1046,6 +1046,12 @@
             }
 
             function playPing(value, offsetSec = 0) {
+                // Special fanfare for the 2048 merge
+                if (value >= 2048) {
+                    playBestFanfare();
+                    return;
+                }
+
                 withAudio((ctx, master) => {
                     const now = ctx.currentTime + offsetSec;
                     const dur = 0.18;
@@ -1063,9 +1069,11 @@
                     const src = ctx.createBufferSource();
                     src.buffer = buf;
 
-                    // Pitch the tap slightly with tile value
-                    const rate = 0.9 + Math.log2(Math.max(2, value)) * 0.05;
-                    src.playbackRate.value = Math.min(1.4, rate);
+                    // Pitch increases noticeably per merge tier:
+                    // value 4→0.8, 8→0.95, 16→1.1, 32→1.25, 64→1.4, 128→1.55, 256→1.7, 512→1.85, 1024→2.0
+                    const tier = Math.log2(Math.max(4, value)) - 2; // 0 for 4, 1 for 8, ... 8 for 1024
+                    const rate = 0.8 + tier * 0.15;
+                    src.playbackRate.value = rate;
 
                     const bp = ctx.createBiquadFilter();
                     bp.type = 'bandpass';
