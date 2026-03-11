@@ -1019,11 +1019,8 @@
                 </select>
             </div>
             <div class="setting-row">
-                <span>Sound</span>
-                <select id="opt-sound">
-                    <option value="1" selected>On</option>
-                    <option value="0">Off</option>
-                </select>
+                <span>Volume</span>
+                <input id="opt-volume" type="range" min="0" max="100" value="60" style="width:120px;accent-color:#29B6F6;cursor:pointer;">
             </div>
             <button class="close-settings" onclick="applySettings()">Apply &amp; Close</button>
         </div>
@@ -1058,6 +1055,7 @@
         let gridSize = 5;
         let matchCount = 3;
         let soundOn = true;
+        let soundVolume = 60;
 
         let board = [];
         let score = 0;
@@ -1188,10 +1186,17 @@
 
         // ── Audio (Web Audio API – no files needed) ────────────────
         let _actx = null;
+        let _dcMaster = null;
         function actx() {
-            if (!_actx) _actx = new (window.AudioContext || window.webkitAudioContext)();
+            if (!_actx) {
+                _actx = new (window.AudioContext || window.webkitAudioContext)();
+                _dcMaster = _actx.createGain();
+                _dcMaster.gain.value = soundVolume / 100;
+                _dcMaster.connect(_actx.destination);
+            }
             return _actx;
         }
+        function dcDest() { return _dcMaster || actx().destination; }
 
         function sfx(type) {
             if (!soundOn) return;
@@ -1232,13 +1237,13 @@
                     g.gain.setValueAtTime(vol, t);
                     g.gain.exponentialRampToValueAtTime(0.001, t + dur);
 
-                    src.connect(bp); bp.connect(hp); hp.connect(g); g.connect(c.destination);
+                    src.connect(bp); bp.connect(hp); hp.connect(g); g.connect(dcDest());
                     src.start(t); src.stop(t + dur);
                     return;
                 }
 
                 const o = c.createOscillator(), g = c.createGain();
-                o.connect(g); g.connect(c.destination);
+                o.connect(g); g.connect(dcDest());
                 switch (type) {
                     case 'place':
                         o.type = 'sine'; o.frequency.setValueAtTime(330, t);
@@ -1287,7 +1292,7 @@
                             const gn = c.createGain();
                             gn.gain.setValueAtTime(0.25, t);
                             gn.gain.exponentialRampToValueAtTime(0.001, t + dur);
-                            src.connect(bp); bp.connect(gn); gn.connect(c.destination);
+                            src.connect(bp); bp.connect(gn); gn.connect(dcDest());
                             src.start(t); src.stop(t + dur);
                             // Tiny tonal thump for the initial "pop" impact
                             o.type = 'sine'; o.frequency.setValueAtTime(400, t);
@@ -2047,13 +2052,15 @@
             m.classList.toggle('show');
             document.getElementById('opt-size').value = String(gridSize);
             document.getElementById('opt-match').value = String(matchCount);
-            document.getElementById('opt-sound').value = soundOn ? '1' : '0';
+            document.getElementById('opt-volume').value = String(soundVolume);
         }
 
         function applySettings() {
             gridSize = parseInt(document.getElementById('opt-size').value);
             matchCount = parseInt(document.getElementById('opt-match').value);
-            soundOn = document.getElementById('opt-sound').value === '1';
+            soundVolume = parseInt(document.getElementById('opt-volume').value) || 0;
+            soundOn = soundVolume > 0;
+            if (_dcMaster) _dcMaster.gain.value = soundVolume / 100;
             saveSettings();
             document.getElementById('settings-modal').classList.remove('show');
             init();
@@ -2063,7 +2070,7 @@
             localStorage.setItem('dcSettings', JSON.stringify({
                 gridSize,
                 matchCount,
-                soundOn
+                soundVolume
             }));
         }
 
@@ -2073,10 +2080,16 @@
                 if (saved) {
                     gridSize = saved.gridSize || 5;
                     matchCount = saved.matchCount || 3;
-                    soundOn = saved.soundOn !== undefined ? saved.soundOn : true;
+                    if (saved.soundVolume !== undefined) {
+                        soundVolume = saved.soundVolume;
+                        soundOn = soundVolume > 0;
+                    } else {
+                        soundOn = saved.soundOn !== undefined ? saved.soundOn : true;
+                        soundVolume = soundOn ? 60 : 0;
+                    }
                     document.getElementById('opt-size').value = String(gridSize);
                     document.getElementById('opt-match').value = String(matchCount);
-                    document.getElementById('opt-sound').value = soundOn ? '1' : '0';
+                    document.getElementById('opt-volume').value = String(soundVolume);
                 }
             } catch (e) { /* ignore corrupt data */ }
         }

@@ -373,6 +373,9 @@
     <button id="pauseBtn" title="Pause">Pause</button>
     <button id="resetBtn" title="Reset">Reset</button>
     <button id="muteBtn" title="Mute / Unmute Audio">🔊</button>
+    <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);cursor:pointer;">
+      <input id="geoVolSlider" type="range" min="0" max="100" value="60" style="width:60px;accent-color:var(--accent);cursor:pointer;">
+    </label>
     <button id="scoresBtn" title="High Scores">🏆</button>
   </div>
 
@@ -1459,13 +1462,21 @@
           muteBtn.textContent = window.audioMuted ? '🔇' : '🔊';
           muteBtn.classList.toggle('muted', window.audioMuted);
           muteBtn.title = window.audioMuted ? 'Unmute Audio' : 'Mute Audio';
+          const slider = document.getElementById('geoVolSlider');
+          if (window.audioMuted) { slider.value = '0'; if (master) master.gain.value = 0; }
+          else { slider.value = '60'; if (master) master.gain.value = 0.6; }
         });
         muteBtn.addEventListener('touchend', function (e) {
           e.preventDefault();
-          window.audioMuted = !window.audioMuted;
-          muteBtn.textContent = window.audioMuted ? '🔇' : '🔊';
-          muteBtn.classList.toggle('muted', window.audioMuted);
-          muteBtn.title = window.audioMuted ? 'Unmute Audio' : 'Mute Audio';
+          muteBtn.click();
+        });
+
+        document.getElementById('geoVolSlider').addEventListener('input', function () {
+          const v = Number(this.value);
+          window.audioMuted = v === 0;
+          muteBtn.textContent = v === 0 ? '🔇' : '🔊';
+          muteBtn.classList.toggle('muted', v === 0);
+          if (master) master.gain.value = v / 100;
         });
 
         document.getElementById('scoresBtn').addEventListener('click', showGeoHighScores);
@@ -1498,7 +1509,7 @@
         if (!AC) return; // No WebAudio support
 
         let ctx = null, master = null, noiseBuf = null;
-        const vol = 0.35;
+        const vol = 0.60;
 
         // Global mute state accessible to sound functions
         window.audioMuted = false;

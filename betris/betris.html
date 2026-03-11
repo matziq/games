@@ -878,11 +878,8 @@
                 </select>
             </div>
             <div class="setting-row">
-                <span>Sound</span>
-                <select id="opt-sound">
-                    <option value="1" selected>On</option>
-                    <option value="0">Off</option>
-                </select>
+                <span>Volume</span>
+                <input id="opt-volume" type="range" min="0" max="100" value="60" style="width:120px;accent-color:#29B6F6;cursor:pointer;">
             </div>
             <button class="close-settings" onclick="applySettings()">Apply &amp; Close</button>
         </div>
@@ -998,6 +995,7 @@
         let paused = false;
         let showGhost = true;
         let soundOn = true;
+        let soundVolume = 60;
 
         let current = null;   // { type, rot, row, col }
         let nextType = null;
@@ -1057,9 +1055,15 @@
         // ── Audio ──────────────────────────────────────────────────
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         let audioCtx = null;
+        let betrisMaster = null;
 
         function ensureAudio() {
-            if (!audioCtx) audioCtx = new AudioCtx();
+            if (!audioCtx) {
+                audioCtx = new AudioCtx();
+                betrisMaster = audioCtx.createGain();
+                betrisMaster.gain.value = soundVolume / 100;
+                betrisMaster.connect(audioCtx.destination);
+            }
             if (audioCtx.state === 'suspended') audioCtx.resume();
         }
 
@@ -1072,7 +1076,7 @@
             gain.gain.setValueAtTime(vol, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
             osc.connect(gain);
-            gain.connect(audioCtx.destination);
+            gain.connect(betrisMaster);
             osc.start();
             osc.stop(audioCtx.currentTime + dur);
         }
@@ -1689,14 +1693,16 @@
         function applySettings() {
             startLevel = parseInt(document.getElementById('opt-level').value) || 1;
             showGhost = document.getElementById('opt-ghost').value === '1';
-            soundOn = document.getElementById('opt-sound').value === '1';
+            soundVolume = parseInt(document.getElementById('opt-volume').value) || 0;
+            soundOn = soundVolume > 0;
+            if (betrisMaster) betrisMaster.gain.value = soundVolume / 100;
             document.getElementById('settings-modal').classList.remove('show');
 
             // Persist settings to localStorage
             localStorage.setItem('betris-settings', JSON.stringify({
                 startLevel,
                 showGhost,
-                soundOn
+                soundVolume
             }));
 
             if (!gameOver) {
@@ -1712,12 +1718,18 @@
                 if (saved) {
                     startLevel = saved.startLevel || 1;
                     showGhost = saved.showGhost !== undefined ? saved.showGhost : true;
-                    soundOn = saved.soundOn !== undefined ? saved.soundOn : true;
+                    if (saved.soundVolume !== undefined) {
+                        soundVolume = saved.soundVolume;
+                        soundOn = soundVolume > 0;
+                    } else {
+                        soundOn = saved.soundOn !== undefined ? saved.soundOn : true;
+                        soundVolume = soundOn ? 60 : 0;
+                    }
 
-                    // Sync UI selects
+                    // Sync UI
                     document.getElementById('opt-level').value = startLevel;
                     document.getElementById('opt-ghost').value = showGhost ? '1' : '0';
-                    document.getElementById('opt-sound').value = soundOn ? '1' : '0';
+                    document.getElementById('opt-volume').value = soundVolume;
                 }
             } catch (e) { /* ignore corrupt data */ }
         }

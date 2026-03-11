@@ -398,7 +398,9 @@
                     style="font-size:12px;font-weight:700;color:rgba(124,247,196,0.7);text-decoration:none;letter-spacing:0.3px;">←
                     Games Menu</a>
                 <button id="btnNew" title="New game">New</button>
-                <button id="btnSound" aria-pressed="true" title="Toggle sound">Sound</button>
+                <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:rgba(255,255,255,0.7);cursor:pointer;">
+                    🔊 <input id="volSlider" type="range" min="0" max="100" value="60" style="width:60px;accent-color:var(--accent);cursor:pointer;">
+                </label>
                 <button id="btnInfo" title="How To Play">How To Play</button>
                 <button id="btnScores" title="High Scores">🏆 Scores</button>
             </div>
@@ -465,7 +467,7 @@
             const modalBody = $('#modalBody');
 
             const btnNew = $('#btnNew');
-            const btnSound = $('#btnSound');
+            const volSlider = $('#volSlider');
             const btnInfo = $('#btnInfo');
             const btnPlay = $('#btnPlay');
             const btnHow = $('#btnHow');
@@ -601,7 +603,9 @@
             // --- Audio (tiny WebAudio pops) ---
             const audio = {
                 enabled: true,
+                volume: 60,
                 ctx: null,
+                _master: null,
                 _noise: null,
                 _tunePlaying: false,
                 _lastHitAt: {
@@ -610,8 +614,22 @@
                     wall: 0
                 },
                 ensure() {
-                    if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (!this.ctx) {
+                        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                        this._master = this.ctx.createGain();
+                        this._master.gain.value = this.volume / 100;
+                        this._master.connect(this.ctx.destination);
+                    }
                     return this.ctx;
+                },
+                dest() {
+                    this.ensure();
+                    return this._master;
+                },
+                setVolume(v) {
+                    this.volume = v;
+                    this.enabled = v > 0;
+                    if (this._master) this._master.gain.value = v / 100;
                 },
                 ensureNoise() {
                     if (this._noise) return this._noise;
@@ -654,7 +672,7 @@
 
                     osc.connect(filter);
                     filter.connect(gain);
-                    gain.connect(ctx.destination);
+                    gain.connect(audio.dest());
 
                     osc.start(t0);
                     osc.stop(t0 + 0.12);
@@ -710,7 +728,7 @@
 
                     osc.connect(filter);
                     filter.connect(gain);
-                    gain.connect(ctx.destination);
+                    gain.connect(audio.dest());
 
                     osc.start(t0);
                     osc.stop(t0 + 0.13);
@@ -745,7 +763,7 @@
                     osc1.connect(filter);
                     osc2.connect(filter);
                     filter.connect(gain);
-                    gain.connect(ctx.destination);
+                    gain.connect(audio.dest());
 
                     osc1.start(t0);
                     osc1.stop(t0 + 0.25);
@@ -797,7 +815,7 @@
                         g.gain.exponentialRampToValueAtTime(0.0001, t + n.d);
 
                         osc.connect(g);
-                        g.connect(ctx.destination);
+                        g.connect(audio.dest());
                         osc.start(t);
                         osc.stop(t + n.d + 0.01);
 
@@ -841,7 +859,7 @@
                     src.connect(bp);
                     bp.connect(hp);
                     hp.connect(gain);
-                    out.connect(ctx.destination);
+                    out.connect(audio.dest());
 
                     src.start(t0);
                     src.stop(t0 + 0.34);
@@ -4152,15 +4170,12 @@
                 newGame();
             });
 
-            btnSound.addEventListener('click', async () => {
-                audio.enabled = !audio.enabled;
-                btnSound.setAttribute('aria-pressed', audio.enabled ? 'true' : 'false');
-                if (audio.enabled) {
+            volSlider.addEventListener('input', async () => {
+                const v = Number(volSlider.value);
+                audio.setVolume(v);
+                if (v > 0) {
                     audio.ensure();
                     try { await audio.ctx.resume(); } catch { /* ignore */ }
-                    showToast('Sound on');
-                } else {
-                    showToast('Sound off');
                 }
             });
 
