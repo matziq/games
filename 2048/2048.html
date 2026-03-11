@@ -1048,35 +1048,45 @@
             function playPing(value, offsetSec = 0) {
                 withAudio((ctx, master) => {
                     const now = ctx.currentTime + offsetSec;
-                    const base = 520;
-                    const step = Math.log2(Math.max(2, value)) * 40;
-                    const freq = Math.min(1400, base + step);
+                    const dur = 0.18;
+                    const vol = 0.13;
 
-                    const osc1 = ctx.createOscillator();
-                    osc1.type = 'sine';
-                    osc1.frequency.setValueAtTime(freq, now);
-                    const osc2 = ctx.createOscillator();
-                    osc2.type = 'triangle';
-                    osc2.frequency.setValueAtTime(freq * 2.01, now);
+                    // Noise buffer shaped into a crackly dice-tap burst
+                    const len = Math.ceil(ctx.sampleRate * dur);
+                    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+                    const data = buf.getChannelData(0);
+                    for (let i = 0; i < len; i++) {
+                        const env = Math.exp(-i / (len * 0.25));
+                        const burst = Math.sin(i * 0.07) > 0.3 ? 1.0 : 0.3;
+                        data[i] = (Math.random() * 2 - 1) * env * burst;
+                    }
+                    const src = ctx.createBufferSource();
+                    src.buffer = buf;
+
+                    // Pitch the tap slightly with tile value
+                    const rate = 0.9 + Math.log2(Math.max(2, value)) * 0.05;
+                    src.playbackRate.value = Math.min(1.4, rate);
+
+                    const bp = ctx.createBiquadFilter();
+                    bp.type = 'bandpass';
+                    bp.frequency.value = 3200;
+                    bp.Q.value = 0.8;
+
+                    const hp = ctx.createBiquadFilter();
+                    hp.type = 'highpass';
+                    hp.frequency.value = 800;
 
                     const gain = ctx.createGain();
-                    gain.gain.setValueAtTime(0.0001, now);
-                    gain.gain.linearRampToValueAtTime(0.08, now + 0.01);
-                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+                    gain.gain.setValueAtTime(vol, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
 
-                    const lp = ctx.createBiquadFilter();
-                    lp.type = 'lowpass';
-                    lp.frequency.value = 2000;
-
-                    osc1.connect(lp);
-                    osc2.connect(lp);
-                    lp.connect(gain);
+                    src.connect(bp);
+                    bp.connect(hp);
+                    hp.connect(gain);
                     gain.connect(master);
 
-                    osc1.start(now);
-                    osc2.start(now);
-                    osc1.stop(now + 0.2);
-                    osc2.stop(now + 0.2);
+                    src.start(now);
+                    src.stop(now + dur);
                 });
             }
 
