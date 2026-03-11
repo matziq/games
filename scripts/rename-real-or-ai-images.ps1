@@ -73,7 +73,7 @@ function Rename-SequentialImages {
     }
 
     if (-not $needsRename) {
-        Write-Host "  $Prefix/: $($orderedFiles.Count) files already sequential — no changes." -ForegroundColor Gray
+        Write-Host "  $Prefix/: $($orderedFiles.Count) files already sequential - no changes." -ForegroundColor Gray
         return
     }
 
