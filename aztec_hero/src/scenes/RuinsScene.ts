@@ -44,12 +44,17 @@ export class RuinsScene extends Phaser.Scene{
   private dying=false;
   private footstepTimer=0;
   private ladderSoundTimer=0;
+  // Rope system
+  private ropes:{anchorX:number;anchorY:number;len:number;angle:number;speed:number;maxAngle:number;graphic:Phaser.GameObjects.Graphics}[]=[];
+  private onRope=false;
+  private currentRope:{anchorX:number;anchorY:number;len:number;angle:number;speed:number;maxAngle:number;graphic:Phaser.GameObjects.Graphics}|null=null;
   constructor(){super('ruins');}
   create(){
     this.escaped=false;this.treasureCount=0;this.oxygen=100;this.onLadder=false;
     this.hasTorch=false;this.swingTimer=0;this.torchPickupTime=0;this.torchFlashing=false;
     this.playerTorch=null;this.playerTorchGlow=null;
     this.dying=false;this.footstepTimer=0;this.ladderSoundTimer=0;
+    this.onRope=false;this.currentRope=null;this.ropes=[];
     this.cameras.main.setBackgroundColor('#070a10');
     this.physics.world.setBounds(0,0,WORLD_W,WORLD_H);
     this.bgDeep=this.add.tileSprite(0,0,320,180,'bgWallDeep').setOrigin(0,0).setScrollFactor(0,0).setDepth(-20);
@@ -120,6 +125,7 @@ export class RuinsScene extends Phaser.Scene{
     this.plat(17,140,5);                            // center high — below gap
     this.ceiling(0,138,TW,2);this.gap(18,138,4,2);  // ceiling with gap to room 2
     this.ladder(19,134,144);                        // ladder extends down through gap into room
+    this.rope(22,134);                              // rope near ladder top
     this.gem(6,145);this.gem(17,145);this.gem(32,145);this.gem(19,139);
     this.deco(5,145,'torch');this.deco(31,145,'torch');
     this.deco(10,148,'bones');this.deco(34,148,'bones');
@@ -132,6 +138,7 @@ export class RuinsScene extends Phaser.Scene{
     this.plat(8,128,4);this.plat(30,128,5);         // right one below gap
     this.ceiling(0,126,TW,2);this.gap(32,126,4,2);  // exit top-right
     this.ladder(33,122,132);                        // ladder extends down through gap
+    this.rope(30,122);                              // rope near ladder top
     this.gem(7,133);this.gem(16,130);this.gem(26,133);this.gem(32,127);
     this.spk(10,136);this.spk(11,136);this.spk(28,136);this.spk(29,136);
     this.deco(6,133,'torch');this.deco(25,133,'torch');this.deco(35,130,'torch');
@@ -146,6 +153,7 @@ export class RuinsScene extends Phaser.Scene{
     this.plat(5,116,5);this.plat(24,116,4);
     this.ceiling(0,114,TW,2);this.gap(6,114,4,2);
     this.ladder(7,110,120);                         // ladder extends down through gap
+    this.rope(10,110);                              // rope near ladder top
     this.gem(5,121);this.gem(16,118);this.gem(30,121);this.gem(36,118);this.gem(7,115);
     this.spk(15,124);this.spk(16,124);this.spk(24,124);this.spk(25,124);
     this.deco(5,121,'torch');this.deco(29,121,'torch');this.deco(15,118,'torch');
@@ -160,6 +168,7 @@ export class RuinsScene extends Phaser.Scene{
     this.plat(6,104,4);this.plat(26,104,5);         // right one near gap
     this.ceiling(0,102,TW,2);this.gap(28,102,4,2);
     this.ladder(29,98,108);                         // ladder extends down through gap
+    this.rope(26,98);                               // rope near ladder top
     this.gem(8,109);this.gem(26,109);this.gem(36,109);this.gem(16,106);
     this.gem(32,106);this.gem(8,103);this.gem(28,103);
     this.spk(12,112);this.spk(13,112);this.spk(20,112);this.spk(21,112);
@@ -175,6 +184,7 @@ export class RuinsScene extends Phaser.Scene{
     this.plat(6,92,4);this.plat(14,92,5);           // center near gap
     this.ceiling(0,90,TW,2);this.gap(14,90,4,2);
     this.ladder(15,86,96);                          // ladder extends down through gap
+    this.rope(18,86);                               // rope near ladder top
     this.gem(6,97);this.gem(22,97);this.gem(36,97);this.gem(14,94);this.gem(30,94);
     this.gem(8,91);this.gem(16,91);
     this.spk(10,100);this.spk(11,100);this.spk(26,100);this.spk(27,100);
@@ -188,6 +198,7 @@ export class RuinsScene extends Phaser.Scene{
     this.plat(6,80,4);this.plat(34,80,4);           // right one near gap
     this.ceiling(0,78,TW,2);this.gap(36,78,3,2);
     this.ladder(37,74,84);                          // ladder extends down through gap
+    this.rope(34,74);                               // rope near ladder top
     this.gem(6,85);this.gem(22,85);this.gem(36,85);this.gem(14,82);this.gem(30,82);
     this.gem(8,79);this.gem(36,79);
     this.spk(8,88);this.spk(9,88);this.spk(26,88);this.spk(27,88);
@@ -203,6 +214,7 @@ export class RuinsScene extends Phaser.Scene{
     this.plat(4,68,4);this.plat(20,68,5);           // center near gap
     this.ceiling(0,66,TW,2);this.gap(22,66,4,2);
     this.ladder(23,62,72);                          // ladder extends down through gap
+    this.rope(26,62);                               // rope near ladder top
     this.gem(6,73);this.gem(20,73);this.gem(36,73);this.gem(12,70);this.gem(30,70);
     this.gem(6,67);this.gem(22,67);
     this.spk(10,76);this.spk(11,76);this.spk(30,76);this.spk(31,76);
@@ -219,6 +231,7 @@ export class RuinsScene extends Phaser.Scene{
     this.plat(6,56,4);this.plat(18,56,4);           // near gap area
     this.ceiling(0,54,TW,2);this.gap(8,54,4,2);
     this.ladder(9,50,60);                           // ladder extends down through gap
+    this.rope(12,50);                               // rope near ladder top
     this.gem(6,61);this.gem(22,61);this.gem(36,61);this.gem(14,58);this.gem(30,58);
     this.gem(8,55);this.gem(20,55);
     this.spk(8,64);this.spk(9,64);this.spk(24,64);this.spk(25,64);
@@ -284,6 +297,48 @@ export class RuinsScene extends Phaser.Scene{
       (ldr as Phaser.Physics.Arcade.Sprite).refreshBody();
     }
   }
+  private rope(tx:number,ty:number,length=40){
+    const ax=tx*TILE+8,ay=ty*TILE;
+    const g=this.add.graphics().setDepth(3);
+    this.add.image(ax,ay,'ropeAnchor').setDepth(3);
+    this.ropes.push({anchorX:ax,anchorY:ay,len:length,angle:0,speed:1.8+Math.random()*0.4,maxAngle:0.6+Math.random()*0.15,graphic:g});
+  }
+  private updateRopes(dt:number){
+    for(const r of this.ropes){
+      r.angle=Math.sin(this.time.now*0.001*r.speed)*r.maxAngle;
+      const bx=r.anchorX+Math.sin(r.angle)*r.len;
+      const by=r.anchorY+Math.cos(r.angle)*r.len;
+      r.graphic.clear();
+      r.graphic.lineStyle(1.5,0x8a6a3a,1);
+      r.graphic.beginPath();
+      r.graphic.moveTo(r.anchorX,r.anchorY);
+      // Draw slightly curved rope
+      const mx=(r.anchorX+bx)/2+Math.sin(r.angle)*4;
+      const my=(r.anchorY+by)/2+3;
+      r.graphic.lineTo(mx,my);
+      r.graphic.lineTo(bx,by);
+      r.graphic.strokePath();
+      // Knot at bottom
+      r.graphic.fillStyle(0x6a4a2a,1);
+      r.graphic.fillCircle(bx,by,2.5);
+    }
+  }
+  private tryGrabRope():boolean{
+    const px=this.player.x,py=this.player.y;
+    for(const r of this.ropes){
+      const bx=r.anchorX+Math.sin(r.angle)*r.len;
+      const by=r.anchorY+Math.cos(r.angle)*r.len;
+      const dx=px-bx,dy=py-by;
+      if(dx*dx+dy*dy<24*24){
+        this.onRope=true;
+        this.currentRope=r;
+        this.player.body.allowGravity=false;
+        this.player.setVelocity(0,0);
+        return true;
+      }
+    }
+    return false;
+  }
   private tile(tx:number,ty:number,key:string){
     const t=this.platforms.create(tx*TILE+8,ty*TILE+8,key);t.refreshBody();t.setDepth(1);
   }
@@ -327,6 +382,7 @@ export class RuinsScene extends Phaser.Scene{
     const dt=delta/1000;
     // Check ladder overlap each frame
     this.onLadder=this.physics.overlap(this.player,this.ladders);
+    this.updateRopes(dt);
     this.movePlayer();this.moveEnemies();this.moveWater(dt);
     this.handleTorch(delta);
     this.unstickPlayer();
@@ -337,6 +393,34 @@ export class RuinsScene extends Phaser.Scene{
     const onGround=this.player.body.blocked.down;
     const wantUp=this.cursors.up.isDown||this.keys.W.isDown;
     const wantDown=this.cursors.down.isDown||this.keys.S.isDown;
+    const justJumped=Phaser.Input.Keyboard.JustDown(this.cursors.space);
+    // If on rope, handle rope controls
+    if(this.onRope&&this.currentRope){
+      this.player.body.allowGravity=false;
+      this.player.setVelocity(0,0);
+      // Position player at bottom of rope
+      const r=this.currentRope;
+      const bx=r.anchorX+Math.sin(r.angle)*r.len;
+      const by=r.anchorY+Math.cos(r.angle)*r.len;
+      this.player.setPosition(bx,by);
+      // Update facing based on left/right input
+      if(this.cursors.left.isDown||this.keys.A.isDown){if(this.facingRight){this.player.setFlipX(true);this.facingRight=false;}}
+      else if(this.cursors.right.isDown||this.keys.D.isDown){if(!this.facingRight){this.player.setFlipX(false);this.facingRight=true;}}
+      // Jump off rope
+      if(justJumped){
+        this.onRope=false;this.currentRope=null;
+        this.player.body.allowGravity=true;
+        // Launch: swing velocity + facing boost
+        const swingVx=Math.cos(r.angle)*r.speed*r.len*0.8;
+        const dir=this.facingRight?1:-1;
+        this.player.setVelocityX(swingVx+dir*120);
+        this.player.setVelocityY(jumpV*0.9);
+        playJump();
+      }
+      const anim=this.player.anims.currentAnim?.key;
+      if(anim!=='player-jump')this.player.play('player-jump');
+      return;
+    }
     let vx=0;
     if(this.cursors.left.isDown||this.keys.A.isDown){vx=-speed;if(this.facingRight){this.player.setFlipX(true);this.facingRight=false;}}
     else if(this.cursors.right.isDown||this.keys.D.isDown){vx=speed;if(!this.facingRight){this.player.setFlipX(false);this.facingRight=true;}}
@@ -353,17 +437,21 @@ export class RuinsScene extends Phaser.Scene{
         if(this.ladderSoundTimer<=0){playLadder();this.ladderSoundTimer=220;}
       }
       // Jump off ladder with space
-      if(this.cursors.space.isDown){
+      if(justJumped){
         this.player.body.allowGravity=true;
         this.onLadder=false;
-        this.player.setVelocityY(jumpV);
+        // Check if we can grab a nearby rope instead of just jumping
+        const grabbed=this.tryGrabRope();
+        if(!grabbed){
+          this.player.setVelocityY(jumpV);
+        }
         playJump();
       }
     }else{
       // Off ladder (or carrying torch): restore gravity, normal jump
       this.player.body.allowGravity=true;
       if(this.onLadder&&this.hasTorch)this.onLadder=false; // can't climb with torch
-      if(!this.hasTorch&&(wantUp||this.cursors.space.isDown)&&onGround){this.player.setVelocityY(jumpV);playJump();}
+      if(!this.hasTorch&&(wantUp||justJumped)&&onGround){this.player.setVelocityY(jumpV);playJump();}
     }
     // Walking sound
     if(onGround&&vx!==0&&!this.onLadder){
@@ -432,7 +520,8 @@ export class RuinsScene extends Phaser.Scene{
     }
   }
   // --- Interactions ---
-  private hitSpike(){this.playerDied();}
+  private detachRope(){this.onRope=false;this.currentRope=null;this.player.body.allowGravity=true;}
+  private hitSpike(){this.detachRope();this.playerDied();}
   private collectGem(_p:any,gem:any){gem.disableBody(true,true);this.treasureCount++;this.cameras.main.flash(100,255,200,50);playGem();}
   private nearBones(_p:any,bones:any){
     if(!this.hasTorch&&Phaser.Input.Keyboard.JustDown(this.keys.E)){bones.disableBody(true,true);this.treasureCount+=3;this.cameras.main.flash(100,200,180,100);}
@@ -442,7 +531,7 @@ export class RuinsScene extends Phaser.Scene{
       enemy.disableBody(true,true);this.enemyData.delete(enemy);
       this.player.setVelocityY(-200);this.treasureCount+=2;this.cameras.main.flash(80,255,100,50);
       playKill();
-    }else{this.playerDied();}
+    }else{this.detachRope();this.playerDied();}
   }
   private reachExit(){
     if(this.escaped)return;
