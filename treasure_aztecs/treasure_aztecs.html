@@ -38,9 +38,15 @@
 
         #game {
             display: block;
-            margin: 34px auto 0;
             image-rendering: pixelated;
-            cursor: crosshair
+            cursor: crosshair;
+            position: fixed;
+            top: 34px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(100vw, calc((100vh - 34px) * 320 / 180));
+            height: calc(100vh - 34px);
+            max-height: calc(100vw * 180 / 320);
         }
 
         #hud {
@@ -166,7 +172,7 @@
             const GRAVITY = 0.35, MAX_FALL = 6, JUMP_FORCE = -5.8, MOVE_SPEED = 1.8;
             const WHIP_RANGE = 28, WHIP_DURATION = 200;
             const BULLET_SPEED = 4, MAX_BULLETS = 12;
-            const FLOOD_SPEED = 0.3, DROWN_TIME = 3000;
+            const FLOOD_SPEED = 0.08, DROWN_TIME = 3000;
             const canvas = document.getElementById('game');
             const ctx = canvas.getContext('2d');
             canvas.width = W * SCALE; canvas.height = H * SCALE;
@@ -588,7 +594,7 @@
                         '#                  #\n' +
                         '#  --     --    -- #\n' +
                         '#                  #\n' +
-                        '=====DD==========DD='
+                        '=====DD========DD==='
                     ),
                     exits: { right: [1, 1, 1], bottom_l: [4, 2, 1], bottom_r: [2, 6, 1] },
                     enemies: [],
@@ -610,7 +616,7 @@
                     tiles: R(
                         '####################\n' +
                         'L                  #\n' +
-                        'L   --     --      #\n' +
+                        'L   --      --     #\n' +
                         '#                  #\n' +
                         '#  --         --   #\n' +
                         '#                  R\n' +
@@ -618,7 +624,7 @@
                         '#                  #\n' +
                         '#  --         --   #\n' +
                         '#                  #\n' +
-                        '==^^^====^^^^===^^^='
+                        '==    ====    ===^^^='
                     ),
                     exits: { left: [0, 18, 1], right: [3, 1, 5] },
                     enemies: [{ type: 'snake', x: 6 * 16, y: 6 * 16 - 8, patrol: [5 * 16, 10 * 16] }],
@@ -644,9 +650,9 @@
                         '>                  #\n' +
                         '#    --            #\n' +
                         '#              --  R\n' +
-                        '>       --         R\n' +
+                        '>                  R\n' +
                         '#                  #\n' +
-                        '=====UU============='
+                        '====UU=============='
                     ),
                     exits: { top: [0, 17, 9], right: [5, 1, 4] },
                     enemies: [{ type: 'scorpion', x: 12 * 16, y: 9 * 16 + 4, patrol: [6 * 16, 17 * 16] }],
@@ -678,7 +684,7 @@
                         '#            H     #\n' +
                         '#            H  -- #\n' +
                         '#            H     #\n' +
-                        '=================DD='
+                        '================DD=='
                     ),
                     exits: { left: [1, 18, 5], bottom: [6, 2, 1] },
                     enemies: [{ type: 'snake', x: 8 * 16, y: 9 * 16 - 8, patrol: [3 * 16, 15 * 16] }],
@@ -717,7 +723,7 @@
                         { type: 'health', x: 3 * 16, y: 1 * 16 + 8 },
                     ],
                     torches: [],
-                    traps: [{ type: 'flood', triggerX: 3 * 16, triggerY: 7 * 16, maxHeight: 4 * 16, speed: FLOOD_SPEED }],
+                    traps: [{ type: 'flood', triggerX: 3 * 16, triggerY: 7 * 16, maxHeight: 7 * 16, speed: FLOOD_SPEED }],
                     flood: { active: false, level: 0, maxLevel: 0 },
                 },
                 // ROOM 5: Spider Lair
@@ -731,7 +737,7 @@
                         'L                  #\n' +
                         'L  --         --   #\n' +
                         '#                  #\n' +
-                        '#       --     --  #\n' +
+                        '#       --      -- #\n' +
                         '#                  #\n' +
                         '#  --           -- #\n' +
                         '===================='
@@ -763,10 +769,10 @@
                         '#                  #\n' +
                         '#   --   --   --   #\n' +
                         '#                  #\n' +
-                        '#  P      P     -- #\n' +
-                        '#   --       --    #\n' +
+                        '#  P      P        #\n' +
+                        '#   --       -- -- #\n' +
                         '#        P         #\n' +
-                        '=UU================='
+                        '==UU================'
                     ),
                     exits: { top: [3, 17, 9] },
                     enemies: [
