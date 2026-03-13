@@ -366,6 +366,9 @@
     <div class="chip speed">
       <div class="dot"></div><span class="key">Speed</span><span class="val" id="speedMult">1.0×</span>
     </div>
+    <div class="chip" style="border-color:rgba(255,80,20,0.3);">
+      <div class="dot" style="background:#ff5014;"></div><span class="key">🚀</span><span class="val" id="rocketCount">0</span>
+    </div>
   </div>
 
   <div id="controls">
@@ -395,6 +398,8 @@
           missing).</div>
         <div class="pill">🔥 <strong>Fireballs</strong> — Rare glowing orbs. Click to explode and turn all geodes into
           diamonds!</div>
+        <div class="pill">🚀 <strong>Rockets</strong> — Earn by collecting crystals. Right-click to launch. Explodes on
+          impact! Lead your target!</div>
       </div>
 
       <div class="row">
@@ -466,6 +471,10 @@
         const particles = [];
         const fireballs = []; // New collection for fireballs
         const laserBeams = []; // Active laser beam animations
+        const rockets = []; // Active rocket projectiles
+        const tractorBeams = []; // Gems being pulled to gun
+        let rocketCount = 0;
+        const rocketEl = document.getElementById('rocketCount');
 
         // Configurations
         const MAX_MISSED = 20;
@@ -501,6 +510,7 @@
           scoreEl.textContent = score.toString();
           missedEl.textContent = missed.toString();
           speedEl.textContent = `${globalSpeedMult().toFixed(1)}×`;
+          if (rocketEl) rocketEl.textContent = rocketCount.toString();
         }
 
         function resize() {
@@ -1271,6 +1281,113 @@
             ctx.restore();
           }
 
+          // Update & draw tractor beams (gems being pulled to gun)
+          const gunTipX = volcano.x;
+          const gunTipY = volcano.y + 6 - 14 - 8;
+          for (let i = tractorBeams.length - 1; i >= 0; i--) {
+            const tb = tractorBeams[i];
+            const dx = gunTipX - tb.x, dy = gunTipY - tb.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 10) {
+              // Arrived at gun — award points and rocket
+              score += tb.points;
+              rocketCount++;
+              updateHUD();
+              makeSparkles(gunTipX, gunTipY, tb.color);
+              tractorBeams.splice(i, 1);
+              continue;
+            }
+            // Move toward gun
+            const speed = 400;
+            tb.x += (dx / dist) * speed * dt;
+            tb.y += (dy / dist) * speed * dt;
+            // Draw tractor beam line
+            ctx.save();
+            ctx.globalAlpha = 0.3;
+            ctx.strokeStyle = tb.color;
+            ctx.lineWidth = 2;
+            ctx.shadowColor = tb.color;
+            ctx.shadowBlur = 10;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(gunTipX, gunTipY);
+            ctx.lineTo(tb.x, tb.y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.restore();
+            // Draw the gem being pulled
+            ctx.save();
+            ctx.globalAlpha = 0.9;
+            ctx.fillStyle = tb.color;
+            ctx.beginPath();
+            ctx.arc(tb.x, tb.y, 5, 0, Math.PI * 2);
+            ctx.fill();
+            // Glow
+            ctx.globalAlpha = 0.4;
+            ctx.shadowColor = tb.color;
+            ctx.shadowBlur = 12;
+            ctx.beginPath();
+            ctx.arc(tb.x, tb.y, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+
+          // Update & draw rockets
+          for (let i = rockets.length - 1; i >= 0; i--) {
+            const rk = rockets[i];
+            const dx = rk.tx - rk.x, dy = rk.ty - rk.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 8) {
+              // Explode at target
+              rocketExplode(rk.x, rk.y);
+              rockets.splice(i, 1);
+              continue;
+            }
+            // Move toward target position
+            rk.x += (dx / dist) * rk.speed * dt;
+            rk.y += (dy / dist) * rk.speed * dt;
+            // Draw rocket
+            ctx.save();
+            const angle = Math.atan2(dy, dx);
+            ctx.translate(rk.x, rk.y);
+            ctx.rotate(angle);
+            // Exhaust trail
+            for (let t = 0; t < 3; t++) {
+              ctx.globalAlpha = 0.3 - t * 0.1;
+              ctx.fillStyle = ['#ff6a00', '#ffcf5a', '#ff3f3f'][t];
+              ctx.beginPath();
+              ctx.arc(-6 - t * 4 + rand(2, -2), rand(2, -2), 3 - t * 0.5, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            // Rocket body
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = '#cc3300';
+            ctx.beginPath();
+            ctx.moveTo(8, 0);
+            ctx.lineTo(-5, -4);
+            ctx.lineTo(-5, 4);
+            ctx.closePath();
+            ctx.fill();
+            // Nose highlight
+            ctx.fillStyle = '#ff6644';
+            ctx.beginPath();
+            ctx.moveTo(8, 0);
+            ctx.lineTo(2, -2);
+            ctx.lineTo(2, 2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+            // Smoke particles
+            if (Math.random() > 0.5) {
+              particles.push({
+                x: rk.x - Math.cos(angle) * 6, y: rk.y - Math.sin(angle) * 6,
+                vx: rand(20, -20), vy: rand(20, -20),
+                life: 0.3, ttl: 0.3, size: rand(1, 3),
+                color: '#888'
+              });
+            }
+          }
+
           // Update & draw sparkles
           for (let i = particles.length - 1; i >= 0; i--) {
             const p = particles[i];
@@ -1329,18 +1446,22 @@
         // Click handling
         function onClick(ev) {
           if (gameOver) return;
+          // Only handle left clicks (button 0)
+          if (ev.button && ev.button !== 0) return;
           const rect = canvas.getBoundingClientRect();
           const x = (ev.clientX - rect.left);
           const y = (ev.clientY - rect.top);
 
-          // Prefer clicking gems first (they may overlap shards/geodes)
+          let hitSomething = false;
+
+          // Prefer clicking gems first — tractor beam pulls them to the gun
           for (let i = gems.length - 1; i >= 0; i--) {
             const gm = gems[i];
             if (hitGem(gm, x, y)) {
-              score += gm.points;
-              updateHUD();
-              makeSparkles(gm.x, gm.y, gm.color);
+              fireLaser(gm.x, gm.y);
+              tractorBeams.push({ x: gm.x, y: gm.y, color: gm.color, points: gm.points });
               gems.splice(i, 1);
+              hitSomething = true;
               return;
             }
           }
@@ -1353,6 +1474,7 @@
               fireLaser(fb.x, fb.y);
               fireballs.splice(i, 1);
               explodeFireball(fb);
+              hitSomething = true;
               return;
             }
           }
@@ -1369,6 +1491,7 @@
               score += 5; // regular rocks worth 5 points
               updateHUD();
               if (typeof sfxRockCrumble === 'function') sfxRockCrumble();
+              hitSomething = true;
               return;
             }
           }
@@ -1386,11 +1509,81 @@
               maybeSpawnGem(g.x, g.y - 4);
               if (typeof sfxRockCrumble === 'function') sfxRockCrumble();
               if (typeof sfxGeode === 'function') sfxGeode();
+              hitSomething = true;
               return;
             }
           }
+
+          // Fire laser even if nothing was hit
+          if (!hitSomething) {
+            fireLaser(x, y);
+          }
         }
         canvas.addEventListener('mousedown', onClick);
+
+        // Right-click to fire rocket
+        canvas.addEventListener('contextmenu', (ev) => { ev.preventDefault(); });
+        canvas.addEventListener('mousedown', (ev) => {
+          if (ev.button !== 2) return;
+          ev.preventDefault();
+          if (gameOver || !running) return;
+          if (rocketCount <= 0) return;
+          rocketCount--;
+          updateHUD();
+          const rect = canvas.getBoundingClientRect();
+          const tx = ev.clientX - rect.left;
+          const ty = ev.clientY - rect.top;
+          const gunX = volcano.x;
+          const gunY = volcano.y + 6 - 14 - 8;
+          rockets.push({ x: gunX, y: gunY, tx, ty, speed: 250 });
+          if (typeof sfxRocket === 'function') sfxRocket();
+        });
+
+        // Rocket explosion — destroys everything in blast radius
+        function rocketExplode(rx, ry) {
+          const blastR = 60; // about double a large geode (30px radius)
+          if (typeof sfxExplosion === 'function') sfxExplosion();
+          // Explosion particles
+          for (let i = 0; i < 30; i++) {
+            const ang = rand(Math.PI * 2);
+            const spd = rand(80, 250);
+            const life = rand(0.5, 1.2);
+            particles.push({
+              x: rx, y: ry, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
+              life, ttl: life, size: rand(2, 5),
+              color: ['#ff6a00', '#ffcf5a', '#ff3f3f', '#ffffff'][Math.floor(Math.random() * 4)]
+            });
+          }
+          // Destroy geodes in blast
+          for (let i = geodes.length - 1; i >= 0; i--) {
+            const g = geodes[i];
+            if (dist2(rx, ry, g.x, g.y) <= blastR * blastR) {
+              makeShards(g.x, g.y, g.color, { x: g.vx / 100, y: g.vy / 100 });
+              maybeSpawnGem(g.x, g.y - 4);
+              geodes.splice(i, 1);
+            }
+          }
+          // Destroy rocks in blast
+          for (let i = rocks.length - 1; i >= 0; i--) {
+            const r = rocks[i];
+            if (dist2(rx, ry, r.x, r.y) <= blastR * blastR) {
+              makeShards(r.x, r.y, r.color, { x: r.vx / 100, y: r.vy / 100 });
+              score += 5;
+              rocks.splice(i, 1);
+            }
+          }
+          // Destroy fireballs in blast (trigger their explosion too)
+          for (let i = fireballs.length - 1; i >= 0; i--) {
+            const fb = fireballs[i];
+            if (dist2(rx, ry, fb.x, fb.y) <= blastR * blastR) {
+              fireballs.splice(i, 1);
+              explodeFireball(fb);
+            }
+          }
+          updateHUD();
+          // Draw blast circle briefly
+          laserBeams.push({ x1: rx - blastR, y1: ry, x2: rx + blastR, y2: ry, life: 0.2, ttl: 0.2 });
+        }
 
         // Add touch support for mobile devices
         canvas.addEventListener('touchstart', function (e) {
@@ -1428,8 +1621,9 @@
         function resetGame() {
           running = false; gameOver = false;
           score = 0; missed = 0;
-          geodes.length = 0; rocks.length = 0; shards.length = 0; gems.length = 0; particles.length = 0; fireballs.length = 0; laserBeams.length = 0;
+          geodes.length = 0; rocks.length = 0; shards.length = 0; gems.length = 0; particles.length = 0; fireballs.length = 0; laserBeams.length = 0; rockets.length = 0; tractorBeams.length = 0;
           spawnTimer = 0; rockTimer = 0; fireballTimer = 0;
+          rocketCount = 0;
           updateHUD();
           overlay.classList.remove('hidden');
           overlay.querySelector('h1').textContent = 'GEODES';
@@ -1716,6 +1910,22 @@
           thud.o.frequency.exponentialRampToValueAtTime(30, t + 0.06);
           thud.o.start(t); thud.o.stop(t + 0.08);
         }
+        function sfxRocket() {
+          if (window.audioMuted) return;
+          resumeCtx();
+          const t = now();
+          // Whoosh launch
+          noiseBurst({ freq: 800, q: 2, a: 0.005, r: 0.2, gain: 0.4 });
+          // Rising tone
+          const rise = osc('sawtooth', 200);
+          env(rise.g, t, 0.005, 0.15, 0.3);
+          rise.o.frequency.exponentialRampToValueAtTime(600, t + 0.15);
+          rise.o.start(t); rise.o.stop(t + 0.18);
+          // Pop
+          const pop = osc('square', 120);
+          env(pop.g, t, 0.001, 0.03, 0.35);
+          pop.o.start(t); pop.o.stop(t + 0.04);
+        }
         function sfxStart() {
           if (window.audioMuted) return;
           resumeCtx();
@@ -1997,6 +2207,7 @@
             ev.preventDefault();
           }
           proxy.addEventListener('mousedown', forwardMouse);
+          proxy.addEventListener('contextmenu', (ev) => { ev.preventDefault(); });
 
           // Basic touch support -> synthesize a mousedown
           proxy.addEventListener('touchstart', (ev) => {
