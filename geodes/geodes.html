@@ -1977,25 +1977,21 @@
           resumeCtx();
           const t = now();
 
-          // High-frequency glass shatter - multiple overlapping noise bursts
-          noiseBurst({ freq: 4200, q: 8, a: 0.001, r: 0.05, gain: 0.4 }); // Sharp initial crack
-          noiseBurst({ freq: 2800, q: 6, a: 0.003, r: 0.08, gain: 0.3 }); // Mid-range tinkle
-          noiseBurst({ freq: 1800, q: 4, a: 0.005, r: 0.12, gain: 0.25 }); // Lower shards falling
+          // Subtle glass crack - quieter, short
+          noiseBurst({ freq: 3200, q: 6, a: 0.001, r: 0.03, gain: 0.12 });
+          noiseBurst({ freq: 2000, q: 4, a: 0.003, r: 0.05, gain: 0.08 });
 
-          // Crystalline tones - multiple high-pitched sine waves like glass resonance
-          const glassFreqs = [2400, 1800, 1200, 950];
-          glassFreqs.forEach((freq, i) => {
-            const glass = osc('sine', freq);
-            env(glass.g, t + i * 0.008, 0.001, 0.06 + i * 0.02, 0.15 - i * 0.03);
-            glass.o.frequency.exponentialRampToValueAtTime(freq * 0.7, t + 0.08);
-            glass.o.start(t + i * 0.008);
-            glass.o.stop(t + 0.12 + i * 0.02);
-          });
+          // Single crystalline tone
+          const glass = osc('sine', 1600);
+          env(glass.g, t, 0.001, 0.04, 0.06);
+          glass.o.frequency.exponentialRampToValueAtTime(1100, t + 0.04);
+          glass.o.start(t);
+          glass.o.stop(t + 0.06);
 
-          // Sharp attack click for initial impact
+          // Tiny click
           const click = osc('square', 150);
-          env(click.g, t, 0.0005, 0.015, 0.3);
-          click.o.start(t); click.o.stop(t + 0.02);
+          env(click.g, t, 0.0005, 0.01, 0.08);
+          click.o.start(t); click.o.stop(t + 0.015);
         }
 
         function sfxExplosion() {
@@ -2073,31 +2069,30 @@
           resumeCtx();
           const t = now();
 
-          // Sad descending melody - minor chord
-          const sadMelody = [523.25, 466.16, 415.30, 349.23]; // C5, Bb4, Ab4, F4 (descending minor)
+          // Lower-pitched sad descending tones
+          const sadMelody = [220, 196, 174.6, 146.8]; // A3, G3, F3, D3
 
           sadMelody.forEach((freq, i) => {
             const note = osc('sine', freq);
             const startTime = t + i * 0.15;
-            env(note.g, startTime, 0.02, 0.3, 0.4 - i * 0.05);
+            env(note.g, startTime, 0.02, 0.25, 0.18 - i * 0.03);
 
-            // Slight downward pitch bend for sadness
             note.o.frequency.setValueAtTime(freq, startTime);
-            note.o.frequency.exponentialRampToValueAtTime(freq * 0.95, startTime + 0.3);
+            note.o.frequency.exponentialRampToValueAtTime(freq * 0.9, startTime + 0.25);
 
             note.o.start(startTime);
-            note.o.stop(startTime + 0.35);
+            note.o.stop(startTime + 0.3);
           });
 
-          // Low, mournful rumble
-          const rumble = osc('triangle', 110);
-          env(rumble.g, t, 0.05, 0.4, 0.3);
-          rumble.o.frequency.exponentialRampToValueAtTime(90, t + 0.4);
+          // Low rumble
+          const rumble = osc('triangle', 55);
+          env(rumble.g, t, 0.05, 0.35, 0.12);
+          rumble.o.frequency.exponentialRampToValueAtTime(40, t + 0.35);
           rumble.o.start(t);
-          rumble.o.stop(t + 0.5);
+          rumble.o.stop(t + 0.4);
 
-          // Soft disappointing noise
-          noiseBurst({ freq: 400, q: 2, a: 0.02, r: 0.25, gain: 0.15 });
+          // Soft low noise
+          noiseBurst({ freq: 200, q: 1.5, a: 0.02, r: 0.2, gain: 0.06 });
         }
 
         // Wire up UI/DOM events to sfx (without changing game code)
