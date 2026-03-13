@@ -155,7 +155,8 @@
         <div class="hud-item"><span style="font-size:14px">🔫</span><span class="hud-val" id="hud-bullets">6</span>
         </div>
         <div class="hud-sep" id="hud-key-sep" style="display:none"></div>
-        <div class="hud-item" id="hud-key-item" style="display:none"><span style="font-size:14px">🔑</span><span class="hud-val" id="hud-keys">0</span></div>
+        <div class="hud-item" id="hud-key-item" style="display:none"><span style="font-size:14px">🔑</span><span
+                class="hud-val" id="hud-keys">0</span></div>
         <div class="hud-sep"></div>
         <div class="hud-item"><span class="hud-label">Score</span><span class="hud-val" id="hud-score">0</span></div>
         <div class="hud-sep"></div>
@@ -229,76 +230,108 @@
             function hsl(h, s, l) { return `hsl(${h},${s}%,${l}%)` }
             function rgba(r, g, b, a) { return `rgba(${r},${g},${b},${a})` }
 
-            // Stone wall tile
+            // Stone wall tile — classic Aztec tan brick
             const tileStone = makeCanvas(16, 16, (c) => {
-                c.fillStyle = '#5a4e3c'; c.fillRect(0, 0, 16, 16);
-                // brick pattern
-                for (let y = 0; y < 16; y += 8) {
-                    for (let x = 0; x < 16; x += 8) {
-                        const off = y % 16 === 0 ? 0 : 4;
-                        c.fillStyle = `hsl(35,${15 + Math.random() * 10}%,${28 + Math.random() * 10}%)`;
-                        c.fillRect(x + off, y, 7, 7);
-                        c.fillStyle = 'rgba(0,0,0,0.3)'; c.fillRect(x + off, y + 7, 8, 1); c.fillRect(x + off + 7, y, 1, 8);
+                c.fillStyle = '#8B7355'; c.fillRect(0, 0, 16, 16);
+                // Brick pattern - 2 rows of offset bricks
+                const rows = [{y:0,h:7,off:0},{y:8,h:7,off:4}];
+                for (const row of rows) {
+                    c.fillStyle = '#1a1408'; c.fillRect(0, row.y + row.h, 16, 1); // mortar line
+                    for (let bx = 0; bx < 20; bx += 8) {
+                        const x = (bx + row.off) % 20;
+                        if (x >= 16) continue;
+                        const w = Math.min(7, 16 - x);
+                        // Brick face
+                        c.fillStyle = `hsl(35,${25 + (x*3+row.y*7)%15}%,${42 + (x*5+row.y*3)%12}%)`;
+                        c.fillRect(x, row.y, w, row.h);
+                        // Light edge top-left
+                        c.fillStyle = 'rgba(255,220,160,0.25)';
+                        c.fillRect(x, row.y, w, 1); c.fillRect(x, row.y, 1, row.h);
+                        // Dark edge bottom-right
+                        c.fillStyle = 'rgba(0,0,0,0.3)';
+                        c.fillRect(x, row.y+row.h-1, w, 1); c.fillRect(x+w-1, row.y, 1, row.h);
+                        // Mortar between bricks
+                        c.fillStyle = '#1a1408'; c.fillRect(x > 0 ? x-1 : 0, row.y, 1, row.h);
                     }
                 }
-                // hieroglyph accent
-                c.fillStyle = 'rgba(255,184,0,0.1)';
-                c.fillRect(3, 3, 2, 2); c.fillRect(7, 5, 1, 3); c.fillRect(11, 2, 2, 1);
+                // Subtle hieroglyph scratches
+                c.fillStyle = 'rgba(255,200,80,0.08)';
+                c.fillRect(3,3,2,3); c.fillRect(6,2,1,4); c.fillRect(11,4,2,2);
             });
 
-            // Stone floor
+            // Stone floor — lighter top surface with clear edge
             const tileFloor = makeCanvas(16, 16, (c) => {
-                c.fillStyle = '#6b5d48'; c.fillRect(0, 0, 16, 16);
+                c.fillStyle = '#7a6a50'; c.fillRect(0, 0, 16, 16);
+                // Block pattern
                 for (let x = 0; x < 16; x += 8) {
-                    c.fillStyle = `hsl(30,${18 + Math.random() * 8}%,${32 + Math.random() * 8}%)`;
-                    c.fillRect(x, 0, 7, 15);
-                    c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(x + 7, 0, 1, 16);
+                    c.fillStyle = `hsl(32,${22 + x%10}%,${38 + x%8}%)`;
+                    c.fillRect(x, 1, 7, 14);
+                    c.fillStyle = 'rgba(0,0,0,0.2)'; c.fillRect(x + 7, 0, 1, 16);
                 }
-                c.fillStyle = 'rgba(0,0,0,0.2)'; c.fillRect(0, 15, 16, 1);
-                c.fillStyle = 'rgba(255,255,200,0.05)'; c.fillRect(0, 0, 16, 1);
+                // Top highlight
+                c.fillStyle = 'rgba(255,220,160,0.3)'; c.fillRect(0, 0, 16, 2);
+                // Bottom shadow
+                c.fillStyle = 'rgba(0,0,0,0.35)'; c.fillRect(0, 14, 16, 2);
             });
 
-            // Platform
+            // Platform — visible stone ledge with thick edge
             const tilePlatform = makeCanvas(16, 16, (c) => {
-                c.fillStyle = '#7a6b52'; c.fillRect(0, 0, 16, 6);
-                c.fillStyle = '#685a44'; c.fillRect(0, 6, 16, 2);
-                c.fillStyle = 'rgba(0,0,0,0.3)'; c.fillRect(0, 7, 16, 1);
-                // moss
-                c.fillStyle = 'rgba(80,140,60,0.4)';
-                c.fillRect(2, 0, 3, 1); c.fillRect(9, 0, 2, 1); c.fillRect(13, 0, 2, 1);
-                c.fillStyle = 'rgba(255,255,200,0.08)'; c.fillRect(0, 0, 16, 1);
+                // Main stone surface
+                c.fillStyle = '#9B8B6B'; c.fillRect(0, 0, 16, 5);
+                // Under-edge
+                c.fillStyle = '#6B5B3B'; c.fillRect(0, 5, 16, 3);
+                // Top highlight
+                c.fillStyle = 'rgba(255,220,160,0.35)'; c.fillRect(0, 0, 16, 1);
+                // Bottom shadow
+                c.fillStyle = 'rgba(0,0,0,0.4)'; c.fillRect(0, 7, 16, 1);
+                // Block divisions
+                c.fillStyle = 'rgba(0,0,0,0.2)'; c.fillRect(7, 0, 1, 5);
+                // Moss spots
+                c.fillStyle = 'rgba(80,140,60,0.35)';
+                c.fillRect(2, 0, 2, 1); c.fillRect(10, 0, 3, 1);
             });
 
-            // Ladder
+            // Ladder — wooden with highlights
             const tileLadder = makeCanvas(16, 16, (c) => {
+                // Side rails
                 c.fillStyle = '#8B7355';
                 c.fillRect(2, 0, 3, 16); c.fillRect(11, 0, 3, 16);
-                c.fillStyle = '#7a6245';
-                c.fillRect(2, 3, 12, 2); c.fillRect(2, 10, 12, 2);
-                c.fillStyle = 'rgba(255,255,200,0.06)';
+                // Rail highlights
+                c.fillStyle = 'rgba(255,220,160,0.15)';
                 c.fillRect(3, 0, 1, 16); c.fillRect(12, 0, 1, 16);
+                // Rungs
+                c.fillStyle = '#9B8365';
+                c.fillRect(2, 3, 12, 2); c.fillRect(2, 10, 12, 2);
+                // Rung highlights
+                c.fillStyle = 'rgba(255,220,160,0.1)';
+                c.fillRect(2, 3, 12, 1); c.fillRect(2, 10, 12, 1);
             });
 
-            // Background wall
+            // Background wall — dark void inside rooms (classic Aztec style)
             const tileBg = makeCanvas(16, 16, (c) => {
-                c.fillStyle = '#2a2318'; c.fillRect(0, 0, 16, 16);
-                for (let i = 0; i < 6; i++) {
-                    c.fillStyle = `rgba(${40 + Math.random() * 20},${35 + Math.random() * 15},${25 + Math.random() * 10},0.3)`;
-                    const x = Math.random() * 14 | 0, y = Math.random() * 14 | 0;
-                    c.fillRect(x, y, 2 + Math.random() * 3 | 0, 2 + Math.random() * 3 | 0);
+                c.fillStyle = '#0a0806'; c.fillRect(0, 0, 16, 16);
+                // Very subtle stone texture hints
+                for (let i = 0; i < 3; i++) {
+                    c.fillStyle = `rgba(30,25,18,${0.15 + Math.random()*0.1})`;
+                    const x = Math.random() * 12 | 0, y = Math.random() * 12 | 0;
+                    c.fillRect(x, y, 3 + Math.random() * 3 | 0, 3 + Math.random() * 3 | 0);
                 }
             });
 
-            // Spikes
+            // Spikes — metallic on dark floor
             const tileSpike = makeCanvas(16, 16, (c) => {
-                c.fillStyle = '#2a2318'; c.fillRect(0, 0, 16, 16);
-                c.fillStyle = '#888';
-                for (let i = 0; i < 4; i++) {
-                    const bx = i * 4;
-                    c.beginPath(); c.moveTo(bx, 16); c.lineTo(bx + 2, 4); c.lineTo(bx + 4, 16); c.fill();
-                }
+                c.fillStyle = '#0a0806'; c.fillRect(0, 0, 16, 16);
+                // Base
+                c.fillStyle = '#5a4e3c'; c.fillRect(0, 12, 16, 4);
+                // Spike triangles
                 c.fillStyle = '#aaa';
-                for (let i = 0; i < 4; i++) { c.fillRect(i * 4 + 1, 5, 1, 2) }
+                for (let i = 0; i < 4; i++) {
+                    const sx = i * 4;
+                    c.beginPath(); c.moveTo(sx, 12); c.lineTo(sx + 2, 2); c.lineTo(sx + 4, 12); c.fill();
+                }
+                // Tips highlight
+                c.fillStyle = '#ddd';
+                for (let i = 0; i < 4; i++) { c.fillRect(i * 4 + 1, 3, 1, 2) }
             });
 
             // Water
@@ -314,16 +347,21 @@
                 c.fillStyle = '#8B7355'; c.fillRect(7, 6, 2, 10);
             });
 
-            // Arrow trap face
+            // Arrow trap face — carved stone face
             const tileArrowTrap = makeCanvas(16, 16, (c) => {
-                c.fillStyle = '#5a4e3c'; c.fillRect(0, 0, 16, 16);
-                // face
-                c.fillStyle = '#3a3228';
-                c.fillRect(3, 3, 10, 10);
-                c.fillStyle = '#222';
-                c.fillRect(5, 5, 2, 2); c.fillRect(9, 5, 2, 2);// eyes
-                c.fillRect(5, 9, 6, 2);// mouth (arrow comes from here)
-                c.fillStyle = 'rgba(255,0,0,0.3)'; c.fillRect(6, 9, 4, 1);
+                c.fillStyle = '#8B7355'; c.fillRect(0, 0, 16, 16);
+                // Recessed face
+                c.fillStyle = '#5a4830'; c.fillRect(2, 2, 12, 12);
+                // Eyes (dark hollows)
+                c.fillStyle = '#1a0a00';
+                c.fillRect(4, 4, 3, 3); c.fillRect(9, 4, 3, 3);
+                // Eye glow
+                c.fillStyle = 'rgba(255,0,0,0.5)';
+                c.fillRect(5, 5, 1, 1); c.fillRect(10, 5, 1, 1);
+                // Mouth (arrow exits here)
+                c.fillStyle = '#1a0a00'; c.fillRect(5, 9, 6, 3);
+                // Mouth edge
+                c.fillStyle = 'rgba(255,220,160,0.2)'; c.fillRect(5, 9, 6, 1);
             });
 
             // Pressure plate
@@ -556,7 +594,9 @@
                     case T.PLATE: bx.drawImage(tileBg, x, y); bx.drawImage(tilePlate, x, y); break;
                     case T.BG: bx.drawImage(tileBg, x, y); break;
                     case T.STAIRS: bx.drawImage(tileFloor, x, y);
-                        bx.fillStyle = 'rgba(0,0,0,0.15)'; bx.fillRect(x, y, 16, 4); break;
+                        // Step edge highlight
+                        bx.fillStyle = 'rgba(255,220,160,0.2)'; bx.fillRect(x, y, 16, 2);
+                        bx.fillStyle = 'rgba(0,0,0,0.2)'; bx.fillRect(x, y + 14, 16, 2); break;
                     case T.TORCH: bx.drawImage(tileBg, x, y); bx.drawImage(tileTorch, x, y); break;
                     case T.EXIT_L: case T.EXIT_R: case T.EXIT_B: bx.drawImage(tileBg, x, y); break;
                     case T.EXIT_T: bx.drawImage(tileFloor, x, y);
@@ -624,12 +664,12 @@
                     exits: { right: [1, 1, 1], bottom_l: [4, 2, 1], bottom_r: [2, 6, 1] },
                     enemies: [],
                     items: [
-                        { type: 'rubbish', x: 4*16, y: 5*16-4 },
-                        { type: 'rubbish', x: 11*16, y: 3*16-4 },
-                        { type: 'chest', x: 15*16, y: 4*16-4 },
-                        { type: 'rubbish', x: 3*16, y: 8*16-4 },
-                        { type: 'rubbish', x: 10*16, y: 6*16-4 },
-                        { type: 'key', x: 16*16+4, y: 4*16-8 },
+                        { type: 'rubbish', x: 4 * 16, y: 5 * 16 - 4 },
+                        { type: 'rubbish', x: 11 * 16, y: 3 * 16 - 4 },
+                        { type: 'chest', x: 15 * 16, y: 4 * 16 - 4 },
+                        { type: 'rubbish', x: 3 * 16, y: 8 * 16 - 4 },
+                        { type: 'rubbish', x: 10 * 16, y: 6 * 16 - 4 },
+                        { type: 'key', x: 16 * 16 + 4, y: 4 * 16 - 8 },
                     ],
                     torches: [[0, 0]],
                     traps: [],
@@ -654,11 +694,11 @@
                     exits: { left: [0, 18, 1], right: [3, 1, 5] },
                     enemies: [{ type: 'snake', x: 6 * 16, y: 6 * 16 - 8, patrol: [5 * 16, 10 * 16] }],
                     items: [
-                        { type: 'rubbish', x: 4*16, y: 2*16-4 },
-                        { type: 'rubbish', x: 14*16, y: 4*16-4 },
-                        { type: 'chest', x: 7*16, y: 6*16-4, locked: true },
-                        { type: 'key', x: 3*16+4, y: 8*16-8 },
-                        { type: 'rubbish', x: 14*16, y: 8*16-4 },
+                        { type: 'rubbish', x: 4 * 16, y: 2 * 16 - 4 },
+                        { type: 'rubbish', x: 14 * 16, y: 4 * 16 - 4 },
+                        { type: 'chest', x: 7 * 16, y: 6 * 16 - 4, locked: true },
+                        { type: 'key', x: 3 * 16 + 4, y: 8 * 16 - 8 },
+                        { type: 'rubbish', x: 14 * 16, y: 8 * 16 - 4 },
                     ],
                     torches: [], traps: [],
                 },
@@ -681,11 +721,11 @@
                     exits: { top: [0, 17, 9], right: [5, 1, 4] },
                     enemies: [{ type: 'scorpion', x: 12 * 16, y: 9 * 16 + 4, patrol: [6 * 16, 17 * 16] }],
                     items: [
-                        { type: 'rubbish', x: 5*16, y: 2*16-4 },
-                        { type: 'bullets', x: 15*16, y: 4*16-4 },
-                        { type: 'rubbish', x: 8*16, y: 9*16-4 },
-                        { type: 'chest', x: 14*16, y: 7*16-4 },
-                        { type: 'rubbish', x: 5*16, y: 6*16-4 },
+                        { type: 'rubbish', x: 5 * 16, y: 2 * 16 - 4 },
+                        { type: 'bullets', x: 15 * 16, y: 4 * 16 - 4 },
+                        { type: 'rubbish', x: 8 * 16, y: 9 * 16 - 4 },
+                        { type: 'chest', x: 14 * 16, y: 7 * 16 - 4 },
+                        { type: 'rubbish', x: 5 * 16, y: 6 * 16 - 4 },
                     ],
                     torches: [],
                     traps: [
@@ -713,12 +753,12 @@
                     exits: { left: [1, 18, 5], bottom: [6, 2, 1] },
                     enemies: [{ type: 'snake', x: 8 * 16, y: 9 * 16 - 8, patrol: [3 * 16, 15 * 16] }],
                     items: [
-                        { type: 'chest', x: 3*16, y: 3*16-4, locked: true },
-                        { type: 'chest', x: 10*16, y: 3*16-4 },
-                        { type: 'chest', x: 15*16, y: 3*16-4 },
-                        { type: 'key', x: 5*16+4, y: 6*16-8 },
-                        { type: 'rubbish', x: 10*16, y: 6*16-4 },
-                        { type: 'rubbish', x: 16*16, y: 8*16-4 },
+                        { type: 'chest', x: 3 * 16, y: 3 * 16 - 4, locked: true },
+                        { type: 'chest', x: 10 * 16, y: 3 * 16 - 4 },
+                        { type: 'chest', x: 15 * 16, y: 3 * 16 - 4 },
+                        { type: 'key', x: 5 * 16 + 4, y: 6 * 16 - 8 },
+                        { type: 'rubbish', x: 10 * 16, y: 6 * 16 - 4 },
+                        { type: 'rubbish', x: 16 * 16, y: 8 * 16 - 4 },
                     ],
                     torches: [[8, 0], [9, 0]], traps: [],
                 },
@@ -741,10 +781,10 @@
                     exits: { top: [0, 5, 9] },
                     enemies: [],
                     items: [
-                        { type: 'rubbish', x: 16*16, y: 3*16-4 },
-                        { type: 'chest', x: 16*16, y: 5*16-4 },
-                        { type: 'rubbish', x: 16*16, y: 7*16-4 },
-                        { type: 'health', x: 3*16, y: 1*16+8 },
+                        { type: 'rubbish', x: 16 * 16, y: 3 * 16 - 4 },
+                        { type: 'chest', x: 16 * 16, y: 5 * 16 - 4 },
+                        { type: 'rubbish', x: 16 * 16, y: 7 * 16 - 4 },
+                        { type: 'health', x: 3 * 16, y: 1 * 16 + 8 },
                     ],
                     torches: [],
                     traps: [{ type: 'flood', triggerX: 3 * 16, triggerY: 7 * 16, maxHeight: 7 * 16, speed: FLOOD_SPEED }],
@@ -773,12 +813,12 @@
                         { type: 'spider', x: 16 * 16, y: 0, dropY: 3 * 16 },
                     ],
                     items: [
-                        { type: 'rubbish', x: 4*16, y: 9*16-4 },
-                        { type: 'rubbish', x: 14*16, y: 9*16-4 },
-                        { type: 'chest', x: 10*16, y: 2*16-4, locked: true },
-                        { type: 'key', x: 15*16+4, y: 5*16-8 },
-                        { type: 'bullets', x: 8*16, y: 7*16-4 },
-                        { type: 'rubbish', x: 4*16, y: 5*16-4 },
+                        { type: 'rubbish', x: 4 * 16, y: 9 * 16 - 4 },
+                        { type: 'rubbish', x: 14 * 16, y: 9 * 16 - 4 },
+                        { type: 'chest', x: 10 * 16, y: 2 * 16 - 4, locked: true },
+                        { type: 'key', x: 15 * 16 + 4, y: 5 * 16 - 8 },
+                        { type: 'bullets', x: 8 * 16, y: 7 * 16 - 4 },
+                        { type: 'rubbish', x: 4 * 16, y: 5 * 16 - 4 },
                     ],
                     torches: [], traps: [],
                 },
@@ -804,11 +844,11 @@
                         { type: 'bat', x: 12 * 16, y: 3 * 16, amplitude: 20, freq: 0.025 },
                     ],
                     items: [
-                        { type: 'rubbish', x: 4*16, y: 2*16-4 },
-                        { type: 'rubbish', x: 8*16, y: 2*16-4 },
-                        { type: 'chest', x: 15*16, y: 8*16-4 },
-                        { type: 'rubbish', x: 5*16, y: 5*16-4 },
-                        { type: 'rubbish', x: 10*16, y: 5*16-4 },
+                        { type: 'rubbish', x: 4 * 16, y: 2 * 16 - 4 },
+                        { type: 'rubbish', x: 8 * 16, y: 2 * 16 - 4 },
+                        { type: 'chest', x: 15 * 16, y: 8 * 16 - 4 },
+                        { type: 'rubbish', x: 5 * 16, y: 5 * 16 - 4 },
+                        { type: 'rubbish', x: 10 * 16, y: 5 * 16 - 4 },
                     ],
                     torches: [],
                     traps: [
@@ -840,12 +880,12 @@
                         { type: 'scorpion', x: 10 * 16, y: 9 * 16 + 4, patrol: [4 * 16, 16 * 16] },
                     ],
                     items: [
-                        { type: 'idol', x: 8*16+2, y: 2*16-2 },
-                        { type: 'chest', x: 4*16, y: 7*16-4, locked: true },
-                        { type: 'key', x: 11*16+4, y: 5*16-8 },
-                        { type: 'rubbish', x: 4*16, y: 9*16-4 },
-                        { type: 'rubbish', x: 10*16, y: 9*16-4 },
-                        { type: 'health', x: 15*16+4, y: 9*16-4 },
+                        { type: 'idol', x: 8 * 16 + 2, y: 2 * 16 - 2 },
+                        { type: 'chest', x: 4 * 16, y: 7 * 16 - 4, locked: true },
+                        { type: 'key', x: 11 * 16 + 4, y: 5 * 16 - 8 },
+                        { type: 'rubbish', x: 4 * 16, y: 9 * 16 - 4 },
+                        { type: 'rubbish', x: 10 * 16, y: 9 * 16 - 4 },
+                        { type: 'health', x: 15 * 16 + 4, y: 9 * 16 - 4 },
                     ],
                     torches: [[6, 0], [7, 0], [8, 0], [9, 0], [10, 0], [11, 0]],
                     traps: [],
