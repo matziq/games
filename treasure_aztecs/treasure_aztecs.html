@@ -234,7 +234,7 @@
             const tileStone = makeCanvas(16, 16, (c) => {
                 c.fillStyle = '#8B7355'; c.fillRect(0, 0, 16, 16);
                 // Brick pattern - 2 rows of offset bricks
-                const rows = [{y:0,h:7,off:0},{y:8,h:7,off:4}];
+                const rows = [{ y: 0, h: 7, off: 0 }, { y: 8, h: 7, off: 4 }];
                 for (const row of rows) {
                     c.fillStyle = '#1a1408'; c.fillRect(0, row.y + row.h, 16, 1); // mortar line
                     for (let bx = 0; bx < 20; bx += 8) {
@@ -242,21 +242,21 @@
                         if (x >= 16) continue;
                         const w = Math.min(7, 16 - x);
                         // Brick face
-                        c.fillStyle = `hsl(35,${25 + (x*3+row.y*7)%15}%,${42 + (x*5+row.y*3)%12}%)`;
+                        c.fillStyle = `hsl(35,${25 + (x * 3 + row.y * 7) % 15}%,${42 + (x * 5 + row.y * 3) % 12}%)`;
                         c.fillRect(x, row.y, w, row.h);
                         // Light edge top-left
                         c.fillStyle = 'rgba(255,220,160,0.25)';
                         c.fillRect(x, row.y, w, 1); c.fillRect(x, row.y, 1, row.h);
                         // Dark edge bottom-right
                         c.fillStyle = 'rgba(0,0,0,0.3)';
-                        c.fillRect(x, row.y+row.h-1, w, 1); c.fillRect(x+w-1, row.y, 1, row.h);
+                        c.fillRect(x, row.y + row.h - 1, w, 1); c.fillRect(x + w - 1, row.y, 1, row.h);
                         // Mortar between bricks
-                        c.fillStyle = '#1a1408'; c.fillRect(x > 0 ? x-1 : 0, row.y, 1, row.h);
+                        c.fillStyle = '#1a1408'; c.fillRect(x > 0 ? x - 1 : 0, row.y, 1, row.h);
                     }
                 }
                 // Subtle hieroglyph scratches
                 c.fillStyle = 'rgba(255,200,80,0.08)';
-                c.fillRect(3,3,2,3); c.fillRect(6,2,1,4); c.fillRect(11,4,2,2);
+                c.fillRect(3, 3, 2, 3); c.fillRect(6, 2, 1, 4); c.fillRect(11, 4, 2, 2);
             });
 
             // Stone floor — lighter top surface with clear edge
@@ -264,7 +264,7 @@
                 c.fillStyle = '#7a6a50'; c.fillRect(0, 0, 16, 16);
                 // Block pattern
                 for (let x = 0; x < 16; x += 8) {
-                    c.fillStyle = `hsl(32,${22 + x%10}%,${38 + x%8}%)`;
+                    c.fillStyle = `hsl(32,${22 + x % 10}%,${38 + x % 8}%)`;
                     c.fillRect(x, 1, 7, 14);
                     c.fillStyle = 'rgba(0,0,0,0.2)'; c.fillRect(x + 7, 0, 1, 16);
                 }
@@ -312,7 +312,7 @@
                 c.fillStyle = '#0a0806'; c.fillRect(0, 0, 16, 16);
                 // Very subtle stone texture hints
                 for (let i = 0; i < 3; i++) {
-                    c.fillStyle = `rgba(30,25,18,${0.15 + Math.random()*0.1})`;
+                    c.fillStyle = `rgba(30,25,18,${0.15 + Math.random() * 0.1})`;
                     const x = Math.random() * 12 | 0, y = Math.random() * 12 | 0;
                     c.fillRect(x, y, 3 + Math.random() * 3 | 0, 3 + Math.random() * 3 | 0);
                 }
