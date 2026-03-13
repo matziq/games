@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { playFootstep, playJump, playGem, playKill, playLadder, playDeath, playExplosion, startAmbient, stopAmbient } from '../SoundManager';
 // Vertical world: climb UP through rooms to escape rising water
 const WORLD_W=640;  // 40 tiles wide
 const WORLD_H=2400; // 150 tiles tall
@@ -40,11 +41,15 @@ export class RuinsScene extends Phaser.Scene{
   private playerTorchGlow:Phaser.GameObjects.Image|null=null;
   private torchPickups!:Phaser.Physics.Arcade.StaticGroup;
   private hudTorch!:Phaser.GameObjects.Text;
+  private dying=false;
+  private footstepTimer=0;
+  private ladderSoundTimer=0;
   constructor(){super('ruins');}
   create(){
     this.escaped=false;this.treasureCount=0;this.oxygen=100;this.onLadder=false;
     this.hasTorch=false;this.swingTimer=0;this.torchPickupTime=0;this.torchFlashing=false;
     this.playerTorch=null;this.playerTorchGlow=null;
+    this.dying=false;this.footstepTimer=0;this.ladderSoundTimer=0;
     this.cameras.main.setBackgroundColor('#070a10');
     this.physics.world.setBounds(0,0,WORLD_W,WORLD_H);
     this.bgDeep=this.add.tileSprite(0,0,320,180,'bgWallDeep').setOrigin(0,0).setScrollFactor(0,0).setDepth(-20);
@@ -100,6 +105,7 @@ export class RuinsScene extends Phaser.Scene{
     this.hudAir=this.add.text(4,14,'Air: 100%',hs).setScrollFactor(0).setDepth(10);
     this.hudDepth=this.add.text(230,4,'',hs).setScrollFactor(0).setDepth(10);
     this.hudTorch=this.add.text(4,24,'',hs).setScrollFactor(0).setDepth(10);
+    startAmbient();
   }
   private buildLevel(){
     // --- WALLS: left and right boundaries for the entire world ---
@@ -317,7 +323,7 @@ export class RuinsScene extends Phaser.Scene{
   }
   // --- Game loop ---
   update(_time:number,delta:number){
-    if(this.escaped)return;
+    if(this.escaped||this.dying)return;
     const dt=delta/1000;
     // Check ladder overlap each frame
     this.onLadder=this.physics.overlap(this.player,this.ladders);
@@ -341,18 +347,29 @@ export class RuinsScene extends Phaser.Scene{
       if(wantUp)this.player.setVelocityY(-climbSpeed);
       else if(wantDown)this.player.setVelocityY(climbSpeed);
       else this.player.setVelocityY(0);
+      // Ladder sound
+      if(wantUp||wantDown){
+        this.ladderSoundTimer-=this.game.loop.delta;
+        if(this.ladderSoundTimer<=0){playLadder();this.ladderSoundTimer=220;}
+      }
       // Jump off ladder with space
       if(this.cursors.space.isDown){
         this.player.body.allowGravity=true;
         this.onLadder=false;
         this.player.setVelocityY(jumpV);
+        playJump();
       }
     }else{
       // Off ladder (or carrying torch): restore gravity, normal jump
       this.player.body.allowGravity=true;
       if(this.onLadder&&this.hasTorch)this.onLadder=false; // can't climb with torch
-      if(!this.hasTorch&&(wantUp||this.cursors.space.isDown)&&onGround)this.player.setVelocityY(jumpV);
+      if(!this.hasTorch&&(wantUp||this.cursors.space.isDown)&&onGround){this.player.setVelocityY(jumpV);playJump();}
     }
+    // Walking sound
+    if(onGround&&vx!==0&&!this.onLadder){
+      this.footstepTimer-=this.game.loop.delta;
+      if(this.footstepTimer<=0){playFootstep();this.footstepTimer=200;}
+    }else if(onGround&&vx===0){this.footstepTimer=0;}
     const anim=this.player.anims.currentAnim?.key;
     if(this.onLadder&&(wantUp||wantDown)){if(anim!=='player-walk')this.player.play('player-walk');}
     else if(!onGround&&!this.onLadder){if(anim!=='player-jump')this.player.play('player-jump');}
@@ -416,7 +433,7 @@ export class RuinsScene extends Phaser.Scene{
   }
   // --- Interactions ---
   private hitSpike(){this.playerDied();}
-  private collectGem(_p:any,gem:any){gem.disableBody(true,true);this.treasureCount++;this.cameras.main.flash(100,255,200,50);}
+  private collectGem(_p:any,gem:any){gem.disableBody(true,true);this.treasureCount++;this.cameras.main.flash(100,255,200,50);playGem();}
   private nearBones(_p:any,bones:any){
     if(!this.hasTorch&&Phaser.Input.Keyboard.JustDown(this.keys.E)){bones.disableBody(true,true);this.treasureCount+=3;this.cameras.main.flash(100,200,180,100);}
   }
@@ -424,11 +441,13 @@ export class RuinsScene extends Phaser.Scene{
     if(this.player.body.velocity.y>0&&this.player.y<enemy.y-4){
       enemy.disableBody(true,true);this.enemyData.delete(enemy);
       this.player.setVelocityY(-200);this.treasureCount+=2;this.cameras.main.flash(80,255,100,50);
+      playKill();
     }else{this.playerDied();}
   }
   private reachExit(){
     if(this.escaped)return;
     this.escaped=true;
+    stopAmbient();
     this.player.setVelocity(0,0);this.player.body.enable=false;
     this.cameras.main.flash(500,255,220,100);
     const cam=this.cameras.main;
@@ -542,6 +561,7 @@ export class RuinsScene extends Phaser.Scene{
         (spr as Phaser.Physics.Arcade.Sprite).disableBody(true,true);this.enemyData.delete(spr);
         this.treasureCount+=2;
         this.cameras.main.flash(80,255,100,50);
+        playKill();
       }
     }
     // Check bones in swing range
@@ -564,8 +584,28 @@ export class RuinsScene extends Phaser.Scene{
     this.cameras.main.flash(40,100,80,40);
   }
   private playerDied(){
-    if(this.escaped)return;
-    this.cameras.main.shake(200,0.02);this.cameras.main.flash(300,180,0,0);
-    this.time.delayedCall(400,()=>{this.scene.restart();});
+    if(this.escaped||this.dying)return;
+    this.dying=true;
+    stopAmbient();
+    playDeath();
+    this.player.setVelocity(0,-100);
+    this.player.body.enable=false;
+    this.cameras.main.shake(200,0.02);
+    // Spin
+    this.tweens.add({targets:this.player,angle:720,duration:600,ease:'Power2',onComplete:()=>{
+      // Explode
+      playExplosion();
+      this.player.setVisible(false);
+      this.cameras.main.flash(200,255,120,0);
+      const emitter=this.add.particles(this.player.x,this.player.y,'exploPart',{
+        speed:{min:40,max:120},angle:{min:0,max:360},
+        lifespan:600,gravityY:300,
+        alpha:{start:1,end:0},scale:{start:1,end:0.3},
+        quantity:20,emitting:false
+      });
+      emitter.setDepth(10);
+      emitter.explode(20);
+      this.time.delayedCall(800,()=>{this.scene.restart();});
+    }});
   }
 }

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { initSounds } from '../SoundManager';
 let _s=42;
 function seed(v:number){_s=v;}
 function rng():number{_s=(_s*16807)%2147483647;return(_s&0x7fffffff)/0x7fffffff;}
@@ -41,6 +42,9 @@ export class BootScene extends Phaser.Scene{
     this.genGlow();
     this.genDoor();
     this.genLadder();
+    this.genExplosionParticle();
+    // Pre-generate audio buffers
+    initSounds();
     const t=this.add.text(160,90,'AZTEC HERO',{fontFamily:'monospace',fontSize:'12px',color:'#c4a060',stroke:'#2a1a0a',strokeThickness:2}).setOrigin(0.5);
     this.time.delayedCall(600,()=>{t.destroy();this.scene.start('ruins');});
   }
@@ -379,5 +383,13 @@ export class BootScene extends Phaser.Scene{
       dot(ctx,2,ry,'#7a5a3a');dot(ctx,7,ry,'#4a2a10');
     }
     this.done('ladder');
+  }
+  genExplosionParticle(){
+    const ctx=this.tex('exploPart',4,4);
+    fill(ctx,1,0,2,1,'#ff8844');
+    fill(ctx,0,1,4,2,'#ffaa44');
+    fill(ctx,1,3,2,1,'#ff6622');
+    dot(ctx,1,1,'#ffee88');dot(ctx,2,1,'#ffcc66');
+    this.done('exploPart');
   }
 }
