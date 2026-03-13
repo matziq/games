@@ -1,0 +1,1723 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Treasure of the Aztecs</title>
+    <style>
+        :root {
+            --bg: #0a0806;
+            --ui: #1a1510;
+            --text: #e8dcc8;
+            --gold: #ffb800;
+            --red: #ff4d4d;
+            --green: #35dd8a;
+            --muted: #a09882
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        html,
+        body {
+            height: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            overflow: hidden;
+            user-select: none;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent
+        }
+
+        #game {
+            display: block;
+            margin: 34px auto 0;
+            image-rendering: pixelated;
+            cursor: crosshair
+        }
+
+        #hud {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 5px 14px;
+            height: 32px;
+            border-radius: 0 0 10px 10px;
+            background: rgba(10, 8, 6, .92);
+            backdrop-filter: blur(6px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .5);
+            border: 1px solid rgba(255, 184, 0, .15);
+            border-top: none;
+            z-index: 5;
+            font-size: 13px;
+            white-space: nowrap
+        }
+
+        .hud-item {
+            display: flex;
+            align-items: center;
+            gap: 4px
+        }
+
+        .hud-hearts span {
+            color: var(--red);
+            font-size: 15px
+        }
+
+        .hud-hearts .empty {
+            opacity: .3
+        }
+
+        .hud-label {
+            color: var(--muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .5px
+        }
+
+        .hud-val {
+            color: var(--gold);
+            font-weight: 700
+        }
+
+        .hud-room {
+            color: var(--text);
+            font-weight: 600;
+            font-size: 12px;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .hud-sep {
+            width: 1px;
+            height: 16px;
+            background: rgba(255, 184, 0, .2)
+        }
+
+        .menu-link {
+            position: fixed;
+            top: 10px;
+            left: 12px;
+            z-index: 7;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--gold);
+            transition: color .15s;
+            letter-spacing: .3px
+        }
+
+        .menu-link:hover {
+            color: #ffdb70
+        }
+
+        .menu-link:focus-visible {
+            outline: 3px solid rgba(255, 184, 0, .4);
+            outline-offset: 2px
+        }
+
+        @media(max-width:680px) {
+            #hud {
+                font-size: 11px;
+                gap: 6px;
+                padding: 4px 8px;
+                height: 28px
+            }
+
+            .hud-label {
+                display: none
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <a class="menu-link" href="../gamemenu.html" aria-label="Back to games menu">← Games Menu</a>
+    <div id="hud" style="display:none">
+        <div class="hud-item hud-hearts" id="hud-hearts"></div>
+        <div class="hud-sep"></div>
+        <div class="hud-item"><span style="font-size:14px">🔫</span><span class="hud-val" id="hud-bullets">6</span>
+        </div>
+        <div class="hud-sep"></div>
+        <div class="hud-item"><span class="hud-label">Score</span><span class="hud-val" id="hud-score">0</span></div>
+        <div class="hud-sep"></div>
+        <div class="hud-item hud-room" id="hud-room">Entrance Hall</div>
+    </div>
+    <canvas id="game"></canvas>
+    <script>
+        (() => {
+            'use strict';
+            /* ═══════════════════════════════════════════════════════════════
+               CONSTANTS
+               ═══════════════════════════════════════════════════════════════ */
+            const W = 320, H = 180, SCALE = 2, TW = 16, TH = 16, COLS = 20, ROWS = 11;
+            const GRAVITY = 0.35, MAX_FALL = 6, JUMP_FORCE = -5.8, MOVE_SPEED = 1.8;
+            const WHIP_RANGE = 28, WHIP_DURATION = 200;
+            const BULLET_SPEED = 4, MAX_BULLETS = 12;
+            const FLOOD_SPEED = 0.3, DROWN_TIME = 3000;
+            const canvas = document.getElementById('game');
+            const ctx = canvas.getContext('2d');
+            canvas.width = W * SCALE; canvas.height = H * SCALE;
+            ctx.imageSmoothingEnabled = false;
+            // offscreen buffer at native res
+            const buf = document.createElement('canvas');
+            buf.width = W; buf.height = H;
+            const bx = buf.getContext('2d');
+
+            /* ═══════════════════════════════════════════════════════════════
+               AUDIO — procedural Web Audio
+               ═══════════════════════════════════════════════════════════════ */
+            let audioCtx;
+            function ensureAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)() }
+            function playTone(freq, dur, type = 'square', vol = .12, slide = 0) {
+                ensureAudio(); const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+                o.type = type; o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                if (slide) o.frequency.linearRampToValueAtTime(freq + slide, audioCtx.currentTime + dur);
+                g.gain.setValueAtTime(vol, audioCtx.currentTime);
+                g.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime + dur);
+                o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + dur);
+            }
+            function playNoise(dur, vol = .1) {
+                ensureAudio(); const n = audioCtx.createBufferSource(), b = audioCtx.createBuffer(1, audioCtx.sampleRate * dur, audioCtx.sampleRate);
+                const d = b.getChannelData(0); for (let i = 0; i < d.length; i++)d[i] = (Math.random() * 2 - 1);
+                n.buffer = b; const g = audioCtx.createGain(); g.gain.setValueAtTime(vol, audioCtx.currentTime);
+                g.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime + dur);
+                n.connect(g); g.connect(audioCtx.destination); n.start();
+            }
+            const SFX = {
+                jump() { playTone(220, .12, 'square', .08, 300) },
+                land() { playNoise(.05, .04) },
+                step() { playNoise(.03, .02) },
+                gunshot() { playNoise(.15, .2); playTone(120, .08, 'sawtooth', .15, -80) },
+                whip() { playNoise(.1, .12); playTone(800, .06, 'sawtooth', .08, -600) },
+                coin() { playTone(880, .08, 'square', .1); setTimeout(() => playTone(1100, .1, 'square', .08), 60) },
+                gem() { playTone(660, .1, 'sine', .12); setTimeout(() => playTone(990, .1, 'sine', .1), 80); setTimeout(() => playTone(1320, .15, 'sine', .08), 160) },
+                chest() { playTone(440, .1, 'square', .08); setTimeout(() => playTone(550, .1, 'square', .07), 100) },
+                hurt() { playTone(200, .2, 'sawtooth', .15, -100); playNoise(.15, .1) },
+                die() { playTone(300, .4, 'sawtooth', .2, -250); playNoise(.3, .15) },
+                enemyDie() { playTone(400, .1, 'square', .1, -200); playNoise(.08, .08) },
+                arrow() { playTone(1200, .08, 'sine', .06, -800) },
+                explosion() { playNoise(.4, .3); playTone(80, .3, 'sine', .2, -40) },
+                water() { playNoise(.2, .05); playTone(300, .15, 'sine', .04, 50) },
+                pickup() { playTone(700, .06, 'square', .08); playTone(900, .08, 'square', .06) },
+            };
+
+            /* ═══════════════════════════════════════════════════════════════
+               SPRITE / TEXTURE GENERATION
+               ═══════════════════════════════════════════════════════════════ */
+            function makeCanvas(w, h, draw) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); return c }
+
+            // Color helpers
+            function hsl(h, s, l) { return `hsl(${h},${s}%,${l}%)` }
+            function rgba(r, g, b, a) { return `rgba(${r},${g},${b},${a})` }
+
+            // Stone wall tile
+            const tileStone = makeCanvas(16, 16, (c) => {
+                c.fillStyle = '#5a4e3c'; c.fillRect(0, 0, 16, 16);
+                // brick pattern
+                for (let y = 0; y < 16; y += 8) {
+                    for (let x = 0; x < 16; x += 8) {
+                        const off = y % 16 === 0 ? 0 : 4;
+                        c.fillStyle = `hsl(35,${15 + Math.random() * 10}%,${28 + Math.random() * 10}%)`;
+                        c.fillRect(x + off, y, 7, 7);
+                        c.fillStyle = 'rgba(0,0,0,0.3)'; c.fillRect(x + off, y + 7, 8, 1); c.fillRect(x + off + 7, y, 1, 8);
+                    }
+                }
+                // hieroglyph accent
+                c.fillStyle = 'rgba(255,184,0,0.1)';
+                c.fillRect(3, 3, 2, 2); c.fillRect(7, 5, 1, 3); c.fillRect(11, 2, 2, 1);
+            });
+
+            // Stone floor
+            const tileFloor = makeCanvas(16, 16, (c) => {
+                c.fillStyle = '#6b5d48'; c.fillRect(0, 0, 16, 16);
+                for (let x = 0; x < 16; x += 8) {
+                    c.fillStyle = `hsl(30,${18 + Math.random() * 8}%,${32 + Math.random() * 8}%)`;
+                    c.fillRect(x, 0, 7, 15);
+                    c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(x + 7, 0, 1, 16);
+                }
+                c.fillStyle = 'rgba(0,0,0,0.2)'; c.fillRect(0, 15, 16, 1);
+                c.fillStyle = 'rgba(255,255,200,0.05)'; c.fillRect(0, 0, 16, 1);
+            });
+
+            // Platform
+            const tilePlatform = makeCanvas(16, 16, (c) => {
+                c.fillStyle = '#7a6b52'; c.fillRect(0, 0, 16, 6);
+                c.fillStyle = '#685a44'; c.fillRect(0, 6, 16, 2);
+                c.fillStyle = 'rgba(0,0,0,0.3)'; c.fillRect(0, 7, 16, 1);
+                // moss
+                c.fillStyle = 'rgba(80,140,60,0.4)';
+                c.fillRect(2, 0, 3, 1); c.fillRect(9, 0, 2, 1); c.fillRect(13, 0, 2, 1);
+                c.fillStyle = 'rgba(255,255,200,0.08)'; c.fillRect(0, 0, 16, 1);
+            });
+
+            // Ladder
+            const tileLadder = makeCanvas(16, 16, (c) => {
+                c.fillStyle = '#8B7355';
+                c.fillRect(2, 0, 3, 16); c.fillRect(11, 0, 3, 16);
+                c.fillStyle = '#7a6245';
+                c.fillRect(2, 3, 12, 2); c.fillRect(2, 10, 12, 2);
+                c.fillStyle = 'rgba(255,255,200,0.06)';
+                c.fillRect(3, 0, 1, 16); c.fillRect(12, 0, 1, 16);
+            });
+
+            // Background wall
+            const tileBg = makeCanvas(16, 16, (c) => {
+                c.fillStyle = '#2a2318'; c.fillRect(0, 0, 16, 16);
+                for (let i = 0; i < 6; i++) {
+                    c.fillStyle = `rgba(${40 + Math.random() * 20},${35 + Math.random() * 15},${25 + Math.random() * 10},0.3)`;
+                    const x = Math.random() * 14 | 0, y = Math.random() * 14 | 0;
+                    c.fillRect(x, y, 2 + Math.random() * 3 | 0, 2 + Math.random() * 3 | 0);
+                }
+            });
+
+            // Spikes
+            const tileSpike = makeCanvas(16, 16, (c) => {
+                c.fillStyle = '#2a2318'; c.fillRect(0, 0, 16, 16);
+                c.fillStyle = '#888';
+                for (let i = 0; i < 4; i++) {
+                    const bx = i * 4;
+                    c.beginPath(); c.moveTo(bx, 16); c.lineTo(bx + 2, 4); c.lineTo(bx + 4, 16); c.fill();
+                }
+                c.fillStyle = '#aaa';
+                for (let i = 0; i < 4; i++) { c.fillRect(i * 4 + 1, 5, 1, 2) }
+            });
+
+            // Water
+            const tileWater = makeCanvas(16, 16, (c) => {
+                c.fillStyle = 'rgba(30,80,180,0.7)'; c.fillRect(0, 0, 16, 16);
+                c.fillStyle = 'rgba(60,120,220,0.4)';
+                c.fillRect(0, 0, 16, 2); c.fillRect(3, 4, 6, 1); c.fillRect(10, 6, 5, 1);
+            });
+
+            // Torch (for wall decoration)
+            const tileTorch = makeCanvas(16, 16, (c) => {
+                c.fillStyle = '#5a4e3c'; c.fillRect(6, 6, 4, 10);// holder
+                c.fillStyle = '#8B7355'; c.fillRect(7, 6, 2, 10);
+            });
+
+            // Arrow trap face
+            const tileArrowTrap = makeCanvas(16, 16, (c) => {
+                c.fillStyle = '#5a4e3c'; c.fillRect(0, 0, 16, 16);
+                // face
+                c.fillStyle = '#3a3228';
+                c.fillRect(3, 3, 10, 10);
+                c.fillStyle = '#222';
+                c.fillRect(5, 5, 2, 2); c.fillRect(9, 5, 2, 2);// eyes
+                c.fillRect(5, 9, 6, 2);// mouth (arrow comes from here)
+                c.fillStyle = 'rgba(255,0,0,0.3)'; c.fillRect(6, 9, 4, 1);
+            });
+
+            // Pressure plate
+            const tilePlate = makeCanvas(16, 16, (c) => {
+                c.fillStyle = '#2a2318'; c.fillRect(0, 0, 16, 16);
+                c.fillStyle = '#8a7a60'; c.fillRect(2, 12, 12, 3);
+                c.fillStyle = 'rgba(255,200,0,0.3)'; c.fillRect(3, 12, 10, 1);
+                c.fillStyle = 'rgba(0,0,0,0.3)'; c.fillRect(2, 15, 12, 1);
+            });
+
+            // Treasure chest (closed)
+            const tileChest = makeCanvas(16, 16, (c) => {
+                c.fillStyle = '#8B6914'; c.fillRect(2, 6, 12, 9);
+                c.fillStyle = '#A07828'; c.fillRect(2, 6, 12, 4);
+                // lid curve
+                c.fillStyle = '#6B4E0A'; c.fillRect(3, 5, 10, 2);
+                // lock
+                c.fillStyle = '#FFD700'; c.fillRect(7, 9, 2, 3);
+                c.fillStyle = 'rgba(0,0,0,0.2)'; c.fillRect(2, 15, 12, 1);
+            });
+
+            // Rubbish pile
+            const tileRubbish = makeCanvas(16, 16, (c) => {
+                c.fillStyle = '#4a4030'; c.fillRect(1, 10, 14, 6);
+                c.fillStyle = '#3a3228'; c.fillRect(3, 7, 10, 4);
+                c.fillStyle = '#5a5040'; c.fillRect(5, 5, 6, 3);
+                // debris
+                c.fillStyle = '#6a6050'; c.fillRect(2, 9, 3, 2); c.fillRect(10, 8, 4, 3);
+                c.fillStyle = 'rgba(255,200,0,0.1)'; c.fillRect(7, 11, 2, 1);// hint of gold
+            });
+
+            // Coin
+            const tileCoin = makeCanvas(8, 8, (c) => {
+                c.fillStyle = '#FFD700';
+                c.beginPath(); c.arc(4, 4, 3, 0, Math.PI * 2); c.fill();
+                c.fillStyle = '#FFA500';
+                c.beginPath(); c.arc(4, 4, 2, 0, Math.PI * 2); c.fill();
+                c.fillStyle = 'rgba(255,255,200,0.5)'; c.fillRect(3, 2, 1, 1);
+            });
+
+            // Gem (ruby)
+            function makeGem(color, highlight) {
+                return makeCanvas(8, 8, (c) => {
+                    c.fillStyle = color;
+                    c.beginPath(); c.moveTo(4, 1); c.lineTo(7, 3); c.lineTo(6, 7); c.lineTo(2, 7); c.lineTo(1, 3); c.closePath(); c.fill();
+                    c.fillStyle = highlight; c.fillRect(3, 2, 2, 1); c.fillRect(4, 3, 1, 1);
+                });
+            }
+            const gemRuby = makeGem('#e03040', 'rgba(255,200,200,0.6)');
+            const gemEmerald = makeGem('#30b050', 'rgba(200,255,200,0.6)');
+            const gemSapphire = makeGem('#3060e0', 'rgba(200,200,255,0.6)');
+
+            // Gold idol
+            const tileIdol = makeCanvas(12, 14, (c) => {
+                c.fillStyle = '#FFD700';
+                // body
+                c.fillRect(4, 4, 4, 8);
+                // head
+                c.fillRect(3, 0, 6, 5);
+                c.fillStyle = '#FFA500';
+                c.fillRect(5, 1, 2, 2);// face
+                // arms
+                c.fillStyle = '#FFD700';
+                c.fillRect(1, 5, 3, 2); c.fillRect(8, 5, 3, 2);
+                // base
+                c.fillRect(2, 11, 8, 3);
+                c.fillStyle = 'rgba(255,255,200,0.4)'; c.fillRect(4, 1, 1, 1);
+            });
+
+            // Bullet pickup
+            const tileBulletPickup = makeCanvas(8, 8, (c) => {
+                c.fillStyle = '#b0a080'; c.fillRect(2, 1, 4, 6);
+                c.fillStyle = '#d4a020'; c.fillRect(3, 0, 2, 2);
+                c.fillStyle = 'rgba(255,255,200,0.3)'; c.fillRect(3, 1, 1, 1);
+            });
+
+            // Health kit
+            const tileHealth = makeCanvas(10, 10, (c) => {
+                c.fillStyle = '#fff'; c.fillRect(1, 1, 8, 8);
+                c.fillStyle = '#e03040';
+                c.fillRect(4, 2, 2, 6); c.fillRect(2, 4, 6, 2);
+            });
+
+            /* ═══════════════════════════════════════════════════════════════
+               PLAYER SPRITES (16x20)
+               ═══════════════════════════════════════════════════════════════ */
+            function drawExplorer(c, frame) {
+                // Boots (brown)
+                c.fillStyle = '#5a3a1a';
+                c.fillRect(3, 17, 4, 3); c.fillRect(9, 17, 4, 3);
+                // Pants (brown)
+                c.fillStyle = '#6B4226';
+                c.fillRect(4, 12, 3, 6); c.fillRect(9, 12, 3, 6);
+                // Belt
+                c.fillStyle = '#3a2a1a'; c.fillRect(3, 11, 10, 2);
+                c.fillStyle = '#FFD700'; c.fillRect(7, 11, 2, 2);// buckle
+                // Shirt (tan/khaki)
+                c.fillStyle = '#C4A868';
+                c.fillRect(3, 5, 10, 7);
+                // Collar detail
+                c.fillStyle = '#B09050'; c.fillRect(5, 5, 6, 1);
+                // Arms
+                c.fillStyle = '#C4A868';
+                if (frame === 1) { c.fillRect(1, 6, 2, 5); c.fillRect(13, 7, 2, 4) }
+                else if (frame === 2) { c.fillRect(1, 7, 2, 4); c.fillRect(13, 6, 2, 5) }
+                else { c.fillRect(1, 6, 2, 5); c.fillRect(13, 6, 2, 5) }
+                // Hands (skin)
+                c.fillStyle = '#D4A574';
+                c.fillRect(1, 11, 2, 1); c.fillRect(13, 11, 2, 1);
+                // Head (skin)
+                c.fillStyle = '#D4A574';
+                c.fillRect(4, 1, 8, 5);
+                // Eyes
+                c.fillStyle = '#222'; c.fillRect(6, 3, 1, 1); c.fillRect(9, 3, 1, 1);
+                // Mouth
+                c.fillStyle = '#a07050'; c.fillRect(7, 5, 2, 1);
+                // Hat (brown fedora)
+                c.fillStyle = '#5B3A18';
+                c.fillRect(2, 0, 12, 2);// brim
+                c.fillRect(4, -1, 8, 2);// crown
+                c.fillStyle = '#4A2A0A'; c.fillRect(5, 0, 6, 1);// hat band
+            }
+
+            const spriteIdle = makeCanvas(16, 20, (c) => { drawExplorer(c, 0) });
+            const spriteWalk1 = makeCanvas(16, 20, (c) => { drawExplorer(c, 1) });
+            const spriteWalk2 = makeCanvas(16, 20, (c) => { drawExplorer(c, 2) });
+            const spriteJump = makeCanvas(16, 20, (c) => {
+                drawExplorer(c, 3);
+                // legs bent
+                c.fillStyle = '#6B4226'; c.fillRect(4, 14, 3, 3); c.fillRect(9, 14, 3, 3);
+            });
+
+            const playerFrames = [spriteIdle, spriteWalk1, spriteIdle, spriteWalk2];
+
+            // Enemy sprites
+            const spriteSnake = makeCanvas(16, 8, (c) => {
+                c.fillStyle = '#408030';
+                c.fillRect(0, 4, 14, 3); c.fillRect(12, 2, 3, 3);
+                c.fillStyle = '#306020'; c.fillRect(2, 5, 4, 1); c.fillRect(8, 5, 3, 1);
+                c.fillStyle = '#e03030'; c.fillRect(14, 3, 2, 1);//tongue
+                c.fillStyle = '#222'; c.fillRect(13, 2, 1, 1);//eye
+                c.fillStyle = 'rgba(255,255,0,0.3)'; c.fillRect(4, 4, 1, 1); c.fillRect(8, 4, 1, 1);//pattern
+            });
+
+            const spriteScorpion = makeCanvas(14, 10, (c) => {
+                c.fillStyle = '#8B4513';
+                c.fillRect(2, 5, 8, 4);// body
+                c.fillRect(0, 7, 3, 2); c.fillRect(11, 7, 3, 2);// claws
+                // tail
+                c.fillRect(9, 2, 2, 4); c.fillRect(10, 0, 2, 3); c.fillRect(11, 0, 2, 1);
+                c.fillStyle = '#6B3503'; c.fillRect(3, 6, 6, 2);
+                c.fillStyle = '#FF4040'; c.fillRect(12, 0, 1, 1);//stinger
+            });
+
+            const spriteSpider = makeCanvas(12, 10, (c) => {
+                c.fillStyle = '#333';
+                c.fillRect(3, 2, 6, 6);// body
+                c.fillStyle = '#222'; c.fillRect(4, 3, 4, 4);
+                // legs
+                c.fillStyle = '#444';
+                c.fillRect(0, 3, 3, 1); c.fillRect(9, 3, 3, 1);
+                c.fillRect(0, 5, 3, 1); c.fillRect(9, 5, 3, 1);
+                c.fillRect(0, 7, 3, 1); c.fillRect(9, 7, 3, 1);
+                c.fillRect(1, 2, 2, 1); c.fillRect(9, 2, 2, 1);
+                // eyes (red)
+                c.fillStyle = '#e03030'; c.fillRect(4, 3, 1, 1); c.fillRect(7, 3, 1, 1);
+            });
+
+            const spriteBat = makeCanvas(14, 8, (c) => {
+                c.fillStyle = '#4a3a4a';
+                c.fillRect(5, 2, 4, 4);// body
+                // wings
+                c.fillRect(0, 1, 5, 3); c.fillRect(9, 1, 5, 3);
+                c.fillStyle = '#3a2a3a';
+                c.fillRect(1, 2, 4, 1); c.fillRect(9, 2, 4, 1);
+                // eyes
+                c.fillStyle = '#ff6060'; c.fillRect(6, 3, 1, 1); c.fillRect(8, 3, 1, 1);
+            });
+
+            /* ═══════════════════════════════════════════════════════════════
+               TILE TYPES
+               ═══════════════════════════════════════════════════════════════ */
+            const T = {
+                EMPTY: 0, WALL: 1, FLOOR: 2, PLATFORM: 3, LADDER: 4, SPIKE: 5,
+                ARROW_L: 6, ARROW_R: 7, PLATE: 8, BG: 9,
+                CHEST: 10, RUBBISH: 11, COIN: 12, GEM_R: 13, GEM_E: 14, GEM_S: 15,
+                IDOL: 16, BULLETS: 17, HEALTH: 18, TORCH: 19,
+                STAIRS: 20, EXIT_L: 21, EXIT_R: 22, EXIT_T: 23, EXIT_B: 24
+            };
+
+            function tileIsSolid(t) { return t === T.WALL || t === T.FLOOR || t === T.STAIRS || t === T.EXIT_T }
+            function tileIsPlatform(t) { return t === T.PLATFORM }
+            function tileIsLadder(t) { return t === T.LADDER }
+            function tileIsSpike(t) { return t === T.SPIKE }
+            function tileIsExit(t) { return t >= T.EXIT_L && t <= T.EXIT_B }
+
+            function drawTile(t, x, y) {
+                switch (t) {
+                    case T.WALL: bx.drawImage(tileStone, x, y); break;
+                    case T.FLOOR: bx.drawImage(tileFloor, x, y); break;
+                    case T.PLATFORM: bx.drawImage(tilePlatform, x, y); break;
+                    case T.LADDER: bx.drawImage(tileBg, x, y); bx.drawImage(tileLadder, x, y); break;
+                    case T.SPIKE: bx.drawImage(tileSpike, x, y); break;
+                    case T.ARROW_L: case T.ARROW_R: bx.drawImage(tileArrowTrap, x, y); break;
+                    case T.PLATE: bx.drawImage(tileBg, x, y); bx.drawImage(tilePlate, x, y); break;
+                    case T.BG: bx.drawImage(tileBg, x, y); break;
+                    case T.STAIRS: bx.drawImage(tileFloor, x, y);
+                        bx.fillStyle = 'rgba(0,0,0,0.15)'; bx.fillRect(x, y, 16, 4); break;
+                    case T.TORCH: bx.drawImage(tileBg, x, y); bx.drawImage(tileTorch, x, y); break;
+                    case T.EXIT_L: case T.EXIT_R: case T.EXIT_B: bx.drawImage(tileBg, x, y); break;
+                    case T.EXIT_T: bx.drawImage(tileFloor, x, y);
+                        bx.fillStyle='rgba(255,184,0,0.35)';bx.beginPath();bx.moveTo(x+4,y+5);bx.lineTo(x+8,y+1);bx.lineTo(x+12,y+5);bx.fill();break;
+                    case T.CHEST: bx.drawImage(tileBg, x, y); break;// draw entity
+                    case T.RUBBISH: bx.drawImage(tileBg, x, y); break;
+                    default: bx.drawImage(tileBg, x, y);
+                }
+            }
+
+            /* ═══════════════════════════════════════════════════════════════
+               ROOM DEFINITIONS
+               ═══════════════════════════════════════════════════════════════ */
+            // Each room: { name, tiles[][], exits:{dir:[roomId,entryX,entryY]}, enemies:[], items:[], torches:[], traps:[] }
+            // Tiles: COLS=20, ROWS=11 (but array can be 12 for partial bottom row)
+
+            function R(s) {
+                // Parse string room def: each char = tile type
+                const map = [];
+                const lines = s.trim().split('\n');
+                for (let r = 0; r < lines.length; r++) {
+                    map[r] = [];
+                    const ln = lines[r];
+                    for (let c = 0; c < COLS; c++) {
+                        const ch = c < ln.length ? ln[c] : ' ';
+                        switch (ch) {
+                            case '#': map[r][c] = T.WALL; break;
+                            case '=': map[r][c] = T.FLOOR; break;
+                            case '-': map[r][c] = T.PLATFORM; break;
+                            case 'H': map[r][c] = T.LADDER; break;
+                            case '^': map[r][c] = T.SPIKE; break;
+                            case '<': map[r][c] = T.ARROW_L; break;
+                            case '>': map[r][c] = T.ARROW_R; break;
+                            case 'P': map[r][c] = T.PLATE; break;
+                            case 'S': map[r][c] = T.STAIRS; break;
+                            case 'T': map[r][c] = T.TORCH; break;
+                            case 'L': map[r][c] = T.EXIT_L; break;
+                            case 'R': map[r][c] = T.EXIT_R; break;
+                            case 'U': map[r][c] = T.EXIT_T; break;
+                            case 'D': map[r][c] = T.EXIT_B; break;
+                            default: map[r][c] = T.BG; break;
+                        }
+                    }
+                }
+                return map;
+            }
+
+            const rooms = [
+                // ROOM 0: Entrance Hall
+                {
+                    name: 'Entrance Hall',
+                    tiles: R(
+                        '##########T#########\n' +
+                        '#                  R\n' +
+                        '#   --             R\n' +
+                        '#         --       #\n' +
+                        '#              --  #\n' +
+                        '#    --            #\n' +
+                        '#          --      #\n' +
+                        '#                  #\n' +
+                        '#  --     --    -- #\n' +
+                        '#                  #\n' +
+                        '=====DD==========DD='
+                    ),
+                    exits: { right: [1, 1, 1], bottom_l: [4, 2, 1], bottom_r: [2, 6, 1] },
+                    enemies: [],
+                    items: [
+                        { type: 'coin', x: 3 * 16 + 4, y: 5 * 16 + 4 }, { type: 'coin', x: 4 * 16 + 4, y: 5 * 16 + 4 },
+                        { type: 'coin', x: 5 * 16 + 4, y: 2 * 16 + 4 }, { type: 'coin', x: 6 * 16 + 4, y: 2 * 16 + 4 },
+                        { type: 'coin', x: 10 * 16 + 4, y: 3 * 16 + 4 }, { type: 'coin', x: 11 * 16 + 4, y: 3 * 16 + 4 },
+                        { type: 'coin', x: 15 * 16 + 4, y: 4 * 16 + 4 }, { type: 'coin', x: 16 * 16 + 4, y: 4 * 16 + 4 },
+                        { type: 'coin', x: 10 * 16 + 4, y: 6 * 16 + 4 }, { type: 'coin', x: 11 * 16 + 4, y: 6 * 16 + 4 },
+                        { type: 'chest', x: 3 * 16, y: 8 * 16 - 4 },
+                    ],
+                    torches: [[0, 0]],
+                    traps: [],
+                    playerStart: [2, 9]
+                },
+                // ROOM 1: Spike Pit Chamber
+                {
+                    name: 'Spike Pit Chamber',
+                    tiles: R(
+                        '####################\n' +
+                        'L                  #\n' +
+                        'L   --     --      #\n' +
+                        '#                  #\n' +
+                        '#  --         --   #\n' +
+                        '#                  R\n' +
+                        '#       --         R\n' +
+                        '#                  #\n' +
+                        '#  --         --   #\n' +
+                        '#                  #\n' +
+                        '==^^^====^^^^===^^^='
+                    ),
+                    exits: { left: [0, 18, 1], right: [3, 1, 5] },
+                    enemies: [{ type: 'snake', x: 6 * 16, y: 6 * 16 - 8, patrol: [5 * 16, 10 * 16] }],
+                    items: [
+                        { type: 'coin', x: 4 * 16 + 4, y: 1 * 16 + 4 }, { type: 'coin', x: 5 * 16 + 4, y: 1 * 16 + 4 },
+                        { type: 'coin', x: 10 * 16 + 4, y: 2 * 16 + 4 }, { type: 'coin', x: 11 * 16 + 4, y: 2 * 16 + 4 },
+                        { type: 'gem_r', x: 7 * 16 + 4, y: 5 * 16 + 8 },
+                        { type: 'coin', x: 3 * 16 + 4, y: 4 * 16 + 4 }, { type: 'coin', x: 4 * 16 + 4, y: 4 * 16 + 4 },
+                        { type: 'coin', x: 14 * 16 + 4, y: 4 * 16 + 4 }, { type: 'coin', x: 15 * 16 + 4, y: 4 * 16 + 4 },
+                        { type: 'coin', x: 3 * 16 + 4, y: 8 * 16 + 4 }, { type: 'coin', x: 4 * 16 + 4, y: 8 * 16 + 4 },
+                    ],
+                    torches: [], traps: [],
+                },
+                // ROOM 2: Arrow Trap Corridor
+                {
+                    name: 'Arrow Trap Corridor',
+                    tiles: R(
+                        '####################\n' +
+                        '#                  #\n' +
+                        '>   --      --     #\n' +
+                        '#                  #\n' +
+                        '#         --    -- #\n' +
+                        '>                  #\n' +
+                        '#    --            #\n' +
+                        '#              --  R\n' +
+                        '>       --         R\n' +
+                        '#                  #\n' +
+                        '=====UU============='
+                    ),
+                    exits: { top: [0, 17, 9], right: [5, 1, 4] },
+                    enemies: [{ type: 'scorpion', x: 12 * 16, y: 9 * 16 + 4, patrol: [6 * 16, 17 * 16] }],
+                    items: [
+                        { type: 'coin', x: 5 * 16 + 4, y: 2 * 16 + 4 }, { type: 'coin', x: 6 * 16 + 4, y: 2 * 16 + 4 },
+                        { type: 'coin', x: 11 * 16 + 4, y: 2 * 16 + 4 }, { type: 'coin', x: 12 * 16 + 4, y: 2 * 16 + 4 },
+                        { type: 'bullets', x: 15 * 16, y: 4 * 16 + 4 },
+                        { type: 'rubbish', x: 8 * 16, y: 9 * 16 - 4 },
+                        { type: 'coin', x: 5 * 16 + 4, y: 6 * 16 + 4 }, { type: 'coin', x: 6 * 16 + 4, y: 6 * 16 + 4 },
+                    ],
+                    torches: [],
+                    traps: [
+                        { type: 'arrow', x: 0, y: 2 * 16 + 4, dir: 1, interval: 2500 },
+                        { type: 'arrow', x: 0, y: 5 * 16 + 4, dir: 1, interval: 3500 },
+                        { type: 'arrow', x: 0, y: 8 * 16 + 4, dir: 1, interval: 2000 },
+                    ],
+                },
+                // ROOM 3: Treasure Vault
+                {
+                    name: 'Treasure Vault',
+                    tiles: R(
+                        '########TT##########\n' +
+                        '#                  #\n' +
+                        '#                  #\n' +
+                        '#  --     --    -- #\n' +
+                        '#                  #\n' +
+                        'L                  #\n' +
+                        'L   --     --      #\n' +
+                        '#            H     #\n' +
+                        '#            H  -- #\n' +
+                        '#            H     #\n' +
+                        '=================DD='
+                    ),
+                    exits: { left: [1, 18, 5], bottom: [6, 2, 1] },
+                    enemies: [{ type: 'snake', x: 8 * 16, y: 9 * 16 - 8, patrol: [3 * 16, 15 * 16] }],
+                    items: [
+                        { type: 'chest', x: 3 * 16, y: 3 * 16 - 4 }, { type: 'chest', x: 10 * 16, y: 3 * 16 - 4 },
+                        { type: 'chest', x: 15 * 16, y: 3 * 16 - 4 },
+                        { type: 'gem_e', x: 7 * 16 + 4, y: 1 * 16 + 8 },
+                        { type: 'coin', x: 5 * 16 + 4, y: 6 * 16 + 4 }, { type: 'coin', x: 6 * 16 + 4, y: 6 * 16 + 4 },
+                        { type: 'coin', x: 10 * 16 + 4, y: 6 * 16 + 4 }, { type: 'coin', x: 11 * 16 + 4, y: 6 * 16 + 4 },
+                        { type: 'gem_r', x: 16 * 16 + 4, y: 8 * 16 + 4 },
+                    ],
+                    torches: [[8, 0], [9, 0]], traps: [],
+                },
+                // ROOM 4: Flooding Chamber
+                {
+                    name: 'Flooding Chamber',
+                    tiles: R(
+                        '####################\n' +
+                        '#                  #\n' +
+                        '#         SS       #\n' +
+                        '#        SS    --  #\n' +
+                        '#       SS         #\n' +
+                        '#      SS      --  #\n' +
+                        '#     SS           #\n' +
+                        '#  P SS        --  #\n' +
+                        '#   SS             #\n' +
+                        '#  SS              #\n' +
+                        '=UU================='
+                    ),
+                    exits: { top: [0, 5, 9] },
+                    enemies: [],
+                    items: [
+                        { type: 'coin', x: 16 * 16 + 4, y: 3 * 16 + 4 }, { type: 'coin', x: 17 * 16 + 4, y: 3 * 16 + 4 },
+                        { type: 'gem_s', x: 17 * 16 + 4, y: 5 * 16 + 4 },
+                        { type: 'coin', x: 16 * 16 + 4, y: 7 * 16 + 4 }, { type: 'coin', x: 17 * 16 + 4, y: 7 * 16 + 4 },
+                        { type: 'health', x: 3 * 16, y: 1 * 16 + 8 },
+                    ],
+                    torches: [],
+                    traps: [{ type: 'flood', triggerX: 3 * 16, triggerY: 7 * 16, maxHeight: 4 * 16, speed: FLOOD_SPEED }],
+                    flood: { active: false, level: 0, maxLevel: 0 },
+                },
+                // ROOM 5: Spider Lair
+                {
+                    name: 'Spider Lair',
+                    tiles: R(
+                        '####################\n' +
+                        '#                  R\n' +
+                        '#  --     --    -- R\n' +
+                        '#                  #\n' +
+                        'L                  #\n' +
+                        'L  --         --   #\n' +
+                        '#                  #\n' +
+                        '#       --     --  #\n' +
+                        '#                  #\n' +
+                        '#  --           -- #\n' +
+                        '===================='
+                    ),
+                    exits: { left: [2, 18, 7], right: [7, 1, 5] },
+                    enemies: [
+                        { type: 'spider', x: 6 * 16, y: 0, dropY: 4 * 16 },
+                        { type: 'spider', x: 12 * 16, y: 0, dropY: 5 * 16 },
+                        { type: 'spider', x: 16 * 16, y: 0, dropY: 3 * 16 },
+                    ],
+                    items: [
+                        { type: 'rubbish', x: 4 * 16, y: 9 * 16 - 4 }, { type: 'rubbish', x: 14 * 16, y: 9 * 16 - 4 },
+                        { type: 'coin', x: 4 * 16 + 4, y: 2 * 16 + 4 }, { type: 'coin', x: 5 * 16 + 4, y: 2 * 16 + 4 },
+                        { type: 'coin', x: 10 * 16 + 4, y: 2 * 16 + 4 }, { type: 'coin', x: 11 * 16 + 4, y: 2 * 16 + 4 },
+                        { type: 'bullets', x: 8 * 16, y: 6 * 16 + 8 },
+                        { type: 'coin', x: 4 * 16 + 4, y: 5 * 16 + 4 }, { type: 'coin', x: 5 * 16 + 4, y: 5 * 16 + 4 },
+                        { type: 'gem_e', x: 15 * 16 + 4, y: 5 * 16 + 4 },
+                    ],
+                    torches: [], traps: [],
+                },
+                // ROOM 6: Explosive Room
+                {
+                    name: 'Explosive Room',
+                    tiles: R(
+                        '####################\n' +
+                        '#                  #\n' +
+                        '#  --   --   --    #\n' +
+                        '#                  #\n' +
+                        '#                  #\n' +
+                        '#   --   --   --   #\n' +
+                        '#                  #\n' +
+                        '#  P      P     -- #\n' +
+                        '#   --       --    #\n' +
+                        '#        P         #\n' +
+                        '=UU================='
+                    ),
+                    exits: { top: [3, 17, 9] },
+                    enemies: [
+                        { type: 'bat', x: 5 * 16, y: 2 * 16, amplitude: 24, freq: 0.03 },
+                        { type: 'bat', x: 12 * 16, y: 3 * 16, amplitude: 20, freq: 0.025 },
+                    ],
+                    items: [
+                        { type: 'coin', x: 4 * 16 + 4, y: 2 * 16 + 4 }, { type: 'coin', x: 5 * 16 + 4, y: 2 * 16 + 4 },
+                        { type: 'coin', x: 8 * 16 + 4, y: 2 * 16 + 4 }, { type: 'coin', x: 9 * 16 + 4, y: 2 * 16 + 4 },
+                        { type: 'coin', x: 12 * 16 + 4, y: 2 * 16 + 4 }, { type: 'coin', x: 13 * 16 + 4, y: 2 * 16 + 4 },
+                        { type: 'gem_s', x: 10 * 16 + 4, y: 1 * 16 + 8 },
+                        { type: 'chest', x: 15 * 16, y: 8 * 16 - 4 },
+                        { type: 'coin', x: 5 * 16 + 4, y: 5 * 16 + 4 }, { type: 'coin', x: 6 * 16 + 4, y: 5 * 16 + 4 },
+                        { type: 'coin', x: 10 * 16 + 4, y: 5 * 16 + 4 }, { type: 'coin', x: 11 * 16 + 4, y: 5 * 16 + 4 },
+                    ],
+                    torches: [],
+                    traps: [
+                        { type: 'explosion', x: 3 * 16, y: 7 * 16, radius: 32 },
+                        { type: 'explosion', x: 10 * 16, y: 7 * 16, radius: 32 },
+                        { type: 'explosion', x: 8 * 16, y: 9 * 16, radius: 32 },
+                    ],
+                },
+                // ROOM 7: Temple Summit (final)
+                {
+                    name: 'Temple Summit',
+                    tiles: R(
+                        '######TTTTTT########\n' +
+                        '#                  #\n' +
+                        '#      ----        #\n' +
+                        '#   --      --   H #\n' +
+                        '#                H #\n' +
+                        'L          --    H #\n' +
+                        'L                H #\n' +
+                        '#   --      --  == #\n' +
+                        '#                  #\n' +
+                        '#  --     --    -- #\n' +
+                        '===================='
+                    ),
+                    exits: { left: [5, 18, 1] },
+                    enemies: [
+                        { type: 'snake', x: 6 * 16, y: 9 * 16 - 8, patrol: [3 * 16, 16 * 16] },
+                        { type: 'bat', x: 4 * 16, y: 2 * 16, amplitude: 20, freq: 0.02 },
+                        { type: 'scorpion', x: 10 * 16, y: 9 * 16 + 4, patrol: [4 * 16, 16 * 16] },
+                    ],
+                    items: [
+                        { type: 'idol', x: 8 * 16 + 2, y: 2 * 16 - 2 },
+                        { type: 'gem_r', x: 4 * 16 + 4, y: 3 * 16 + 4 }, { type: 'gem_e', x: 13 * 16 + 4, y: 3 * 16 + 4 },
+                        { type: 'chest', x: 4 * 16, y: 7 * 16 - 4 },
+                        { type: 'coin', x: 4 * 16 + 4, y: 9 * 16 + 4 }, { type: 'coin', x: 5 * 16 + 4, y: 9 * 16 + 4 },
+                        { type: 'coin', x: 10 * 16 + 4, y: 9 * 16 + 4 }, { type: 'coin', x: 11 * 16 + 4, y: 9 * 16 + 4 },
+                        { type: 'gem_s', x: 14 * 16 + 4, y: 7 * 16 + 4 },
+                        { type: 'health', x: 15 * 16 + 4, y: 9 * 16 + 4 },
+                    ],
+                    torches: [[6, 0], [7, 0], [8, 0], [9, 0], [10, 0], [11, 0]],
+                    traps: [],
+                },
+            ];
+
+            /* ═══════════════════════════════════════════════════════════════
+               GAME STATE
+               ═══════════════════════════════════════════════════════════════ */
+            let state = 'title'; // title, playing, dead, gameover
+            let player = {
+                x: 0, y: 0, vx: 0, vy: 0, facing: 1, onGround: false, onLadder: false,
+                frame: 0, animTimer: 0, hearts: 3, maxHearts: 3, bullets: 6, score: 0,
+                roomScore: 0, whipping: false, whipTimer: 0, invincible: 0, dead: false
+            };
+            let currentRoom = 0;
+            let roomStates = {}; // persisted room data
+            let activeEnemies = [];
+            let activeItems = [];
+            let activeTraps = [];
+            let activeBullets = [];
+            let activeArrows = [];
+            let explosions = [];
+            let particles = [];
+            let floodLevel = 0;
+            let floodActive = false;
+            let floodMaxY = 0;
+            let drownTimer = 0;
+            let roomTorchPhase = 0;
+            let interactCooldown = 0;
+            let deathTimer = 0;
+            let stepTimer = 0;
+
+            /* ═══════════════════════════════════════════════════════════════
+               INPUT
+               ═══════════════════════════════════════════════════════════════ */
+            const keys = {};
+            window.addEventListener('keydown', e => {
+                keys[e.code] = true;
+                if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+                if (state === 'title' && (e.code === 'Space' || e.code === 'Enter')) { startGame(); ensureAudio() }
+                if (state === 'gameover' && (e.code === 'Space' || e.code === 'Enter')) { showTitle() }
+            });
+            window.addEventListener('keyup', e => { keys[e.code] = false });
+            canvas.addEventListener('click', () => {
+                ensureAudio();
+                if (state === 'title') startGame();
+                else if (state === 'gameover') showTitle();
+            });
+
+            function inputLeft() { return keys['ArrowLeft'] || keys['KeyA'] }
+            function inputRight() { return keys['ArrowRight'] || keys['KeyD'] }
+            function inputUp() { return keys['ArrowUp'] || keys['KeyW'] || keys['Space'] }
+            function inputDown() { return keys['ArrowDown'] || keys['KeyS'] }
+            function inputShoot() { return keys['KeyE'] }
+            function inputWhip() { return keys['KeyF'] }
+
+            /* ═══════════════════════════════════════════════════════════════
+               ROOM MANAGEMENT
+               ═══════════════════════════════════════════════════════════════ */
+            function loadRoom(roomId, entryX, entryY) {
+                currentRoom = roomId;
+                const room = rooms[roomId];
+                player.roomScore = 0;
+                floodLevel = 0; floodActive = false; drownTimer = 0;
+                activeBullets = []; activeArrows = []; explosions = []; particles = [];
+
+                // Load enemies (reset each time)
+                activeEnemies = room.enemies.map(e => ({
+                    ...e, alive: true, hp: 1, baseX: e.x, baseY: e.y,
+                    vx: e.type === 'snake' || e.type === 'scorpion' ? 0.5 : 0, dir: 1,
+                    dropTriggered: false, dropping: false, phase: Math.random() * Math.PI * 2
+                }));
+
+                // Load items — check if room was already cleared
+                const rs = roomStates[roomId];
+                if (rs && rs.cleared) {
+                    activeItems = room.items.filter((_, i) => !rs.collectedItems.includes(i))
+                        .map(it => ({ ...it, collected: false, opened: false }));
+                } else {
+                    activeItems = room.items.map(it => ({ ...it, collected: false, opened: false }));
+                }
+
+                // Load traps (reset each time)
+                activeTraps = room.traps.map(t => ({ ...t, timer: 0, active: false, warned: false, warningTimer: 0, cooldown: 0 }));
+
+                // Position player
+                if (entryX !== undefined) {
+                    player.x = entryX * TW; player.y = entryY * TH;
+                } else if (room.playerStart) {
+                    player.x = room.playerStart[0] * TW; player.y = room.playerStart[1] * TH;
+                }
+                player.vx = 0; player.vy = 0; player.onGround = false; player.onLadder = false;
+
+                // Flood setup
+                if (room.flood) { room.flood.active = false; room.flood.level = 0 }
+
+                updateHUD();
+            }
+
+            function saveRoom(roomId) {
+                const collected = [];
+                activeItems.forEach((it, i) => { if (it.collected) collected.push(i) });
+                roomStates[roomId] = { cleared: true, collectedItems: collected };
+            }
+
+            /* ═══════════════════════════════════════════════════════════════
+               COLLISION HELPERS
+               ═══════════════════════════════════════════════════════════════ */
+            function getTile(room, col, row) {
+                if (col < 0 || col >= COLS || row < 0 || row >= rooms[room].tiles.length) return T.WALL;
+                return rooms[room].tiles[row][col];
+            }
+
+            function rectOverlap(ax, ay, aw, ah, bx, by, bw, bh) {
+                return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+            }
+
+            function playerRect() { return { x: player.x + 3, y: player.y + 2, w: 10, h: 18 } }
+
+            /* ═══════════════════════════════════════════════════════════════
+               GAME INIT
+               ═══════════════════════════════════════════════════════════════ */
+            function startGame() {
+                state = 'playing';
+                player.hearts = 3; player.bullets = 6; player.score = 0; player.dead = false;
+                player.invincible = 0; player.whipping = false;
+                roomStates = {};
+                drawGameOver._saved = false;
+                loadRoom(0);
+                document.getElementById('hud').style.display = 'flex';
+            }
+
+            function showTitle() { state = 'title'; document.getElementById('hud').style.display = 'none' }
+
+            /* ═══════════════════════════════════════════════════════════════
+               HUD UPDATE
+               ═══════════════════════════════════════════════════════════════ */
+            function updateHUD() {
+                const hh = document.getElementById('hud-hearts');
+                let s = ''; for (let i = 0; i < player.maxHearts; i++)s += `<span${i >= player.hearts ? ' class="empty"' : ''}>♥</span>`;
+                hh.innerHTML = s;
+                document.getElementById('hud-bullets').textContent = player.bullets;
+                document.getElementById('hud-score').textContent = player.score;
+                document.getElementById('hud-room').textContent = rooms[currentRoom].name;
+            }
+
+            /* ═══════════════════════════════════════════════════════════════
+               PLAYER HURT / DIE
+               ═══════════════════════════════════════════════════════════════ */
+            function hurtPlayer() {
+                if (player.invincible > 0 || player.dead) return;
+                player.hearts--;
+                player.invincible = 1500;
+                SFX.hurt();
+                updateHUD();
+                if (player.hearts <= 0) { killPlayer() }
+            }
+
+            function killPlayer() {
+                player.dead = true;
+                player.score -= player.roomScore;
+                if (player.score < 0) player.score = 0;
+                player.roomScore = 0;
+                SFX.die();
+                deathTimer = 2000;
+                state = 'dead';
+                updateHUD();
+            }
+
+            function addScore(pts) {
+                player.score += pts;
+                player.roomScore += pts;
+                updateHUD();
+            }
+
+            /* ═══════════════════════════════════════════════════════════════
+               PARTICLES
+               ═══════════════════════════════════════════════════════════════ */
+            function spawnParticles(x, y, count, color, speed = 2) {
+                for (let i = 0; i < count; i++) {
+                    const a = Math.random() * Math.PI * 2;
+                    particles.push({
+                        x, y, vx: Math.cos(a) * speed * (0.5 + Math.random()),
+                        vy: Math.sin(a) * speed * (0.5 + Math.random()) - 1, life: 400 + Math.random() * 300,
+                        maxLife: 700, color, size: 1 + Math.random() * 2
+                    });
+                }
+            }
+
+            /* ═══════════════════════════════════════════════════════════════
+               UPDATE LOOP
+               ═══════════════════════════════════════════════════════════════ */
+            let lastTime = 0;
+            let shootCooldown = 0;
+            let whipCooldown = 0;
+
+            function update(dt) {
+                if (state === 'dead') {
+                    deathTimer -= dt * 1000;
+                    if (deathTimer <= 0) {
+                        if (player.hearts <= 0) { state = 'gameover'; return }
+                        player.dead = false; player.hearts = Math.max(player.hearts, 1);
+                        player.invincible = 2000;
+                        loadRoom(currentRoom); state = 'playing';
+                    }
+                    return;
+                }
+                if (state !== 'playing') return;
+
+                const room = rooms[currentRoom];
+                const pRect = playerRect;
+
+                // Cooldowns
+                if (player.invincible > 0) player.invincible -= dt * 1000;
+                if (interactCooldown > 0) interactCooldown -= dt * 1000;
+                if (shootCooldown > 0) shootCooldown -= dt * 1000;
+                if (whipCooldown > 0) whipCooldown -= dt * 1000;
+
+                // Horizontal movement
+                player.vx = 0;
+                if (inputLeft()) { player.vx = -MOVE_SPEED; player.facing = -1 }
+                if (inputRight()) { player.vx = MOVE_SPEED; player.facing = 1 }
+
+                // Ladder logic
+                const pcx = player.x + 8, pcy = player.y + 10;
+                const tileAtPlayer = getTile(currentRoom, pcx / TW | 0, pcy / TH | 0);
+                const tileAtFeet = getTile(currentRoom, pcx / TW | 0, (player.y + 18) / TH | 0);
+
+                if (tileIsLadder(tileAtPlayer) || tileIsLadder(tileAtFeet)) {
+                    if (inputUp()) { player.onLadder = true; player.vy = -1.5 }
+                    else if (inputDown()) { player.onLadder = true; player.vy = 1.5 }
+                    else if (player.onLadder) { player.vy = 0 }
+                } else { player.onLadder = false }
+
+                if (!player.onLadder) {
+                    // EXIT_T tile transition (up exits via floor doors)
+                    if (inputUp() && player.onGround) {
+                        const feetCol = ((player.x + 8) / TW) | 0;
+                        const feetRow = ((player.y + 20) / TH) | 0;
+                        const tBelow = getTile(currentRoom, feetCol, feetRow);
+                        if (tBelow === T.EXIT_T && room.exits.top) {
+                            saveRoom(currentRoom); loadRoom(room.exits.top[0], room.exits.top[1], room.exits.top[2]); return;
+                        }
+                    }
+                    // Jump
+                    if (inputUp() && player.onGround) { player.vy = JUMP_FORCE; player.onGround = false; SFX.jump() }
+                    // Gravity
+                    player.vy += GRAVITY;
+                    if (player.vy > MAX_FALL) player.vy = MAX_FALL;
+                }
+
+                // Move X
+                player.x += player.vx;
+                // X collision
+                const pr = playerRect();
+                for (let row = 0; row < (room.tiles.length); row++) {
+                    for (let col = 0; col < COLS; col++) {
+                        const t = room.tiles[row][col];
+                        if (!tileIsSolid(t)) continue;
+                        const tx = col * TW, ty = row * TH;
+                        if (rectOverlap(pr.x, pr.y, pr.w, pr.h, tx, ty, TW, TH)) {
+                            if (player.vx > 0) { player.x = tx - 13 }
+                            else if (player.vx < 0) { player.x = tx + TW - 3 }
+                        }
+                    }
+                }
+
+                // Move Y
+                player.y += player.vy;
+                player.onGround = false;
+                const pr2 = playerRect();
+                for (let row = 0; row < (room.tiles.length); row++) {
+                    for (let col = 0; col < COLS; col++) {
+                        const t = room.tiles[row][col];
+                        const tx = col * TW, ty = row * TH;
+                        if (tileIsSolid(t)) {
+                            if (rectOverlap(pr2.x, pr2.y, pr2.w, pr2.h, tx, ty, TW, TH)) {
+                                if (player.vy > 0) { player.y = ty - 20; player.vy = 0; player.onGround = true }
+                                else if (player.vy < 0) { player.y = ty + TH - 2; player.vy = 0 }
+                            }
+                        }
+                        // Platform — only solid from top
+                        if (tileIsPlatform(t) && player.vy >= 0) {
+                            const prevBottom = pr2.y + pr2.h - player.vy;
+                            if (prevBottom <= ty && pr2.y + pr2.h > ty && pr2.x + pr2.w > tx && pr2.x < tx + TW) {
+                                player.y = ty - 20; player.vy = 0; player.onGround = true;
+                            }
+                        }
+                    }
+                }
+
+                // Spikes
+                for (let row = 0; row < room.tiles.length; row++) {
+                    for (let col = 0; col < COLS; col++) {
+                        if (tileIsSpike(room.tiles[row][col])) {
+                            const tx = col * TW, ty = row * TH;
+                            if (rectOverlap(pr2.x, pr2.y, pr2.w, pr2.h, tx, ty + 6, TW, TH - 6)) {
+                                killPlayer(); return;
+                            }
+                        }
+                    }
+                }
+
+                // Walking sound
+                if (player.onGround && Math.abs(player.vx) > 0.5) {
+                    stepTimer += dt * 1000; if (stepTimer > 250) { stepTimer = 0; SFX.step() }
+                } else stepTimer = 200;
+
+                // Animation
+                player.animTimer += dt * 1000;
+                if (Math.abs(player.vx) > 0.5 && player.onGround) {
+                    if (player.animTimer > 150) { player.animTimer = 0; player.frame = (player.frame + 1) % 4 }
+                } else if (!player.onGround) {
+                    player.frame = 3;// jump frame index is handled in draw
+                } else { player.frame = 0 }
+
+                // — Shooting —
+                if (inputShoot() && shootCooldown <= 0 && player.bullets > 0 && interactCooldown <= 0) {
+                    // Check if near interactable first
+                    let interacted = false;
+                    for (const it of activeItems) {
+                        if (it.collected || it.opened) continue;
+                        if ((it.type === 'chest' || it.type === 'rubbish') && Math.abs(player.x - it.x) < 20 && Math.abs(player.y - it.y) < 20) {
+                            interactWith(it); interacted = true; interactCooldown = 400; break;
+                        }
+                    }
+                    if (!interacted) {
+                        player.bullets--;
+                        SFX.gunshot();
+                        activeBullets.push({
+                            x: player.x + 8 + player.facing * 8, y: player.y + 8,
+                            vx: BULLET_SPEED * player.facing, vy: 0, life: 800
+                        });
+                        shootCooldown = 300;
+                        updateHUD();
+                    }
+                }
+
+                // — Whip —
+                if (inputWhip() && whipCooldown <= 0) {
+                    player.whipping = true; player.whipTimer = WHIP_DURATION;
+                    whipCooldown = 400;
+                    SFX.whip();
+                    // Check whip hits
+                    const whipX = player.x + 8 + player.facing * WHIP_RANGE / 2;
+                    const whipY = player.y + 8;
+                    for (const en of activeEnemies) {
+                        if (!en.alive) continue;
+                        if (Math.abs(en.x + 6 - whipX) < WHIP_RANGE / 2 + 8 && Math.abs(en.y + 4 - whipY) < 16) {
+                            en.alive = false; SFX.enemyDie(); addScore(25);
+                            spawnParticles(en.x + 6, en.y + 4, 8, '#80ff80');
+                        }
+                    }
+                }
+
+                if (player.whipTimer > 0) { player.whipTimer -= dt * 1000; if (player.whipTimer <= 0) player.whipping = false }
+
+                // — Bullets update —
+                for (const b of activeBullets) {
+                    b.x += b.vx; b.life -= dt * 1000;
+                    // Hit enemies
+                    for (const en of activeEnemies) {
+                        if (!en.alive) continue;
+                        const ew = en.type === 'bat' ? 14 : en.type === 'spider' ? 12 : en.type === 'scorpion' ? 14 : 16;
+                        const eh = en.type === 'bat' ? 8 : en.type === 'spider' ? 10 : en.type === 'scorpion' ? 10 : 8;
+                        if (rectOverlap(b.x - 2, b.y - 2, 4, 4, en.x, en.y, ew, eh)) {
+                            en.alive = false; b.life = -1; SFX.enemyDie(); addScore(25);
+                            spawnParticles(en.x + ew / 2, en.y + eh / 2, 8, '#80ff80');
+                        }
+                    }
+                    // Hit walls
+                    const bc = getTile(currentRoom, b.x / TW | 0, b.y / TH | 0);
+                    if (tileIsSolid(bc)) b.life = -1;
+                }
+                activeBullets = activeBullets.filter(b => b.life > 0);
+
+                // — Arrows (from traps) —
+                for (const t of activeTraps) {
+                    if (t.type === 'arrow') {
+                        t.timer += dt * 1000;
+                        if (t.timer >= t.interval) {
+                            t.timer = 0;
+                            activeArrows.push({ x: t.x + (t.dir > 0 ? 16 : 0), y: t.y, vx: t.dir * 3, vy: 0, life: 2000 });
+                            SFX.arrow();
+                        }
+                    }
+                    if (t.type === 'explosion') {
+                        // Check if player on plate
+                        const pr3 = playerRect();
+                        if (!t.active && !t.warned && rectOverlap(pr3.x, pr3.y, pr3.w, pr3.h, t.x, t.y, 16, 16)) {
+                            t.warned = true; t.warningTimer = 1000;
+                        }
+                        if (t.warned && !t.active) {
+                            t.warningTimer -= dt * 1000;
+                            if (t.warningTimer <= 0) {
+                                t.active = true;
+                                SFX.explosion();
+                                explosions.push({ x: t.x + 8, y: t.y + 8, radius: t.radius, life: 500, maxLife: 500 });
+                                spawnParticles(t.x + 8, t.y + 8, 20, '#ff8800', 4);
+                                spawnParticles(t.x + 8, t.y + 8, 10, '#ffdd00', 3);
+                                // Damage in radius
+                                const pr4 = playerRect();
+                                if (Math.hypot(pr4.x + pr4.w / 2 - t.x - 8, pr4.y + pr4.h / 2 - t.y - 8) < t.radius) {
+                                    hurtPlayer();
+                                }
+                                for (const en of activeEnemies) {
+                                    if (!en.alive) continue;
+                                    if (Math.hypot(en.x + 6 - t.x - 8, en.y + 4 - t.y - 8) < t.radius) {
+                                        en.alive = false; addScore(25); spawnParticles(en.x + 6, en.y + 4, 6, '#80ff80');
+                                    }
+                                }
+                                t.cooldown = 5000;
+                            }
+                        }
+                        if (t.active) {
+                            t.cooldown -= dt * 1000;
+                            if (t.cooldown <= 0) { t.active = false; t.warned = false }
+                        }
+                    }
+                    if (t.type === 'flood') {
+                        const pr3 = playerRect();
+                        if (!floodActive && rectOverlap(pr3.x, pr3.y, pr3.w, pr3.h, t.triggerX, t.triggerY, 16, 16)) {
+                            floodActive = true; SFX.water();
+                        }
+                        if (floodActive && floodLevel < t.maxHeight) {
+                            floodLevel += t.speed;
+                            if (floodLevel > t.maxHeight) floodLevel = t.maxHeight;
+                        }
+                    }
+                }
+
+                // Arrow movement & collision
+                for (const a of activeArrows) {
+                    a.x += a.vx; a.life -= dt * 1000;
+                    const pr3 = playerRect();
+                    if (rectOverlap(pr3.x, pr3.y, pr3.w, pr3.h, a.x, a.y, 8, 4)) {
+                        hurtPlayer(); a.life = -1;
+                    }
+                    const ac = getTile(currentRoom, a.x / TW | 0, a.y / TH | 0);
+                    if (tileIsSolid(ac)) a.life = -1;
+                }
+                activeArrows = activeArrows.filter(a => a.life > 0);
+
+                // — Flood drowning —
+                if (floodActive && floodLevel > 0) {
+                    const waterY = H - floodLevel;
+                    if (player.y + 16 > waterY) {
+                        drownTimer += dt * 1000;
+                        if (drownTimer > DROWN_TIME) { killPlayer(); return }
+                    } else { drownTimer = 0 }
+                }
+
+                // — Enemy update —
+                for (const en of activeEnemies) {
+                    if (!en.alive) continue;
+                    if (en.type === 'snake' || en.type === 'scorpion') {
+                        en.x += en.vx * en.dir;
+                        if (en.patrol) {
+                            if (en.x <= en.patrol[0]) en.dir = 1;
+                            if (en.x >= en.patrol[1]) en.dir = -1;
+                        }
+                        // Collision with player
+                        const ew = en.type === 'scorpion' ? 14 : 16, eh = en.type === 'scorpion' ? 10 : 8;
+                        const eY = en.type === 'snake' ? en.y : en.y;
+                        const pr3 = playerRect();
+                        if (rectOverlap(pr3.x, pr3.y, pr3.w, pr3.h, en.x, eY, ew, eh)) { hurtPlayer() }
+                    }
+                    if (en.type === 'spider') {
+                        const pr3 = playerRect();
+                        // Drop when player is below
+                        if (!en.dropTriggered && Math.abs(pr3.x + pr3.w / 2 - en.x - 6) < 24 && pr3.y > en.y) {
+                            en.dropTriggered = true; en.dropping = true;
+                        }
+                        if (en.dropping) {
+                            en.y += 2;
+                            if (en.y >= en.dropY) { en.y = en.dropY; en.dropping = false }
+                        }
+                        if (rectOverlap(pr3.x, pr3.y, pr3.w, pr3.h, en.x, en.y, 12, 10)) { hurtPlayer() }
+                    }
+                    if (en.type === 'bat') {
+                        en.phase += en.freq || 0.03;
+                        en.x += 0.5 * en.dir;
+                        en.y = en.baseY + Math.sin(en.phase) * (en.amplitude || 20);
+                        if (en.x < 16 || en.x > W - 30) en.dir = (en.dir || 1) * -1;
+                        const pr3 = playerRect();
+                        if (rectOverlap(pr3.x, pr3.y, pr3.w, pr3.h, en.x, en.y, 14, 8)) { hurtPlayer() }
+                    }
+                }
+
+                // — Item collision —
+                for (let i = 0; i < activeItems.length; i++) {
+                    const it = activeItems[i];
+                    if (it.collected) continue;
+                    if (it.type === 'chest' || it.type === 'rubbish') continue;// interact only
+                    const pr3 = playerRect();
+                    const ix = it.x, iy = it.y;
+                    let iw = 8, ih = 8;
+                    if (it.type === 'idol') { iw = 12; ih = 14 }
+                    if (it.type === 'health') { iw = 10; ih = 10 }
+                    if (rectOverlap(pr3.x, pr3.y, pr3.w, pr3.h, ix, iy, iw, ih)) {
+                        it.collected = true;
+                        switch (it.type) {
+                            case 'coin': addScore(10); SFX.coin(); spawnParticles(ix + 4, iy + 4, 4, '#FFD700'); break;
+                            case 'gem_r': addScore(50); SFX.gem(); spawnParticles(ix + 4, iy + 4, 6, '#e03040'); break;
+                            case 'gem_e': addScore(75); SFX.gem(); spawnParticles(ix + 4, iy + 4, 6, '#30b050'); break;
+                            case 'gem_s': addScore(100); SFX.gem(); spawnParticles(ix + 4, iy + 4, 6, '#3060e0'); break;
+                            case 'idol': addScore(500); SFX.gem(); spawnParticles(ix + 6, iy + 7, 12, '#FFD700', 3); break;
+                            case 'bullets': player.bullets = Math.min(player.bullets + 3, MAX_BULLETS); SFX.pickup(); updateHUD(); break;
+                            case 'health': player.hearts = Math.min(player.hearts + 1, player.maxHearts); SFX.pickup(); updateHUD(); break;
+                        }
+                    }
+                }
+
+                // — Room exits —
+                // Left exit
+                if (player.x < -4) {
+                    const exits = room.exits;
+                    if (exits.left) { saveRoom(currentRoom); loadRoom(exits.left[0], exits.left[1], exits.left[2]) }
+                    else player.x = -4;
+                }
+                // Right exit
+                if (player.x > W - 12) {
+                    const exits = room.exits;
+                    if (exits.right) { saveRoom(currentRoom); loadRoom(exits.right[0], exits.right[1], exits.right[2]) }
+                    else player.x = W - 12;
+                }
+                // Top exit
+                if (player.y < -8) {
+                    const exits = room.exits;
+                    if (exits.top) { saveRoom(currentRoom); loadRoom(exits.top[0], exits.top[1], exits.top[2]) }
+                    else player.y = -8;
+                }
+                // Bottom exits — check which bottom exit
+                if (player.y > H - 4) {
+                    const exits = room.exits;
+                    if (exits.bottom_l && player.x < W / 2) { saveRoom(currentRoom); loadRoom(exits.bottom_l[0], exits.bottom_l[1], exits.bottom_l[2]) }
+                    else if (exits.bottom_r && player.x >= W / 2) { saveRoom(currentRoom); loadRoom(exits.bottom_r[0], exits.bottom_r[1], exits.bottom_r[2]) }
+                    else if (exits.bottom) { saveRoom(currentRoom); loadRoom(exits.bottom[0], exits.bottom[1], exits.bottom[2]) }
+                    else player.y = H - 4;
+                }
+
+                // Clamp to room bounds (if no exit that direction)
+                if (player.x < 0 && !room.exits.left) player.x = 0;
+                if (player.x > W - 16 && !room.exits.right) player.x = W - 16;
+                if (player.y < 0 && !room.exits.top) player.y = 0;
+
+                // — Explosions decay —
+                for (const ex of explosions) { ex.life -= dt * 1000 }
+                explosions = explosions.filter(e => e.life > 0);
+
+                // — Particles —
+                for (const p of particles) {
+                    p.x += p.vx * dt * 60; p.y += p.vy * dt * 60; p.vy += 0.1; p.life -= dt * 1000;
+                }
+                particles = particles.filter(p => p.life > 0);
+
+                roomTorchPhase += dt * 3;
+            }
+
+            function interactWith(it) {
+                if (it.type === 'chest' && !it.opened) {
+                    it.opened = true; SFX.chest();
+                    // Random contents
+                    const roll = Math.random();
+                    if (roll < 0.3) { addScore(30); spawnParticles(it.x + 8, it.y + 4, 6, '#FFD700'); SFX.coin() }
+                    else if (roll < 0.5) { addScore(50); spawnParticles(it.x + 8, it.y + 4, 6, '#e03040'); SFX.gem() }
+                    else if (roll < 0.7) { player.bullets = Math.min(player.bullets + 3, MAX_BULLETS); SFX.pickup(); updateHUD(); spawnParticles(it.x + 8, it.y + 4, 4, '#d4a020') }
+                    else { addScore(75); spawnParticles(it.x + 8, it.y + 4, 8, '#30b050'); SFX.gem() }
+                }
+                if (it.type === 'rubbish' && !it.opened) {
+                    it.opened = true;
+                    const roll = Math.random();
+                    if (roll < 0.25) { addScore(10); SFX.coin(); spawnParticles(it.x + 8, it.y + 4, 4, '#FFD700') }
+                    else if (roll < 0.45) { player.bullets = Math.min(player.bullets + 2, MAX_BULLETS); SFX.pickup(); updateHUD() }
+                    else if (roll < 0.6) {
+                        // Scorpion jumps out!
+                        activeEnemies.push({
+                            type: 'scorpion', x: it.x, y: it.y - 4, alive: true, hp: 1,
+                            baseX: it.x, baseY: it.y - 4, vx: 0.5, dir: Math.random() < 0.5 ? 1 : -1,
+                            patrol: [it.x - 32, it.x + 32], dropTriggered: false, dropping: false, phase: 0
+                        });
+                        SFX.hurt();
+                    }
+                    else {/* nothing */ }
+                }
+            }
+
+            /* ═══════════════════════════════════════════════════════════════
+               RENDER
+               ═══════════════════════════════════════════════════════════════ */
+            function render() {
+                bx.fillStyle = '#1a1510'; bx.fillRect(0, 0, W, H);
+
+                if (state === 'title') { drawTitle(); blitToMain(); return }
+                if (state === 'gameover') { drawGameOver(); blitToMain(); return }
+
+                const room = rooms[currentRoom];
+
+                // Draw tile background
+                for (let r = 0; r < room.tiles.length; r++) {
+                    for (let c = 0; c < COLS; c++) {
+                        drawTile(room.tiles[r][c], c * TW, r * TH);
+                    }
+                }
+
+                // Torch glow
+                for (const [tc, tr] of room.torches || []) {
+                    const tx = tc * TW + 8, ty = tr * TH + 4;
+                    const flicker = Math.sin(roomTorchPhase + tc * 1.7) * 0.15 + 0.85;
+                    // Flame
+                    bx.fillStyle = `rgba(255,${150 + Math.random() * 50 | 0},0,${0.7 * flicker})`;
+                    bx.fillRect(tx - 2, ty - 4, 4, 4);
+                    bx.fillStyle = `rgba(255,${200 + Math.random() * 55 | 0},50,${0.5 * flicker})`;
+                    bx.fillRect(tx - 1, ty - 6, 2, 3);
+                    // Glow
+                    const grd = bx.createRadialGradient(tx, ty, 2, tx, ty, 30);
+                    grd.addColorStop(0, `rgba(255,150,30,${0.15 * flicker})`);
+                    grd.addColorStop(1, 'rgba(255,150,30,0)');
+                    bx.fillStyle = grd; bx.fillRect(tx - 30, ty - 30, 60, 60);
+                }
+
+                // Draw items
+                for (const it of activeItems) {
+                    if (it.collected) continue;
+                    if (it.type === 'chest') {
+                        if (it.opened) {
+                            // Open chest
+                            bx.fillStyle = '#8B6914'; bx.fillRect(it.x + 2, it.y + 10, 12, 6);
+                            bx.fillStyle = '#A07828'; bx.fillRect(it.x + 2, it.y + 4, 12, 4);
+                            bx.fillStyle = '#6B4E0A'; bx.fillRect(it.x + 3, it.y + 2, 10, 3);
+                        } else { bx.drawImage(tileChest, it.x, it.y) }
+                        continue;
+                    }
+                    if (it.type === 'rubbish') {
+                        if (!it.opened) bx.drawImage(tileRubbish, it.x, it.y);
+                        else { bx.fillStyle = '#3a3228'; bx.fillRect(it.x + 2, it.y + 10, 12, 6) }
+                        continue;
+                    }
+                    if (it.type === 'coin') { bx.drawImage(tileCoin, it.x, it.y); continue }
+                    if (it.type === 'gem_r') { bx.drawImage(gemRuby, it.x, it.y); continue }
+                    if (it.type === 'gem_e') { bx.drawImage(gemEmerald, it.x, it.y); continue }
+                    if (it.type === 'gem_s') { bx.drawImage(gemSapphire, it.x, it.y); continue }
+                    if (it.type === 'idol') { bx.drawImage(tileIdol, it.x, it.y); continue }
+                    if (it.type === 'bullets') { bx.drawImage(tileBulletPickup, it.x, it.y); continue }
+                    if (it.type === 'health') { bx.drawImage(tileHealth, it.x, it.y); continue }
+                }
+
+                // Draw enemies
+                for (const en of activeEnemies) {
+                    if (!en.alive) continue;
+                    const flip = en.dir && en.dir < 0;
+                    const spr = en.type === 'snake' ? spriteSnake : en.type === 'scorpion' ? spriteScorpion : en.type === 'spider' ? spriteSpider : spriteBat;
+                    bx.save();
+                    if (flip) {
+                        bx.translate(en.x + spr.width, 0); bx.scale(-1, 1);
+                        bx.drawImage(spr, 0, en.y);
+                    } else {
+                        bx.drawImage(spr, en.x, en.y);
+                    }
+                    bx.restore();
+                    // Spider thread
+                    if (en.type === 'spider') {
+                        bx.strokeStyle = '#666'; bx.lineWidth = 0.5;
+                        bx.beginPath(); bx.moveTo(en.x + 6, 0); bx.lineTo(en.x + 6, en.y); bx.stroke();
+                    }
+                }
+
+                // Draw arrows
+                bx.fillStyle = '#b0a080';
+                for (const a of activeArrows) {
+                    bx.fillRect(a.x, a.y, 8, 2);
+                    bx.fillStyle = '#888'; bx.fillRect(a.x + (a.vx > 0 ? 0 : 6), a.y - 1, 2, 4);
+                    bx.fillStyle = '#b0a080';
+                }
+
+                // Draw bullets
+                bx.fillStyle = '#FFD700';
+                for (const b of activeBullets) { bx.fillRect(b.x - 1, b.y - 1, 3, 3) }
+
+                // Draw player
+                if (state !== 'dead' || (deathTimer > 0 && Math.sin(deathTimer * 0.02) > 0)) {
+                    if (player.invincible <= 0 || Math.sin(player.invincible * 0.02) > 0) {
+                        bx.save();
+                        const frame = player.onGround ? (Math.abs(player.vx) > 0.5 ? playerFrames[player.frame] : spriteIdle) : spriteJump;
+                        if (player.facing < 0) {
+                            bx.translate(player.x + 16, 0); bx.scale(-1, 1);
+                            bx.drawImage(frame, 0, player.y);
+                        } else {
+                            bx.drawImage(frame, player.x, player.y);
+                        }
+                        bx.restore();
+                    }
+
+                    // Whip animation
+                    if (player.whipping) {
+                        const whipProgress = 1 - player.whipTimer / WHIP_DURATION;
+                        bx.strokeStyle = '#5B3A18'; bx.lineWidth = 1.5;
+                        bx.beginPath();
+                        const wx = player.x + 8 + player.facing * 4;
+                        const wy = player.y + 10;
+                        const curve = Math.sin(whipProgress * Math.PI) * WHIP_RANGE;
+                        bx.moveTo(wx, wy);
+                        bx.quadraticCurveTo(wx + player.facing * curve * 0.5, wy - 8, wx + player.facing * curve, wy + Math.sin(whipProgress * Math.PI * 3) * 4);
+                        bx.stroke();
+                        // Tip spark
+                        bx.fillStyle = 'rgba(255,200,100,0.6)';
+                        bx.fillRect(wx + player.facing * curve - 1, wy + Math.sin(whipProgress * Math.PI * 3) * 4 - 1, 3, 3);
+                    }
+                }
+
+                // Explosion warnings
+                for (const t of activeTraps) {
+                    if (t.type === 'explosion' && t.warned && !t.active) {
+                        bx.fillStyle = '#ff0000';
+                        bx.font = 'bold 12px monospace';
+                        bx.fillText('!', t.x + 5, t.y - 2);
+                    }
+                }
+
+                // Explosions
+                for (const ex of explosions) {
+                    const progress = 1 - ex.life / ex.maxLife;
+                    const r = ex.radius * progress;
+                    const alpha = (1 - progress) * 0.6;
+                    const grd = bx.createRadialGradient(ex.x, ex.y, 0, ex.x, ex.y, r);
+                    grd.addColorStop(0, `rgba(255,220,100,${alpha})`);
+                    grd.addColorStop(0.5, `rgba(255,120,20,${alpha * 0.6})`);
+                    grd.addColorStop(1, `rgba(200,40,0,0)`);
+                    bx.fillStyle = grd;
+                    bx.beginPath(); bx.arc(ex.x, ex.y, r, 0, Math.PI * 2); bx.fill();
+                }
+
+                // Flood water
+                if (floodActive && floodLevel > 0) {
+                    const waterY = H - floodLevel;
+                    bx.fillStyle = 'rgba(30,80,180,0.45)';
+                    bx.fillRect(0, waterY, W, floodLevel);
+                    // Wave surface
+                    bx.strokeStyle = 'rgba(80,160,255,0.5)'; bx.lineWidth = 1;
+                    bx.beginPath();
+                    for (let x = 0; x < W; x += 2) {
+                        bx.lineTo(x, waterY + Math.sin(x * 0.1 + roomTorchPhase * 2) * 2);
+                    }
+                    bx.stroke();
+                    // Drowning indicator
+                    if (drownTimer > 0) {
+                        const frac = drownTimer / DROWN_TIME;
+                        bx.fillStyle = `rgba(0,0,80,${frac * 0.4})`; bx.fillRect(0, 0, W, H);
+                        bx.fillStyle = '#fff'; bx.font = '8px monospace'; bx.textAlign = 'center';
+                        bx.fillText(`DROWNING ${(DROWN_TIME / 1000 - drownTimer / 1000).toFixed(1)}s`, W / 2, waterY - 8);
+                        bx.textAlign = 'left';
+                    }
+                }
+
+                // Particles
+                for (const p of particles) {
+                    const alpha = p.life / p.maxLife;
+                    bx.globalAlpha = alpha;
+                    bx.fillStyle = p.color; bx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+                }
+                bx.globalAlpha = 1;
+
+                // Death overlay
+                if (state === 'dead') {
+                    bx.fillStyle = 'rgba(100,0,0,0.5)'; bx.fillRect(0, 0, W, H);
+                    bx.fillStyle = '#ff4444'; bx.font = 'bold 14px monospace'; bx.textAlign = 'center';
+                    bx.fillText('YOU DIED', W / 2, H / 2 - 8);
+                    bx.fillStyle = '#ccc'; bx.font = '8px monospace';
+                    bx.fillText(player.hearts > 0 ? 'Respawning...' : 'GAME OVER', W / 2, H / 2 + 8);
+                    bx.textAlign = 'left';
+                }
+
+                blitToMain();
+            }
+
+            function blitToMain() {
+                ctx.drawImage(buf, 0, 0, W, H, 0, 0, W * SCALE, H * SCALE);
+            }
+
+            /* ═══════════════════════════════════════════════════════════════
+               TITLE SCREEN
+               ═══════════════════════════════════════════════════════════════ */
+            let titlePhase = 0;
+            function drawTitle() {
+                titlePhase += 0.02;
+                // Dark temple BG
+                for (let r = 0; r < 12; r++) {
+                    for (let c = 0; c < COLS; c++) {
+                        bx.drawImage(tileStone, c * TW, r * TH);
+                    }
+                }
+
+                // Darker overlay
+                bx.fillStyle = 'rgba(0,0,0,0.6)'; bx.fillRect(0, 0, W, H);
+
+                // Temple doorway shape
+                bx.fillStyle = '#1a1510';
+                bx.fillRect(W / 2 - 40, 40, 80, 140);
+                bx.beginPath(); bx.arc(W / 2, 40, 40, Math.PI, 0); bx.fill();
+
+                // Torches
+                for (const tx of [W / 2 - 60, W / 2 + 55]) {
+                    bx.fillStyle = '#5a3a1a'; bx.fillRect(tx, 50, 6, 20);
+                    const flk = Math.sin(titlePhase * 3 + (tx > W / 2 ? 1 : 0)) * 0.2 + 0.8;
+                    bx.fillStyle = `rgba(255,${140 + Math.random() * 40 | 0},0,${0.8 * flk})`;
+                    bx.fillRect(tx - 1, 42, 8, 10);
+                    bx.fillStyle = `rgba(255,${200 + Math.random() * 55 | 0},50,${0.5 * flk})`;
+                    bx.fillRect(tx + 1, 38, 4, 6);
+                    const grd = bx.createRadialGradient(tx + 3, 48, 2, tx + 3, 48, 28);
+                    grd.addColorStop(0, `rgba(255,150,30,${0.12 * flk})`);
+                    grd.addColorStop(1, 'rgba(255,150,30,0)');
+                    bx.fillStyle = grd; bx.fillRect(tx - 25, 23, 56, 56);
+                }
+
+                // Gold idol in doorway
+                bx.drawImage(tileIdol, W / 2 - 6, 100);
+
+                // Title text
+                bx.textAlign = 'center';
+                bx.font = 'bold 16px monospace';
+                // Shadow
+                bx.fillStyle = 'rgba(0,0,0,0.7)';
+                bx.fillText('TREASURE OF', W / 2 + 1, 22 + 1);
+                bx.fillText('THE AZTECS', W / 2 + 1, 38 + 1);
+                // Gold text
+                const goldGrad = bx.createLinearGradient(0, 14, 0, 40);
+                goldGrad.addColorStop(0, '#FFD700'); goldGrad.addColorStop(0.5, '#FFA500'); goldGrad.addColorStop(1, '#FFD700');
+                bx.fillStyle = goldGrad;
+                bx.fillText('TREASURE OF', W / 2, 22);
+                bx.fillText('THE AZTECS', W / 2, 38);
+
+                // Prompt
+                const blink = Math.sin(titlePhase * 4) > 0;
+                if (blink) {
+                    bx.fillStyle = '#e8dcc8'; bx.font = '8px monospace';
+                    bx.fillText('Press SPACE or Click to Start', W / 2, 135);
+                }
+
+                // Controls
+                bx.fillStyle = '#a09882'; bx.font = '7px monospace';
+                bx.fillText('A/D: Move  W/Space: Jump  E: Shoot/Interact  F: Whip', W / 2, 155);
+                bx.fillText('Collect treasure • Avoid traps • Defeat enemies', W / 2, 166);
+
+                bx.textAlign = 'left';
+            }
+
+            /* ═══════════════════════════════════════════════════════════════
+               GAME OVER SCREEN
+               ═══════════════════════════════════════════════════════════════ */
+            function drawGameOver() {
+                bx.fillStyle = '#0a0806'; bx.fillRect(0, 0, W, H);
+                bx.textAlign = 'center';
+                bx.fillStyle = '#ff4444'; bx.font = 'bold 18px monospace';
+                bx.fillText('GAME OVER', W / 2, 60);
+                bx.fillStyle = '#FFD700'; bx.font = '14px monospace';
+                bx.fillText(`Score: ${player.score}`, W / 2, 90);
+                bx.fillStyle = '#a09882'; bx.font = '8px monospace';
+                const blink = Math.sin(titlePhase * 4) > 0;
+                if (blink) bx.fillText('Press SPACE to try again', W / 2, 130);
+                bx.textAlign = 'left';
+                titlePhase += 0.02;
+
+                // Save score
+                if (!drawGameOver._saved) {
+                    drawGameOver._saved = true;
+                    try {
+                        const ls = JSON.parse(localStorage.getItem('taHighScores') || '[]');
+                        ls.push({ score: player.score, date: new Date().toISOString().slice(0, 10) });
+                        ls.sort((a, b) => b.score - a.score);
+                        localStorage.setItem('taHighScores', JSON.stringify(ls.slice(0, 10)));
+                        if (typeof GHScores !== 'undefined') { GHScores.save('treasure_aztecs', 'taHighScores').catch(() => { }) }
+                    } catch (e) { }
+                }
+            }
+
+            /* ═══════════════════════════════════════════════════════════════
+               MAIN LOOP
+               ═══════════════════════════════════════════════════════════════ */
+            function gameLoop(now) {
+                const dt = Math.min((now - lastTime) / 1000, 0.05);
+                lastTime = now;
+                update(dt);
+                render();
+                requestAnimationFrame(gameLoop);
+            }
+
+            // Reset saved flag when starting new game
+            const origStartGame = startGame;
+            // no need, just reset in startGame
+            const _sg = startGame;
+
+            showTitle();
+            drawGameOver._saved = false;
+            requestAnimationFrame(ts => { lastTime = ts; gameLoop(ts) });
+        })();
+    </script>
+    <script src="../scripts/mobile-controls.js"></script>
+    <script src="../scripts/github-scores.js"></script>
+</body>
+
+</html>
