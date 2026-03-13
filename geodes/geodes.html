@@ -465,6 +465,7 @@
         const gems = [];
         const particles = [];
         const fireballs = []; // New collection for fireballs
+        const laserBeams = []; // Active laser beam animations
 
         // Configurations
         const MAX_MISSED = 20;
@@ -751,6 +752,35 @@
           ctx.fillStyle = mg;
           ctx.beginPath();
           ctx.arc(x, y - height + 2, rimR, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Laser gun at the base of the volcano
+          const gunX = x;
+          const gunY = y + 6;
+          const gunW = 28, gunH = 14;
+          // Gun body
+          ctx.fillStyle = '#3a3f4a';
+          ctx.beginPath();
+          roundedRectPath(ctx, gunX - gunW / 2, gunY - gunH, gunW, gunH, 4);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          // Barrel
+          ctx.fillStyle = '#2a2e36';
+          ctx.fillRect(gunX - 3, gunY - gunH - 8, 6, 10);
+          // Lens / emitter glow
+          const lensPulse = 0.5 + Math.sin(Date.now() * 0.004) * 0.3;
+          const lensGrad = ctx.createRadialGradient(gunX, gunY - gunH - 8, 1, gunX, gunY - gunH - 8, 8);
+          lensGrad.addColorStop(0, `rgba(0,200,255,${lensPulse})`);
+          lensGrad.addColorStop(1, 'rgba(0,200,255,0)');
+          ctx.fillStyle = lensGrad;
+          ctx.beginPath();
+          ctx.arc(gunX, gunY - gunH - 8, 8, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#00e5ff';
+          ctx.beginPath();
+          ctx.arc(gunX, gunY - gunH - 8, 2.5, 0, Math.PI * 2);
           ctx.fill();
         }
 
@@ -1104,6 +1134,10 @@
             g.y += g.vy * slowSpeed * dt;
             g.vy += 300 * slowSpeed * dt; // Scale gravity with speed so trajectory shape is preserved
 
+            // Bounce off screen edges
+            if (g.x - g.r < 0) { g.x = g.r; g.vx = Math.abs(g.vx) * 0.8; }
+            if (g.x + g.r > canvas.clientWidth) { g.x = canvas.clientWidth - g.r; g.vx = -Math.abs(g.vx) * 0.8; }
+
             drawGeode(g);
 
             // Check if geode escaped at bottom of screen
@@ -1126,6 +1160,10 @@
             fb.y += fb.vy * slowSpeed * dt;
             fb.vy += 300 * slowSpeed * dt;
 
+            // Bounce off screen edges
+            if (fb.x - fb.r < 0) { fb.x = fb.r; fb.vx = Math.abs(fb.vx) * 0.8; }
+            if (fb.x + fb.r > canvas.clientWidth) { fb.x = canvas.clientWidth - fb.r; fb.vx = -Math.abs(fb.vx) * 0.8; }
+
             drawFireball(fb);
 
             // Check if fireball escaped at bottom of screen
@@ -1146,6 +1184,10 @@
             rock.x += rock.vx * slowSpeed * dt;
             rock.y += rock.vy * slowSpeed * dt;
             rock.vy += 300 * slowSpeed * dt;
+
+            // Bounce off screen edges
+            if (rock.x - rock.r < 0) { rock.x = rock.r; rock.vx = Math.abs(rock.vx) * 0.8; }
+            if (rock.x + rock.r > canvas.clientWidth) { rock.x = canvas.clientWidth - rock.r; rock.vx = -Math.abs(rock.vx) * 0.8; }
 
             drawRock(rock);
 
@@ -1173,6 +1215,35 @@
 
             drawGem(gm);
             if (gm.ttl <= 0) gems.splice(i, 1);
+          }
+
+          // Update & draw laser beams
+          for (let i = laserBeams.length - 1; i >= 0; i--) {
+            const lb = laserBeams[i];
+            lb.ttl -= dt;
+            if (lb.ttl <= 0) { laserBeams.splice(i, 1); continue; }
+            const a = clamp(lb.ttl / lb.life, 0, 1);
+            ctx.save();
+            // Outer glow
+            ctx.globalAlpha = a * 0.4;
+            ctx.strokeStyle = '#00e5ff';
+            ctx.lineWidth = 6;
+            ctx.shadowColor = '#00e5ff';
+            ctx.shadowBlur = 18;
+            ctx.beginPath();
+            ctx.moveTo(lb.x1, lb.y1);
+            ctx.lineTo(lb.x2, lb.y2);
+            ctx.stroke();
+            // Core beam
+            ctx.globalAlpha = a;
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 8;
+            ctx.beginPath();
+            ctx.moveTo(lb.x1, lb.y1);
+            ctx.lineTo(lb.x2, lb.y2);
+            ctx.stroke();
+            ctx.restore();
           }
 
           // Update & draw sparkles
@@ -1211,6 +1282,25 @@
           ctx.restore();
         }
 
+        // Fire laser beam from gun to target
+        function fireLaser(tx, ty) {
+          const gunX = volcano.x;
+          const gunY = volcano.y + 6 - 14 - 8; // matches gun barrel tip position
+          laserBeams.push({ x1: gunX, y1: gunY, x2: tx, y2: ty, life: 0.15, ttl: 0.15 });
+          if (typeof sfxLaser === 'function') sfxLaser();
+          // Explosion particles at target
+          for (let i = 0; i < 12; i++) {
+            const ang = rand(Math.PI * 2);
+            const spd = rand(60, 160);
+            const life = rand(0.2, 0.5);
+            particles.push({
+              x: tx, y: ty, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
+              life, ttl: life, size: rand(1.5, 3.5),
+              color: ['#00e5ff', '#ffffff', '#80ffff'][Math.floor(Math.random() * 3)]
+            });
+          }
+        }
+
         // Click handling
         function onClick(ev) {
           if (gameOver) return;
@@ -1235,6 +1325,7 @@
             const fb = fireballs[i];
             if (dist2(x, y, fb.x, fb.y) <= Math.pow(fb.r + 5, 2)) {
               fb.clicked = true;
+              fireLaser(fb.x, fb.y);
               fireballs.splice(i, 1);
               explodeFireball(fb);
               return;
@@ -1246,6 +1337,7 @@
             const rock = rocks[i];
             if (dist2(x, y, rock.x, rock.y) <= Math.pow(rock.r + 2, 2)) {
               rock.clicked = true;
+              fireLaser(rock.x, rock.y);
               rocks.splice(i, 1);
               makeShards(rock.x, rock.y, rock.color, { x: rock.vx / 100, y: rock.vy / 100 });
               // Rocks now give a small score when clicked
@@ -1264,6 +1356,7 @@
             // Apply scale to geode radius for hit detection
             if (dist2(x, y, g.x, g.y) <= Math.pow((g.r + 2) * GEODE_SCALE, 2)) {
               g.clicked = true;
+              fireLaser(g.x, g.y);
               geodes.splice(i, 1);
               makeShards(g.x, g.y, g.color, { x: g.vx / 100, y: g.vy / 100 }); // Use velocity for shard direction
               maybeSpawnGem(g.x, g.y - 4);
@@ -1310,7 +1403,7 @@
         function resetGame() {
           running = false; gameOver = false;
           score = 0; missed = 0;
-          geodes.length = 0; rocks.length = 0; shards.length = 0; gems.length = 0; particles.length = 0; fireballs.length = 0;
+          geodes.length = 0; rocks.length = 0; shards.length = 0; gems.length = 0; particles.length = 0; fireballs.length = 0; laserBeams.length = 0;
           spawnTimer = 0; rockTimer = 0; fireballTimer = 0;
           updateHUD();
           overlay.classList.remove('hidden');
@@ -1563,6 +1656,18 @@
         }
 
         // SFX
+        function sfxLaser() {
+          if (window.audioMuted) return;
+          resumeCtx();
+          const t = now();
+          // High-pitched zap
+          const zap = osc('sawtooth', 1800);
+          env(zap.g, t, 0.001, 0.08, 0.35);
+          zap.o.frequency.exponentialRampToValueAtTime(400, t + 0.08);
+          zap.o.start(t); zap.o.stop(t + 0.1);
+          // Electric sizzle
+          noiseBurst({ freq: 5000, q: 6, a: 0.001, r: 0.04, gain: 0.25 });
+        }
         function sfxStart() {
           if (window.audioMuted) return;
           resumeCtx();
