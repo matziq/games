@@ -1,28 +1,26 @@
 // Procedural sound generation for Aztec Hero using Web Audio API
 let ctx: AudioContext | null = null;
+let soundsReady = false;
+let initStarted = false;
 
 function getCtx(): AudioContext {
   if (!ctx) ctx = new AudioContext();
   return ctx;
 }
 
-function resumeCtx() {
-  if (ctx && ctx.state === 'suspended') ctx.resume();
-}
-
 // --- Cached buffers ---
 const buffers: Record<string, AudioBuffer> = {};
 
 function playBuffer(name: string, volume = 0.15) {
-  resumeCtx();
-  const ac = getCtx();
+  if (!soundsReady || !ctx) return;
+  if (ctx.state === 'suspended') ctx.resume();
   const buf = buffers[name];
   if (!buf) return;
-  const src = ac.createBufferSource();
+  const src = ctx.createBufferSource();
   src.buffer = buf;
-  const gain = ac.createGain();
+  const gain = ctx.createGain();
   gain.gain.value = volume;
-  src.connect(gain).connect(ac.destination);
+  src.connect(gain).connect(ctx.destination);
   src.start();
 }
 
@@ -184,8 +182,8 @@ async function genExplosion(): Promise<AudioBuffer> {
 let ambientInterval: number | null = null;
 
 function playDrip() {
-  resumeCtx();
-  const ac = getCtx();
+  if (!ctx || ctx.state === 'suspended') return;
+  const ac = ctx;
   const osc = ac.createOscillator();
   osc.type = 'sine';
   const freq = 1800 + Math.random() * 800;
@@ -212,8 +210,7 @@ function scheduleDrip() {
 
 // --- Public API ---
 
-export async function initSounds(): Promise<void> {
-  getCtx();
+async function generateBuffers(): Promise<void> {
   const [footstep, jump, gem, kill, ladder, death, explosion] = await Promise.all([
     genFootstep(),
     genJump(),
@@ -230,6 +227,25 @@ export async function initSounds(): Promise<void> {
   buffers.ladder = ladder;
   buffers.death = death;
   buffers.explosion = explosion;
+  soundsReady = true;
+}
+
+export function initSounds(): void {
+  if (initStarted) return;
+  initStarted = true;
+  // Pre-render buffers (doesn't need user gesture — uses OfflineAudioContext)
+  generateBuffers();
+  // Create/resume AudioContext on first real user interaction
+  const unlock = () => {
+    const ac = getCtx();
+    if (ac.state === 'suspended') ac.resume();
+    document.removeEventListener('keydown', unlock);
+    document.removeEventListener('pointerdown', unlock);
+    document.removeEventListener('click', unlock);
+  };
+  document.addEventListener('keydown', unlock);
+  document.addEventListener('pointerdown', unlock);
+  document.addEventListener('click', unlock);
 }
 
 export function playFootstep() { playBuffer('footstep', 0.10); }
