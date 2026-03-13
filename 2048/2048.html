@@ -1,0 +1,1779 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>2048</title>
+    <style>
+        :root {
+            --bg: #000;
+            --board: #1a1a1a;
+            --cell: #0d0d0d;
+            --text: #fff;
+            --textLight: #f9f6f2;
+            --gap: 12px;
+            --radius: 12px;
+            --tileRadius: 10px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .menu-link {
+            display: block;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 700;
+            color: #8f7a66;
+            text-decoration: none;
+            padding: 4px 0;
+            transition: color 0.15s;
+            letter-spacing: 0.3px;
+        }
+
+        .menu-link:hover {
+            color: #bbada0;
+        }
+
+        .menu-link:focus-visible {
+            outline: 3px solid rgba(41, 182, 246, 0.6);
+            outline-offset: 2px;
+        }
+
+        .app {
+            width: min(520px, 100%);
+            user-select: none;
+        }
+
+        header {
+            display: flex;
+            gap: 16px;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .title {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 44px;
+            line-height: 1;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .scores {
+            display: flex;
+            gap: 10px;
+        }
+
+        .scorebox {
+            min-width: 92px;
+            padding: 10px 12px;
+            background: #111;
+            color: #29B6F6;
+            border: 1px solid #333;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .scorebox .label {
+            font-size: 11px;
+            opacity: 0.7;
+            letter-spacing: 0.6px;
+            color: #888;
+        }
+
+        .scorebox .value {
+            font-size: 22px;
+            font-weight: 800;
+            margin-top: 2px;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .hint {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.25;
+        }
+
+        button {
+            appearance: none;
+            border: 0;
+            background: #29B6F6;
+            color: #000;
+            font-weight: 700;
+            padding: 10px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .boardWrap {
+            position: relative;
+        }
+
+        .board {
+            background: var(--board);
+            border: 3px solid #555;
+            border-radius: var(--radius);
+            padding: var(--gap);
+            touch-action: none;
+            /* enable swipe/drag without browser panning */
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            z-index: 1;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: var(--gap);
+            height: 100%;
+        }
+
+        .cell {
+            width: 100%;
+            height: 100%;
+            background: var(--cell);
+            border-radius: var(--tileRadius);
+            border: 1px solid #2a2a2a;
+        }
+
+        .tiles {
+            position: absolute;
+            inset: var(--gap);
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .confetti {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            border-radius: var(--radius);
+            z-index: 5;
+        }
+
+        .tile {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--tileRadius);
+            font-weight: 900;
+            font-size: clamp(20px, 6vw, 42px);
+            color: #000;
+            background: #333;
+            transition: transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1), background 160ms ease;
+            transform-origin: center;
+            will-change: transform;
+        }
+
+        /* Tile colors — dark theme */
+        .v2 {
+            background: #BDBDBD;
+            color: #1a1a1a;
+        }
+
+        .v4 {
+            background: #42A5F5;
+            color: #000;
+        }
+
+        .v8 {
+            background: #66BB6A;
+            color: #000;
+        }
+
+        .v16 {
+            background: #AB47BC;
+            color: #fff;
+        }
+
+        .v32 {
+            background: #FFEE58;
+            color: #000;
+        }
+
+        .v64 {
+            background: #EF5350;
+            color: #fff;
+        }
+
+        .v128 {
+            background: #FF9800;
+            color: #000;
+            font-size: clamp(18px, 5vw, 36px);
+        }
+
+        .v256 {
+            background: #29B6F6;
+            color: #000;
+            font-size: clamp(18px, 5vw, 36px);
+        }
+
+        .v512 {
+            background: #FFD600;
+            color: #000;
+            font-size: clamp(18px, 5vw, 36px);
+        }
+
+        .v1024 {
+            background: #FF1744;
+            color: #fff;
+            font-size: clamp(16px, 4.6vw, 32px);
+        }
+
+        .v2048 {
+            background: #00E676;
+            color: #000;
+            font-size: clamp(16px, 4.6vw, 32px);
+        }
+
+        .overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            border-radius: var(--radius);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 18px;
+            z-index: 10;
+        }
+
+        .overlay.show {
+            display: flex;
+        }
+
+        .overlay .panel {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 14px;
+            padding: 16px 16px 14px;
+            width: min(360px, 95%);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .overlay h2 {
+            margin: 0 0 6px;
+            font-size: 22px;
+            color: #29B6F6;
+        }
+
+        .overlay p {
+            margin: 0 0 12px;
+            color: #888;
+            font-size: 14px;
+        }
+
+        .overlay .row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .small {
+            font-size: 12px;
+            color: #555;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .tile {
+                transition: none;
+            }
+
+            button:active {
+                transform: none;
+            }
+        }
+
+        /* === High Scores Modal === */
+        .hs-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .hs-overlay.show {
+            display: flex;
+        }
+
+        .hs-content {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: 26px;
+            min-width: 290px;
+            max-width: 88%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .hs-content h2 {
+            text-align: center;
+            margin: 0 0 18px;
+            font-size: 22px;
+            color: #FFD600;
+        }
+
+        .hs-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .hs-table th {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666;
+            padding: 6px 8px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+
+        .hs-table th:first-child {
+            width: 36px;
+            text-align: center;
+        }
+
+        .hs-table td {
+            padding: 10px 8px;
+            font-size: 14px;
+            border-bottom: 1px solid #222;
+            color: var(--text);
+        }
+
+        .hs-table td:first-child {
+            text-align: center;
+            font-weight: 700;
+            color: #666;
+        }
+
+        .hs-table tr.hs-gold td:first-child {
+            color: #edc53f;
+        }
+
+        .hs-table tr.hs-silver td:first-child {
+            color: #c0c0c0;
+        }
+
+        .hs-table tr.hs-bronze td:first-child {
+            color: #cd7f32;
+        }
+
+        .hs-table .hs-score {
+            font-weight: 900;
+            color: #29B6F6;
+        }
+
+        .hs-table .hs-name {
+            font-weight: 700;
+            color: #ccc;
+        }
+
+        .hs-table .hs-date {
+            font-size: 11px;
+            color: #555;
+        }
+
+        .hs-table tr.hs-new td {
+            background: rgba(255, 214, 0, 0.08);
+        }
+
+        .hs-empty {
+            text-align: center;
+            color: #555;
+            font-size: 14px;
+            padding: 30px 0;
+        }
+
+        .hs-close-btn {
+            width: 100%;
+            padding: 11px;
+            margin-top: 18px;
+            background: #29B6F6;
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .hs-clear-btn {
+            display: block;
+            margin: 10px auto 0;
+            padding: 6px 18px;
+            font-size: 12px;
+            background: transparent;
+            color: #555;
+            border: 1px solid #333;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .hs-clear-btn:hover {
+            color: #F44336;
+            border-color: #F44336;
+        }
+
+        .hs-list-btn {
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            background: transparent;
+            color: #FFD600;
+            border: 2px solid #FFD600;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .hs-list-btn:hover {
+            background: rgba(255, 214, 0, 0.1);
+        }
+
+        /* === Mobile: maximize board, hide clutter === */
+        @media (max-width: 600px) {
+            body {
+                padding: 6px 8px;
+                align-items: flex-start;
+                justify-content: flex-start;
+                height: 100dvh;
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            .menu-link {
+                display: none;
+            }
+
+            .app {
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+            }
+
+            .subtitle {
+                display: none;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            header {
+                margin-bottom: 6px;
+            }
+
+            .scorebox {
+                min-width: 60px;
+                padding: 6px 8px;
+            }
+
+            .scorebox .value {
+                font-size: 18px;
+            }
+
+            .controls {
+                margin-bottom: 4px;
+                gap: 6px;
+            }
+
+            .hint {
+                display: none;
+            }
+
+            .app>.small {
+                display: none;
+            }
+
+            .boardWrap {
+                flex: 1 1 auto;
+                min-height: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .board {
+                max-height: 100%;
+                width: min(100%, calc(100dvh - 150px));
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="app" aria-label="2048 game">
+        <a class="menu-link" href="../gamemenu.html" aria-label="Back to games menu">← Games Menu</a>
+        <header>
+            <div class="title">
+                <h1>2048</h1>
+                <div class="subtitle">Slide tiles to combine matching numbers.</div>
+            </div>
+            <div class="scores" aria-label="Scores">
+                <div class="scorebox" aria-label="Score">
+                    <div class="label">SCORE</div>
+                    <div class="value" id="score">0</div>
+                </div>
+                <div class="scorebox" aria-label="Best score">
+                    <div class="label">BEST</div>
+                    <div class="value" id="best">0</div>
+                </div>
+            </div>
+        </header>
+
+        <section class="controls">
+            <div class="hint">
+                Use <b>swipe</b> (touch) or <b>drag</b> (mouse) on the board to move <br />
+                tiles left/right/up/down. (Arrow keys also work.)
+            </div>
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#888;cursor:pointer;">
+                    🔊 <input id="volumeSlider" type="range" min="0" max="100" value="60"
+                        style="width:70px;accent-color:#29B6F6;cursor:pointer;">
+                </label>
+                <button id="newGame" type="button">New Game</button>
+                <button id="showScores" type="button">🏆 Scores</button>
+            </div>
+        </section>
+
+        <section class="boardWrap" aria-label="Game board">
+            <div class="board" id="board" tabindex="0" aria-label="2048 board" role="application">
+                <div class="grid" aria-hidden="true" id="grid"></div>
+                <div class="tiles" aria-live="polite" aria-atomic="true" id="tiles"></div>
+            </div>
+
+            <canvas id="confetti" class="confetti" aria-hidden="true"></canvas>
+
+            <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-label="Game status">
+                <div class="panel">
+                    <h2 id="overlayTitle">Game Over</h2>
+                    <p id="overlayBody">No more moves.</p>
+                    <div id="hs2048-name-entry" style="display:none;margin:8px 0;text-align:center;">
+                        <div style="font-size:13px;color:#8f7a66;margin-bottom:6px;">Enter your name:</div>
+                        <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+                            <input id="hs2048-name" type="text" maxlength="6" autocomplete="off" spellcheck="false"
+                                style="width:120px;padding:6px 10px;font-size:18px;font-weight:bold;text-align:center;
+                                background:#f0e8e0;color:#776e65;border:2px solid #8f7a66;border-radius:8px;outline:none;
+                                text-transform:uppercase;letter-spacing:2px;font-family:inherit;" placeholder="______">
+                            <button id="hs2048-save" type="button"
+                                style="padding:6px 14px;font-size:14px;font-weight:700;
+                                background:#8f7a66;color:#fff;border:none;border-radius:8px;cursor:pointer;">Save</button>
+                        </div>
+                        <div id="hs2048-saved-msg" style="font-size:11px;color:#6ab04c;margin-top:4px;display:none;">
+                            &#10003; Name saved!</div>
+                        <div id="hs2048-hint" style="font-size:10px;color:#bbada0;margin-top:3px;">Up to 6 letters</div>
+                    </div>
+                    <div class="row">
+                        <button id="tryAgain" type="button">Try Again</button>
+                        <button id="keepPlaying" type="button">Keep Playing</button>
+                    </div>
+                    <div class="row" style="margin-top:8px;">
+                        <button class="hs-list-btn" id="goShowScores" type="button">🏆 High Scores</button>
+                    </div>
+                    <div class="row" style="margin-top:8px;">
+                        <a href="../gamemenu.html"
+                            style="padding:8px 20px;font-size:14px;font-weight:700;color:#8f7a66;text-decoration:none;border:1px solid rgba(143,122,102,0.3);border-radius:10px;">←
+                            Games Menu</a>
+                    </div>
+                    <div class="small">Tip: on desktop, click + drag a little in the direction you want.</div>
+                </div>
+            </div>
+        </section>
+
+        <div class="small">Single-file HTML implementation. No external assets.</div>
+    </main>
+
+    <div class="hs-overlay" id="hs-modal">
+        <div class="hs-content">
+            <h2>🏆 High Scores</h2>
+            <div id="hs-table-wrap"></div>
+            <button class="hs-close-btn" id="hsClose">Close</button>
+        </div>
+    </div>
+
+    <script>
+        (() => {
+            'use strict';
+
+            const SIZE = 4;
+            const STORAGE_KEY_BEST = 'singlehtml2048_best';
+            const SWIPE_THRESHOLD = 22; // px
+            const STORAGE_KEY_SOUND = 'singlehtml2048_sound_enabled';
+            const STORAGE_KEY_VOLUME = 'singlehtml2048_volume';
+
+            /** @typedef {{id:number, value:number}} Tile */
+
+            /** @type {(Tile|null)[][]} */
+            let grid = makeEmptyGrid();
+            let score = 0;
+            let best = loadBest();
+            let bestAtGameStart = best;
+            let bestCelebratedThisGame = false;
+            let gameOver = false;
+            let hasWon = false;
+            let allowContinueAfterWin = false;
+
+            let nextTileId = 1;
+
+            /** @type {Map<number, HTMLDivElement>} */
+            const tileEls = new Map();
+
+            /** @type {Set<number>} */
+            let popIds = new Set();
+
+            let cellSize = 0;
+            let gapPx = 12;
+
+            let soundEnabled = true;
+            let soundVolume = loadVolume();
+            let pendingStartSound = true; // will play on first user gesture
+
+            // ── High Scores ────────────────────────────────────
+            const HS_KEY_2048 = 'singlehtml2048_highscores';
+            const HS_MAX_2048 = 5;
+            let lastNewHsIndex2048 = -1;
+            let pendingHsScore2048 = null;
+
+            function getHighScores2048() {
+                try { return JSON.parse(localStorage.getItem(HS_KEY_2048)) || []; }
+                catch (e) { return []; }
+            }
+
+            function saveHighScores2048(list) {
+                localStorage.setItem(HS_KEY_2048, JSON.stringify(list));
+                if (window.GHScores) GHScores.save('2048', HS_KEY_2048);
+            }
+
+            function addHighScore2048(scoreVal, nameVal) {
+                const list = getHighScores2048();
+                const mt = maxTile(grid);
+                const entry = { score: scoreVal, name: (nameVal || '').toUpperCase(), maxTile: mt, date: new Date().toISOString() };
+                let inserted = false;
+                for (let i = 0; i < list.length; i++) {
+                    if (scoreVal > list[i].score) {
+                        list.splice(i, 0, entry);
+                        inserted = true;
+                        lastNewHsIndex2048 = i;
+                        break;
+                    }
+                }
+                if (!inserted && list.length < HS_MAX_2048) {
+                    lastNewHsIndex2048 = list.length;
+                    list.push(entry);
+                    inserted = true;
+                } else if (!inserted) {
+                    lastNewHsIndex2048 = -1;
+                    return false;
+                }
+                if (list.length > HS_MAX_2048) list.length = HS_MAX_2048;
+                saveHighScores2048(list);
+                return true;
+            }
+
+            function makesLeaderboard2048(scoreVal) {
+                if (scoreVal <= 0) return false;
+                const list = getHighScores2048();
+                return list.length < HS_MAX_2048 || scoreVal > list[list.length - 1].score;
+            }
+
+            function renderHighScores2048() {
+                const list = getHighScores2048();
+                const wrap = document.getElementById('hs-table-wrap');
+                if (list.length === 0) {
+                    wrap.innerHTML = '<div class="hs-empty">No scores yet. Play a game!</div>';
+                    return;
+                }
+                const medals = ['hs-gold', 'hs-silver', 'hs-bronze'];
+                let html = '<table class="hs-table"><thead><tr><th>#</th><th>Score</th><th>Name</th><th>Best Tile</th><th>Date</th></tr></thead><tbody>';
+                list.forEach((entry, i) => {
+                    const mc = i < 3 ? medals[i] : '';
+                    const nc = i === lastNewHsIndex2048 ? 'hs-new' : '';
+                    const d = new Date(entry.date);
+                    const ds = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' });
+                    html += `<tr class="${mc} ${nc}"><td>${i + 1}</td><td class="hs-score">${entry.score.toLocaleString()}</td><td class="hs-name">${entry.name || '---'}</td><td>${entry.maxTile || '?'}</td><td class="hs-date">${ds}</td></tr>`;
+                });
+                html += '</tbody></table>';
+                wrap.innerHTML = html;
+            }
+
+            function showHighScores2048() {
+                renderHighScores2048();
+                document.getElementById('hs-modal').classList.add('show');
+            }
+
+            function hideHighScores2048() {
+                document.getElementById('hs-modal').classList.remove('show');
+                lastNewHsIndex2048 = -1;
+            }
+
+            function saveHsName2048() {
+                const inp = document.getElementById('hs2048-name');
+                const name = inp.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase();
+                if (pendingHsScore2048 !== null) {
+                    addHighScore2048(pendingHsScore2048, name);
+                    pendingHsScore2048 = null;
+                }
+                inp.disabled = true;
+                inp.value = name || '------';
+                inp.style.borderColor = '#6ab04c';
+                const btn = document.getElementById('hs2048-save');
+                btn.textContent = '\u2713';
+                btn.style.background = '#6ab04c';
+                btn.disabled = true;
+                document.getElementById('hs2048-saved-msg').style.display = 'block';
+                document.getElementById('hs2048-hint').style.display = 'none';
+            }
+
+            /** @type {AudioContext|null} */
+            let audioCtx = null;
+            /** @type {GainNode|null} */
+            let masterGain = null;
+
+            const els = {
+                score: document.getElementById('score'),
+                best: document.getElementById('best'),
+                board: document.getElementById('board'),
+                grid: document.getElementById('grid'),
+                tiles: document.getElementById('tiles'),
+                overlay: document.getElementById('overlay'),
+                overlayTitle: document.getElementById('overlayTitle'),
+                overlayBody: document.getElementById('overlayBody'),
+                confetti: document.getElementById('confetti'),
+                volumeSlider: document.getElementById('volumeSlider'),
+                newGame: document.getElementById('newGame'),
+                tryAgain: document.getElementById('tryAgain'),
+                keepPlaying: document.getElementById('keepPlaying'),
+            };
+
+            // Confetti
+            /** @type {CanvasRenderingContext2D|null} */
+            const confettiCtx = els.confetti ? els.confetti.getContext('2d') : null;
+            /** @type {{x:number,y:number,vx:number,vy:number,rot:number,vr:number,w:number,h:number,color:string,life:number}[]} */
+            let confettiParticles = [];
+            let confettiRunning = false;
+            let confettiLastT = 0;
+
+            function resizeConfettiCanvas() {
+                if (!els.confetti) return;
+                const rect = els.confetti.getBoundingClientRect();
+                const dpr = Math.max(1, window.devicePixelRatio || 1);
+                els.confetti.width = Math.floor(rect.width * dpr);
+                els.confetti.height = Math.floor(rect.height * dpr);
+                if (confettiCtx) confettiCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            }
+
+            function confettiBurst() {
+                if (!els.confetti || !confettiCtx) return;
+                resizeConfettiCanvas();
+
+                const rect = els.confetti.getBoundingClientRect();
+                const cx = rect.width * 0.5;
+                const cy = rect.height * 0.28;
+
+                const colors = ['#ff4757', '#ffa502', '#2ed573', '#1e90ff', '#a55eea', '#ff6b81', '#70a1ff'];
+                const count = 120;
+                confettiParticles = [];
+                for (let i = 0; i < count; i++) {
+                    const a = (Math.random() * Math.PI) - Math.PI; // -pi..0 (upward-ish)
+                    const sp = 220 + Math.random() * 420;
+                    confettiParticles.push({
+                        x: cx + (Math.random() - 0.5) * 20,
+                        y: cy + (Math.random() - 0.5) * 10,
+                        vx: Math.cos(a) * sp,
+                        vy: Math.sin(a) * sp,
+                        rot: Math.random() * Math.PI * 2,
+                        vr: (Math.random() - 0.5) * 10,
+                        w: 6 + Math.random() * 7,
+                        h: 4 + Math.random() * 6,
+                        color: colors[(Math.random() * colors.length) | 0],
+                        life: 1.4 + Math.random() * 0.6,
+                    });
+                }
+
+                const shouldStartLoop = !confettiRunning;
+                confettiRunning = true;
+                confettiLastT = performance.now();
+                if (shouldStartLoop) requestAnimationFrame(tickConfetti);
+            }
+
+            function tickConfetti(t) {
+                if (!confettiRunning || !els.confetti || !confettiCtx) return;
+                const dt = Math.min(0.033, Math.max(0.001, (t - confettiLastT) / 1000));
+                confettiLastT = t;
+
+                const rect = els.confetti.getBoundingClientRect();
+                confettiCtx.clearRect(0, 0, rect.width, rect.height);
+
+                const gravity = 820;
+                const drag = 0.985;
+
+                let alive = 0;
+                for (const p of confettiParticles) {
+                    p.life -= dt;
+                    if (p.life <= 0) continue;
+                    alive++;
+
+                    p.vy += gravity * dt;
+                    p.vx *= Math.pow(drag, dt * 60);
+                    p.vy *= Math.pow(drag, dt * 60);
+                    p.x += p.vx * dt;
+                    p.y += p.vy * dt;
+                    p.rot += p.vr * dt;
+
+                    // Draw
+                    confettiCtx.save();
+                    confettiCtx.translate(p.x, p.y);
+                    confettiCtx.rotate(p.rot);
+                    confettiCtx.fillStyle = p.color;
+                    confettiCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                    confettiCtx.restore();
+                }
+
+                if (alive === 0) {
+                    confettiRunning = false;
+                    confettiCtx.clearRect(0, 0, rect.width, rect.height);
+                    return;
+                }
+
+                requestAnimationFrame(tickConfetti);
+            }
+
+            function loadVolume() {
+                const raw = localStorage.getItem(STORAGE_KEY_VOLUME);
+                if (raw !== null) { const v = Number(raw); if (Number.isFinite(v)) return Math.max(0, Math.min(100, v)); }
+                // Migrate old on/off setting
+                const old = localStorage.getItem(STORAGE_KEY_SOUND);
+                if (old === '0') return 0;
+                return 60;
+            }
+
+            function saveVolume() {
+                localStorage.setItem(STORAGE_KEY_VOLUME, String(soundVolume));
+            }
+
+            function applyVolume() {
+                soundEnabled = soundVolume > 0;
+                if (masterGain) masterGain.gain.value = soundVolume / 100;
+                if (els.volumeSlider) els.volumeSlider.value = String(soundVolume);
+            }
+
+            async function ensureAudioUnlocked() {
+                if (!soundEnabled) return false;
+                const Ctx = window.AudioContext || window.webkitAudioContext;
+                if (!Ctx) return false;
+
+                if (!audioCtx) {
+                    audioCtx = new Ctx();
+                    masterGain = audioCtx.createGain();
+                    masterGain.gain.value = soundVolume / 100;
+                    masterGain.connect(audioCtx.destination);
+                }
+
+                try {
+                    if (audioCtx.state === 'suspended') {
+                        // Must be called in a user gesture; callers await this in gesture handlers.
+                        await audioCtx.resume();
+                    }
+                } catch {
+                    // ignore
+                }
+
+                if (audioCtx.state !== 'running') return false;
+
+                if (pendingStartSound) {
+                    pendingStartSound = false;
+                    playDiceRoll();
+                }
+
+                return true;
+            }
+
+            function withAudio(fn) {
+                if (!soundEnabled) return;
+                if (!audioCtx || !masterGain) return;
+                if (audioCtx.state === 'running') {
+                    fn(audioCtx, masterGain);
+                    return;
+                }
+
+                // If resume is still in-flight, don't drop the sound; schedule it right after resume.
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume()
+                        .then(() => {
+                            if (audioCtx && masterGain && audioCtx.state === 'running') fn(audioCtx, masterGain);
+                        })
+                        .catch(() => { /* ignore */ });
+                }
+            }
+
+            function makeNoiseBuffer(ctx, durationSec) {
+                const len = Math.max(1, Math.floor(ctx.sampleRate * durationSec));
+                const buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1);
+                return buffer;
+            }
+
+            function playDiceRoll() {
+                withAudio((ctx, master) => {
+                    const now = ctx.currentTime;
+
+                    // Noise bed
+                    const src = ctx.createBufferSource();
+                    src.buffer = makeNoiseBuffer(ctx, 0.65);
+
+                    const bp = ctx.createBiquadFilter();
+                    bp.type = 'bandpass';
+                    bp.frequency.value = 260;
+                    bp.Q.value = 0.9;
+
+                    const lp = ctx.createBiquadFilter();
+                    lp.type = 'lowpass';
+                    lp.frequency.value = 1400;
+
+                    const gain = ctx.createGain();
+                    gain.gain.setValueAtTime(0.0001, now);
+
+                    // Quick "rattle" envelope
+                    const steps = 10;
+                    for (let i = 0; i < steps; i++) {
+                        const t = now + i * 0.045;
+                        const a = 0.22 * (1 - i / steps);
+                        gain.gain.linearRampToValueAtTime(a, t + 0.01);
+                        gain.gain.linearRampToValueAtTime(0.0001, t + 0.045);
+                    }
+
+                    // Low thump
+                    const osc = ctx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(70, now);
+                    osc.frequency.exponentialRampToValueAtTime(40, now + 0.45);
+                    const og = ctx.createGain();
+                    og.gain.setValueAtTime(0.0001, now);
+                    og.gain.linearRampToValueAtTime(0.08, now + 0.02);
+                    og.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+
+                    src.connect(bp);
+                    bp.connect(lp);
+                    lp.connect(gain);
+                    gain.connect(master);
+
+                    osc.connect(og);
+                    og.connect(master);
+
+                    src.start(now);
+                    src.stop(now + 0.65);
+                    osc.start(now);
+                    osc.stop(now + 0.55);
+                });
+            }
+
+            function playPageFlip() {
+                withAudio((ctx, master) => {
+                    const now = ctx.currentTime;
+
+                    const src = ctx.createBufferSource();
+                    src.buffer = makeNoiseBuffer(ctx, 0.14);
+
+                    const hp = ctx.createBiquadFilter();
+                    hp.type = 'highpass';
+                    hp.frequency.value = 550;
+                    const bp = ctx.createBiquadFilter();
+                    bp.type = 'bandpass';
+                    bp.frequency.setValueAtTime(1200, now);
+                    bp.Q.value = 1.2;
+
+                    const gain = ctx.createGain();
+                    gain.gain.setValueAtTime(0.0001, now);
+                    gain.gain.linearRampToValueAtTime(0.11, now + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
+
+                    src.connect(hp);
+                    hp.connect(bp);
+                    bp.connect(gain);
+                    gain.connect(master);
+
+                    src.start(now);
+                    src.stop(now + 0.14);
+                });
+            }
+
+            function playPing(value, offsetSec = 0) {
+                // Special fanfare for the 2048 merge
+                if (value >= 2048) {
+                    playBestFanfare();
+                    return;
+                }
+
+                withAudio((ctx, master) => {
+                    const now = ctx.currentTime + offsetSec;
+
+                    // Tonal ping that rises in pitch per merge tier
+                    const tier = Math.log2(Math.max(4, value)) - 2; // 0 for 4, 1 for 8, ... 8 for 1024
+                    const freq = 440 + tier * 80; // 440 → 1080 Hz
+                    const dur = 0.22;
+
+                    const osc = ctx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now);
+
+                    const osc2 = ctx.createOscillator();
+                    osc2.type = 'triangle';
+                    osc2.frequency.setValueAtTime(freq * 1.5, now);
+
+                    const gain = ctx.createGain();
+                    gain.gain.setValueAtTime(0.0001, now);
+                    gain.gain.linearRampToValueAtTime(0.35, now + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+
+                    osc.connect(gain);
+                    osc2.connect(gain);
+                    gain.connect(master);
+
+                    osc.start(now);
+                    osc2.start(now);
+                    osc.stop(now + dur);
+                    osc2.stop(now + dur);
+                });
+            }
+
+            function playWompWomp() {
+                withAudio((ctx, master) => {
+                    const now = ctx.currentTime;
+
+                    const playDrop = (start, f0, f1, dur) => {
+                        const osc = ctx.createOscillator();
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(f0, start);
+                        osc.frequency.exponentialRampToValueAtTime(f1, start + dur);
+
+                        const gain = ctx.createGain();
+                        gain.gain.setValueAtTime(0.0001, start);
+                        gain.gain.linearRampToValueAtTime(0.11, start + 0.02);
+                        gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+
+                        const lp = ctx.createBiquadFilter();
+                        lp.type = 'lowpass';
+                        lp.frequency.setValueAtTime(900, start);
+                        lp.frequency.exponentialRampToValueAtTime(450, start + dur);
+
+                        osc.connect(lp);
+                        lp.connect(gain);
+                        gain.connect(master);
+
+                        osc.start(start);
+                        osc.stop(start + dur);
+                    };
+
+                    // Two sad descending "trombone" drops
+                    playDrop(now, 420, 150, 0.28);
+                    playDrop(now + 0.20, 320, 120, 0.32);
+                });
+            }
+
+            function playBestFanfare() {
+                withAudio((ctx, master) => {
+                    const now = ctx.currentTime;
+                    const notes = [659.25, 783.99, 987.77]; // E5, G5, B5
+                    for (let i = 0; i < notes.length; i++) {
+                        const start = now + i * 0.055;
+                        const osc = ctx.createOscillator();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(notes[i], start);
+
+                        const g = ctx.createGain();
+                        g.gain.setValueAtTime(0.0001, start);
+                        g.gain.linearRampToValueAtTime(0.11, start + 0.01);
+                        g.gain.exponentialRampToValueAtTime(0.0001, start + 0.22);
+
+                        osc.connect(g);
+                        g.connect(master);
+                        osc.start(start);
+                        osc.stop(start + 0.23);
+                    }
+
+                    // Tiny sparkle on top
+                    const sparkle = ctx.createOscillator();
+                    sparkle.type = 'triangle';
+                    sparkle.frequency.setValueAtTime(1760, now + 0.12);
+                    const sg = ctx.createGain();
+                    sg.gain.setValueAtTime(0.0001, now + 0.12);
+                    sg.gain.linearRampToValueAtTime(0.06, now + 0.13);
+                    sg.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+                    sparkle.connect(sg);
+                    sg.connect(master);
+                    sparkle.start(now + 0.12);
+                    sparkle.stop(now + 0.30);
+                });
+            }
+
+            // Build background grid cells
+            for (let i = 0; i < SIZE * SIZE; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                els.grid.appendChild(cell);
+            }
+
+            function makeEmptyGrid() {
+                return Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
+            }
+
+            function loadBest() {
+                const v = Number(localStorage.getItem(STORAGE_KEY_BEST) || '0');
+                return Number.isFinite(v) ? v : 0;
+            }
+
+            function saveBest() {
+                localStorage.setItem(STORAGE_KEY_BEST, String(best));
+            }
+
+            function setOverlay(show, title = '', body = '') {
+                if (!show) {
+                    els.overlay.classList.remove('show');
+                    return;
+                }
+                els.overlayTitle.textContent = title;
+                els.overlayBody.textContent = body;
+                els.overlay.classList.add('show');
+            }
+
+            function updateScore(delta) {
+                score += delta;
+
+                // Celebrate once per game when surpassing the saved BEST from the start of this game.
+                if (!bestCelebratedThisGame && score > bestAtGameStart) {
+                    bestCelebratedThisGame = true;
+                    playBestFanfare();
+                    confettiBurst();
+                }
+
+                if (score > best) {
+                    best = score;
+                    saveBest();
+                }
+                els.score.textContent = String(score);
+                els.best.textContent = String(best);
+            }
+
+            function getEmptyCells(g) {
+                /** @type {{r:number,c:number}[]} */
+                const cells = [];
+                for (let r = 0; r < SIZE; r++) {
+                    for (let c = 0; c < SIZE; c++) {
+                        if (g[r][c] === null) cells.push({ r, c });
+                    }
+                }
+                return cells;
+            }
+
+            /**
+             * @param {(Tile|null)[][]} g
+             * @param {number=} forcedValue
+             */
+            function addRandomTile(g, forcedValue) {
+                const empties = getEmptyCells(g);
+                if (empties.length === 0) return false;
+                const pick = empties[Math.floor(Math.random() * empties.length)];
+                const value = (typeof forcedValue === 'number') ? forcedValue : (Math.random() < 0.9 ? 2 : 4);
+                const tile = { id: nextTileId++, value };
+                g[pick.r][pick.c] = tile;
+                popIds.add(tile.id);
+                return true;
+            }
+
+            function cloneGrid(g) {
+                return g.map(row => row.slice());
+            }
+
+            function gridsEqual(a, b) {
+                for (let r = 0; r < SIZE; r++) {
+                    for (let c = 0; c < SIZE; c++) {
+                        const ta = a[r][c];
+                        const tb = b[r][c];
+                        const ida = ta ? ta.id : 0;
+                        const idb = tb ? tb.id : 0;
+                        if (ida !== idb) return false;
+                        if (ta && tb && ta.value !== tb.value) return false;
+                    }
+                }
+                return true;
+            }
+
+            /**
+             * Slides a line to the left and merges equal adjacent numbers once per move.
+             * Returns the new line, score gained, created tile IDs, and merge source mapping.
+             * @param {(Tile|null)[]} line
+             * @returns {{line:(Tile|null)[], gained:number, createdIds:Set<number>, mergeMap:Map<number,number[]>}}
+             */
+            function slideAndMerge(line) {
+                /** @type {Tile[]} */
+                const nonzero = line.filter(v => v !== null);
+                /** @type {(Tile|null)[]} */
+                const out = [];
+                let gained = 0;
+                /** @type {Set<number>} */
+                const createdIds = new Set();
+                /** @type {Map<number,number[]>} mergedId → [sourceId1, sourceId2] */
+                const mergeMap = new Map();
+
+                for (let i = 0; i < nonzero.length; i++) {
+                    const t = nonzero[i];
+                    const next = (i + 1 < nonzero.length) ? nonzero[i + 1] : null;
+                    if (next && next.value === t.value) {
+                        const merged = { id: nextTileId++, value: t.value * 2 };
+                        out.push(merged);
+                        createdIds.add(merged.id);
+                        mergeMap.set(merged.id, [t.id, next.id]);
+                        gained += merged.value;
+                        i++;
+                    } else {
+                        out.push(t);
+                    }
+                }
+
+                while (out.length < SIZE) out.push(null);
+                return { line: out, gained, createdIds, mergeMap };
+            }
+
+            /** @type {Map<number,{r:number,c:number}>} tile id → position before move */
+            let prevPositions = new Map();
+            /** @type {Map<number,number[]>} merged tile id → source tile ids */
+            let mergeSourceMap = new Map();
+            /** @type {Set<number>} ids of tiles spawned after a move */
+            let spawnedIds = new Set();
+
+            /**
+             * @param {'left'|'right'|'up'|'down'} dir
+             */
+            function move(dir) {
+                if (gameOver) return;
+                if (hasWon && !allowContinueAfterWin) return;
+
+                // Snapshot current positions
+                prevPositions = new Map();
+                for (let r = 0; r < SIZE; r++) {
+                    for (let c = 0; c < SIZE; c++) {
+                        const t = grid[r][c];
+                        if (t) prevPositions.set(t.id, { r, c });
+                    }
+                }
+
+                const before = cloneGrid(grid);
+                let totalGained = 0;
+                /** @type {Set<number>} */
+                const createdIds = new Set();
+                mergeSourceMap = new Map();
+
+                const applyLine = (getter, setter) => {
+                    for (let i = 0; i < SIZE; i++) {
+                        const line = getter(i);
+                        const { line: newLine, gained, createdIds: newIds, mergeMap } = slideAndMerge(line);
+                        totalGained += gained;
+                        for (const id of newIds) createdIds.add(id);
+                        for (const [mid, sources] of mergeMap) mergeSourceMap.set(mid, sources);
+                        setter(i, newLine);
+                    }
+                };
+
+                if (dir === 'left') {
+                    applyLine(
+                        r => grid[r].slice(),
+                        (r, line) => { grid[r] = line; }
+                    );
+                } else if (dir === 'right') {
+                    applyLine(
+                        r => grid[r].slice().reverse(),
+                        (r, line) => { grid[r] = line.slice().reverse(); }
+                    );
+                } else if (dir === 'up') {
+                    applyLine(
+                        c => Array.from({ length: SIZE }, (_, r) => grid[r][c]),
+                        (c, line) => { for (let r = 0; r < SIZE; r++) grid[r][c] = line[r]; }
+                    );
+                } else if (dir === 'down') {
+                    applyLine(
+                        c => Array.from({ length: SIZE }, (_, r) => grid[r][c]).reverse(),
+                        (c, line) => {
+                            const back = line.slice().reverse();
+                            for (let r = 0; r < SIZE; r++) grid[r][c] = back[r];
+                        }
+                    );
+                }
+
+                if (gridsEqual(before, grid)) {
+                    return;
+                }
+
+                // Successful move sound
+                playPageFlip();
+
+                // Collect merge values for pings (before spawning the new tile)
+                /** @type {number[]} */
+                const mergeValues = [];
+                if (createdIds.size) {
+                    for (let r = 0; r < SIZE; r++) {
+                        for (let c = 0; c < SIZE; c++) {
+                            const t = grid[r][c];
+                            if (t && createdIds.has(t.id)) mergeValues.push(t.value);
+                        }
+                    }
+                    // Stagger a few pings so multiple merges don't sound like a single click
+                    mergeValues.sort((a, b) => a - b);
+                    const cap = Math.min(6, mergeValues.length);
+                    for (let i = 0; i < cap; i++) {
+                        playPing(mergeValues[i], i * 0.035);
+                    }
+                }
+
+                if (totalGained) updateScore(totalGained);
+
+                // Pop merged tiles (and later the spawned tile)
+                popIds = createdIds;
+                addRandomTile(grid);
+
+                // Track which tile was just spawned
+                spawnedIds = new Set();
+                for (let r = 0; r < SIZE; r++) {
+                    for (let c = 0; c < SIZE; c++) {
+                        const t = grid[r][c];
+                        if (t && !prevPositions.has(t.id) && !createdIds.has(t.id)) {
+                            spawnedIds.add(t.id);
+                        }
+                    }
+                }
+
+                if (!hasWon && maxTile(grid) >= 2048) {
+                    hasWon = true;
+                    setOverlay(true, 'You win!', 'You reached 2048. You can keep playing if you want.');
+                }
+
+                if (!canMove(grid)) {
+                    gameOver = true;
+                    const nameEntry = document.getElementById('hs2048-name-entry');
+                    const nameInput = document.getElementById('hs2048-name');
+                    if (makesLeaderboard2048(score)) {
+                        const isNewBest = score > 0 && (getHighScores2048().length === 0 || score > getHighScores2048()[0].score);
+                        pendingHsScore2048 = score;
+                        setOverlay(true, 'Game Over', isNewBest ? '\ud83c\udfc6 New High Score!' : '\ud83d\udccb You made the leaderboard!');
+                        nameEntry.style.display = 'block';
+                        nameInput.value = '';
+                        nameInput.disabled = false;
+                        nameInput.style.borderColor = '#8f7a66';
+                        document.getElementById('hs2048-save').textContent = 'Save';
+                        document.getElementById('hs2048-save').style.background = '#8f7a66';
+                        document.getElementById('hs2048-save').disabled = false;
+                        document.getElementById('hs2048-saved-msg').style.display = 'none';
+                        document.getElementById('hs2048-hint').style.display = '';
+                        setTimeout(() => nameInput.focus(), 100);
+                    } else {
+                        setOverlay(true, 'Game Over', 'No more moves.');
+                        nameEntry.style.display = 'none';
+                        addHighScore2048(score, '');
+                    }
+                    playWompWomp();
+                }
+
+                render();
+            }
+
+            function maxTile(g) {
+                let m = 0;
+                for (let r = 0; r < SIZE; r++) {
+                    for (let c = 0; c < SIZE; c++) {
+                        const t = g[r][c];
+                        if (t) m = Math.max(m, t.value);
+                    }
+                }
+                return m;
+            }
+
+            function canMove(g) {
+                if (getEmptyCells(g).length > 0) return true;
+                for (let r = 0; r < SIZE; r++) {
+                    for (let c = 0; c < SIZE; c++) {
+                        const t = g[r][c];
+                        if (!t) continue;
+                        const down = (r + 1 < SIZE) ? g[r + 1][c] : null;
+                        const right = (c + 1 < SIZE) ? g[r][c + 1] : null;
+                        if (down && down.value === t.value) return true;
+                        if (right && right.value === t.value) return true;
+                    }
+                }
+                return false;
+            }
+
+            function readGapPx() {
+                const raw = getComputedStyle(document.documentElement).getPropertyValue('--gap').trim();
+                const n = parseFloat(raw);
+                gapPx = Number.isFinite(n) ? n : 12;
+            }
+
+            function measureLayout() {
+                readGapPx();
+                const w = els.tiles.clientWidth;
+                cellSize = (w - gapPx * (SIZE - 1)) / SIZE;
+            }
+
+            function tileTranslate(r, c) {
+                const x = c * (cellSize + gapPx);
+                const y = r * (cellSize + gapPx);
+                return `translate(${x}px, ${y}px)`;
+            }
+
+            const SLIDE_MS = 150;
+            const ANIM_MS = 240;
+
+            function render() {
+                measureLayout();
+
+                /** @type {Set<number>} */
+                const aliveIds = new Set();
+
+                for (let r = 0; r < SIZE; r++) {
+                    for (let c = 0; c < SIZE; c++) {
+                        const t = grid[r][c];
+                        if (!t) continue;
+                        aliveIds.add(t.id);
+
+                        let el = tileEls.get(t.id);
+                        const isMerged = mergeSourceMap.has(t.id);
+                        const isSpawned = spawnedIds.has(t.id);
+                        const isNew = !el;
+
+                        if (isNew) {
+                            el = document.createElement('div');
+                            el.className = `tile v${t.value}`;
+                            el.textContent = String(t.value);
+                            el.style.width = `${cellSize}px`;
+                            el.style.height = `${cellSize}px`;
+
+                            if (isMerged) {
+                                // Merged tile: start hidden, will appear after sources slide in
+                                const sources = mergeSourceMap.get(t.id) || [];
+                                const srcPos = prevPositions.get(sources[0]);
+                                const startR = srcPos ? srcPos.r : r;
+                                const startC = srcPos ? srcPos.c : c;
+                                el.style.transition = 'none';
+                                el.style.transform = `${tileTranslate(startR, startC)} scale(0)`;
+                                el.style.zIndex = '2';
+                                els.tiles.appendChild(el);
+                                tileEls.set(t.id, el);
+                                // After sources slide in, pop the merged tile into existence
+                                setTimeout(() => {
+                                    const still = tileEls.get(t.id);
+                                    if (!still) return;
+                                    still.style.transition = `transform ${ANIM_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1), background 160ms ease`;
+                                    still.style.transform = `${tileTranslate(r, c)} scale(1.2)`;
+                                    setTimeout(() => {
+                                        const s2 = tileEls.get(t.id);
+                                        if (s2) s2.style.transform = `${tileTranslate(r, c)} scale(1)`;
+                                    }, ANIM_MS);
+                                }, SLIDE_MS);
+                            } else if (isSpawned) {
+                                // Spawned tile: grow from nothing after slide completes
+                                el.style.transition = 'none';
+                                el.style.transform = `${tileTranslate(r, c)} scale(0)`;
+                                els.tiles.appendChild(el);
+                                tileEls.set(t.id, el);
+                                setTimeout(() => {
+                                    const still = tileEls.get(t.id);
+                                    if (!still) return;
+                                    still.style.transition = `transform ${ANIM_MS}ms cubic-bezier(0.34, 1.56, 0.64, 1), background 160ms ease`;
+                                    still.style.transform = `${tileTranslate(r, c)} scale(1)`;
+                                }, SLIDE_MS + 60);
+                            } else {
+                                // Initial placement (game start) — grow in
+                                el.style.transition = 'none';
+                                el.style.transform = `${tileTranslate(r, c)} scale(0)`;
+                                els.tiles.appendChild(el);
+                                tileEls.set(t.id, el);
+                                requestAnimationFrame(() => {
+                                    requestAnimationFrame(() => {
+                                        const still = tileEls.get(t.id);
+                                        if (!still) return;
+                                        still.style.transition = `transform ${ANIM_MS}ms cubic-bezier(0.34, 1.56, 0.64, 1), background 160ms ease`;
+                                        still.style.transform = `${tileTranslate(r, c)} scale(1)`;
+                                    });
+                                });
+                            }
+                        } else {
+                            // Existing tile: slide to new position (CSS transition handles animation)
+                            el.className = `tile v${t.value}`;
+                            el.textContent = String(t.value);
+                            el.style.width = `${cellSize}px`;
+                            el.style.height = `${cellSize}px`;
+                            el.style.transition = `transform ${SLIDE_MS}ms ease-in-out, background 160ms ease`;
+                            el.style.transform = `${tileTranslate(r, c)} scale(1)`;
+                        }
+                    }
+                }
+
+                // Slide consumed merge-source tiles to the merge destination, then remove
+                for (const [mergedId, sourceIds] of mergeSourceMap) {
+                    // Find where the merged tile ended up
+                    let destR = 0, destC = 0;
+                    outer: for (let r = 0; r < SIZE; r++) {
+                        for (let c = 0; c < SIZE; c++) {
+                            const t = grid[r][c];
+                            if (t && t.id === mergedId) { destR = r; destC = c; break outer; }
+                        }
+                    }
+                    for (const srcId of sourceIds) {
+                        const srcEl = tileEls.get(srcId);
+                        if (!srcEl) continue;
+                        // Slide source to destination
+                        srcEl.style.transition = `transform ${SLIDE_MS}ms ease-in-out`;
+                        srcEl.style.transform = `${tileTranslate(destR, destC)} scale(1)`;
+                        srcEl.style.zIndex = '1';
+                        // Remove after slide completes
+                        const capturedId = srcId;
+                        setTimeout(() => {
+                            const el = tileEls.get(capturedId);
+                            if (el) { el.remove(); tileEls.delete(capturedId); }
+                        }, SLIDE_MS);
+                    }
+                    // Don't delete source elements from tileEls yet (timeout handles it)
+                    // But mark them so the cleanup below doesn't remove them early
+                    for (const srcId of sourceIds) aliveIds.add(srcId);
+                }
+
+                // Remove tiles that no longer exist (non-merge cases)
+                for (const [id, el] of tileEls) {
+                    if (aliveIds.has(id)) continue;
+                    el.remove();
+                    tileEls.delete(id);
+                }
+
+                // Reset tracking after render
+                mergeSourceMap = new Map();
+                spawnedIds = new Set();
+                popIds = new Set();
+
+                els.score.textContent = String(score);
+                els.best.textContent = String(best);
+            }
+
+            function newGame() {
+                // Auto-save pending score if user didn't save name
+                if (pendingHsScore2048 !== null) {
+                    const inp = document.getElementById('hs2048-name');
+                    const name = inp && !inp.disabled ? inp.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase() : '';
+                    addHighScore2048(pendingHsScore2048, name);
+                    pendingHsScore2048 = null;
+                }
+                document.getElementById('hs2048-name-entry').style.display = 'none';
+                lastNewHsIndex2048 = -1;
+
+                grid = makeEmptyGrid();
+                score = 0;
+                gameOver = false;
+                hasWon = false;
+                allowContinueAfterWin = false;
+                popIds = new Set();
+                prevPositions = new Map();
+                mergeSourceMap = new Map();
+                spawnedIds = new Set();
+
+                // Refresh BEST from storage so each new game uses the latest baseline.
+                best = loadBest();
+                bestAtGameStart = best;
+                bestCelebratedThisGame = false;
+
+                for (const [, el] of tileEls) el.remove();
+                tileEls.clear();
+
+                // Always start with two separate 2-tiles (never a "combined" 4 at start).
+                addRandomTile(grid, 2);
+                addRandomTile(grid, 2);
+                setOverlay(false);
+                render();
+                els.board.focus({ preventScroll: true });
+            }
+
+            async function newGameFromUser() {
+                // Confirm if a game is in progress
+                if (!gameOver && grid.some(row => row.some(v => v !== 0)) && !confirm('Start a new game?')) return;
+
+                // User explicitly started a new game; don't also trigger the one-time pending start sound.
+                pendingStartSound = false;
+                await ensureAudioUnlocked();
+                playDiceRoll();
+                newGame();
+            }
+
+            // Input handling (touch + mouse) using Pointer Events
+            const swipe = {
+                active: false,
+                id: 0,
+                startX: 0,
+                startY: 0,
+                lastX: 0,
+                lastY: 0,
+            };
+
+            async function onPointerDown(e) {
+                if (e.pointerType === 'mouse' && e.button !== 0) return;
+                await ensureAudioUnlocked();
+                swipe.active = true;
+                swipe.id = e.pointerId;
+                swipe.startX = e.clientX;
+                swipe.startY = e.clientY;
+                swipe.lastX = e.clientX;
+                swipe.lastY = e.clientY;
+                try { els.board.setPointerCapture(e.pointerId); } catch { /* ignore */ }
+            }
+
+            function onPointerMove(e) {
+                if (!swipe.active || e.pointerId !== swipe.id) return;
+                swipe.lastX = e.clientX;
+                swipe.lastY = e.clientY;
+            }
+
+            function endSwipe(e) {
+                if (!swipe.active || e.pointerId !== swipe.id) return;
+                swipe.active = false;
+
+                const dx = swipe.lastX - swipe.startX;
+                const dy = swipe.lastY - swipe.startY;
+                const adx = Math.abs(dx);
+                const ady = Math.abs(dy);
+
+                if (Math.max(adx, ady) < SWIPE_THRESHOLD) return;
+
+                if (adx > ady) {
+                    move(dx > 0 ? 'right' : 'left');
+                } else {
+                    move(dy > 0 ? 'down' : 'up');
+                }
+            }
+
+            els.board.addEventListener('pointerdown', onPointerDown);
+            els.board.addEventListener('pointermove', onPointerMove);
+            els.board.addEventListener('pointerup', endSwipe);
+            els.board.addEventListener('pointercancel', endSwipe);
+            els.board.addEventListener('contextmenu', e => e.preventDefault());
+
+            // Keyboard (optional but handy)
+            els.board.addEventListener('keydown', async (e) => {
+                await ensureAudioUnlocked();
+                const k = e.key;
+                /** @type {('left'|'right'|'up'|'down'|null)} */
+                let dir = null;
+                if (k === 'ArrowLeft') dir = 'left';
+                else if (k === 'ArrowRight') dir = 'right';
+                else if (k === 'ArrowUp') dir = 'up';
+                else if (k === 'ArrowDown') dir = 'down';
+                if (dir) {
+                    e.preventDefault();
+                    move(dir);
+                }
+            });
+
+            // Buttons
+            els.newGame.addEventListener('click', newGameFromUser);
+            els.tryAgain.addEventListener('click', newGameFromUser);
+            els.keepPlaying.addEventListener('click', () => {
+                allowContinueAfterWin = true;
+                setOverlay(false);
+            });
+
+            document.getElementById('showScores').addEventListener('click', showHighScores2048);
+            document.getElementById('goShowScores').addEventListener('click', showHighScores2048);
+            document.getElementById('hsClose').addEventListener('click', hideHighScores2048);
+            document.getElementById('hs2048-save').addEventListener('click', saveHsName2048);
+            document.getElementById('hs2048-name').addEventListener('keydown', e => {
+                if (e.key === 'Enter') { e.preventDefault(); const btn = document.getElementById('hs2048-save'); if (!btn.disabled) saveHsName2048(); }
+            });
+
+            els.volumeSlider.addEventListener('input', () => {
+                soundVolume = Number(els.volumeSlider.value);
+                soundEnabled = soundVolume > 0;
+                saveVolume();
+                applyVolume();
+                if (soundEnabled) void ensureAudioUnlocked();
+            });
+
+            els.overlay.addEventListener('click', (e) => {
+                if (e.target !== els.overlay) return;
+                if (hasWon && !gameOver) {
+                    allowContinueAfterWin = true;
+                    setOverlay(false);
+                }
+            });
+
+            // Keep layout crisp on resize
+            window.addEventListener('resize', () => {
+                render();
+                resizeConfettiCanvas();
+            });
+
+            // Start
+            els.best.textContent = String(best);
+            applyVolume();
+            resizeConfettiCanvas();
+            newGame();
+        })();
+    </script>
+    <script src="../scripts/github-scores.js"></script>
+    <script>
+        if (window.GHScores) GHScores.load('2048', 'singlehtml2048_highscores', 5).catch(() => { });
+    </script>
+    <script src="../scripts/mobile-controls.js"></script>
+</body>
+
+</html>

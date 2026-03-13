@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aztec Hero</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: #070a10;
+      height: 100%;
+    }
+
+    #app {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      place-items: center;
+    }
+
+    canvas {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    #debug {
+      position: fixed;
+      left: 10px;
+      top: 10px;
+      max-width: min(92vw, 720px);
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(0, 0, 0, 0.55);
+      color: rgba(255, 255, 255, 0.92);
+      font: 12px/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      white-space: pre-wrap;
+      z-index: 9999;
+    }
+
+    .hint {
+      position: fixed;
+      left: 12px;
+      bottom: 12px;
+      color: rgba(255, 255, 255, 0.75);
+      font: 12px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      user-select: none;
+    }
+
+    .hint kbd {
+      padding: 2px 6px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.06);
+      font-weight: 650;
+    }
+
+    .menu-link {
+      position: fixed;
+      top: 10px;
+      left: 12px;
+      z-index: 9998;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 13px;
+      color: #c4a060;
+      transition: color 0.15s;
+      letter-spacing: 0.3px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    }
+
+    .menu-link:hover {
+      color: #e0c080;
+    }
+  </style>
+</head>
+
+<body>
+  <a class="menu-link" href="../gamemenu.html">← Games Menu</a>
+  <div id="app"></div>
+  <div id="debug">Booting…</div>
+  <div class="hint">Move: <kbd>A</kbd>/<kbd>D</kbd> or <kbd>←</kbd>/<kbd>→</kbd> · Jump: <kbd>Space</kbd> · Interact:
+    <kbd>E</kbd>
+  </div>
+  <script>
+    (() => {
+      const el = document.getElementById('debug');
+      const log = (msg) => {
+        if (!el) return;
+        el.textContent = String(msg);
+      };
+      window.__aztecDebug = {
+        log,
+        append: (msg) => {
+          if (!el) return;
+          el.textContent += `\n${msg}`;
+        }
+      };
+      window.addEventListener('error', (e) => {
+        log(`JS error: ${e.message}\n${e.filename}:${e.lineno}:${e.colno}`);
+      });
+      window.addEventListener('unhandledrejection', (e) => {
+        log(`Unhandled promise rejection:\n${e.reason}`);
+      });
+    })();
+  </script>
+  <script type="module" src="/src/main.ts"></script>
+
+  <!-- Mobile touch controls -->
+  <div id="touch-controls">
+    <div id="tc-dpad">
+      <button id="tc-up" class="tc-btn" data-key="ArrowUp" aria-label="Up">▲</button>
+      <div class="tc-dpad-row">
+        <button id="tc-left" class="tc-btn" data-key="ArrowLeft" aria-label="Left">◀</button>
+        <button id="tc-down" class="tc-btn" data-key="ArrowDown" aria-label="Down">▼</button>
+        <button id="tc-right" class="tc-btn" data-key="ArrowRight" aria-label="Right">▶</button>
+      </div>
+    </div>
+    <div id="tc-actions">
+      <button id="tc-jump" class="tc-btn tc-action" data-key=" " aria-label="Jump">JUMP</button>
+      <button id="tc-interact" class="tc-btn tc-action tc-interact" data-key="e" aria-label="Interact">E</button>
+    </div>
+  </div>
+  <style>
+    #touch-controls {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 12px 16px;
+      z-index: 9000;
+      pointer-events: none;
+      /* only show on touch devices */
+    }
+
+
+    #touch-controls * {
+      pointer-events: auto;
+    }
+
+    #tc-dpad {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .tc-dpad-row {
+      display: flex;
+      gap: 4px;
+    }
+
+    .tc-btn {
+      all: unset;
+      cursor: pointer;
+      width: 54px;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      font-size: 20px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .tc-btn:active,
+    .tc-btn.pressed {
+      background: rgba(255, 255, 255, 0.28);
+      transform: scale(0.93);
+    }
+
+    #tc-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .tc-action {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      font-size: 14px;
+      font-weight: 800;
+      background: rgba(100, 200, 100, 0.18);
+      border-color: rgba(100, 200, 100, 0.35);
+    }
+
+    .tc-interact {
+      width: 54px;
+      height: 54px;
+      font-size: 16px;
+      background: rgba(200, 160, 60, 0.18);
+      border-color: rgba(200, 160, 60, 0.35);
+    }
+  </style>
+  <script>
+    /** Virtual touch controls — dispatches real keyboard events to the canvas */
+    (() => {
+      const controls = document.getElementById('touch-controls');
+      if (!controls) return;
+      const activeKeys = new Set();
+
+      function fireKey(key, code, type) {
+        const ev = new KeyboardEvent(type, {
+          key, code, bubbles: true, cancelable: true
+        });
+        document.dispatchEvent(ev);
+        // Also dispatch to window for Phaser
+        window.dispatchEvent(ev);
+      }
+
+      function keyCode(key) {
+        const map = {
+          'ArrowUp': 'ArrowUp', 'ArrowDown': 'ArrowDown',
+          'ArrowLeft': 'ArrowLeft', 'ArrowRight': 'ArrowRight',
+          ' ': 'Space', 'e': 'KeyE'
+        };
+        return map[key] || key;
+      }
+
+      controls.querySelectorAll('.tc-btn').forEach(btn => {
+        const key = btn.dataset.key;
+        if (!key) return;
+
+        function startPress(e) {
+          e.preventDefault();
+          if (!activeKeys.has(key)) {
+            activeKeys.add(key);
+            btn.classList.add('pressed');
+            fireKey(key, keyCode(key), 'keydown');
+          }
+        }
+        function endPress(e) {
+          e.preventDefault();
+          if (activeKeys.has(key)) {
+            activeKeys.delete(key);
+            btn.classList.remove('pressed');
+            fireKey(key, keyCode(key), 'keyup');
+          }
+        }
+
+        btn.addEventListener('touchstart', startPress, { passive: false });
+        btn.addEventListener('touchend', endPress, { passive: false });
+        btn.addEventListener('touchcancel', endPress, { passive: false });
+        // Also handle mouse for testing on desktop
+        btn.addEventListener('mousedown', startPress);
+        btn.addEventListener('mouseup', endPress);
+        btn.addEventListener('mouseleave', endPress);
+      });
+
+      // Handle finger sliding off buttons
+      controls.addEventListener('touchmove', (e) => {
+        const touch = e.changedTouches[0];
+        if (!touch) return;
+        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+        activeKeys.forEach(key => {
+          const btn = controls.querySelector(`[data-key="${key}"]`);
+          if (btn && el !== btn && !btn.contains(el)) {
+            activeKeys.delete(key);
+            btn.classList.remove('pressed');
+            fireKey(key, keyCode(key), 'keyup');
+          }
+        });
+      }, { passive: true });
+    })();
+  </script>
+
+  <script src="../scripts/mobile-controls.js"></script>
+
+  <!-- High Score System -->
+  <div id="aztec-hs-modal"
+    style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);z-index:10000;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#e8ecf1;">
+    <div
+      style="background:#121722;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:26px;min-width:290px;max-width:88%;max-height:80vh;overflow-y:auto;">
+      <h2 style="text-align:center;margin:0 0 18px;font-size:22px;color:#c4a060;">\ud83c\udfc6 High Scores</h2>
+      <div id="aztec-hs-wrap"></div>
+      <div id="aztec-name-entry" style="display:none;margin:10px 0;text-align:center;">
+        <div style="font-size:13px;color:#c4a060;margin-bottom:6px;">Enter your name:</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+          <input id="aztec-hs-name" type="text" maxlength="6" autocomplete="off" spellcheck="false" style="width:120px;padding:6px 10px;font-size:18px;font-weight:bold;text-align:center;
+            background:#1a1f2c;color:#e8ecf1;border:2px solid #c4a060;border-radius:8px;outline:none;
+            text-transform:uppercase;letter-spacing:2px;font-family:inherit;" placeholder="______">
+          <button id="aztec-save-name" style="padding:6px 14px;font-size:14px;font-weight:700;
+            background:#c4a060;color:#000;border:none;border-radius:8px;cursor:pointer;">Save</button>
+        </div>
+        <div id="aztec-name-saved" style="font-size:11px;color:#35dd8a;margin-top:4px;display:none;">&#10003; Name
+          saved!</div>
+        <div id="aztec-name-hint" style="font-size:10px;color:#90a0b7;margin-top:3px;">Up to 6 letters</div>
+      </div>
+      <button id="aztecHsClose"
+        style="width:100%;padding:11px;margin-top:18px;background:#c4a060;color:#000;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">Close</button>
+    </div>
+  </div>
+  <button id="aztecScoresBtn"
+    style="position:fixed;top:12px;right:12px;z-index:9999;padding:6px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.18);background:rgba(0,0,0,0.55);color:#c4a060;font-weight:700;font-size:12px;cursor:pointer;backdrop-filter:blur(4px);">\ud83c\udfc6
+    Scores</button>
+  <script>
+    (() => {
+      const AZ_HS_KEY = 'aztecHero-highscores';
+      let azLastIdx = -1, azPending = null;
+      function getAzHs() { try { return JSON.parse(localStorage.getItem(AZ_HS_KEY)) || []; } catch { return []; } }
+      function addAzHs(gems, name, escaped) {
+        const list = getAzHs();
+        const entry = { score: gems, name: (name || '').toUpperCase(), escaped, date: new Date().toISOString() };
+        let ins = false;
+        for (let i = 0; i < list.length; i++) {
+          if (gems > list[i].score) { list.splice(i, 0, entry); ins = true; azLastIdx = i; break; }
+        }
+        if (!ins && list.length < 5) { azLastIdx = list.length; list.push(entry); ins = true; }
+        else if (!ins) { azLastIdx = -1; return false; }
+        if (list.length > 5) list.length = 5;
+        localStorage.setItem(AZ_HS_KEY, JSON.stringify(list));
+        if (window.GHScores) GHScores.save('aztec_hero', AZ_HS_KEY);
+        return true;
+      }
+      function renderAzHs() {
+        const list = getAzHs(), wrap = document.getElementById('aztec-hs-wrap');
+        if (!list.length) { wrap.innerHTML = '<p style="text-align:center;color:#90a0b7;padding:30px 0;">No scores yet.</p>'; return; }
+        const mc = ['#edc53f', '#c0c0c0', '#cd7f32'];
+        let html = '<table style="width:100%;border-collapse:collapse;"><thead><tr><th style="font-size:11px;text-transform:uppercase;color:#90a0b7;padding:6px 8px;text-align:center;border-bottom:1px solid #333;">#</th><th style="font-size:11px;text-transform:uppercase;color:#90a0b7;padding:6px 8px;text-align:left;border-bottom:1px solid #333;">Gems</th><th style="font-size:11px;text-transform:uppercase;color:#90a0b7;padding:6px 8px;text-align:left;border-bottom:1px solid #333;">Name</th><th style="font-size:11px;text-transform:uppercase;color:#90a0b7;padding:6px 8px;text-align:left;border-bottom:1px solid #333;">Result</th><th style="font-size:11px;text-transform:uppercase;color:#90a0b7;padding:6px 8px;text-align:left;border-bottom:1px solid #333;">Date</th></tr></thead><tbody>';
+        list.forEach((e, i) => {
+          const bg = i === azLastIdx ? 'background:rgba(196,160,96,0.06);' : '';
+          const col = i < 3 ? 'color:' + mc[i] + ';' : '';
+          const d = new Date(e.date);
+          const ds = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' });
+          html += '<tr style="' + bg + '"><td style="text-align:center;font-weight:700;padding:10px 8px;border-bottom:1px solid #222;' + col + '">' + (i + 1) + '</td><td style="font-weight:900;color:#c4a060;padding:10px 8px;border-bottom:1px solid #222;">' + e.score + '</td><td style="font-weight:700;padding:10px 8px;border-bottom:1px solid #222;">' + (e.name || '---') + '</td><td style="padding:10px 8px;border-bottom:1px solid #222;">' + (e.escaped ? '\u2705 Escaped' : '\u274c Died') + '</td><td style="font-size:11px;color:#555;padding:10px 8px;border-bottom:1px solid #222;">' + ds + '</td></tr>';
+        });
+        html += '</tbody></table>';
+        wrap.innerHTML = html;
+      }
+      function showAzHs() { renderAzHs(); document.getElementById('aztec-name-entry').style.display = 'none'; document.getElementById('aztec-hs-modal').style.display = 'flex'; }
+      function hideAzHs() { document.getElementById('aztec-hs-modal').style.display = 'none'; azLastIdx = -1; }
+      function saveAzName() {
+        const inp = document.getElementById('aztec-hs-name');
+        if (!inp || inp.disabled) return;
+        const name = inp.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase();
+        if (azPending) { addAzHs(azPending.gems, name, azPending.escaped); azPending = null; }
+        inp.disabled = true; inp.value = name || '------'; inp.style.borderColor = '#35dd8a';
+        const btn = document.getElementById('aztec-save-name');
+        if (btn) { btn.textContent = '\u2713'; btn.style.background = '#35dd8a'; btn.disabled = true; }
+        document.getElementById('aztec-name-saved').style.display = 'block';
+        document.getElementById('aztec-name-hint').style.display = 'none';
+        renderAzHs();
+      }
+      // Called from Phaser scene
+      window.__aztecGameEnd = function (gems, escaped) {
+        const list = getAzHs();
+        const makesLb = gems > 0 && (list.length < 5 || gems > list[list.length - 1].score);
+        if (makesLb) {
+          azPending = { gems, escaped };
+          document.getElementById('aztec-name-entry').style.display = 'block';
+          const inp = document.getElementById('aztec-hs-name');
+          inp.value = ''; inp.disabled = false; inp.style.borderColor = '#c4a060';
+          document.getElementById('aztec-save-name').textContent = 'Save';
+          document.getElementById('aztec-save-name').style.background = '#c4a060';
+          document.getElementById('aztec-save-name').disabled = false;
+          document.getElementById('aztec-name-saved').style.display = 'none';
+          document.getElementById('aztec-name-hint').style.display = '';
+          renderAzHs();
+          document.getElementById('aztec-hs-modal').style.display = 'flex';
+          setTimeout(() => inp.focus(), 100);
+        } else {
+          addAzHs(gems, '', escaped);
+        }
+      };
+      document.getElementById('aztecScoresBtn').addEventListener('click', showAzHs);
+      document.getElementById('aztecHsClose').addEventListener('click', () => {
+        if (azPending) { const inp = document.getElementById('aztec-hs-name'); const name = inp && !inp.disabled ? inp.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase() : ''; addAzHs(azPending.gems, name, azPending.escaped); azPending = null; }
+        hideAzHs();
+      });
+      document.getElementById('aztec-save-name').addEventListener('click', saveAzName);
+      document.getElementById('aztec-hs-name').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); saveAzName(); } });
+    })();
+  </script>
+  <script src="../scripts/github-scores.js"></script>
+  <script>
+    if (window.GHScores) GHScores.load('aztec_hero', 'aztecHero-highscores', 5).catch(() => { });
+  </script>
+</body>
+
+</html>
