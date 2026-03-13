@@ -1137,6 +1137,27 @@
             // Bounce off screen edges
             if (g.x - g.r < 0) { g.x = g.r; g.vx = Math.abs(g.vx) * 0.8; }
             if (g.x + g.r > canvas.clientWidth) { g.x = canvas.clientWidth - g.r; g.vx = -Math.abs(g.vx) * 0.8; }
+            // Bounce off top of screen
+            if (g.y - g.r < 0) { g.y = g.r; g.vy = Math.abs(g.vy) * 0.5; }
+
+            // Geode-rock collisions: geode changes direction on contact
+            for (let j = rocks.length - 1; j >= 0; j--) {
+              const rock = rocks[j];
+              const dx = g.x - rock.x, dy = g.y - rock.y;
+              const minDist = g.r + rock.r;
+              if (dx * dx + dy * dy < minDist * minDist) {
+                const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                const nx = dx / dist, ny = dy / dist;
+                // Push geode away from rock
+                g.x = rock.x + nx * minDist;
+                g.y = rock.y + ny * minDist;
+                // Reflect geode velocity off collision normal
+                const dot = g.vx * nx + g.vy * ny;
+                g.vx -= 2 * dot * nx;
+                g.vy -= 2 * dot * ny;
+                g.vx *= 0.8; g.vy *= 0.8;
+              }
+            }
 
             drawGeode(g);
 
@@ -1163,6 +1184,8 @@
             // Bounce off screen edges
             if (fb.x - fb.r < 0) { fb.x = fb.r; fb.vx = Math.abs(fb.vx) * 0.8; }
             if (fb.x + fb.r > canvas.clientWidth) { fb.x = canvas.clientWidth - fb.r; fb.vx = -Math.abs(fb.vx) * 0.8; }
+            // Bounce off top of screen
+            if (fb.y - fb.r < 0) { fb.y = fb.r; fb.vy = Math.abs(fb.vy) * 0.5; }
 
             drawFireball(fb);
 
@@ -1188,6 +1211,8 @@
             // Bounce off screen edges
             if (rock.x - rock.r < 0) { rock.x = rock.r; rock.vx = Math.abs(rock.vx) * 0.8; }
             if (rock.x + rock.r > canvas.clientWidth) { rock.x = canvas.clientWidth - rock.r; rock.vx = -Math.abs(rock.vx) * 0.8; }
+            // Bounce off top of screen
+            if (rock.y - rock.r < 0) { rock.y = rock.r; rock.vy = Math.abs(rock.vy) * 0.5; }
 
             drawRock(rock);
 
@@ -1343,8 +1368,7 @@
               // Rocks now give a small score when clicked
               score += 5; // regular rocks worth 5 points
               updateHUD();
-              // Play small gem-like sound to give feedback
-              if (typeof sfxGem === 'function') sfxGem(5);
+              if (typeof sfxRockCrumble === 'function') sfxRockCrumble();
               return;
             }
           }
@@ -1360,6 +1384,7 @@
               geodes.splice(i, 1);
               makeShards(g.x, g.y, g.color, { x: g.vx / 100, y: g.vy / 100 }); // Use velocity for shard direction
               maybeSpawnGem(g.x, g.y - 4);
+              if (typeof sfxRockCrumble === 'function') sfxRockCrumble();
               if (typeof sfxGeode === 'function') sfxGeode();
               return;
             }
@@ -1667,6 +1692,29 @@
           zap.o.start(t); zap.o.stop(t + 0.1);
           // Electric sizzle
           noiseBurst({ freq: 5000, q: 6, a: 0.001, r: 0.04, gain: 0.25 });
+        }
+        function sfxRockCrumble() {
+          if (window.audioMuted) return;
+          resumeCtx();
+          const t = now();
+          // Low rumbling crumble
+          noiseBurst({ freq: 300, q: 1.2, a: 0.002, r: 0.18, gain: 0.5 });
+          noiseBurst({ freq: 600, q: 1.5, a: 0.008, r: 0.12, gain: 0.35 });
+          noiseBurst({ freq: 150, q: 0.8, a: 0.01, r: 0.22, gain: 0.4 });
+          // Gravelly cracking sounds
+          const crackFreqs = [180, 250, 120, 90];
+          crackFreqs.forEach((freq, i) => {
+            const crack = osc('triangle', freq);
+            env(crack.g, t + i * 0.015, 0.002, 0.04 + i * 0.02, 0.2 - i * 0.03);
+            crack.o.frequency.exponentialRampToValueAtTime(freq * 0.5, t + 0.1);
+            crack.o.start(t + i * 0.015);
+            crack.o.stop(t + 0.08 + i * 0.03);
+          });
+          // Thud impact
+          const thud = osc('sine', 60);
+          env(thud.g, t, 0.001, 0.06, 0.4);
+          thud.o.frequency.exponentialRampToValueAtTime(30, t + 0.06);
+          thud.o.start(t); thud.o.stop(t + 0.08);
         }
         function sfxStart() {
           if (window.audioMuted) return;
