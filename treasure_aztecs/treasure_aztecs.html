@@ -42,11 +42,9 @@
             cursor: crosshair;
             position: fixed;
             top: 34px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: min(100vw, calc((100vh - 34px) * 320 / 180));
+            left: 0;
+            width: 100vw;
             height: calc(100vh - 34px);
-            max-height: calc(100vw * 180 / 320);
         }
 
         #hud {
@@ -156,6 +154,8 @@
         <div class="hud-sep"></div>
         <div class="hud-item"><span style="font-size:14px">🔫</span><span class="hud-val" id="hud-bullets">6</span>
         </div>
+        <div class="hud-sep" id="hud-key-sep" style="display:none"></div>
+        <div class="hud-item" id="hud-key-item" style="display:none"><span style="font-size:14px">🔑</span><span class="hud-val" id="hud-keys">0</span></div>
         <div class="hud-sep"></div>
         <div class="hud-item"><span class="hud-label">Score</span><span class="hud-val" id="hud-score">0</span></div>
         <div class="hud-sep"></div>
@@ -407,19 +407,44 @@
                 c.fillRect(4, 2, 2, 6); c.fillRect(2, 4, 6, 2);
             });
 
+            // Key
+            const tileKey = makeCanvas(10, 6, (c) => {
+                c.fillStyle = '#FFD700';
+                c.fillRect(0, 2, 6, 2);
+                c.fillRect(6, 0, 4, 2); c.fillRect(6, 4, 4, 2); c.fillRect(9, 0, 1, 6);
+                c.fillStyle = '#FFA500';
+                c.fillRect(0, 3, 2, 1); c.fillRect(2, 3, 1, 1);
+                c.fillStyle = 'rgba(255,255,200,0.4)';
+                c.fillRect(7, 1, 2, 1);
+            });
+
             /* ═══════════════════════════════════════════════════════════════
                PLAYER SPRITES (16x20)
                ═══════════════════════════════════════════════════════════════ */
             function drawExplorer(c, frame) {
-                // Boots (brown)
-                c.fillStyle = '#5a3a1a';
-                c.fillRect(3, 17, 4, 3); c.fillRect(9, 17, 4, 3);
-                // Pants (brown)
-                c.fillStyle = '#6B4226';
-                c.fillRect(4, 12, 3, 6); c.fillRect(9, 12, 3, 6);
                 // Belt
                 c.fillStyle = '#3a2a1a'; c.fillRect(3, 11, 10, 2);
                 c.fillStyle = '#FFD700'; c.fillRect(7, 11, 2, 2);// buckle
+                // Legs differ per frame
+                if (frame === 1) {
+                    // Left leg forward, right back
+                    c.fillStyle = '#6B4226';
+                    c.fillRect(3, 12, 3, 6); c.fillRect(10, 12, 3, 5);
+                    c.fillStyle = '#5a3a1a';
+                    c.fillRect(2, 17, 4, 3); c.fillRect(10, 16, 4, 3);
+                } else if (frame === 2) {
+                    // Right leg forward, left back
+                    c.fillStyle = '#6B4226';
+                    c.fillRect(4, 12, 3, 5); c.fillRect(9, 12, 3, 6);
+                    c.fillStyle = '#5a3a1a';
+                    c.fillRect(3, 16, 4, 3); c.fillRect(9, 17, 4, 3);
+                } else {
+                    // Idle
+                    c.fillStyle = '#6B4226';
+                    c.fillRect(4, 12, 3, 6); c.fillRect(9, 12, 3, 6);
+                    c.fillStyle = '#5a3a1a';
+                    c.fillRect(3, 17, 4, 3); c.fillRect(9, 17, 4, 3);
+                }
                 // Shirt (tan/khaki)
                 c.fillStyle = '#C4A868';
                 c.fillRect(3, 5, 10, 7);
@@ -535,7 +560,7 @@
                     case T.TORCH: bx.drawImage(tileBg, x, y); bx.drawImage(tileTorch, x, y); break;
                     case T.EXIT_L: case T.EXIT_R: case T.EXIT_B: bx.drawImage(tileBg, x, y); break;
                     case T.EXIT_T: bx.drawImage(tileFloor, x, y);
-                        bx.fillStyle='rgba(255,184,0,0.35)';bx.beginPath();bx.moveTo(x+4,y+5);bx.lineTo(x+8,y+1);bx.lineTo(x+12,y+5);bx.fill();break;
+                        bx.fillStyle = 'rgba(255,184,0,0.35)'; bx.beginPath(); bx.moveTo(x + 4, y + 5); bx.lineTo(x + 8, y + 1); bx.lineTo(x + 12, y + 5); bx.fill(); break;
                     case T.CHEST: bx.drawImage(tileBg, x, y); break;// draw entity
                     case T.RUBBISH: bx.drawImage(tileBg, x, y); break;
                     default: bx.drawImage(tileBg, x, y);
@@ -599,12 +624,12 @@
                     exits: { right: [1, 1, 1], bottom_l: [4, 2, 1], bottom_r: [2, 6, 1] },
                     enemies: [],
                     items: [
-                        { type: 'coin', x: 3 * 16 + 4, y: 5 * 16 + 4 }, { type: 'coin', x: 4 * 16 + 4, y: 5 * 16 + 4 },
-                        { type: 'coin', x: 5 * 16 + 4, y: 2 * 16 + 4 }, { type: 'coin', x: 6 * 16 + 4, y: 2 * 16 + 4 },
-                        { type: 'coin', x: 10 * 16 + 4, y: 3 * 16 + 4 }, { type: 'coin', x: 11 * 16 + 4, y: 3 * 16 + 4 },
-                        { type: 'coin', x: 15 * 16 + 4, y: 4 * 16 + 4 }, { type: 'coin', x: 16 * 16 + 4, y: 4 * 16 + 4 },
-                        { type: 'coin', x: 10 * 16 + 4, y: 6 * 16 + 4 }, { type: 'coin', x: 11 * 16 + 4, y: 6 * 16 + 4 },
-                        { type: 'chest', x: 3 * 16, y: 8 * 16 - 4 },
+                        { type: 'rubbish', x: 4*16, y: 5*16-4 },
+                        { type: 'rubbish', x: 11*16, y: 3*16-4 },
+                        { type: 'chest', x: 15*16, y: 4*16-4 },
+                        { type: 'rubbish', x: 3*16, y: 8*16-4 },
+                        { type: 'rubbish', x: 10*16, y: 6*16-4 },
+                        { type: 'key', x: 16*16+4, y: 4*16-8 },
                     ],
                     torches: [[0, 0]],
                     traps: [],
@@ -629,12 +654,11 @@
                     exits: { left: [0, 18, 1], right: [3, 1, 5] },
                     enemies: [{ type: 'snake', x: 6 * 16, y: 6 * 16 - 8, patrol: [5 * 16, 10 * 16] }],
                     items: [
-                        { type: 'coin', x: 4 * 16 + 4, y: 1 * 16 + 4 }, { type: 'coin', x: 5 * 16 + 4, y: 1 * 16 + 4 },
-                        { type: 'coin', x: 10 * 16 + 4, y: 2 * 16 + 4 }, { type: 'coin', x: 11 * 16 + 4, y: 2 * 16 + 4 },
-                        { type: 'gem_r', x: 7 * 16 + 4, y: 5 * 16 + 8 },
-                        { type: 'coin', x: 3 * 16 + 4, y: 4 * 16 + 4 }, { type: 'coin', x: 4 * 16 + 4, y: 4 * 16 + 4 },
-                        { type: 'coin', x: 14 * 16 + 4, y: 4 * 16 + 4 }, { type: 'coin', x: 15 * 16 + 4, y: 4 * 16 + 4 },
-                        { type: 'coin', x: 3 * 16 + 4, y: 8 * 16 + 4 }, { type: 'coin', x: 4 * 16 + 4, y: 8 * 16 + 4 },
+                        { type: 'rubbish', x: 4*16, y: 2*16-4 },
+                        { type: 'rubbish', x: 14*16, y: 4*16-4 },
+                        { type: 'chest', x: 7*16, y: 6*16-4, locked: true },
+                        { type: 'key', x: 3*16+4, y: 8*16-8 },
+                        { type: 'rubbish', x: 14*16, y: 8*16-4 },
                     ],
                     torches: [], traps: [],
                 },
@@ -657,11 +681,11 @@
                     exits: { top: [0, 17, 9], right: [5, 1, 4] },
                     enemies: [{ type: 'scorpion', x: 12 * 16, y: 9 * 16 + 4, patrol: [6 * 16, 17 * 16] }],
                     items: [
-                        { type: 'coin', x: 5 * 16 + 4, y: 2 * 16 + 4 }, { type: 'coin', x: 6 * 16 + 4, y: 2 * 16 + 4 },
-                        { type: 'coin', x: 11 * 16 + 4, y: 2 * 16 + 4 }, { type: 'coin', x: 12 * 16 + 4, y: 2 * 16 + 4 },
-                        { type: 'bullets', x: 15 * 16, y: 4 * 16 + 4 },
-                        { type: 'rubbish', x: 8 * 16, y: 9 * 16 - 4 },
-                        { type: 'coin', x: 5 * 16 + 4, y: 6 * 16 + 4 }, { type: 'coin', x: 6 * 16 + 4, y: 6 * 16 + 4 },
+                        { type: 'rubbish', x: 5*16, y: 2*16-4 },
+                        { type: 'bullets', x: 15*16, y: 4*16-4 },
+                        { type: 'rubbish', x: 8*16, y: 9*16-4 },
+                        { type: 'chest', x: 14*16, y: 7*16-4 },
+                        { type: 'rubbish', x: 5*16, y: 6*16-4 },
                     ],
                     torches: [],
                     traps: [
@@ -689,12 +713,12 @@
                     exits: { left: [1, 18, 5], bottom: [6, 2, 1] },
                     enemies: [{ type: 'snake', x: 8 * 16, y: 9 * 16 - 8, patrol: [3 * 16, 15 * 16] }],
                     items: [
-                        { type: 'chest', x: 3 * 16, y: 3 * 16 - 4 }, { type: 'chest', x: 10 * 16, y: 3 * 16 - 4 },
-                        { type: 'chest', x: 15 * 16, y: 3 * 16 - 4 },
-                        { type: 'gem_e', x: 7 * 16 + 4, y: 1 * 16 + 8 },
-                        { type: 'coin', x: 5 * 16 + 4, y: 6 * 16 + 4 }, { type: 'coin', x: 6 * 16 + 4, y: 6 * 16 + 4 },
-                        { type: 'coin', x: 10 * 16 + 4, y: 6 * 16 + 4 }, { type: 'coin', x: 11 * 16 + 4, y: 6 * 16 + 4 },
-                        { type: 'gem_r', x: 16 * 16 + 4, y: 8 * 16 + 4 },
+                        { type: 'chest', x: 3*16, y: 3*16-4, locked: true },
+                        { type: 'chest', x: 10*16, y: 3*16-4 },
+                        { type: 'chest', x: 15*16, y: 3*16-4 },
+                        { type: 'key', x: 5*16+4, y: 6*16-8 },
+                        { type: 'rubbish', x: 10*16, y: 6*16-4 },
+                        { type: 'rubbish', x: 16*16, y: 8*16-4 },
                     ],
                     torches: [[8, 0], [9, 0]], traps: [],
                 },
@@ -704,7 +728,7 @@
                     tiles: R(
                         '####################\n' +
                         '#                  #\n' +
-                        '#         SS       #\n' +
+                        '#                  #\n' +
                         '#        SS    --  #\n' +
                         '#       SS         #\n' +
                         '#      SS      --  #\n' +
@@ -717,10 +741,10 @@
                     exits: { top: [0, 5, 9] },
                     enemies: [],
                     items: [
-                        { type: 'coin', x: 16 * 16 + 4, y: 3 * 16 + 4 }, { type: 'coin', x: 17 * 16 + 4, y: 3 * 16 + 4 },
-                        { type: 'gem_s', x: 17 * 16 + 4, y: 5 * 16 + 4 },
-                        { type: 'coin', x: 16 * 16 + 4, y: 7 * 16 + 4 }, { type: 'coin', x: 17 * 16 + 4, y: 7 * 16 + 4 },
-                        { type: 'health', x: 3 * 16, y: 1 * 16 + 8 },
+                        { type: 'rubbish', x: 16*16, y: 3*16-4 },
+                        { type: 'chest', x: 16*16, y: 5*16-4 },
+                        { type: 'rubbish', x: 16*16, y: 7*16-4 },
+                        { type: 'health', x: 3*16, y: 1*16+8 },
                     ],
                     torches: [],
                     traps: [{ type: 'flood', triggerX: 3 * 16, triggerY: 7 * 16, maxHeight: 7 * 16, speed: FLOOD_SPEED }],
@@ -749,12 +773,12 @@
                         { type: 'spider', x: 16 * 16, y: 0, dropY: 3 * 16 },
                     ],
                     items: [
-                        { type: 'rubbish', x: 4 * 16, y: 9 * 16 - 4 }, { type: 'rubbish', x: 14 * 16, y: 9 * 16 - 4 },
-                        { type: 'coin', x: 4 * 16 + 4, y: 2 * 16 + 4 }, { type: 'coin', x: 5 * 16 + 4, y: 2 * 16 + 4 },
-                        { type: 'coin', x: 10 * 16 + 4, y: 2 * 16 + 4 }, { type: 'coin', x: 11 * 16 + 4, y: 2 * 16 + 4 },
-                        { type: 'bullets', x: 8 * 16, y: 6 * 16 + 8 },
-                        { type: 'coin', x: 4 * 16 + 4, y: 5 * 16 + 4 }, { type: 'coin', x: 5 * 16 + 4, y: 5 * 16 + 4 },
-                        { type: 'gem_e', x: 15 * 16 + 4, y: 5 * 16 + 4 },
+                        { type: 'rubbish', x: 4*16, y: 9*16-4 },
+                        { type: 'rubbish', x: 14*16, y: 9*16-4 },
+                        { type: 'chest', x: 10*16, y: 2*16-4, locked: true },
+                        { type: 'key', x: 15*16+4, y: 5*16-8 },
+                        { type: 'bullets', x: 8*16, y: 7*16-4 },
+                        { type: 'rubbish', x: 4*16, y: 5*16-4 },
                     ],
                     torches: [], traps: [],
                 },
@@ -780,13 +804,11 @@
                         { type: 'bat', x: 12 * 16, y: 3 * 16, amplitude: 20, freq: 0.025 },
                     ],
                     items: [
-                        { type: 'coin', x: 4 * 16 + 4, y: 2 * 16 + 4 }, { type: 'coin', x: 5 * 16 + 4, y: 2 * 16 + 4 },
-                        { type: 'coin', x: 8 * 16 + 4, y: 2 * 16 + 4 }, { type: 'coin', x: 9 * 16 + 4, y: 2 * 16 + 4 },
-                        { type: 'coin', x: 12 * 16 + 4, y: 2 * 16 + 4 }, { type: 'coin', x: 13 * 16 + 4, y: 2 * 16 + 4 },
-                        { type: 'gem_s', x: 10 * 16 + 4, y: 1 * 16 + 8 },
-                        { type: 'chest', x: 15 * 16, y: 8 * 16 - 4 },
-                        { type: 'coin', x: 5 * 16 + 4, y: 5 * 16 + 4 }, { type: 'coin', x: 6 * 16 + 4, y: 5 * 16 + 4 },
-                        { type: 'coin', x: 10 * 16 + 4, y: 5 * 16 + 4 }, { type: 'coin', x: 11 * 16 + 4, y: 5 * 16 + 4 },
+                        { type: 'rubbish', x: 4*16, y: 2*16-4 },
+                        { type: 'rubbish', x: 8*16, y: 2*16-4 },
+                        { type: 'chest', x: 15*16, y: 8*16-4 },
+                        { type: 'rubbish', x: 5*16, y: 5*16-4 },
+                        { type: 'rubbish', x: 10*16, y: 5*16-4 },
                     ],
                     torches: [],
                     traps: [
@@ -818,13 +840,12 @@
                         { type: 'scorpion', x: 10 * 16, y: 9 * 16 + 4, patrol: [4 * 16, 16 * 16] },
                     ],
                     items: [
-                        { type: 'idol', x: 8 * 16 + 2, y: 2 * 16 - 2 },
-                        { type: 'gem_r', x: 4 * 16 + 4, y: 3 * 16 + 4 }, { type: 'gem_e', x: 13 * 16 + 4, y: 3 * 16 + 4 },
-                        { type: 'chest', x: 4 * 16, y: 7 * 16 - 4 },
-                        { type: 'coin', x: 4 * 16 + 4, y: 9 * 16 + 4 }, { type: 'coin', x: 5 * 16 + 4, y: 9 * 16 + 4 },
-                        { type: 'coin', x: 10 * 16 + 4, y: 9 * 16 + 4 }, { type: 'coin', x: 11 * 16 + 4, y: 9 * 16 + 4 },
-                        { type: 'gem_s', x: 14 * 16 + 4, y: 7 * 16 + 4 },
-                        { type: 'health', x: 15 * 16 + 4, y: 9 * 16 + 4 },
+                        { type: 'idol', x: 8*16+2, y: 2*16-2 },
+                        { type: 'chest', x: 4*16, y: 7*16-4, locked: true },
+                        { type: 'key', x: 11*16+4, y: 5*16-8 },
+                        { type: 'rubbish', x: 4*16, y: 9*16-4 },
+                        { type: 'rubbish', x: 10*16, y: 9*16-4 },
+                        { type: 'health', x: 15*16+4, y: 9*16-4 },
                     ],
                     torches: [[6, 0], [7, 0], [8, 0], [9, 0], [10, 0], [11, 0]],
                     traps: [],
@@ -837,7 +858,7 @@
             let state = 'title'; // title, playing, dead, gameover
             let player = {
                 x: 0, y: 0, vx: 0, vy: 0, facing: 1, onGround: false, onLadder: false,
-                frame: 0, animTimer: 0, hearts: 3, maxHearts: 3, bullets: 6, score: 0,
+                frame: 0, animTimer: 0, hearts: 3, maxHearts: 3, bullets: 6, keys: 0, score: 0,
                 roomScore: 0, whipping: false, whipTimer: 0, invincible: 0, dead: false
             };
             let currentRoom = 0;
@@ -857,6 +878,7 @@
             let interactCooldown = 0;
             let deathTimer = 0;
             let stepTimer = 0;
+            let lockedMsgTimer = 0, lockedMsgX = 0, lockedMsgY = 0;
 
             /* ═══════════════════════════════════════════════════════════════
                INPUT
@@ -950,7 +972,7 @@
                ═══════════════════════════════════════════════════════════════ */
             function startGame() {
                 state = 'playing';
-                player.hearts = 3; player.bullets = 6; player.score = 0; player.dead = false;
+                player.hearts = 3; player.bullets = 6; player.keys = 0; player.score = 0; player.dead = false;
                 player.invincible = 0; player.whipping = false;
                 roomStates = {};
                 drawGameOver._saved = false;
@@ -968,6 +990,9 @@
                 let s = ''; for (let i = 0; i < player.maxHearts; i++)s += `<span${i >= player.hearts ? ' class="empty"' : ''}>♥</span>`;
                 hh.innerHTML = s;
                 document.getElementById('hud-bullets').textContent = player.bullets;
+                document.getElementById('hud-keys').textContent = player.keys;
+                document.getElementById('hud-key-sep').style.display = player.keys > 0 ? '' : 'none';
+                document.getElementById('hud-key-item').style.display = player.keys > 0 ? 'flex' : 'none';
                 document.getElementById('hud-score').textContent = player.score;
                 document.getElementById('hud-room').textContent = rooms[currentRoom].name;
             }
@@ -1043,6 +1068,7 @@
                 if (interactCooldown > 0) interactCooldown -= dt * 1000;
                 if (shootCooldown > 0) shootCooldown -= dt * 1000;
                 if (whipCooldown > 0) whipCooldown -= dt * 1000;
+                if (lockedMsgTimer > 0) lockedMsgTimer -= dt * 1000;
 
                 // Horizontal movement
                 player.vx = 0;
@@ -1325,10 +1351,12 @@
                     let iw = 8, ih = 8;
                     if (it.type === 'idol') { iw = 12; ih = 14 }
                     if (it.type === 'health') { iw = 10; ih = 10 }
+                    if (it.type === 'key') { iw = 10; ih = 6 }
                     if (rectOverlap(pr3.x, pr3.y, pr3.w, pr3.h, ix, iy, iw, ih)) {
                         it.collected = true;
                         switch (it.type) {
                             case 'coin': addScore(10); SFX.coin(); spawnParticles(ix + 4, iy + 4, 4, '#FFD700'); break;
+                            case 'key': player.keys++; SFX.pickup(); updateHUD(); spawnParticles(ix + 4, iy + 4, 4, '#FFD700'); break;
                             case 'gem_r': addScore(50); SFX.gem(); spawnParticles(ix + 4, iy + 4, 6, '#e03040'); break;
                             case 'gem_e': addScore(75); SFX.gem(); spawnParticles(ix + 4, iy + 4, 6, '#30b050'); break;
                             case 'gem_s': addScore(100); SFX.gem(); spawnParticles(ix + 4, iy + 4, 6, '#3060e0'); break;
@@ -1387,6 +1415,13 @@
 
             function interactWith(it) {
                 if (it.type === 'chest' && !it.opened) {
+                    if (it.locked && player.keys <= 0) {
+                        lockedMsgTimer = 1000;
+                        lockedMsgX = it.x + 8;
+                        lockedMsgY = it.y - 6;
+                        return;
+                    }
+                    if (it.locked) { player.keys--; it.locked = false; updateHUD(); }
                     it.opened = true; SFX.chest();
                     // Random contents
                     const roll = Math.random();
@@ -1456,7 +1491,13 @@
                             bx.fillStyle = '#8B6914'; bx.fillRect(it.x + 2, it.y + 10, 12, 6);
                             bx.fillStyle = '#A07828'; bx.fillRect(it.x + 2, it.y + 4, 12, 4);
                             bx.fillStyle = '#6B4E0A'; bx.fillRect(it.x + 3, it.y + 2, 10, 3);
-                        } else { bx.drawImage(tileChest, it.x, it.y) }
+                        } else {
+                            bx.drawImage(tileChest, it.x, it.y);
+                            if (it.locked) {
+                                bx.fillStyle = '#ff3030'; bx.fillRect(it.x + 6, it.y + 8, 4, 5);
+                                bx.fillStyle = '#cc2020'; bx.fillRect(it.x + 7, it.y + 5, 2, 4);
+                            }
+                        }
                         continue;
                     }
                     if (it.type === 'rubbish') {
@@ -1471,6 +1512,14 @@
                     if (it.type === 'idol') { bx.drawImage(tileIdol, it.x, it.y); continue }
                     if (it.type === 'bullets') { bx.drawImage(tileBulletPickup, it.x, it.y); continue }
                     if (it.type === 'health') { bx.drawImage(tileHealth, it.x, it.y); continue }
+                    if (it.type === 'key') { bx.drawImage(tileKey, it.x, it.y); continue }
+                }
+
+                // Locked message
+                if (lockedMsgTimer > 0) {
+                    bx.fillStyle = '#ff4444'; bx.font = 'bold 8px monospace'; bx.textAlign = 'center';
+                    bx.fillText('Locked!', lockedMsgX, lockedMsgY);
+                    bx.textAlign = 'left';
                 }
 
                 // Draw enemies
