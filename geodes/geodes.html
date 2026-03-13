@@ -367,7 +367,8 @@
       <div class="dot"></div><span class="key">Speed</span><span class="val" id="speedMult">1.0×</span>
     </div>
     <div class="chip" style="border-color:rgba(255,80,20,0.3);">
-      <div class="dot" style="background:#ff5014;"></div><span class="key">🚀</span><span class="val" id="rocketCount">0</span>
+      <div class="dot" style="background:#ff5014;"></div><span class="key">🚀</span><span class="val"
+        id="rocketCount">0</span>
     </div>
   </div>
 
@@ -1165,7 +1166,6 @@
                 const dot = g.vx * nx + g.vy * ny;
                 g.vx -= 2 * dot * nx;
                 g.vy -= 2 * dot * ny;
-                g.vx *= 0.8; g.vy *= 0.8;
               }
             }
 
@@ -1578,6 +1578,14 @@
             if (dist2(rx, ry, fb.x, fb.y) <= blastR * blastR) {
               fireballs.splice(i, 1);
               explodeFireball(fb);
+            }
+          }
+          // Tractor-beam gems caught in blast to the gun (don't destroy them)
+          for (let i = gems.length - 1; i >= 0; i--) {
+            const gm = gems[i];
+            if (dist2(rx, ry, gm.x, gm.y) <= blastR * blastR) {
+              tractorBeams.push({ x: gm.x, y: gm.y, color: gm.color, points: gm.points });
+              gems.splice(i, 1);
             }
           }
           updateHUD();
