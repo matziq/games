@@ -43,6 +43,7 @@ export class BootScene extends Phaser.Scene{
     this.genDoor();
     this.genLadder();
     this.genExplosionParticle();
+    this.genRopeAnchor();
     // Pre-generate audio buffers
     initSounds();
     const t=this.add.text(160,90,'AZTEC HERO',{fontFamily:'monospace',fontSize:'12px',color:'#c4a060',stroke:'#2a1a0a',strokeThickness:2}).setOrigin(0.5);
@@ -391,5 +392,15 @@ export class BootScene extends Phaser.Scene{
     fill(ctx,1,3,2,1,'#ff6622');
     dot(ctx,1,1,'#ffee88');dot(ctx,2,1,'#ffcc66');
     this.done('exploPart');
+  }
+  genRopeAnchor(){
+    // Small hook/anchor point drawn at 8x8
+    const ctx=this.tex('ropeAnchor',8,8);
+    fill(ctx,3,0,2,3,'#5a3a1a');
+    fill(ctx,2,3,4,2,'#6a4a2a');
+    dot(ctx,2,3,'#7a5a3a');dot(ctx,5,4,'#4a2a10');
+    fill(ctx,1,5,6,2,'#5a3a1a');
+    dot(ctx,1,5,'#6a4a2a');dot(ctx,6,6,'#4a2a10');
+    this.done('ropeAnchor');
   }
 }
