@@ -1,6 +1,6 @@
 ﻿// Auto-generated image manifest for real_or_ai.
 // This file is intentionally plain JS so it can be loaded via <script> from file://.
-// Generated: 2026-03-11 11:10:23
+// Generated: 2026-03-13 13:49:11
 
 window.__REAL_OR_AI_MANIFEST__ = {
   ai: [
@@ -15,7 +15,14 @@ window.__REAL_OR_AI_MANIFEST__ = {
     "ai/ai_0009.jpg",
     "ai/ai_0010.jpg",
     "ai/ai_0011.jpg",
-    "ai/ai_0012.jpg"
+    "ai/ai_0012.jpg",
+    "ai/ai_0013.jpg",
+    "ai/ai_0014.jpg",
+    "ai/ai_0015.jpg",
+    "ai/ai_0016.jpg",
+    "ai/ai_0017.jpg",
+    "ai/ai_0018.jpg",
+    "ai/ai_0019.jpg"
 ],
   real: [
     "real/real_0001.jpg",
@@ -62,7 +69,62 @@ window.__REAL_OR_AI_MANIFEST__ = {
     "real/real_0042.jpg",
     "real/real_0043.png",
     "real/real_0044.jpg",
-    "real/real_0045.jpg"
+    "real/real_0045.jpg",
+    "real/real_0046.jpg",
+    "real/real_0047.jpg",
+    "real/real_0048.jpg",
+    "real/real_0049.jpg",
+    "real/real_0050.jpg",
+    "real/real_0051.jpg",
+    "real/real_0052.jpg",
+    "real/real_0053.jpg",
+    "real/real_0054.jpg",
+    "real/real_0055.jpg",
+    "real/real_0056.jpg",
+    "real/real_0057.jpg",
+    "real/real_0058.jpg",
+    "real/real_0059.jpg",
+    "real/real_0060.jpg",
+    "real/real_0061.jpg",
+    "real/real_0062.jpg",
+    "real/real_0063.jpg",
+    "real/real_0064.jpg",
+    "real/real_0065.jpg",
+    "real/real_0066.jpg",
+    "real/real_0067.jpg",
+    "real/real_0068.jpg",
+    "real/real_0069.jpg",
+    "real/real_0070.jpg",
+    "real/real_0071.jpg",
+    "real/real_0072.jpg",
+    "real/real_0073.jpg",
+    "real/real_0074.jpg",
+    "real/real_0075.jpg",
+    "real/real_0076.jpg",
+    "real/real_0077.jpg",
+    "real/real_0078.jpg",
+    "real/real_0079.jpg",
+    "real/real_0080.jpg",
+    "real/real_0081.jpg",
+    "real/real_0082.jpg",
+    "real/real_0083.jpg",
+    "real/real_0084.jpg",
+    "real/real_0085.jpg",
+    "real/real_0086.jpg",
+    "real/real_0087.jpg",
+    "real/real_0088.jpg",
+    "real/real_0089.jpg",
+    "real/real_0090.jpg",
+    "real/real_0091.jpg",
+    "real/real_0092.jpg",
+    "real/real_0093.jpg",
+    "real/real_0094.jpg",
+    "real/real_0095.jpg",
+    "real/real_0096.jpg",
+    "real/real_0097.jpg",
+    "real/real_0098.jpg",
+    "real/real_0099.jpg",
+    "real/real_0100.jpg"
 ]
 };
 
