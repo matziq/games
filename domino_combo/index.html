@@ -131,7 +131,7 @@
             justify-content: center;
             align-items: center;
             min-height: 85px;
-            margin: 40px 0 4px;
+            margin: 70px 0 4px;
         }
 
         #current-piece {
@@ -1589,7 +1589,7 @@
             if (!drag) return;
             e.preventDefault();
             const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
-            const threshold = drag.isTouch ? 4 : 7;
+            const threshold = drag.isTouch ? 14 : 7;
 
             if (!drag.active && (Math.abs(dx) > threshold || Math.abs(dy) > threshold)) {
                 drag.active = true;
