@@ -1,6 +1,6 @@
 ﻿// Auto-generated image manifest for real_or_ai.
 // This file is intentionally plain JS so it can be loaded via <script> from file://.
-// Generated: 2026-03-13 18:55:30
+// Generated: 2026-03-14 00:22:35
 
 window.__REAL_OR_AI_MANIFEST__ = {
   ai: [
@@ -46,7 +46,25 @@ window.__REAL_OR_AI_MANIFEST__ = {
     "ai/ai_0040.jpg",
     "ai/ai_0041.jpg",
     "ai/ai_0042.jpg",
-    "ai/ai_0043.jpg"
+    "ai/ai_0043.jpg",
+    "ai/ai_0044.jpg",
+    "ai/ai_0045.jpg",
+    "ai/ai_0046.jpg",
+    "ai/ai_0047.jpg",
+    "ai/ai_0048.jpg",
+    "ai/ai_0049.jpg",
+    "ai/ai_0050.jpg",
+    "ai/ai_0051.jpg",
+    "ai/ai_0052.jpg",
+    "ai/ai_0053.jpg",
+    "ai/ai_0054.jpg",
+    "ai/ai_0055.jpg",
+    "ai/ai_0056.jpg",
+    "ai/ai_0057.jpg",
+    "ai/ai_0058.jpg",
+    "ai/ai_0059.jpg",
+    "ai/ai_0060.jpg",
+    "ai/ai_0061.jpg"
 ],
   real: [
     "real/real_0001.jpg",
@@ -84,7 +102,7 @@ window.__REAL_OR_AI_MANIFEST__ = {
     "real/real_0033.jpg",
     "real/real_0034.jpg",
     "real/real_0035.jpg",
-    "real/real_0036.png",
+    "real/real_0036.jpg",
     "real/real_0037.jpg",
     "real/real_0038.jpg",
     "real/real_0039.jpg",
@@ -114,23 +132,7 @@ window.__REAL_OR_AI_MANIFEST__ = {
     "real/real_0063.jpg",
     "real/real_0064.jpg",
     "real/real_0065.jpg",
-    "real/real_0066.jpg",
-    "real/real_0067.jpg",
-    "real/real_0068.jpg",
-    "real/real_0069.jpg",
-    "real/real_0070.jpg",
-    "real/real_0071.jpg",
-    "real/real_0072.jpg",
-    "real/real_0073.jpg",
-    "real/real_0074.jpg",
-    "real/real_0075.jpg",
-    "real/real_0076.jpg",
-    "real/real_0077.jpg",
-    "real/real_0078.jpg",
-    "real/real_0079.jpg",
-    "real/real_0080.jpg",
-    "real/real_0081.jpg",
-    "real/real_0082.jpg"
+    "real/real_0066.jpg"
 ]
 };
 
