@@ -1,6 +1,6 @@
 ﻿// Auto-generated image manifest for real_or_ai.
 // This file is intentionally plain JS so it can be loaded via <script> from file://.
-// Generated: 2026-03-15 00:11:32
+// Generated: 2026-03-15 11:01:54
 
 window.__REAL_OR_AI_MANIFEST__ = {
   ai: [
@@ -66,7 +66,29 @@ window.__REAL_OR_AI_MANIFEST__ = {
     "ai/ai_0060.jpg",
     "ai/ai_0061.jpg",
     "ai/ai_0062.jpg",
-    "ai/ai_0063.jpg"
+    "ai/ai_0063.jpg",
+    "ai/ai_0064.jpg",
+    "ai/ai_0065.jpg",
+    "ai/ai_0066.jpg",
+    "ai/ai_0067.jpg",
+    "ai/ai_0068.jpg",
+    "ai/ai_0069.jpg",
+    "ai/ai_0070.jpg",
+    "ai/ai_0071.jpg",
+    "ai/ai_0072.jpg",
+    "ai/ai_0073.jpg",
+    "ai/ai_0074.jpg",
+    "ai/ai_0075.jpg",
+    "ai/ai_0076.jpg",
+    "ai/ai_0077.jpg",
+    "ai/ai_0078.jpg",
+    "ai/ai_0079.jpg",
+    "ai/ai_0080.jpg",
+    "ai/ai_0081.jpg",
+    "ai/ai_0082.jpg",
+    "ai/ai_0083.jpg",
+    "ai/ai_0084.jpg",
+    "ai/ai_0085.jpg"
 ],
   real: [
     "real/real_0001.jpg",
