@@ -29,9 +29,9 @@
 const C = document.getElementById('game');
 const X = C.getContext('2d');
 let W, H;
+let plats = [];
 function resize() { W = C.width = innerWidth; H = C.height = innerHeight; buildPlatforms(); }
 addEventListener('resize', resize);
-resize();
 
 // ─── Tuning ────────────────────────────────────────────────────────
 const G      = 0.34;
@@ -126,7 +126,6 @@ function droneOff() {
 }
 
 // ─── Platforms ─────────────────────────────────────────────────────
-let plats = [];
 function buildPlatforms() {
   plats = [
     { x: W * .10, y: H * .18, w: Math.max(70, W * .09) },
@@ -787,6 +786,7 @@ function loop(t) {
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+resize();
 
 // ─── Remote Score ──────────────────────────────────────────────────
 function saveRemote() {
