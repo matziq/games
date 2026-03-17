@@ -175,6 +175,9 @@
       // Teleport spawn effects
       let teleports = [];  // {x, y, w, h, life, maxLife, ent}
 
+      // Eggs — dropped when enemies are killed
+      let eggs = [];  // {x, y, vx, vy, type, landed, hatchTimer, onPlat}
+
       // ─── Input ─────────────────────────────────────────────────────────
       const K = {};
       onkeydown = e => { K[e.code] = 1; if (e.code === 'Space') e.preventDefault(); };
@@ -255,8 +258,51 @@
               g.gain.setValueAtTime(.22, n); g.gain.exponentialRampToValueAtTime(.001, n + .7);
               o.connect(g); o.start(n); o.stop(n + .7); break;
             }
+            case 'hatch': {
+              const o = a.createOscillator(); o.type = 'triangle';
+              o.frequency.setValueAtTime(300, n);
+              o.frequency.exponentialRampToValueAtTime(800, n + .1);
+              o.frequency.exponentialRampToValueAtTime(200, n + .2);
+              g.gain.setValueAtTime(.2, n); g.gain.exponentialRampToValueAtTime(.001, n + .25);
+              o.connect(g); o.start(n); o.stop(n + .3); break;
+            }
+            case 'eggPop': {
+              const o = a.createOscillator(); o.type = 'sine';
+              o.frequency.setValueAtTime(600, n);
+              o.frequency.exponentialRampToValueAtTime(1200, n + .08);
+              g.gain.setValueAtTime(.15, n); g.gain.exponentialRampToValueAtTime(.001, n + .12);
+              o.connect(g); o.start(n); o.stop(n + .15); break;
+            }
           }
         } catch (e) { }
+      }
+
+      // ─── Teleport Spawn Sound ──────────────────────────────────────────
+      let spawnSound = null;
+      let spawnPos = null; // {x, y} where player spawned
+
+      function spawnSoundOn() {
+        if (spawnSound) return;
+        try {
+          const a = audio();
+          const g = a.createGain(); g.gain.value = .12; g.connect(a.destination);
+          // Warbling electronic tone
+          const o1 = a.createOscillator(); o1.type = 'sine'; o1.frequency.value = 440; o1.connect(g); o1.start();
+          const o2 = a.createOscillator(); o2.type = 'square'; o2.frequency.value = 445; o2.connect(g); o2.start();
+          // LFO for wobble
+          const lfo = a.createOscillator(); lfo.frequency.value = 8;
+          const lfoG = a.createGain(); lfoG.gain.value = 30;
+          lfo.connect(lfoG); lfoG.connect(o1.frequency); lfoG.connect(o2.frequency); lfo.start();
+          spawnSound = { g, o1, o2, lfo };
+        } catch (e) { }
+      }
+
+      function spawnSoundOff() {
+        if (!spawnSound) return;
+        try {
+          spawnSound.o1.stop(); spawnSound.o2.stop(); spawnSound.lfo.stop();
+        } catch (e) { }
+        spawnSound = null;
       }
 
       let drone = null;
@@ -375,10 +421,10 @@
 
       // Joust-faithful palette — bright, saturated, distinct
       const PAL = {
-        player:      { body: '#28c', wing: '#4ef', eye: '#fff', rider: '#ff0', helm: '#fc0', beak: '#fa0', lance: '#ccc' },
+        player: { body: '#28c', wing: '#4ef', eye: '#fff', rider: '#ff0', helm: '#fc0', beak: '#fa0', lance: '#ccc' },
         bloodKnight: { body: '#060', wing: '#0a0', eye: '#ff0', rider: '#a00', helm: '#c22', beak: '#fc0', lance: '#aaa' },
         shadowRider: { body: '#606', wing: '#a0a', eye: '#ff0', rider: '#40a', helm: '#80f', beak: '#fc0', lance: '#88a' },
-        deathLord:   { body: '#444', wing: '#888', eye: '#f00', rider: '#000', helm: '#fff', beak: '#fa0', lance: '#888' },
+        deathLord: { body: '#444', wing: '#888', eye: '#f00', rider: '#000', helm: '#fff', beak: '#fa0', lance: '#888' },
       };
 
       function spr(type, flap, left) {
@@ -408,14 +454,16 @@
       function mkPlayer() {
         // Spawn on the bottom (widest) platform
         const bp = plats[plats.length - 1];
-        const px = bp.x + bp.w / 2 - spW / 2;
-        const py = bp.y - spH;
-        player = mkEnt('player', px, py);
+        const ppx = bp.x + bp.w / 2 - spW / 2;
+        const ppy = bp.y - spH;
+        player = mkEnt('player', ppx, ppy);
         player.ground = true;
         player.gPlat = plats.length - 1;
         invulnT = INVULN_T;
-        // Start teleport effect for player
-        addTeleport(px, py, spW, spH, null);
+        // Start teleport effect and sound for player
+        addTeleport(ppx, ppy, spW, spH, null);
+        spawnPos = { x: ppx, y: ppy };
+        spawnSoundOn();
       }
 
       function spawnWave() {
@@ -490,6 +538,131 @@
         }
       }
 
+      // ─── Egg System ────────────────────────────────────────────────────
+      const EGG_W = 12, EGG_H = 14;
+      const HATCH_TIME = 600; // ~10 seconds at 60fps
+
+      function spawnEgg(x, y, vx, vy, type) {
+        eggs.push({ x, y, vx: vx * .6, vy, type, landed: false, hatchTimer: 0, onPlat: -1, cracking: false });
+      }
+
+      function tickEggs() {
+        for (let i = eggs.length - 1; i >= 0; i--) {
+          const eg = eggs[i];
+
+          if (!eg.landed) {
+            // Physics — gravity, movement
+            eg.vy += G * .6 * dt;
+            if (eg.vy > 8) eg.vy = 8;
+            eg.x += eg.vx * dt;
+            eg.y += eg.vy * dt;
+            eg.vx *= .98;
+
+            // Screen wrap
+            if (eg.x < -20) eg.x = W + 10;
+            if (eg.x > W + 20) eg.x = -10;
+
+            // Platform landing
+            const eb = eg.y + EGG_H;
+            for (let j = 0; j < plats.length; j++) {
+              const p = plats[j];
+              if (eg.x + EGG_W > p.x && eg.x < p.x + p.w && eg.vy >= 0 && eb >= p.y && eb - eg.vy * dt <= p.y + 6) {
+                eg.y = p.y - EGG_H;
+                eg.vy = 0; eg.vx = 0;
+                eg.landed = true;
+                eg.onPlat = j;
+                break;
+              }
+            }
+
+            // Lava — egg destroyed
+            if (eg.y + EGG_H > H - LAVA_H) {
+              for (let k = 0; k < 6; k++)
+                lavaPx.push({
+                  x: eg.x + EGG_W / 2 + (Math.random() - .5) * 20,
+                  y: H - LAVA_H,
+                  vy: -1.5 - Math.random() * 2.5,
+                  sz: 2 + Math.random() * 3,
+                  life: .6 + Math.random() * .4
+                });
+              sfx('lava');
+              eggs.splice(i, 1);
+              continue;
+            }
+          } else {
+            // Landed — hatch countdown
+            eg.hatchTimer++;
+            if (eg.hatchTimer > HATCH_TIME * .85) eg.cracking = true;
+            if (eg.hatchTimer >= HATCH_TIME) {
+              // Hatch! Spawn new enemy
+              hatchEgg(eg);
+              eggs.splice(i, 1);
+              continue;
+            }
+          }
+
+          // Player collection — touch egg for bonus points
+          if (player && player.alive && invulnT <= 0) {
+            const dx = (player.x + player.w / 2) - (eg.x + EGG_W / 2);
+            const dy = (player.y + player.h / 2) - (eg.y + EGG_H / 2);
+            if (Math.abs(dx) < 24 && Math.abs(dy) < 22) {
+              score += 250;
+              sfx('eggPop');
+              // Small particle burst
+              addBlood(eg.x + EGG_W / 2, eg.y + EGG_H / 2, 4);
+              eggs.splice(i, 1);
+              continue;
+            }
+          }
+        }
+      }
+
+      function hatchEgg(eg) {
+        const t = eg.type;
+        const e = mkEnt(t, eg.x - spW / 2 + EGG_W / 2, eg.y - spH + EGG_H);
+        e.left = Math.random() < .5;
+        e.ground = true;
+        e.gPlat = eg.onPlat;
+        if (t === 'bloodKnight') { e.speed = .65; e.aggro = .25; }
+        if (t === 'shadowRider') { e.speed = 1.1; e.aggro = .55; }
+        if (t === 'deathLord') { e.speed = 1.4; e.aggro = .8; }
+        e.patrolY = H * (.15 + Math.random() * .5);
+        e.patrolDir = Math.random() < .5 ? 1 : -1;
+        e.aiTimer = 40 + Math.random() * 60 | 0;
+        e.spawning = true;
+        addTeleport(e.x, e.y, spW, spH, e);
+        enemies.push(e);
+        sfx('hatch');
+      }
+
+      function drawEggs() {
+        for (const eg of eggs) {
+          const cx = eg.x | 0, cy = eg.y | 0;
+          // Egg body — cream/white oval
+          X.fillStyle = '#eed';
+          X.fillRect(cx + 2, cy, 8, EGG_H);
+          X.fillRect(cx, cy + 2, EGG_W, EGG_H - 4);
+          X.fillRect(cx + 1, cy + 1, 10, EGG_H - 2);
+          // Highlight
+          X.fillStyle = '#fff';
+          X.fillRect(cx + 3, cy + 2, 3, 3);
+          // Spots based on type
+          const col = eg.type === 'deathLord' ? '#888' : eg.type === 'shadowRider' ? '#a0a' : '#0a0';
+          X.fillStyle = col;
+          X.fillRect(cx + 5, cy + 5, 2, 2);
+          X.fillRect(cx + 2, cy + 8, 2, 2);
+          X.fillRect(cx + 7, cy + 9, 2, 2);
+          // Cracking animation when about to hatch
+          if (eg.cracking) {
+            const flicker = frame % 10 < 5;
+            X.fillStyle = flicker ? '#fa0' : '#fff';
+            X.fillRect(cx + 4, cy + 3, 1, 4);
+            X.fillRect(cx + 3, cy + 5, 3, 1);
+            X.fillRect(cx + 6, cy + 7, 2, 3);
+          }
+        }
+      }
+
       // ─── Particles ─────────────────────────────────────────────────────
       function addBlood(x, y, n) {
         for (let i = 0; i < n && bloods.length < P_LIM; i++)
@@ -534,10 +707,9 @@
       }
 
       function killFX(x, y) {
-        addBlood(x, y, 25 + (Math.random() * 18 | 0));
-        addGore(x, y, 5 + (Math.random() * 6 | 0));
-        addBone(x, y, 3 + (Math.random() * 4 | 0));
-        shakeT = 14; shakeI = 10; flashT = 8;
+        addBlood(x, y, 12 + (Math.random() * 8 | 0));
+        addGore(x, y, 2 + (Math.random() * 3 | 0));
+        shakeT = 10; shakeI = 7; flashT = 6;
         sfx('kill');
       }
 
@@ -600,6 +772,7 @@
 
       function loseLife() {
         lives--;
+        spawnSoundOff(); spawnPos = null;
         if (lives <= 0) {
           state = 'gameOver'; droneOff();
           if (score > hiScore) { hiScore = score; localStorage.setItem('bjHi', hiScore); saveRemote(); }
@@ -727,11 +900,13 @@
           if (Math.hypot(pcx - ecx, pcy - ecy) > 42) continue;
 
           if (pcy < ecy - 5) {
-            // Player wins
+            // Player wins — enemy becomes an egg
             e.alive = false;
             killFX(ecx, ecy);
             score += e.type === 'deathLord' ? 500 : e.type === 'shadowRider' ? 250 : 100;
             player.vy = -4.5;
+            // Spawn egg with enemy's momentum
+            spawnEgg(ecx - 6, ecy - 6, e.vx, e.vy - 3, e.type);
             for (let j = 0; j < plats.length; j++) {
               if (ecx > plats[j].x && ecx < plats[j].x + plats[j].w && ecy < plats[j].y) {
                 addStain(ecx, j); break;
@@ -1075,7 +1250,7 @@
       function startGame() {
         audio(); droneOn();
         state = 'waveAnnounce'; wave = 1; score = 0; lives = 3;
-        stains = []; bloods = []; gores = []; bones = []; teleports = [];
+        stains = []; bloods = []; gores = []; bones = []; teleports = []; eggs = [];
         mkPlayer(); spawnWave(); waveT = 130; sfx('wave');
       }
 
@@ -1086,6 +1261,14 @@
           if (Math.abs(player.vx) > MAXVX) player.vx = Math.sign(player.vx) * MAXVX;
           if (K.Space || K.KeyW) { doFlap(player); K.Space = 0; K.KeyW = 0; }
           physEnt(player, true);
+
+          // Stop spawn sound when player moves away from spawn point
+          if (spawnPos && spawnSound) {
+            if (Math.abs(player.x - spawnPos.x) > 5 || Math.abs(player.y - spawnPos.y) > 5) {
+              spawnSoundOff();
+              spawnPos = null;
+            }
+          }
         }
 
         if ((!player || !player.alive) && lives > 0) {
@@ -1100,9 +1283,12 @@
         collisions();
         tickParts();
         tickTeleports();
+        tickEggs();
 
-        if (enemies.every(e => !e.alive)) {
+        // Wave complete when all enemies dead AND no eggs remain
+        if (enemies.every(e => !e.alive) && eggs.length === 0) {
           wave++; state = 'waveAnnounce'; waveT = 130; spawnWave(); sfx('wave');
+          spawnSoundOff(); spawnPos = null;
         }
       }
 
@@ -1114,7 +1300,7 @@
           case 'waveAnnounce': drawWaveScreen(); break;
           case 'playing':
             applyShake(); drawBG(); drawLava(); drawPlats();
-            drawTeleports();
+            drawTeleports(); drawEggs();
             for (const e of enemies) drawEnt(e);
             if (player) drawEnt(player);
             drawParts(); drawFlash(); drawScanlines(); drawHUD();
