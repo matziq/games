@@ -366,65 +366,70 @@
         cx.save();
         if (!left) { cx.translate(spW, 0); cx.scale(-1, 1); }
 
-        // Body — ostrich/stork shape
-        px(cx, 9, 9, 9, 5, col.body);
-        px(cx, 8, 10, 2, 4, col.body);
-        px(cx, 7, 10, 2, 3, col.body);  // neck
-        px(cx, 5, 9, 3, 3, col.body);   // head
-        px(cx, 5, 8, 2, 1, col.body);   // crown
-        // Beak — yellow/orange
-        px(cx, 3, 10, 2, 1, col.beak || '#fc0');
-        px(cx, 2, 10, 1, 1, col.beak || '#fa0');
+        // Body — fat round ostrich
+        px(cx, 8, 10, 10, 4, col.body);   // main body
+        px(cx, 9, 9, 8, 1, col.body);     // upper body
+        px(cx, 9, 14, 6, 1, col.body);    // lower body
+        px(cx, 7, 11, 2, 2, col.body);    // chest
+        // Head & neck
+        px(cx, 5, 9, 3, 3, col.body);     // head
+        px(cx, 6, 8, 2, 1, col.body);     // forehead
+        px(cx, 7, 10, 1, 2, col.body);    // neck
+        // Beak — long orange
+        px(cx, 3, 10, 2, 1, col.beak || '#fa0');
+        px(cx, 2, 10, 1, 1, col.beak || '#fc0');
+        px(cx, 3, 11, 1, 1, col.beak || '#fa0');
         // Eye
-        px(cx, 6, 9, 1, 1, col.eye);
+        px(cx, 5, 9, 1, 1, col.eye);
         // Tail feathers
-        px(cx, 18, 8, 3, 2, col.wing);
-        px(cx, 20, 7, 2, 2, col.wing);
-        px(cx, 21, 6, 2, 2, col.wing);
-        px(cx, 22, 5, 1, 2, col.body);
+        px(cx, 18, 9, 3, 2, col.body);
+        px(cx, 20, 8, 2, 2, col.wing);
+        px(cx, 21, 7, 2, 2, col.wing);
 
-        // Wings (animated)
-        const wy = fp === 1 ? 3 : fp === 2 ? 11 : fp === 3 ? 8 : 7;
-        px(cx, 8, wy, 11, 2, col.wing);
-        if (fp === 1) {
-          px(cx, 6, 2, 5, 2, col.wing);
-          px(cx, 16, 2, 5, 2, col.wing);
-          px(cx, 5, 1, 3, 2, col.wing);
-          px(cx, 19, 1, 3, 2, col.wing);
-        } else if (fp === 2) {
-          px(cx, 8, wy + 2, 11, 2, col.wing);
-        } else if (fp === 3) {
+        // Wings (animated) — big chunky wings
+        const wy = fp === 1 ? 3 : fp === 2 ? 12 : fp === 3 ? 8 : 7;
+        px(cx, 9, wy, 10, 2, col.wing);
+        if (fp === 1) {         // up-stroke — wings way up
+          px(cx, 7, 2, 5, 3, col.wing);
+          px(cx, 15, 2, 5, 3, col.wing);
+          px(cx, 6, 1, 3, 2, col.wing);
+          px(cx, 18, 1, 3, 2, col.wing);
+        } else if (fp === 2) {  // down-stroke
+          px(cx, 8, wy + 2, 10, 2, col.wing);
+        } else if (fp === 3) {  // mid
           px(cx, 7, wy - 1, 12, 1, col.wing);
+        } else {                // glide
+          px(cx, 7, wy - 1, 13, 1, col.wing);
         }
 
-        // Legs / talons
-        px(cx, 11, 14, 1, 2, '#a86'); px(cx, 10, 15, 1, 2, '#a86');
-        px(cx, 16, 14, 1, 2, '#a86'); px(cx, 17, 15, 1, 2, '#a86');
+        // Legs — long dangling orange legs
+        px(cx, 10, 14, 1, 3, '#c80'); px(cx, 9, 16, 1, 1, '#c80'); px(cx, 11, 16, 1, 1, '#c80');
+        px(cx, 15, 14, 1, 3, '#c80'); px(cx, 14, 16, 1, 1, '#c80'); px(cx, 16, 16, 1, 1, '#c80');
 
-        // Rider torso
-        px(cx, 11, 4, 5, 5, col.rider);
-        px(cx, 10, 5, 1, 4, col.rider);
-        px(cx, 16, 5, 1, 4, col.rider);
+        // Rider — yellow knight sitting on top
+        px(cx, 11, 5, 5, 5, col.rider);   // torso
+        px(cx, 10, 6, 1, 3, col.rider);   // left arm
+        px(cx, 16, 6, 1, 3, col.rider);   // right arm
         // Head
-        px(cx, 12, 2, 3, 3, col.rider);
-        // Helmet
-        px(cx, 11, 1, 5, 2, col.helm);
-        px(cx, 12, 0, 3, 1, col.helm);
+        px(cx, 12, 3, 3, 2, col.rider);
+        // Helmet/crown
+        px(cx, 11, 2, 5, 2, col.helm);
+        px(cx, 12, 1, 3, 1, col.helm);
 
-        // Lance — horizontal, extending forward
-        px(cx, 1, 7, 10, 1, col.lance || '#aaa');
-        px(cx, 0, 7, 2, 1, '#f22');
-        px(cx, 0, 6, 1, 2, '#c00');
+        // Lance — extending forward from rider
+        px(cx, 1, 8, 10, 1, col.lance || '#ccc');
+        px(cx, 0, 8, 1, 1, '#fff');       // lance tip
+        px(cx, 0, 7, 1, 2, '#eee');
 
         cx.restore();
       }
 
       // Joust-faithful palette — bright, saturated, distinct
       const PAL = {
-        player: { body: '#28c', wing: '#4ef', eye: '#fff', rider: '#ff0', helm: '#fc0', beak: '#fa0', lance: '#ccc' },
+        player:      { body: '#24a', wing: '#4cf', eye: '#fff', rider: '#ff0', helm: '#fc0', beak: '#f80', lance: '#ccc' },
         bloodKnight: { body: '#060', wing: '#0a0', eye: '#ff0', rider: '#a00', helm: '#c22', beak: '#fc0', lance: '#aaa' },
         shadowRider: { body: '#606', wing: '#a0a', eye: '#ff0', rider: '#40a', helm: '#80f', beak: '#fc0', lance: '#88a' },
-        deathLord: { body: '#444', wing: '#888', eye: '#f00', rider: '#000', helm: '#fff', beak: '#fa0', lance: '#888' },
+        deathLord:   { body: '#444', wing: '#888', eye: '#f00', rider: '#000', helm: '#fff', beak: '#fa0', lance: '#888' },
       };
 
       function spr(type, flap, left) {
