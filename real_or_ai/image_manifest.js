@@ -1,6 +1,6 @@
 ﻿// Auto-generated image manifest for real_or_ai.
 // This file is intentionally plain JS so it can be loaded via <script> from file://.
-// Generated: 2026-03-16 08:08:09
+// Generated: 2026-03-17 05:15:35
 
 window.__REAL_OR_AI_MANIFEST__ = {
   ai: [
@@ -38,34 +38,36 @@ window.__REAL_OR_AI_MANIFEST__ = {
     "ai/ai_0032.jpg",
     "ai/ai_0033.jpg",
     "ai/ai_0034.jpg",
-    "ai/ai_0035.jpg",
+    "ai/ai_0035.png",
     "ai/ai_0036.jpg",
-    "ai/ai_0037.jpg",
+    "ai/ai_0037.png",
     "ai/ai_0038.jpg",
-    "ai/ai_0039.jpg",
+    "ai/ai_0039.png",
     "ai/ai_0040.jpg",
-    "ai/ai_0041.jpg",
+    "ai/ai_0041.png",
     "ai/ai_0042.jpg",
-    "ai/ai_0043.jpg",
+    "ai/ai_0043.png",
     "ai/ai_0044.jpg",
-    "ai/ai_0045.png",
+    "ai/ai_0045.jpg",
     "ai/ai_0046.png",
-    "ai/ai_0047.png",
+    "ai/ai_0047.jpg",
     "ai/ai_0048.png",
-    "ai/ai_0049.png",
+    "ai/ai_0049.jpg",
     "ai/ai_0050.png",
-    "ai/ai_0051.png",
+    "ai/ai_0051.jpg",
     "ai/ai_0052.png",
-    "ai/ai_0053.png",
+    "ai/ai_0053.jpg",
     "ai/ai_0054.png",
-    "ai/ai_0055.png",
+    "ai/ai_0055.jpg",
     "ai/ai_0056.png",
-    "ai/ai_0057.png",
+    "ai/ai_0057.jpg",
     "ai/ai_0058.png",
     "ai/ai_0059.png",
     "ai/ai_0060.png",
     "ai/ai_0061.png",
-    "ai/ai_0062.png"
+    "ai/ai_0062.png",
+    "ai/ai_0063.jpg",
+    "ai/ai_0064.png"
 ],
   real: [
     "real/real_0001.jpg",
