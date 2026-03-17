@@ -178,6 +178,9 @@
       // Eggs — dropped when enemies are killed
       let eggs = [];  // {x, y, vx, vy, type, landed, hatchTimer, onPlat}
 
+      // Lava hands
+      let lavaHands = [];  // {x, targetEnt, grip, life}
+
       // ─── Input ─────────────────────────────────────────────────────────
       const K = {};
       onkeydown = e => { K[e.code] = 1; if (e.code === 'Space') e.preventDefault(); };
@@ -426,10 +429,10 @@
 
       // Joust-faithful palette — bright, saturated, distinct
       const PAL = {
-        player:      { body: '#24a', wing: '#4cf', eye: '#fff', rider: '#ff0', helm: '#fc0', beak: '#f80', lance: '#ccc' },
+        player: { body: '#24a', wing: '#4cf', eye: '#fff', rider: '#ff0', helm: '#fc0', beak: '#f80', lance: '#ccc' },
         bloodKnight: { body: '#060', wing: '#0a0', eye: '#ff0', rider: '#a00', helm: '#c22', beak: '#fc0', lance: '#aaa' },
         shadowRider: { body: '#606', wing: '#a0a', eye: '#ff0', rider: '#40a', helm: '#80f', beak: '#fc0', lance: '#88a' },
-        deathLord:   { body: '#444', wing: '#888', eye: '#f00', rider: '#000', helm: '#fff', beak: '#fa0', lance: '#888' },
+        deathLord: { body: '#444', wing: '#888', eye: '#f00', rider: '#000', helm: '#fff', beak: '#fa0', lance: '#888' },
       };
 
       function spr(type, flap, left) {
@@ -673,48 +676,49 @@
         for (let i = 0; i < n && bloods.length < P_LIM; i++)
           bloods.push({
             x, y,
-            vx: (Math.random() - .5) * 9,
-            vy: (Math.random() - .85) * 7 - 2,
-            sz: 1 + Math.random() * 3,
-            life: 2 + Math.random() * 1.5,
-            col: `hsl(${354 + Math.random() * 12},${75 + Math.random() * 25}%,${18 + Math.random() * 22}%)`
+            vx: (Math.random() - .5) * 14,
+            vy: (Math.random() - .85) * 10 - 3,
+            sz: 1 + Math.random() * 4,
+            life: 3 + Math.random() * 2.5,
+            col: `hsl(${350 + Math.random() * 15},${75 + Math.random() * 25}%,${15 + Math.random() * 25}%)`
           });
       }
 
       function addGore(x, y, n) {
-        for (let i = 0; i < n && gores.length < 200; i++)
+        for (let i = 0; i < n && gores.length < 400; i++)
           gores.push({
             x, y,
-            vx: (Math.random() - .5) * 7,
-            vy: (Math.random() - .7) * 8 - 1,
-            sz: 3 + Math.random() * 5,
+            vx: (Math.random() - .5) * 12,
+            vy: (Math.random() - .7) * 11 - 2,
+            sz: 3 + Math.random() * 7,
             rot: Math.random() * 6.28,
-            rv: (Math.random() - .5) * .35,
-            life: 2.5 + Math.random() * 2,
+            rv: (Math.random() - .5) * .5,
+            life: 3 + Math.random() * 3,
             bn: 0,
-            col: `hsl(${348 + Math.random() * 16},${65 + Math.random() * 35}%,${12 + Math.random() * 18}%)`
+            col: `hsl(${348 + Math.random() * 16},${70 + Math.random() * 30}%,${10 + Math.random() * 25}%)`
           });
       }
 
       function addBone(x, y, n) {
-        for (let i = 0; i < n && bones.length < 150; i++)
+        for (let i = 0; i < n && bones.length < 250; i++)
           bones.push({
             x, y,
-            vx: (Math.random() - .5) * 8,
-            vy: (Math.random() - .6) * 9 - 2,
-            sz: 2 + Math.random() * 3,
+            vx: (Math.random() - .5) * 11,
+            vy: (Math.random() - .6) * 12 - 3,
+            sz: 2 + Math.random() * 4,
             rot: Math.random() * 6.28,
-            rv: (Math.random() - .5) * .45,
-            life: 3 + Math.random() * 2,
+            rv: (Math.random() - .5) * .55,
+            life: 4 + Math.random() * 3,
             bn: 0,
             col: `hsl(38,${25 + Math.random() * 35}%,${72 + Math.random() * 22}%)`
           });
       }
 
       function killFX(x, y) {
-        addBlood(x, y, 12 + (Math.random() * 8 | 0));
-        addGore(x, y, 2 + (Math.random() * 3 | 0));
-        shakeT = 10; shakeI = 7; flashT = 6;
+        addBlood(x, y, 45 + (Math.random() * 30 | 0));
+        addGore(x, y, 10 + (Math.random() * 8 | 0));
+        addBone(x, y, 5 + (Math.random() * 5 | 0));
+        shakeT = 18; shakeI = 14; flashT = 10;
         sfx('kill');
       }
 
@@ -739,9 +743,15 @@
         // Flap animation
         e.flap = e.flapT > 0 ? (e.flapT > 9 ? 1 : e.flapT > 5 ? 2 : 3) : 0;
 
-        // Screen wrap
+        // Screen wrap horizontal
         if (e.x < -e.w * 1.2) e.x = W + e.w * .2;
         if (e.x > W + e.w * .2) e.x = -e.w * 1.2;
+
+        // Ceiling rubberband — can't go above screen
+        if (e.y < -5) {
+          e.y = -5;
+          e.vy = Math.abs(e.vy) * .6 + 2; // bounce back down
+        }
 
         // Platform landing
         e.ground = false; e.gPlat = -1;
@@ -992,6 +1002,113 @@
         for (let i = lavaPx.length - 1; i >= 0; i--) {
           const l = lavaPx[i]; l.y += l.vy; l.vy += .06; l.life -= .017;
           if (l.life <= 0) lavaPx.splice(i, 1);
+        }
+      }
+
+      // ─── Lava Hands ────────────────────────────────────────────────────
+      const LAVA_HAND_ZONE = 120;  // how close to lava before hands spawn
+      const HAND_PULL = 0.18;      // downward pull force per frame
+
+      function tickLavaHands() {
+        const ly = H - LAVA_H;
+
+        // Check all alive entities near lava
+        const ents = [];
+        if (player && player.alive) ents.push(player);
+        for (const e of enemies) if (e.alive && !e.spawning) ents.push(e);
+
+        for (const ent of ents) {
+          const bottom = ent.y + ent.h;
+          const dist = ly - bottom;
+
+          // Already grabbed?
+          const existing = lavaHands.find(h => h.targetEnt === ent);
+
+          if (dist < LAVA_HAND_ZONE && dist > 0 && !existing) {
+            // Chance to spawn a hand (closer = more likely)
+            const chance = .008 + (1 - dist / LAVA_HAND_ZONE) * .02;
+            if (Math.random() < chance) {
+              lavaHands.push({
+                x: ent.x + ent.w / 2 + (Math.random() - .5) * 20,
+                targetEnt: ent,
+                grip: 0,       // 0→1 reaching, 1 = grabbed
+                reachY: ly,    // current hand Y position
+                life: 180 + Math.random() * 120 | 0,  // how long it persists
+                fingerAnim: 0
+              });
+            }
+          }
+
+          if (existing) {
+            const h = existing;
+            h.fingerAnim += .15;
+            h.x += (ent.x + ent.w / 2 - h.x) * .08; // track horizontally
+
+            if (h.grip < 1) {
+              // Reaching up toward the entity
+              h.reachY -= 1.8;
+              if (h.reachY <= bottom + 5) {
+                h.grip = 1; // grabbed!
+              }
+            } else {
+              // Gripped! Pull the entity down toward lava
+              ent.vy += HAND_PULL * dt;
+              h.reachY = bottom + 3;
+              // Restrict upward escape — need hard flapping
+              if (ent.vy < -3) {
+                h.life -= 8; // flapping hard breaks grip faster
+              }
+              h.life -= 1;
+            }
+
+            h.life--;
+            if (h.life <= 0) {
+              lavaHands.splice(lavaHands.indexOf(h), 1);
+            }
+          }
+        }
+
+        // Remove hands whose target died
+        for (let i = lavaHands.length - 1; i >= 0; i--) {
+          if (!lavaHands[i].targetEnt.alive) lavaHands.splice(i, 1);
+        }
+      }
+
+      function drawLavaHands() {
+        const ly = H - LAVA_H;
+        for (const h of lavaHands) {
+          const hx = h.x | 0;
+          const hy = h.reachY | 0;
+          const armLen = ly - hy;
+          if (armLen <= 0) continue;
+
+          // Arm — rising from lava
+          const glow = h.grip >= 1 ? 'rgba(255,100,0,.7)' : 'rgba(255,60,0,.5)';
+          X.fillStyle = '#a20';
+          X.fillRect(hx - 3, hy + 8, 6, armLen - 8);
+          X.fillStyle = '#c40';
+          X.fillRect(hx - 2, hy + 10, 4, armLen - 10);
+
+          // Hand / claw — 5 fingers
+          const grab = h.grip >= 1;
+          const spread = grab ? 3 + Math.sin(h.fingerAnim) * 1 : 6;
+          X.fillStyle = grab ? '#f80' : '#e50';
+          // Palm
+          X.fillRect(hx - 5, hy + 2, 10, 7);
+          // Fingers
+          for (let f = -2; f <= 2; f++) {
+            const fx = hx + f * spread;
+            const curl = grab ? 4 + Math.sin(h.fingerAnim + f) * 2 : 0;
+            X.fillRect(fx - 1, hy - 4 + curl, 2, 6);
+            // Fingertip glow
+            X.fillStyle = 'rgba(255,200,0,.6)';
+            X.fillRect(fx - 1, hy - 4 + curl, 2, 2);
+            X.fillStyle = grab ? '#f80' : '#e50';
+          }
+
+          // Glow around hand
+          X.fillStyle = glow;
+          X.fillRect(hx - 8, hy - 2, 16, 4);
         }
       }
 
@@ -1255,7 +1372,7 @@
       function startGame() {
         audio(); droneOn();
         state = 'waveAnnounce'; wave = 1; score = 0; lives = 3;
-        stains = []; bloods = []; gores = []; bones = []; teleports = []; eggs = [];
+        stains = []; bloods = []; gores = []; bones = []; teleports = []; eggs = []; lavaHands = [];
         mkPlayer(); spawnWave(); waveT = 130; sfx('wave');
       }
 
@@ -1289,6 +1406,7 @@
         tickParts();
         tickTeleports();
         tickEggs();
+        tickLavaHands();
 
         // Wave complete when all enemies dead AND no eggs remain
         if (enemies.every(e => !e.alive) && eggs.length === 0) {
@@ -1304,7 +1422,7 @@
           case 'gameOver': drawGameOver(); break;
           case 'waveAnnounce': drawWaveScreen(); break;
           case 'playing':
-            applyShake(); drawBG(); drawLava(); drawPlats();
+            applyShake(); drawBG(); drawLava(); drawLavaHands(); drawPlats();
             drawTeleports(); drawEggs();
             for (const e of enemies) drawEnt(e);
             if (player) drawEnt(player);
