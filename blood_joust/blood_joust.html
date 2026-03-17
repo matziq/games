@@ -158,7 +158,7 @@
       const LAVA_H = 65;
       const P_LIM = 900;
       const RESPAWN_T = 90;
-      const INVULN_T = 120;
+      const INVULN_T = 180;
 
       // ─── State ─────────────────────────────────────────────────────────
       let state = 'title';
@@ -171,6 +171,9 @@
       // Particles
       let bloods = [], gores = [], bones = [], embers = [], lavaPx = [];
       let stains = [];
+
+      // Teleport spawn effects
+      let teleports = [];  // {x, y, w, h, life, maxLife, ent}
 
       // ─── Input ─────────────────────────────────────────────────────────
       const K = {};
@@ -270,21 +273,39 @@
         drone = null;
       }
 
-      // ─── Platforms ─────────────────────────────────────────────────────
+      // ─── Platforms (Joust layout) ──────────────────────────────────────
       function buildPlatforms() {
         plats = [
-          { x: W * .10, y: H * .18, w: Math.max(70, W * .09) },
-          { x: W * .80, y: H * .16, w: Math.max(70, W * .09) },
-          { x: W * .30, y: H * .38, w: Math.max(90, W * .15) },
-          { x: W * .56, y: H * .43, w: Math.max(90, W * .14) },
-          { x: W * .04, y: H * .62, w: Math.max(100, W * .20) },
-          { x: W * .72, y: H * .60, w: Math.max(100, W * .18) },
-          { x: W * .18, y: H * .80, w: Math.max(120, W * .50) },
+          // Top tier — small ledges
+          { x: W * .08, y: H * .18, w: Math.max(80, W * .12) },
+          { x: W * .78, y: H * .18, w: Math.max(80, W * .12) },
+          // Mid tier
+          { x: W * .25, y: H * .38, w: Math.max(100, W * .18) },
+          { x: W * .58, y: H * .42, w: Math.max(100, W * .16) },
+          // Lower tier
+          { x: W * .02, y: H * .60, w: Math.max(110, W * .20) },
+          { x: W * .74, y: H * .58, w: Math.max(110, W * .18) },
+          // Bottom wide platform (main base)
+          { x: W * .12, y: H * .78, w: Math.max(200, W * .55) },
         ];
         for (const p of plats) {
-          p.h = 18;
+          p.h = 22;
           if (p.x + p.w > W - 5) p.x = W - p.w - 5;
           if (p.y > H - LAVA_H - 30) p.y = H - LAVA_H - 35;
+        }
+        // Generate deterministic rocky texture per platform
+        for (const p of plats) {
+          p.rocks = [];
+          let seed = (p.x * 7 + p.y * 13) | 0;
+          const prng = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return (seed >> 16) / 32768; };
+          // Surface bumps
+          for (let bx = 0; bx < p.w; bx += 6 + prng() * 4) {
+            p.rocks.push({ rx: bx, ry: -1 - prng() * 3, rw: 4 + prng() * 6, rh: 2 + prng() * 2 });
+          }
+          // Underside stalactites / roots
+          for (let bx = 4; bx < p.w - 4; bx += 10 + prng() * 14) {
+            p.rocks.push({ rx: bx, ry: p.h, rw: 2 + prng() * 4, rh: 4 + prng() * 10, under: true });
+          }
         }
       }
 
@@ -299,61 +320,65 @@
         cx.save();
         if (left) { cx.translate(spW, 0); cx.scale(-1, 1); }
 
-        // Body
+        // Body — ostrich/stork shape
         px(cx, 9, 9, 9, 5, col.body);
-        px(cx, 7, 10, 3, 3, col.body);  // neck
+        px(cx, 8, 10, 2, 4, col.body);
+        px(cx, 7, 10, 2, 3, col.body);  // neck
         px(cx, 5, 9, 3, 3, col.body);   // head
-        // Beak
-        px(cx, 3, 10, 2, 1, '#444');
-        px(cx, 3, 10, 1, 1, '#555');
+        px(cx, 5, 8, 2, 1, col.body);   // crown
+        // Beak — yellow/orange
+        px(cx, 3, 10, 2, 1, col.beak || '#fc0');
+        px(cx, 2, 10, 1, 1, col.beak || '#fa0');
         // Eye
         px(cx, 6, 9, 1, 1, col.eye);
-        // Tail
+        // Tail feathers
         px(cx, 18, 8, 3, 2, col.wing);
         px(cx, 20, 7, 2, 2, col.wing);
-        px(cx, 21, 6, 2, 1, col.body);
+        px(cx, 21, 6, 2, 2, col.wing);
+        px(cx, 22, 5, 1, 2, col.body);
 
         // Wings (animated)
-        const wy = fp === 1 ? 4 : fp === 2 ? 10 : fp === 3 ? 8 : 7;
+        const wy = fp === 1 ? 3 : fp === 2 ? 11 : fp === 3 ? 8 : 7;
         px(cx, 8, wy, 11, 2, col.wing);
-        if (fp === 1) {         // up-stroke
-          px(cx, 6, 3, 4, 2, col.wing);
-          px(cx, 17, 3, 4, 2, col.wing);
-          px(cx, 5, 2, 2, 2, col.wing);
-          px(cx, 19, 2, 2, 2, col.wing);
-        } else if (fp === 2) {  // down-stroke
-          px(cx, 9, wy + 2, 9, 1, col.wing);
+        if (fp === 1) {
+          px(cx, 6, 2, 5, 2, col.wing);
+          px(cx, 16, 2, 5, 2, col.wing);
+          px(cx, 5, 1, 3, 2, col.wing);
+          px(cx, 19, 1, 3, 2, col.wing);
+        } else if (fp === 2) {
+          px(cx, 8, wy + 2, 11, 2, col.wing);
+        } else if (fp === 3) {
+          px(cx, 7, wy - 1, 12, 1, col.wing);
         }
 
-        // Talons
-        px(cx, 11, 14, 1, 2, '#555'); px(cx, 10, 15, 1, 1, '#555');
-        px(cx, 16, 14, 1, 2, '#555'); px(cx, 17, 15, 1, 1, '#555');
+        // Legs / talons
+        px(cx, 11, 14, 1, 2, '#a86'); px(cx, 10, 15, 1, 2, '#a86');
+        px(cx, 16, 14, 1, 2, '#a86'); px(cx, 17, 15, 1, 2, '#a86');
 
         // Rider torso
         px(cx, 11, 4, 5, 5, col.rider);
-        px(cx, 10, 6, 1, 3, col.rider); // left arm
-        px(cx, 16, 6, 1, 3, col.rider); // right arm
+        px(cx, 10, 5, 1, 4, col.rider);
+        px(cx, 16, 5, 1, 4, col.rider);
         // Head
         px(cx, 12, 2, 3, 3, col.rider);
         // Helmet
         px(cx, 11, 1, 5, 2, col.helm);
-        // Horns
-        px(cx, 10, 0, 1, 2, col.horn || col.helm);
-        px(cx, 16, 0, 1, 2, col.horn || col.helm);
+        px(cx, 12, 0, 3, 1, col.helm);
 
-        // Lance
-        px(cx, 1, 7, 10, 1, col.lance || '#777');
-        px(cx, 0, 7, 2, 1, '#a01010'); // blood tip
-        px(cx, 0, 6, 1, 1, '#801010');
+        // Lance — horizontal, extending forward
+        px(cx, 1, 7, 10, 1, col.lance || '#aaa');
+        px(cx, 0, 7, 2, 1, '#f22');
+        px(cx, 0, 6, 1, 2, '#c00');
 
         cx.restore();
       }
 
+      // Joust-faithful palette — bright, saturated, distinct
       const PAL = {
-        player: { body: '#2c1a0e', wing: '#3d2b1a', eye: '#e74c3c', rider: '#555', helm: '#777', horn: '#999', lance: '#888' },
-        bloodKnight: { body: '#555', wing: '#666', eye: '#ff0', rider: '#8b0000', helm: '#a01010', horn: '#c02020', lance: '#777' },
-        shadowRider: { body: '#1a0a2e', wing: '#2d1b4e', eye: '#c050ff', rider: '#2a1040', helm: '#5020a0', horn: '#7030d0', lance: '#444' },
-        deathLord: { body: '#3a3a2a', wing: '#2a2a1a', eye: '#ff2020', rider: '#1a1a1a', helm: '#ddd', horn: '#fff', lance: '#555' },
+        player:      { body: '#28c', wing: '#4ef', eye: '#fff', rider: '#ff0', helm: '#fc0', beak: '#fa0', lance: '#ccc' },
+        bloodKnight: { body: '#060', wing: '#0a0', eye: '#ff0', rider: '#a00', helm: '#c22', beak: '#fc0', lance: '#aaa' },
+        shadowRider: { body: '#606', wing: '#a0a', eye: '#ff0', rider: '#40a', helm: '#80f', beak: '#fc0', lance: '#88a' },
+        deathLord:   { body: '#444', wing: '#888', eye: '#f00', rider: '#000', helm: '#fff', beak: '#fa0', lance: '#888' },
       };
 
       function spr(type, flap, left) {
@@ -381,27 +406,87 @@
       }
 
       function mkPlayer() {
-        player = mkEnt('player', W / 2 - spW / 2, H * .25);
+        // Spawn on the bottom (widest) platform
+        const bp = plats[plats.length - 1];
+        const px = bp.x + bp.w / 2 - spW / 2;
+        const py = bp.y - spH;
+        player = mkEnt('player', px, py);
+        player.ground = true;
+        player.gPlat = plats.length - 1;
         invulnT = INVULN_T;
+        // Start teleport effect for player
+        addTeleport(px, py, spW, spH, null);
       }
 
       function spawnWave() {
         enemies = [];
         const n = 2 + wave;
+        // Exclude the bottom platform (reserved for player) for enemy spawns
+        const spawnPlats = plats.slice(0, -1);
         for (let i = 0; i < n; i++) {
           let t = 'bloodKnight';
           if (wave >= 5 && Math.random() < .35) t = 'deathLord';
           else if (wave >= 3 && Math.random() < .45) t = 'shadowRider';
-          const e = mkEnt(t, 60 + Math.random() * (W - 120), -20 - Math.random() * 80);
+          // Spawn on a platform
+          const sp = spawnPlats[i % spawnPlats.length];
+          const ex = sp.x + sp.w * (.2 + Math.random() * .6) - spW / 2;
+          const ey = sp.y - spH;
+          const e = mkEnt(t, ex, ey);
           e.left = Math.random() < .5;
+          e.ground = true;
+          e.gPlat = plats.indexOf(sp);
           if (t === 'bloodKnight') { e.speed = .65; e.aggro = .25; }
           if (t === 'shadowRider') { e.speed = 1.1; e.aggro = .55; }
           if (t === 'deathLord') { e.speed = 1.4; e.aggro = .8; }
-          // Stagger patrol heights so they don't all cluster
+          // Stagger patrol heights
           e.patrolY = H * (.2 + .45 * (i / Math.max(1, n - 1)));
           e.patrolDir = Math.random() < .5 ? 1 : -1;
           e.aiTimer = 80 + Math.random() * 150 | 0;
+          // Stagger spawning — entity hidden until teleport finishes
+          e.spawning = true;
+          e.spawnDelay = i * 30; // stagger each enemy
+          addTeleport(ex, ey, spW, spH, e);
           enemies.push(e);
+        }
+      }
+
+      // ─── Teleport Spawn FX ─────────────────────────────────────────────
+      function addTeleport(x, y, w, h, ent) {
+        teleports.push({ x, y, w, h, life: 45, maxLife: 45, ent });
+      }
+
+      function tickTeleports() {
+        for (let i = teleports.length - 1; i >= 0; i--) {
+          const t = teleports[i];
+          t.life--;
+          if (t.life <= 0) {
+            // Reveal entity
+            if (t.ent) t.ent.spawning = false;
+            teleports.splice(i, 1);
+          }
+        }
+      }
+
+      function drawTeleports() {
+        for (const t of teleports) {
+          const prog = 1 - t.life / t.maxLife; // 0→1
+          const cx = t.x + t.w / 2;
+          const cy = t.y + t.h / 2;
+          // Vertical scan lines materializing
+          const scanH = t.h * prog;
+          const top = cy - scanH / 2;
+          for (let sy = 0; sy < scanH; sy += 2) {
+            const sw = t.w * (.3 + prog * .7) * (1 - Math.abs(sy - scanH / 2) / (scanH / 2) * .3);
+            const a = .3 + prog * .5 + Math.sin(sy * .8 + frame * .3) * .15;
+            X.fillStyle = `rgba(100,200,255,${Math.min(1, a)})`;
+            X.fillRect(cx - sw / 2 | 0, top + sy | 0, sw | 0, 2);
+          }
+          // Bright flash at end
+          if (prog > .8) {
+            const fa = (prog - .8) / .2;
+            X.fillStyle = `rgba(255,255,255,${fa * .6})`;
+            X.fillRect(t.x - 4, t.y - 4, t.w + 8, t.h + 8);
+          }
         }
       }
 
@@ -638,7 +723,8 @@
         for (let i = enemies.length - 1; i >= 0; i--) {
           const e = enemies[i]; if (!e.alive) continue;
           const ecx = e.x + e.w / 2, ecy = e.y + e.h * .4;
-          if (Math.hypot(pcx - ecx, pcy - ecy) > 52) continue;
+          if (e.spawning) continue;
+          if (Math.hypot(pcx - ecx, pcy - ecy) > 42) continue;
 
           if (pcy < ecy - 5) {
             // Player wins
@@ -731,63 +817,77 @@
 
       // ─── Drawing ───────────────────────────────────────────────────────
       function drawBG() {
+        // Joust-style: black at top, subtle dark red near lava
         const g = X.createLinearGradient(0, 0, 0, H);
-        g.addColorStop(0, '#080509');
-        g.addColorStop(.45, '#0d080a');
-        g.addColorStop(.8, '#180c08');
-        g.addColorStop(1, '#281005');
+        g.addColorStop(0, '#000');
+        g.addColorStop(.55, '#000');
+        g.addColorStop(.85, '#180808');
+        g.addColorStop(1, '#301008');
         X.fillStyle = g;
         X.fillRect(0, 0, W, H);
       }
 
       function drawLava() {
         const ly = H - LAVA_H;
-        for (let x = 0; x < W; x += 3) {
-          const w1 = Math.sin(x * .018 + frame * .028) * 6;
-          const w2 = Math.sin(x * .045 + frame * .045) * 3;
-          const cy = ly + w1 + w2;
-          const b = 48 + Math.sin(x * .09 + frame * .035) * 18 | 0;
-          X.fillStyle = `hsl(${14 + Math.sin(x * .025) * 8},100%,${b}%)`;
-          X.fillRect(x, cy, 3, H - cy);
+        // Bright Joust-style lava — bold red/orange band
+        X.fillStyle = '#e00'; X.fillRect(0, ly, W, H - ly);
+        // Orange highlight on top edge
+        X.fillStyle = '#f60'; X.fillRect(0, ly, W, 6);
+        X.fillStyle = '#fa0'; X.fillRect(0, ly, W, 3);
+        // Animated shimmer
+        for (let x = 0; x < W; x += 8) {
+          const sh = Math.sin(x * .05 + frame * .04) * 3;
+          X.fillStyle = `rgba(255,200,0,${.15 + Math.sin(x * .08 + frame * .06) * .1})`;
+          X.fillRect(x, ly + 4 + sh, 8, 4);
         }
-        const gl = X.createLinearGradient(0, ly - 55, 0, ly);
-        gl.addColorStop(0, 'transparent');
-        gl.addColorStop(1, 'rgba(255,70,0,.12)');
-        X.fillStyle = gl; X.fillRect(0, ly - 55, W, 55);
+        // Lava splash particles
         for (const l of lavaPx) {
-          X.fillStyle = `rgba(255,${115 + Math.random() * 80 | 0},0,${Math.min(1, l.life / .5)})`;
-          X.fillRect(l.x, l.y, l.sz, l.sz);
+          X.fillStyle = `rgba(255,${140 + Math.random() * 80 | 0},0,${Math.min(1, l.life / .5)})`;
+          X.fillRect(l.x | 0, l.y | 0, (l.sz | 0) + 1, (l.sz | 0) + 1);
         }
       }
 
       function drawPlats() {
         for (let i = 0; i < plats.length; i++) {
           const p = plats[i];
-          X.fillStyle = '#18181e'; X.fillRect(p.x, p.y, p.w, p.h);
-          X.fillStyle = '#28282f'; X.fillRect(p.x, p.y, p.w, 3);
-          X.fillStyle = '#0c0c10'; X.fillRect(p.x, p.y + p.h - 3, p.w, 3);
-          miniSkull(p.x + 5, p.y + 3);
-          miniSkull(p.x + p.w - 12, p.y + 3);
-          X.fillStyle = 'rgba(255,255,255,.025)';
-          for (let sx = p.x + 14; sx < p.x + p.w - 14; sx += 14) X.fillRect(sx, p.y + 5, 7, 4);
+          // Rocky brown platform body
+          X.fillStyle = '#6a3a1a'; X.fillRect(p.x, p.y, p.w, p.h);
+          // Orange highlight on top surface
+          X.fillStyle = '#a06020'; X.fillRect(p.x, p.y, p.w, 4);
+          X.fillStyle = '#c08030'; X.fillRect(p.x + 2, p.y, p.w - 4, 2);
+          // Darker underside
+          X.fillStyle = '#3a1a08'; X.fillRect(p.x, p.y + p.h - 4, p.w, 4);
+          // Rock texture bumps & stalactites
+          if (p.rocks) {
+            for (const r of p.rocks) {
+              if (r.under) {
+                // Hanging stalactite/root
+                X.fillStyle = '#4a2010';
+                X.fillRect(p.x + r.rx, p.y + r.ry, r.rw, r.rh);
+                X.fillStyle = '#5a3018';
+                X.fillRect(p.x + r.rx, p.y + r.ry, r.rw, 2);
+              } else {
+                // Surface bump
+                X.fillStyle = '#b08040';
+                X.fillRect(p.x + r.rx, p.y + r.ry, r.rw, r.rh);
+              }
+            }
+          }
+          // Subtle edge shadows
+          X.fillStyle = 'rgba(0,0,0,.25)';
+          X.fillRect(p.x, p.y + p.h - 2, p.w, 2);
+          // Blood stains
           for (const s of stains) {
             if (s.pi !== i) continue;
-            X.fillStyle = 'rgba(110,8,8,.55)';
-            X.fillRect(p.x + s.rx, p.y - s.h, s.w, s.h + 2);
-            X.fillStyle = 'rgba(90,4,4,.25)';
-            X.fillRect(p.x + s.rx + s.w / 2 - .5, p.y + 1, 1, 2 + Math.random() * 4);
+            X.fillStyle = 'rgba(160,0,0,.5)';
+            X.fillRect((p.x + s.rx) | 0, p.y - s.h, s.w | 0, (s.h | 0) + 2);
           }
         }
       }
 
-      function miniSkull(x, y) {
-        X.fillStyle = '#3a3a3a'; X.fillRect(x, y, 7, 6); X.fillRect(x + 1, y + 6, 5, 3);
-        X.fillStyle = '#1a1a1a'; X.fillRect(x + 1, y + 2, 2, 2); X.fillRect(x + 4, y + 2, 2, 2);
-        X.fillStyle = '#2a2a2a'; X.fillRect(x + 2, y + 6, 1, 3); X.fillRect(x + 4, y + 6, 1, 3);
-      }
-
       function drawEnt(e) {
         if (!e.alive) return;
+        if (e.spawning) return; // hidden during teleport
         if (e === player && invulnT > 0 && invulnT % 8 < 4) return;
         X.drawImage(spr(e.type, e.flap, e.left), e.x, e.y, e.w, e.h);
       }
@@ -880,7 +980,7 @@
 
       // ─── Screens ───────────────────────────────────────────────────────
       function drawTitle() {
-        drawBG(); drawLava(); drawParts();
+        drawBG(); drawLava(); drawPlats(); drawParts();
         const cx = W / 2, cy = H * .42;
         // Silhouette jousters
         X.fillStyle = '#140408';
@@ -915,6 +1015,9 @@
 
       function drawWaveScreen() {
         drawBG(); drawLava(); drawPlats();
+        drawTeleports();
+        for (const e of enemies) drawEnt(e);
+        if (player) drawEnt(player);
         const t = waveT / 130;
         const sc = 1 + Math.sin(t * Math.PI) * .25;
         X.save(); X.translate(W / 2, H * .38); X.scale(sc, sc);
@@ -929,7 +1032,7 @@
       }
 
       function drawGameOver() {
-        drawBG(); drawLava();
+        drawBG(); drawLava(); drawPlats();
         bloodText('GAME OVER', W / 2, H * .28, Math.min(68, W * .07));
         X.textAlign = 'center';
         X.fillStyle = '#ff0'; X.font = `bold 32px ${FONT}`;
@@ -955,6 +1058,7 @@
             break;
           case 'waveAnnounce':
             tickEmbers();
+            tickTeleports();
             waveT--;
             if (waveT <= 0) state = 'playing';
             break;
@@ -971,7 +1075,7 @@
       function startGame() {
         audio(); droneOn();
         state = 'waveAnnounce'; wave = 1; score = 0; lives = 3;
-        stains = []; bloods = []; gores = []; bones = [];
+        stains = []; bloods = []; gores = []; bones = []; teleports = [];
         mkPlayer(); spawnWave(); waveT = 130; sfx('wave');
       }
 
@@ -990,9 +1094,12 @@
         }
         if (invulnT > 0) invulnT--;
 
-        for (const e of enemies) { if (e.alive) { aiUpdate(e); physEnt(e, false); } }
+        for (const e of enemies) {
+          if (e.alive && !e.spawning) { aiUpdate(e); physEnt(e, false); }
+        }
         collisions();
         tickParts();
+        tickTeleports();
 
         if (enemies.every(e => !e.alive)) {
           wave++; state = 'waveAnnounce'; waveT = 130; spawnWave(); sfx('wave');
@@ -1007,6 +1114,7 @@
           case 'waveAnnounce': drawWaveScreen(); break;
           case 'playing':
             applyShake(); drawBG(); drawLava(); drawPlats();
+            drawTeleports();
             for (const e of enemies) drawEnt(e);
             if (player) drawEnt(player);
             drawParts(); drawFlash(); drawScanlines(); drawHUD();
