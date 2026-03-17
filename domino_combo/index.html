@@ -1857,14 +1857,16 @@
 
             // Build a map of merge targets for the slide-toward animation
             const mergeTargetMap = new Map(); // 'r,c' -> {tr, tc}
+            const sixTargets = new Set();     // 'r,c' keys for six-group merge targets
             for (const grp of groups) {
-                if (grp.val < 6) {
-                    const target = pickMergeTarget(grp);
-                    for (const cell of grp.cells) {
-                        const key = cell.r + ',' + cell.c;
-                        if (cell.r !== target.r || cell.c !== target.c) {
-                            mergeTargetMap.set(key, { tr: target.r, tc: target.c });
-                        }
+                const target = pickMergeTarget(grp);
+                if (grp.val === 6) {
+                    sixTargets.add(target.r + ',' + target.c);
+                }
+                for (const cell of grp.cells) {
+                    const key = cell.r + ',' + cell.c;
+                    if (cell.r !== target.r || cell.c !== target.c) {
+                        mergeTargetMap.set(key, { tr: target.r, tc: target.c });
                     }
                 }
             }
@@ -1876,10 +1878,7 @@
                 const el = cellEl(r, c);
                 if (!el) return;
 
-                if (sixCells.has(k)) {
-                    el.classList.add('clearing-6');
-                    spawnParticles(el);
-                } else if (mergeTargetMap.has(k)) {
+                if (mergeTargetMap.has(k)) {
                     // Slide this cell toward the merge target
                     const { tr, tc } = mergeTargetMap.get(k);
                     const dx = (tc - c) * step;
@@ -1889,13 +1888,29 @@
                         el.classList.add('go');
                         el.style.transform = `translate(${dx}px, ${dy}px) scale(0.3)`;
                     });
+                } else if (sixCells.has(k)) {
+                    // Six merge target: wait for slide-in, then explode
+                    // (explosion triggered after slide delay below)
                 } else {
                     el.classList.add('clearing');
                 }
             });
 
-            if (sixCells.size > 0) sfx('explode6');
+            // Explode six merge targets after the slide-toward animation finishes
+            if (sixTargets.size > 0) {
+                setTimeout(() => {
+                    sixTargets.forEach(k => {
+                        const el = cellEl(...k.split(',').map(Number));
+                        if (el) {
+                            el.classList.add('clearing-6');
+                            spawnParticles(el);
+                        }
+                    });
+                    sfx('explode6');
+                }, 320);
+            }
 
+            const clearDelay = sixTargets.size > 0 ? 870 : 420;
             setTimeout(() => {
                 // Clear all matched cells
                 allClear.forEach(k => {
@@ -1946,7 +1961,7 @@
                 }
 
                 setTimeout(processMatches, 550);   // chain reaction (longer to let flip finish)
-            }, 420);
+            }, clearDelay);
         }
 
         function showPopup(pts, comboN, isChain, offsetY) {

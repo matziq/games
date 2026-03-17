@@ -1,810 +1,943 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <title>Blood Joust</title>
   <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:system-ui,sans-serif}
-    canvas{display:block;width:100vw;height:100vh}
-    .menu-link{position:fixed;top:10px;left:12px;z-index:9999;text-decoration:none;font-weight:700;font-size:13px;color:#c0392b;transition:color .15s;letter-spacing:.3px}
-    .menu-link:hover{color:#e74c3c}
-    .menu-link:focus-visible{outline:3px solid rgba(192,57,43,.5);outline-offset:2px}
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      font-family: system-ui, sans-serif
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh
+    }
+
+    .menu-link {
+      position: fixed;
+      top: 10px;
+      left: 12px;
+      z-index: 9999;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 13px;
+      color: #c0392b;
+      transition: color .15s;
+      letter-spacing: .3px
+    }
+
+    .menu-link:hover {
+      color: #e74c3c
+    }
+
+    .menu-link:focus-visible {
+      outline: 3px solid rgba(192, 57, 43, .5);
+      outline-offset: 2px
+    }
+
+    /* ── On-screen mobile controls ────────────────────────── */
+    .touch-controls {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 9000;
+      pointer-events: none;
+      padding: 0 12px max(14px, env(safe-area-inset-bottom, 14px));
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    @media (pointer: coarse) {
+      .touch-controls { display: flex; }
+    }
+    .tc-group {
+      display: flex;
+      gap: 10px;
+      pointer-events: auto;
+    }
+    .tc-btn {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: 2px solid rgba(192,57,43,.55);
+      background: rgba(30,8,8,.55);
+      color: rgba(255,255,255,.85);
+      font-size: 28px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    .tc-btn:active, .tc-btn.pressed {
+      background: rgba(192,57,43,.45);
+      border-color: rgba(220,80,60,.8);
+    }
+    .tc-btn.tc-flap {
+      width: 88px;
+      height: 88px;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
   </style>
 </head>
+
 <body>
   <a class="menu-link" href="../gamemenu.html" aria-label="Back to games menu">← Games Menu</a>
   <canvas id="game"></canvas>
+
+  <!-- Mobile on-screen controls -->
+  <div class="touch-controls" id="touch-controls">
+    <div class="tc-group">
+      <button class="tc-btn" id="tc-left" aria-label="Move left">◀</button>
+      <button class="tc-btn" id="tc-right" aria-label="Move right">▶</button>
+    </div>
+    <div class="tc-group">
+      <button class="tc-btn tc-flap" id="tc-flap" aria-label="Flap">FLAP</button>
+    </div>
+  </div>
   <script>
-(()=>{
-'use strict';
+    (() => {
+      'use strict';
 
-/* ═══════════════════════════════════════════════════════════════════
-   BLOOD JOUST — Flying Mount Combat Arena
-   "Only the highest shall survive"
-   ═══════════════════════════════════════════════════════════════════ */
+      /* ═══════════════════════════════════════════════════════════════════
+         BLOOD JOUST — Flying Mount Combat Arena
+         "Only the highest shall survive"
+         ═══════════════════════════════════════════════════════════════════ */
 
-// ─── Canvas ────────────────────────────────────────────────────────
-const C = document.getElementById('game');
-const X = C.getContext('2d');
-let W, H;
-let plats = [];
-function resize() { W = C.width = innerWidth; H = C.height = innerHeight; buildPlatforms(); }
-addEventListener('resize', resize);
+      // ─── Canvas ────────────────────────────────────────────────────────
+      const C = document.getElementById('game');
+      const X = C.getContext('2d');
+      let W, H;
+      let plats = [];
+      function resize() { W = C.width = innerWidth; H = C.height = innerHeight; buildPlatforms(); }
+      addEventListener('resize', resize);
 
-// ─── Tuning ────────────────────────────────────────────────────────
-const G      = 0.34;
-const FLAP   = -6.0;
-const MAXVY  = 9;
-const HACC   = 0.48;
-const HDRAG  = 0.91;
-const MAXVX  = 5.5;
-const LAVA_H = 65;
-const P_LIM  = 900;
-const RESPAWN_T = 90;
-const INVULN_T  = 120;
+      // ─── Tuning ────────────────────────────────────────────────────────
+      const G = 0.34;
+      const FLAP = -6.0;
+      const MAXVY = 9;
+      const HACC = 0.48;
+      const HDRAG = 0.91;
+      const MAXVX = 5.5;
+      const LAVA_H = 65;
+      const P_LIM = 900;
+      const RESPAWN_T = 90;
+      const INVULN_T = 120;
 
-// ─── State ─────────────────────────────────────────────────────────
-let state = 'title';
-let score = 0, hiScore = +(localStorage.getItem('bjHi')) || 0;
-let lives = 3, wave = 0, waveT = 0;
-let shakeT = 0, shakeI = 0, flashT = 0;
-let frame = 0, dt = 1, lastT = 0;
-let player = null, enemies = [], respawnT = 0, invulnT = 0;
+      // ─── State ─────────────────────────────────────────────────────────
+      let state = 'title';
+      let score = 0, hiScore = +(localStorage.getItem('bjHi')) || 0;
+      let lives = 3, wave = 0, waveT = 0;
+      let shakeT = 0, shakeI = 0, flashT = 0;
+      let frame = 0, dt = 1, lastT = 0;
+      let player = null, enemies = [], respawnT = 0, invulnT = 0;
 
-// Particles
-let bloods = [], gores = [], bones = [], embers = [], lavaPx = [];
-let stains = [];
+      // Particles
+      let bloods = [], gores = [], bones = [], embers = [], lavaPx = [];
+      let stains = [];
 
-// ─── Input ─────────────────────────────────────────────────────────
-const K = {};
-onkeydown = e => { K[e.code] = 1; if (e.code === 'Space') e.preventDefault(); };
-onkeyup   = e => { K[e.code] = 0; };
+      // ─── Input ─────────────────────────────────────────────────────────
+      const K = {};
+      onkeydown = e => { K[e.code] = 1; if (e.code === 'Space') e.preventDefault(); };
+      onkeyup = e => { K[e.code] = 0; };
 
-// ─── Audio ─────────────────────────────────────────────────────────
-let ac = null;
-function audio() { if (!ac) ac = new (AudioContext || webkitAudioContext)(); return ac; }
-
-function noise(len, decay, vol, mod) {
-  const a = audio(), g = a.createGain(), b = a.createBuffer(1, len, a.sampleRate), d = b.getChannelData(0);
-  const n = a.currentTime;
-  for (let i = 0; i < len; i++) {
-    let v = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
-    if (mod) v *= Math.sin(i / a.sampleRate * mod * Math.PI * 2);
-    d[i] = v;
-  }
-  const s = a.createBufferSource(); s.buffer = b; s.connect(g); g.connect(a.destination);
-  g.gain.setValueAtTime(vol, n); g.gain.exponentialRampToValueAtTime(.001, n + len / a.sampleRate);
-  s.start(n);
-}
-
-function sfx(id) {
-  try {
-    const a = audio(), n = a.currentTime, g = a.createGain(); g.connect(a.destination);
-    switch (id) {
-      case 'flap': noise(2400, 2, .12); break;
-      case 'kill': {
-        noise(9000, 4, .5, 80);
-        const o = a.createOscillator(); o.type = 'sine';
-        o.frequency.setValueAtTime(150, n); o.frequency.exponentialRampToValueAtTime(30, n + .2);
-        const g2 = a.createGain(); g2.connect(a.destination);
-        g2.gain.setValueAtTime(.3, n); g2.gain.exponentialRampToValueAtTime(.001, n + .25);
-        o.connect(g2); o.start(n); o.stop(n + .3); break;
+      // ─── Touch Controls ────────────────────────────────────────────────
+      function tcBind(id, code) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('touchstart', e => { e.preventDefault(); K[code] = 1; el.classList.add('pressed'); }, { passive: false });
+        el.addEventListener('touchend', e => { e.preventDefault(); K[code] = 0; el.classList.remove('pressed'); }, { passive: false });
+        el.addEventListener('touchcancel', () => { K[code] = 0; el.classList.remove('pressed'); });
       }
-      case 'die': {
-        const o = a.createOscillator(); o.type = 'sawtooth';
-        o.frequency.setValueAtTime(220, n); o.frequency.exponentialRampToValueAtTime(35, n + .9);
-        g.gain.setValueAtTime(.3, n); g.gain.exponentialRampToValueAtTime(.001, n + 1);
-        o.connect(g); o.start(n); o.stop(n + 1); break;
-      }
-      case 'lava': noise(14000, 3, .25, 200); break;
-      case 'wave': {
-        const o = a.createOscillator(); o.type = 'square';
-        o.frequency.setValueAtTime(90, n); o.frequency.exponentialRampToValueAtTime(400, n + .15);
-        o.frequency.exponentialRampToValueAtTime(250, n + .35);
-        o.frequency.exponentialRampToValueAtTime(500, n + .55);
-        g.gain.setValueAtTime(.22, n); g.gain.exponentialRampToValueAtTime(.001, n + .7);
-        o.connect(g); o.start(n); o.stop(n + .7); break;
-      }
-    }
-  } catch (e) {}
-}
-
-let drone = null;
-function droneOn() {
-  if (drone) return;
-  const a = audio(), g = a.createGain(); g.gain.value = .032; g.connect(a.destination);
-  const o1 = a.createOscillator(); o1.type = 'sawtooth'; o1.frequency.value = 38; o1.connect(g); o1.start();
-  const o2 = a.createOscillator(); o2.type = 'sine'; o2.frequency.value = 57; o2.connect(g); o2.start();
-  drone = { g, o1, o2 };
-}
-function droneOff() {
-  if (!drone) return;
-  try { drone.o1.stop(); drone.o2.stop(); } catch (e) {}
-  drone = null;
-}
-
-// ─── Platforms ─────────────────────────────────────────────────────
-function buildPlatforms() {
-  plats = [
-    { x: W * .10, y: H * .18, w: Math.max(70, W * .09) },
-    { x: W * .80, y: H * .16, w: Math.max(70, W * .09) },
-    { x: W * .30, y: H * .38, w: Math.max(90, W * .15) },
-    { x: W * .56, y: H * .43, w: Math.max(90, W * .14) },
-    { x: W * .04, y: H * .62, w: Math.max(100, W * .20) },
-    { x: W * .72, y: H * .60, w: Math.max(100, W * .18) },
-    { x: W * .18, y: H * .80, w: Math.max(120, W * .50) },
-  ];
-  for (const p of plats) {
-    p.h = 18;
-    if (p.x + p.w > W - 5) p.x = W - p.w - 5;
-    if (p.y > H - LAVA_H - 30) p.y = H - LAVA_H - 35;
-  }
-}
-
-// ─── Sprites ───────────────────────────────────────────────────────
-const SC = 2;
-const spW = 26 * SC, spH = 18 * SC;
-const sprCache = {};
-
-function px(cx, x, y, w, h, c) { cx.fillStyle = c; cx.fillRect(x * SC, y * SC, w * SC, h * SC); }
-
-function drawBirdPx(cx, col, fp, left) {
-  cx.save();
-  if (left) { cx.translate(spW, 0); cx.scale(-1, 1); }
-
-  // Body
-  px(cx, 9, 9, 9, 5, col.body);
-  px(cx, 7, 10, 3, 3, col.body);  // neck
-  px(cx, 5, 9, 3, 3, col.body);   // head
-  // Beak
-  px(cx, 3, 10, 2, 1, '#444');
-  px(cx, 3, 10, 1, 1, '#555');
-  // Eye
-  px(cx, 6, 9, 1, 1, col.eye);
-  // Tail
-  px(cx, 18, 8, 3, 2, col.wing);
-  px(cx, 20, 7, 2, 2, col.wing);
-  px(cx, 21, 6, 2, 1, col.body);
-
-  // Wings (animated)
-  const wy = fp === 1 ? 4 : fp === 2 ? 10 : fp === 3 ? 8 : 7;
-  px(cx, 8, wy, 11, 2, col.wing);
-  if (fp === 1) {         // up-stroke
-    px(cx, 6, 3, 4, 2, col.wing);
-    px(cx, 17, 3, 4, 2, col.wing);
-    px(cx, 5, 2, 2, 2, col.wing);
-    px(cx, 19, 2, 2, 2, col.wing);
-  } else if (fp === 2) {  // down-stroke
-    px(cx, 9, wy + 2, 9, 1, col.wing);
-  }
-
-  // Talons
-  px(cx, 11, 14, 1, 2, '#555'); px(cx, 10, 15, 1, 1, '#555');
-  px(cx, 16, 14, 1, 2, '#555'); px(cx, 17, 15, 1, 1, '#555');
-
-  // Rider torso
-  px(cx, 11, 4, 5, 5, col.rider);
-  px(cx, 10, 6, 1, 3, col.rider); // left arm
-  px(cx, 16, 6, 1, 3, col.rider); // right arm
-  // Head
-  px(cx, 12, 2, 3, 3, col.rider);
-  // Helmet
-  px(cx, 11, 1, 5, 2, col.helm);
-  // Horns
-  px(cx, 10, 0, 1, 2, col.horn || col.helm);
-  px(cx, 16, 0, 1, 2, col.horn || col.helm);
-
-  // Lance
-  px(cx, 1, 7, 10, 1, col.lance || '#777');
-  px(cx, 0, 7, 2, 1, '#a01010'); // blood tip
-  px(cx, 0, 6, 1, 1, '#801010');
-
-  cx.restore();
-}
-
-const PAL = {
-  player:      { body: '#2c1a0e', wing: '#3d2b1a', eye: '#e74c3c', rider: '#555', helm: '#777', horn: '#999', lance: '#888' },
-  bloodKnight: { body: '#555',    wing: '#666',    eye: '#ff0',    rider: '#8b0000', helm: '#a01010', horn: '#c02020', lance: '#777' },
-  shadowRider: { body: '#1a0a2e', wing: '#2d1b4e', eye: '#c050ff', rider: '#2a1040', helm: '#5020a0', horn: '#7030d0', lance: '#444' },
-  deathLord:   { body: '#3a3a2a', wing: '#2a2a1a', eye: '#ff2020', rider: '#1a1a1a', helm: '#ddd',    horn: '#fff',    lance: '#555' },
-};
-
-function spr(type, flap, left) {
-  const k = type + flap + (left ? 'L' : 'R');
-  if (sprCache[k]) return sprCache[k];
-  const c = document.createElement('canvas'); c.width = spW; c.height = spH;
-  drawBirdPx(c.getContext('2d'), PAL[type], flap, left);
-  sprCache[k] = c;
-  return c;
-}
-
-// ─── Entity ────────────────────────────────────────────────────────
-function mkEnt(type, x, y) {
-  return {
-    type, x, y, vx: 0, vy: 0, w: spW, h: spH,
-    left: false, flap: 0, flapT: 0, flapCD: 0,
-    ground: false, gPlat: -1, alive: true,
-    speed: 1, aggro: 0
-  };
-}
-
-function mkPlayer() {
-  player = mkEnt('player', W / 2 - spW / 2, H * .25);
-  invulnT = INVULN_T;
-}
-
-function spawnWave() {
-  enemies = [];
-  const n = 2 + wave;
-  for (let i = 0; i < n; i++) {
-    let t = 'bloodKnight';
-    if (wave >= 5 && Math.random() < .35) t = 'deathLord';
-    else if (wave >= 3 && Math.random() < .45) t = 'shadowRider';
-    const e = mkEnt(t, 60 + Math.random() * (W - 120), -20 - Math.random() * 80);
-    e.left = Math.random() < .5;
-    if (t === 'bloodKnight')  { e.speed = .65; e.aggro = .25; }
-    if (t === 'shadowRider')  { e.speed = 1.1; e.aggro = .55; }
-    if (t === 'deathLord')    { e.speed = 1.4; e.aggro = .8;  }
-    enemies.push(e);
-  }
-}
-
-// ─── Particles ─────────────────────────────────────────────────────
-function addBlood(x, y, n) {
-  for (let i = 0; i < n && bloods.length < P_LIM; i++)
-    bloods.push({
-      x, y,
-      vx: (Math.random() - .5) * 9,
-      vy: (Math.random() - .85) * 7 - 2,
-      sz: 1 + Math.random() * 3,
-      life: 2 + Math.random() * 1.5,
-      col: `hsl(${354 + Math.random() * 12},${75 + Math.random() * 25}%,${18 + Math.random() * 22}%)`
-    });
-}
-
-function addGore(x, y, n) {
-  for (let i = 0; i < n && gores.length < 200; i++)
-    gores.push({
-      x, y,
-      vx: (Math.random() - .5) * 7,
-      vy: (Math.random() - .7) * 8 - 1,
-      sz: 3 + Math.random() * 5,
-      rot: Math.random() * 6.28,
-      rv: (Math.random() - .5) * .35,
-      life: 2.5 + Math.random() * 2,
-      bn: 0,
-      col: `hsl(${348 + Math.random() * 16},${65 + Math.random() * 35}%,${12 + Math.random() * 18}%)`
-    });
-}
-
-function addBone(x, y, n) {
-  for (let i = 0; i < n && bones.length < 150; i++)
-    bones.push({
-      x, y,
-      vx: (Math.random() - .5) * 8,
-      vy: (Math.random() - .6) * 9 - 2,
-      sz: 2 + Math.random() * 3,
-      rot: Math.random() * 6.28,
-      rv: (Math.random() - .5) * .45,
-      life: 3 + Math.random() * 2,
-      bn: 0,
-      col: `hsl(38,${25 + Math.random() * 35}%,${72 + Math.random() * 22}%)`
-    });
-}
-
-function killFX(x, y) {
-  addBlood(x, y, 25 + (Math.random() * 18 | 0));
-  addGore(x, y, 5 + (Math.random() * 6 | 0));
-  addBone(x, y, 3 + (Math.random() * 4 | 0));
-  shakeT = 14; shakeI = 10; flashT = 8;
-  sfx('kill');
-}
-
-function addStain(x, pi) {
-  if (pi < 0 || pi >= plats.length) return;
-  stains.push({ pi, rx: x - plats[pi].x, w: 2 + Math.random() * 7, h: 1 + Math.random() * 3 });
-  if (stains.length > 350) stains.shift();
-}
-
-// ─── Physics ───────────────────────────────────────────────────────
-function physEnt(e, isP) {
-  if (!e.alive) return;
-  if (e.flapT > 0) e.flapT--;
-  if (e.flapCD > 0) e.flapCD--;
-
-  e.vy += G * dt;
-  if (e.vy > MAXVY) e.vy = MAXVY;
-  e.x += e.vx * dt;
-  e.y += e.vy * dt;
-  e.vx *= HDRAG;
-
-  // Flap animation
-  e.flap = e.flapT > 0 ? (e.flapT > 9 ? 1 : e.flapT > 5 ? 2 : 3) : 0;
-
-  // Screen wrap
-  if (e.x < -e.w * 1.2) e.x = W + e.w * .2;
-  if (e.x > W + e.w * .2) e.x = -e.w * 1.2;
-
-  // Platform landing
-  e.ground = false; e.gPlat = -1;
-  const el = e.x + e.w * .15, er = e.x + e.w * .85, eb = e.y + e.h;
-  for (let i = 0; i < plats.length; i++) {
-    const p = plats[i];
-    if (er > p.x && el < p.x + p.w && e.vy >= 0 && eb >= p.y && eb - e.vy * dt <= p.y + 6) {
-      e.y = p.y - e.h; e.vy = 0; e.ground = true; e.gPlat = i; break;
-    }
-  }
-
-  // Lava
-  if (e.y + e.h > H - LAVA_H) {
-    e.alive = false;
-    for (let i = 0; i < 10; i++)
-      lavaPx.push({
-        x: e.x + e.w / 2 + (Math.random() - .5) * 50,
-        y: H - LAVA_H,
-        vy: -2.5 - Math.random() * 3.5,
-        sz: 2 + Math.random() * 5,
-        life: .9 + Math.random() * .7
-      });
-    sfx('lava');
-    if (isP) loseLife();
-  }
-}
-
-function doFlap(e) {
-  if (e.flapCD > 0) return;
-  e.vy = FLAP; e.flapT = 13; e.flapCD = 8; e.ground = false;
-  if (e === player) sfx('flap');
-}
-
-function loseLife() {
-  lives--;
-  if (lives <= 0) {
-    state = 'gameOver'; droneOff();
-    if (score > hiScore) { hiScore = score; localStorage.setItem('bjHi', hiScore); saveRemote(); }
-  } else {
-    respawnT = RESPAWN_T;
-  }
-}
-
-// ─── Enemy AI ──────────────────────────────────────────────────────
-function aiUpdate(e) {
-  if (!e.alive || !player || !player.alive) {
-    // Patrol randomly when no player target
-    if (Math.random() < .06) e.vx += (Math.random() - .5) * 2;
-    if (e.y > H - LAVA_H - 120) doFlap(e);
-    if (e.vy > 3 && Math.random() < .15) doFlap(e);
-    return;
-  }
-
-  const dx = player.x - e.x, dy = player.y - e.y;
-
-  // Horizontal pursuit
-  if (Math.abs(dx) > 20) {
-    const dir = Math.sign(dx);
-    e.vx += dir * HACC * e.speed * .5;
-    e.left = dir < 0;
-  }
-  if (Math.abs(e.vx) > MAXVX * e.speed) e.vx = Math.sign(e.vx) * MAXVX * e.speed;
-
-  // Try to get above player
-  const wantUp = dy > -50 || e.y > H * .65;
-  if (wantUp && Math.random() < .12 + e.aggro * .14) doFlap(e);
-
-  // Avoid lava
-  if (e.y > H - LAVA_H - 110) doFlap(e);
-
-  // Gravity dive if above and close
-  if (dy > 60 && Math.abs(dx) < 70 && e.aggro > .45) { /* let gravity work */ }
-  else if (e.vy > 4 && Math.random() < .18 + e.aggro * .1) doFlap(e);
-
-  // Organic randomness
-  if (Math.random() < .025) e.vx += (Math.random() - .5) * 2;
-  // Avoid top of screen
-  if (e.y < -30) e.vy = Math.max(e.vy, 1);
-}
-
-// ─── Collision ─────────────────────────────────────────────────────
-function collisions() {
-  if (!player || !player.alive || invulnT > 0) return;
-  const pcx = player.x + player.w / 2, pcy = player.y + player.h * .4;
-
-  for (let i = enemies.length - 1; i >= 0; i--) {
-    const e = enemies[i]; if (!e.alive) continue;
-    const ecx = e.x + e.w / 2, ecy = e.y + e.h * .4;
-    if (Math.hypot(pcx - ecx, pcy - ecy) > 38) continue;
-
-    if (pcy < ecy - 5) {
-      // Player wins
-      e.alive = false;
-      killFX(ecx, ecy);
-      score += e.type === 'deathLord' ? 500 : e.type === 'shadowRider' ? 250 : 100;
-      player.vy = -4.5;
-      for (let j = 0; j < plats.length; j++) {
-        if (ecx > plats[j].x && ecx < plats[j].x + plats[j].w && ecy < plats[j].y) {
-          addStain(ecx, j); break;
+      tcBind('tc-left', 'ArrowLeft');
+      tcBind('tc-right', 'ArrowRight');
+      // Flap button: set Space, game loop clears it each frame
+      {
+        const el = document.getElementById('tc-flap');
+        if (el) {
+          el.addEventListener('touchstart', e => {
+            e.preventDefault(); K.Space = 1; el.classList.add('pressed');
+          }, { passive: false });
+          el.addEventListener('touchend', e => { e.preventDefault(); el.classList.remove('pressed'); }, { passive: false });
+          el.addEventListener('touchcancel', () => el.classList.remove('pressed'));
         }
       }
-    } else if (ecy < pcy - 5) {
-      // Enemy wins
-      player.alive = false;
-      killFX(pcx, pcy); sfx('die');
-      loseLife();
-    } else {
-      // Tie — both bounce
-      const sign = Math.sign(pcx - ecx) || 1;
-      player.vx = -sign * 4; e.vx = sign * 4;
-      player.vy = -3.5; e.vy = -3.5;
-    }
-  }
-}
+      // Tap anywhere on canvas to flap (during gameplay) or start/restart
+      C.addEventListener('touchstart', e => {
+        // Ignore if a touch-control button was tapped
+        if (e.target.closest('.touch-controls')) return;
+        e.preventDefault();
+        if (state === 'title' || state === 'gameOver') { K.Space = 1; }
+        else if (state === 'playing') { K.Space = 1; }
+      }, { passive: false });
 
-// ─── Particle Update ──────────────────────────────────────────────
-function tickParts() {
-  // Blood
-  for (let i = bloods.length - 1; i >= 0; i--) {
-    const b = bloods[i];
-    b.vy += G * .4; b.x += b.vx; b.y += b.vy; b.life -= .017 * dt;
-    for (let j = 0; j < plats.length; j++) {
-      const p = plats[j];
-      if (b.x > p.x && b.x < p.x + p.w && b.y >= p.y && b.y - b.vy <= p.y + 5) {
-        b.vy = 0; b.vx = 0; b.y = p.y; addStain(b.x, j); b.life = Math.min(b.life, .2);
+      // ─── Audio ─────────────────────────────────────────────────────────
+      let ac = null;
+      function audio() { if (!ac) ac = new (AudioContext || webkitAudioContext)(); return ac; }
+
+      function noise(len, decay, vol, mod) {
+        const a = audio(), g = a.createGain(), b = a.createBuffer(1, len, a.sampleRate), d = b.getChannelData(0);
+        const n = a.currentTime;
+        for (let i = 0; i < len; i++) {
+          let v = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+          if (mod) v *= Math.sin(i / a.sampleRate * mod * Math.PI * 2);
+          d[i] = v;
+        }
+        const s = a.createBufferSource(); s.buffer = b; s.connect(g); g.connect(a.destination);
+        g.gain.setValueAtTime(vol, n); g.gain.exponentialRampToValueAtTime(.001, n + len / a.sampleRate);
+        s.start(n);
       }
-    }
-    if (b.life <= 0 || b.y > H) bloods.splice(i, 1);
-  }
-  // Gore
-  for (let i = gores.length - 1; i >= 0; i--) {
-    const g = gores[i];
-    g.vy += G * .5; g.x += g.vx; g.y += g.vy; g.rot += g.rv; g.life -= .017 * dt;
-    for (let j = 0; j < plats.length; j++) {
-      const p = plats[j];
-      if (g.x > p.x && g.x < p.x + p.w && g.y >= p.y && g.y - g.vy <= p.y + 7 && g.bn < 1) {
-        g.vy *= -.35; g.vx *= .4; g.y = p.y - 1; g.bn++; addStain(g.x, j);
+
+      function sfx(id) {
+        try {
+          const a = audio(), n = a.currentTime, g = a.createGain(); g.connect(a.destination);
+          switch (id) {
+            case 'flap': noise(2400, 2, .12); break;
+            case 'kill': {
+              noise(9000, 4, .5, 80);
+              const o = a.createOscillator(); o.type = 'sine';
+              o.frequency.setValueAtTime(150, n); o.frequency.exponentialRampToValueAtTime(30, n + .2);
+              const g2 = a.createGain(); g2.connect(a.destination);
+              g2.gain.setValueAtTime(.3, n); g2.gain.exponentialRampToValueAtTime(.001, n + .25);
+              o.connect(g2); o.start(n); o.stop(n + .3); break;
+            }
+            case 'die': {
+              const o = a.createOscillator(); o.type = 'sawtooth';
+              o.frequency.setValueAtTime(220, n); o.frequency.exponentialRampToValueAtTime(35, n + .9);
+              g.gain.setValueAtTime(.3, n); g.gain.exponentialRampToValueAtTime(.001, n + 1);
+              o.connect(g); o.start(n); o.stop(n + 1); break;
+            }
+            case 'lava': noise(14000, 3, .25, 200); break;
+            case 'wave': {
+              const o = a.createOscillator(); o.type = 'square';
+              o.frequency.setValueAtTime(90, n); o.frequency.exponentialRampToValueAtTime(400, n + .15);
+              o.frequency.exponentialRampToValueAtTime(250, n + .35);
+              o.frequency.exponentialRampToValueAtTime(500, n + .55);
+              g.gain.setValueAtTime(.22, n); g.gain.exponentialRampToValueAtTime(.001, n + .7);
+              o.connect(g); o.start(n); o.stop(n + .7); break;
+            }
+          }
+        } catch (e) { }
       }
-    }
-    if (g.life <= 0 || g.y > H) gores.splice(i, 1);
-  }
-  // Bones
-  for (let i = bones.length - 1; i >= 0; i--) {
-    const b = bones[i];
-    b.vy += G * .45; b.x += b.vx; b.y += b.vy; b.rot += b.rv; b.life -= .017 * dt;
-    for (let j = 0; j < plats.length; j++) {
-      const p = plats[j];
-      if (b.x > p.x && b.x < p.x + p.w && b.y >= p.y && b.y - b.vy <= p.y + 7 && b.bn < 2) {
-        b.vy *= -.45; b.vx *= .55; b.y = p.y - 1; b.bn++;
+
+      let drone = null;
+      function droneOn() {
+        if (drone) return;
+        const a = audio(), g = a.createGain(); g.gain.value = .032; g.connect(a.destination);
+        const o1 = a.createOscillator(); o1.type = 'sawtooth'; o1.frequency.value = 38; o1.connect(g); o1.start();
+        const o2 = a.createOscillator(); o2.type = 'sine'; o2.frequency.value = 57; o2.connect(g); o2.start();
+        drone = { g, o1, o2 };
       }
-    }
-    if (b.life <= 0 || b.y > H) bones.splice(i, 1);
-  }
-  // Embers
-  tickEmbers();
-}
+      function droneOff() {
+        if (!drone) return;
+        try { drone.o1.stop(); drone.o2.stop(); } catch (e) { }
+        drone = null;
+      }
 
-function tickEmbers() {
-  if (embers.length < 50 && Math.random() < .25)
-    embers.push({
-      x: Math.random() * W,
-      y: H - LAVA_H + Math.random() * 12,
-      vy: -.4 - Math.random() * 1.1,
-      vx: (Math.random() - .5) * .4,
-      sz: 1 + Math.random() * 2.5,
-      life: 3 + Math.random() * 4,
-      maxL: 7
-    });
-  for (let i = embers.length - 1; i >= 0; i--) {
-    const e = embers[i];
-    e.y += e.vy; e.x += e.vx + Math.sin(frame * .015 + i) * .12; e.life -= .017;
-    if (e.life <= 0 || e.y < -10) embers.splice(i, 1);
-  }
-  for (let i = lavaPx.length - 1; i >= 0; i--) {
-    const l = lavaPx[i]; l.y += l.vy; l.vy += .06; l.life -= .017;
-    if (l.life <= 0) lavaPx.splice(i, 1);
-  }
-}
+      // ─── Platforms ─────────────────────────────────────────────────────
+      function buildPlatforms() {
+        plats = [
+          { x: W * .10, y: H * .18, w: Math.max(70, W * .09) },
+          { x: W * .80, y: H * .16, w: Math.max(70, W * .09) },
+          { x: W * .30, y: H * .38, w: Math.max(90, W * .15) },
+          { x: W * .56, y: H * .43, w: Math.max(90, W * .14) },
+          { x: W * .04, y: H * .62, w: Math.max(100, W * .20) },
+          { x: W * .72, y: H * .60, w: Math.max(100, W * .18) },
+          { x: W * .18, y: H * .80, w: Math.max(120, W * .50) },
+        ];
+        for (const p of plats) {
+          p.h = 18;
+          if (p.x + p.w > W - 5) p.x = W - p.w - 5;
+          if (p.y > H - LAVA_H - 30) p.y = H - LAVA_H - 35;
+        }
+      }
 
-// ─── Drawing ───────────────────────────────────────────────────────
-function drawBG() {
-  const g = X.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, '#080509');
-  g.addColorStop(.45, '#0d080a');
-  g.addColorStop(.8, '#180c08');
-  g.addColorStop(1, '#281005');
-  X.fillStyle = g;
-  X.fillRect(0, 0, W, H);
-}
+      // ─── Sprites ───────────────────────────────────────────────────────
+      const SC = 2;
+      const spW = 26 * SC, spH = 18 * SC;
+      const sprCache = {};
 
-function drawLava() {
-  const ly = H - LAVA_H;
-  for (let x = 0; x < W; x += 3) {
-    const w1 = Math.sin(x * .018 + frame * .028) * 6;
-    const w2 = Math.sin(x * .045 + frame * .045) * 3;
-    const cy = ly + w1 + w2;
-    const b = 48 + Math.sin(x * .09 + frame * .035) * 18 | 0;
-    X.fillStyle = `hsl(${14 + Math.sin(x * .025) * 8},100%,${b}%)`;
-    X.fillRect(x, cy, 3, H - cy);
-  }
-  const gl = X.createLinearGradient(0, ly - 55, 0, ly);
-  gl.addColorStop(0, 'transparent');
-  gl.addColorStop(1, 'rgba(255,70,0,.12)');
-  X.fillStyle = gl; X.fillRect(0, ly - 55, W, 55);
-  for (const l of lavaPx) {
-    X.fillStyle = `rgba(255,${115 + Math.random() * 80 | 0},0,${Math.min(1, l.life / .5)})`;
-    X.fillRect(l.x, l.y, l.sz, l.sz);
-  }
-}
+      function px(cx, x, y, w, h, c) { cx.fillStyle = c; cx.fillRect(x * SC, y * SC, w * SC, h * SC); }
 
-function drawPlats() {
-  for (let i = 0; i < plats.length; i++) {
-    const p = plats[i];
-    X.fillStyle = '#18181e'; X.fillRect(p.x, p.y, p.w, p.h);
-    X.fillStyle = '#28282f'; X.fillRect(p.x, p.y, p.w, 3);
-    X.fillStyle = '#0c0c10'; X.fillRect(p.x, p.y + p.h - 3, p.w, 3);
-    miniSkull(p.x + 5, p.y + 3);
-    miniSkull(p.x + p.w - 12, p.y + 3);
-    X.fillStyle = 'rgba(255,255,255,.025)';
-    for (let sx = p.x + 14; sx < p.x + p.w - 14; sx += 14) X.fillRect(sx, p.y + 5, 7, 4);
-    for (const s of stains) {
-      if (s.pi !== i) continue;
-      X.fillStyle = 'rgba(110,8,8,.55)';
-      X.fillRect(p.x + s.rx, p.y - s.h, s.w, s.h + 2);
-      X.fillStyle = 'rgba(90,4,4,.25)';
-      X.fillRect(p.x + s.rx + s.w / 2 - .5, p.y + 1, 1, 2 + Math.random() * 4);
-    }
-  }
-}
+      function drawBirdPx(cx, col, fp, left) {
+        cx.save();
+        if (left) { cx.translate(spW, 0); cx.scale(-1, 1); }
 
-function miniSkull(x, y) {
-  X.fillStyle = '#3a3a3a'; X.fillRect(x, y, 7, 6); X.fillRect(x + 1, y + 6, 5, 3);
-  X.fillStyle = '#1a1a1a'; X.fillRect(x + 1, y + 2, 2, 2); X.fillRect(x + 4, y + 2, 2, 2);
-  X.fillStyle = '#2a2a2a'; X.fillRect(x + 2, y + 6, 1, 3); X.fillRect(x + 4, y + 6, 1, 3);
-}
+        // Body
+        px(cx, 9, 9, 9, 5, col.body);
+        px(cx, 7, 10, 3, 3, col.body);  // neck
+        px(cx, 5, 9, 3, 3, col.body);   // head
+        // Beak
+        px(cx, 3, 10, 2, 1, '#444');
+        px(cx, 3, 10, 1, 1, '#555');
+        // Eye
+        px(cx, 6, 9, 1, 1, col.eye);
+        // Tail
+        px(cx, 18, 8, 3, 2, col.wing);
+        px(cx, 20, 7, 2, 2, col.wing);
+        px(cx, 21, 6, 2, 1, col.body);
 
-function drawEnt(e) {
-  if (!e.alive) return;
-  if (e === player && invulnT > 0 && invulnT % 8 < 4) return;
-  X.drawImage(spr(e.type, e.flap, e.left), e.x, e.y, e.w, e.h);
-}
+        // Wings (animated)
+        const wy = fp === 1 ? 4 : fp === 2 ? 10 : fp === 3 ? 8 : 7;
+        px(cx, 8, wy, 11, 2, col.wing);
+        if (fp === 1) {         // up-stroke
+          px(cx, 6, 3, 4, 2, col.wing);
+          px(cx, 17, 3, 4, 2, col.wing);
+          px(cx, 5, 2, 2, 2, col.wing);
+          px(cx, 19, 2, 2, 2, col.wing);
+        } else if (fp === 2) {  // down-stroke
+          px(cx, 9, wy + 2, 9, 1, col.wing);
+        }
 
-function drawParts() {
-  for (const b of bloods) {
-    X.globalAlpha = Math.min(1, b.life / 1.2); X.fillStyle = b.col;
-    X.fillRect(b.x, b.y, b.sz, b.sz);
-  }
-  X.globalAlpha = 1;
-  for (const g of gores) {
-    X.save(); X.translate(g.x, g.y); X.rotate(g.rot);
-    X.globalAlpha = Math.min(1, g.life / 1.2); X.fillStyle = g.col;
-    X.fillRect(-g.sz / 2, -g.sz / 2, g.sz, g.sz * .7); X.restore();
-  }
-  X.globalAlpha = 1;
-  for (const b of bones) {
-    X.save(); X.translate(b.x, b.y); X.rotate(b.rot);
-    X.globalAlpha = Math.min(1, b.life / 1.2); X.fillStyle = b.col;
-    X.beginPath(); X.moveTo(-b.sz / 2, 0); X.lineTo(0, -b.sz / 2);
-    X.lineTo(b.sz / 2, 0); X.lineTo(0, b.sz / 3); X.fill(); X.restore();
-  }
-  X.globalAlpha = 1;
-  for (const e of embers) {
-    const a = e.life / (e.life + 2);
-    X.fillStyle = `rgba(${200 + Math.random() * 55 | 0},${70 + Math.random() * 60 | 0},0,${a * .6})`;
-    X.fillRect(e.x, e.y, e.sz, e.sz);
-  }
-}
+        // Talons
+        px(cx, 11, 14, 1, 2, '#555'); px(cx, 10, 15, 1, 1, '#555');
+        px(cx, 16, 14, 1, 2, '#555'); px(cx, 17, 15, 1, 1, '#555');
 
-// ─── HUD ───────────────────────────────────────────────────────────
-function drawHUD() {
-  for (let i = 0; i < lives; i++) hudSkull(16 + i * 28, 14);
-  X.textAlign = 'center'; X.fillStyle = '#b02020';
-  X.font = 'bold 17px system-ui,sans-serif';
-  X.fillText('WAVE ' + wave, W / 2, 28);
-  X.textAlign = 'right'; X.fillStyle = '#e0d8c8';
-  X.font = 'bold 22px system-ui,sans-serif';
-  X.fillText(score.toLocaleString(), W - 18, 28);
-  X.font = '11px system-ui,sans-serif'; X.fillStyle = '#666';
-  X.fillText('HI: ' + hiScore.toLocaleString(), W - 18, 44);
-}
+        // Rider torso
+        px(cx, 11, 4, 5, 5, col.rider);
+        px(cx, 10, 6, 1, 3, col.rider); // left arm
+        px(cx, 16, 6, 1, 3, col.rider); // right arm
+        // Head
+        px(cx, 12, 2, 3, 3, col.rider);
+        // Helmet
+        px(cx, 11, 1, 5, 2, col.helm);
+        // Horns
+        px(cx, 10, 0, 1, 2, col.horn || col.helm);
+        px(cx, 16, 0, 1, 2, col.horn || col.helm);
 
-function hudSkull(x, y) {
-  X.fillStyle = '#ccc'; X.fillRect(x, y, 12, 10); X.fillRect(x + 2, y + 10, 8, 4);
-  X.fillStyle = '#a01515'; X.fillRect(x + 2, y + 3, 3, 3); X.fillRect(x + 7, y + 3, 3, 3);
-  X.fillStyle = '#777'; X.fillRect(x + 4, y + 10, 1, 4); X.fillRect(x + 7, y + 10, 1, 4);
-}
+        // Lance
+        px(cx, 1, 7, 10, 1, col.lance || '#777');
+        px(cx, 0, 7, 2, 1, '#a01010'); // blood tip
+        px(cx, 0, 6, 1, 1, '#801010');
 
-// ─── Screen FX ─────────────────────────────────────────────────────
-function applyShake() {
-  if (shakeT > 0) {
-    X.translate((Math.random() - .5) * shakeI, (Math.random() - .5) * shakeI);
-    shakeT--; shakeI *= .84;
-  }
-}
-function drawFlash() {
-  if (flashT > 0) {
-    X.fillStyle = `rgba(170,15,15,${flashT * .055})`;
-    X.fillRect(-20, -20, W + 40, H + 40); flashT--;
-  }
-}
+        cx.restore();
+      }
 
-// ─── Blood-drip text ───────────────────────────────────────────────
-function bloodText(txt, x, y, size, col) {
-  X.textAlign = 'center';
-  X.font = `bold ${size}px system-ui,sans-serif`;
-  X.fillStyle = '#200000'; X.fillText(txt, x + 3, y + 3);
-  X.fillStyle = col || '#c0392b'; X.fillText(txt, x, y);
-  const w = X.measureText(txt).width;
-  const nd = Math.max(3, w / 35 | 0);
-  for (let i = 0; i < nd; i++) {
-    const dx = x - w / 2 + i * (w / (nd - 1));
-    const dLen = 12 + Math.sin(frame * .018 + i * 2.1) * 10 + (frame * .15 + i * 7) % 25;
-    X.fillStyle = 'rgba(160,15,15,.45)';
-    X.fillRect(dx, y + 6, 2, Math.min(dLen, 50));
-    X.fillRect(dx - 1, y + 6 + Math.min(dLen, 50), 4, 3);
-  }
-}
+      const PAL = {
+        player: { body: '#2c1a0e', wing: '#3d2b1a', eye: '#e74c3c', rider: '#555', helm: '#777', horn: '#999', lance: '#888' },
+        bloodKnight: { body: '#555', wing: '#666', eye: '#ff0', rider: '#8b0000', helm: '#a01010', horn: '#c02020', lance: '#777' },
+        shadowRider: { body: '#1a0a2e', wing: '#2d1b4e', eye: '#c050ff', rider: '#2a1040', helm: '#5020a0', horn: '#7030d0', lance: '#444' },
+        deathLord: { body: '#3a3a2a', wing: '#2a2a1a', eye: '#ff2020', rider: '#1a1a1a', helm: '#ddd', horn: '#fff', lance: '#555' },
+      };
 
-// ─── Screens ───────────────────────────────────────────────────────
-function drawTitle() {
-  drawBG(); drawLava(); drawParts();
-  const cx = W / 2, cy = H * .42;
-  // Silhouette jousters
-  X.fillStyle = '#140408';
-  X.fillRect(cx - 130, cy - 8, 45, 22); X.fillRect(cx - 108, cy - 26, 16, 22);
-  X.fillRect(cx - 150, cy - 2, 28, 5);
-  X.fillRect(cx + 85, cy - 8, 45, 22); X.fillRect(cx + 98, cy - 26, 16, 22);
-  X.fillRect(cx + 122, cy - 2, 28, 5);
-  X.strokeStyle = '#280808'; X.lineWidth = 3;
-  X.beginPath(); X.moveTo(cx - 150, cy + 2); X.lineTo(cx + 15, cy - 3); X.stroke();
-  X.beginPath(); X.moveTo(cx + 150, cy + 2); X.lineTo(cx - 15, cy - 3); X.stroke();
+      function spr(type, flap, left) {
+        const k = type + flap + (left ? 'L' : 'R');
+        if (sprCache[k]) return sprCache[k];
+        const c = document.createElement('canvas'); c.width = spW; c.height = spH;
+        drawBirdPx(c.getContext('2d'), PAL[type], flap, left);
+        sprCache[k] = c;
+        return c;
+      }
 
-  bloodText('BLOOD JOUST', cx, H * .25, Math.min(68, W * .065));
+      // ─── Entity ────────────────────────────────────────────────────────
+      function mkEnt(type, x, y) {
+        return {
+          type, x, y, vx: 0, vy: 0, w: spW, h: spH,
+          left: false, flap: 0, flapT: 0, flapCD: 0,
+          ground: false, gPlat: -1, alive: true,
+          speed: 1, aggro: 0
+        };
+      }
 
-  X.fillStyle = '#777'; X.font = 'italic 18px system-ui,sans-serif';
-  X.textAlign = 'center'; X.fillText('Only the highest shall survive', cx, H * .33);
+      function mkPlayer() {
+        player = mkEnt('player', W / 2 - spW / 2, H * .25);
+        invulnT = INVULN_T;
+      }
 
-  const pulse = .4 + Math.sin(frame * .055) * .6;
-  X.fillStyle = `rgba(220,200,180,${Math.max(.15, pulse)})`;
-  X.font = 'bold 24px system-ui,sans-serif';
-  X.fillText('Press SPACE to Begin', cx, H * .63);
+      function spawnWave() {
+        enemies = [];
+        const n = 2 + wave;
+        for (let i = 0; i < n; i++) {
+          let t = 'bloodKnight';
+          if (wave >= 5 && Math.random() < .35) t = 'deathLord';
+          else if (wave >= 3 && Math.random() < .45) t = 'shadowRider';
+          const e = mkEnt(t, 60 + Math.random() * (W - 120), -20 - Math.random() * 80);
+          e.left = Math.random() < .5;
+          if (t === 'bloodKnight') { e.speed = .65; e.aggro = .25; }
+          if (t === 'shadowRider') { e.speed = 1.1; e.aggro = .55; }
+          if (t === 'deathLord') { e.speed = 1.4; e.aggro = .8; }
+          enemies.push(e);
+        }
+      }
 
-  X.fillStyle = '#484848'; X.font = '14px system-ui,sans-serif';
-  X.fillText('A/D or \u2190/\u2192 to Move  \u2022  SPACE or W to Flap', cx, H * .73);
-  X.fillText('Get ABOVE enemies to joust them down!', cx, H * .78);
+      // ─── Particles ─────────────────────────────────────────────────────
+      function addBlood(x, y, n) {
+        for (let i = 0; i < n && bloods.length < P_LIM; i++)
+          bloods.push({
+            x, y,
+            vx: (Math.random() - .5) * 9,
+            vy: (Math.random() - .85) * 7 - 2,
+            sz: 1 + Math.random() * 3,
+            life: 2 + Math.random() * 1.5,
+            col: `hsl(${354 + Math.random() * 12},${75 + Math.random() * 25}%,${18 + Math.random() * 22}%)`
+          });
+      }
 
-  if (hiScore > 0) {
-    X.fillStyle = '#555'; X.font = '13px system-ui,sans-serif';
-    X.fillText('High Score: ' + hiScore.toLocaleString(), cx, H * .86);
-  }
-}
+      function addGore(x, y, n) {
+        for (let i = 0; i < n && gores.length < 200; i++)
+          gores.push({
+            x, y,
+            vx: (Math.random() - .5) * 7,
+            vy: (Math.random() - .7) * 8 - 1,
+            sz: 3 + Math.random() * 5,
+            rot: Math.random() * 6.28,
+            rv: (Math.random() - .5) * .35,
+            life: 2.5 + Math.random() * 2,
+            bn: 0,
+            col: `hsl(${348 + Math.random() * 16},${65 + Math.random() * 35}%,${12 + Math.random() * 18}%)`
+          });
+      }
 
-function drawWaveScreen() {
-  drawBG(); drawLava(); drawPlats();
-  const t = waveT / 130;
-  const sc = 1 + Math.sin(t * Math.PI) * .25;
-  X.save(); X.translate(W / 2, H * .38); X.scale(sc, sc);
-  bloodText('WAVE ' + wave, 0, 0, 50);
-  X.restore();
-  if (wave > 1) {
-    X.fillStyle = '#777'; X.font = '18px system-ui,sans-serif';
-    X.textAlign = 'center'; X.fillText('WAVE COMPLETE', W / 2, H * .5);
-  }
-  drawHUD();
-}
+      function addBone(x, y, n) {
+        for (let i = 0; i < n && bones.length < 150; i++)
+          bones.push({
+            x, y,
+            vx: (Math.random() - .5) * 8,
+            vy: (Math.random() - .6) * 9 - 2,
+            sz: 2 + Math.random() * 3,
+            rot: Math.random() * 6.28,
+            rv: (Math.random() - .5) * .45,
+            life: 3 + Math.random() * 2,
+            bn: 0,
+            col: `hsl(38,${25 + Math.random() * 35}%,${72 + Math.random() * 22}%)`
+          });
+      }
 
-function drawGameOver() {
-  drawBG(); drawLava();
-  bloodText('GAME OVER', W / 2, H * .28, Math.min(64, W * .065));
-  X.textAlign = 'center';
-  X.fillStyle = '#e0d8c8'; X.font = 'bold 32px system-ui,sans-serif';
-  X.fillText('Score: ' + score.toLocaleString(), W / 2, H * .44);
-  X.fillStyle = '#777'; X.font = '20px system-ui,sans-serif';
-  X.fillText('High Score: ' + hiScore.toLocaleString(), W / 2, H * .51);
-  X.fillStyle = '#666'; X.font = '16px system-ui,sans-serif';
-  X.fillText('Wave Reached: ' + wave, W / 2, H * .57);
-  const pulse = .4 + Math.sin(frame * .055) * .6;
-  X.fillStyle = `rgba(220,200,180,${Math.max(.15, pulse)})`;
-  X.font = 'bold 22px system-ui,sans-serif';
-  X.fillText('Press SPACE to Restart', W / 2, H * .7);
-}
+      function killFX(x, y) {
+        addBlood(x, y, 25 + (Math.random() * 18 | 0));
+        addGore(x, y, 5 + (Math.random() * 6 | 0));
+        addBone(x, y, 3 + (Math.random() * 4 | 0));
+        shakeT = 14; shakeI = 10; flashT = 8;
+        sfx('kill');
+      }
 
-// ─── Main Loop ─────────────────────────────────────────────────────
-function update() {
-  frame++;
-  switch (state) {
-    case 'title':
-      tickEmbers();
-      if (K.Space) { K.Space = 0; startGame(); }
-      break;
-    case 'waveAnnounce':
-      tickEmbers();
-      waveT--;
-      if (waveT <= 0) state = 'playing';
-      break;
-    case 'gameOver':
-      tickEmbers();
-      if (K.Space) { K.Space = 0; state = 'title'; }
-      break;
-    case 'playing':
-      updatePlaying();
-      break;
-  }
-}
+      function addStain(x, pi) {
+        if (pi < 0 || pi >= plats.length) return;
+        stains.push({ pi, rx: x - plats[pi].x, w: 2 + Math.random() * 7, h: 1 + Math.random() * 3 });
+        if (stains.length > 350) stains.shift();
+      }
 
-function startGame() {
-  audio(); droneOn();
-  state = 'waveAnnounce'; wave = 1; score = 0; lives = 3;
-  stains = []; bloods = []; gores = []; bones = [];
-  mkPlayer(); spawnWave(); waveT = 130; sfx('wave');
-}
+      // ─── Physics ───────────────────────────────────────────────────────
+      function physEnt(e, isP) {
+        if (!e.alive) return;
+        if (e.flapT > 0) e.flapT--;
+        if (e.flapCD > 0) e.flapCD--;
 
-function updatePlaying() {
-  if (player && player.alive) {
-    if (K.KeyA || K.ArrowLeft) { player.vx -= HACC; player.left = true; }
-    if (K.KeyD || K.ArrowRight) { player.vx += HACC; player.left = false; }
-    if (Math.abs(player.vx) > MAXVX) player.vx = Math.sign(player.vx) * MAXVX;
-    if (K.Space || K.KeyW) { doFlap(player); K.Space = 0; K.KeyW = 0; }
-    physEnt(player, true);
-  }
+        e.vy += G * dt;
+        if (e.vy > MAXVY) e.vy = MAXVY;
+        e.x += e.vx * dt;
+        e.y += e.vy * dt;
+        e.vx *= HDRAG;
 
-  if ((!player || !player.alive) && lives > 0) {
-    respawnT--;
-    if (respawnT <= 0) mkPlayer();
-  }
-  if (invulnT > 0) invulnT--;
+        // Flap animation
+        e.flap = e.flapT > 0 ? (e.flapT > 9 ? 1 : e.flapT > 5 ? 2 : 3) : 0;
 
-  for (const e of enemies) { if (e.alive) { aiUpdate(e); physEnt(e, false); } }
-  collisions();
-  tickParts();
+        // Screen wrap
+        if (e.x < -e.w * 1.2) e.x = W + e.w * .2;
+        if (e.x > W + e.w * .2) e.x = -e.w * 1.2;
 
-  if (enemies.every(e => !e.alive)) {
-    wave++; state = 'waveAnnounce'; waveT = 130; spawnWave(); sfx('wave');
-  }
-}
+        // Platform landing
+        e.ground = false; e.gPlat = -1;
+        const el = e.x + e.w * .15, er = e.x + e.w * .85, eb = e.y + e.h;
+        for (let i = 0; i < plats.length; i++) {
+          const p = plats[i];
+          if (er > p.x && el < p.x + p.w && e.vy >= 0 && eb >= p.y && eb - e.vy * dt <= p.y + 6) {
+            e.y = p.y - e.h; e.vy = 0; e.ground = true; e.gPlat = i; break;
+          }
+        }
 
-function draw() {
-  X.save();
-  switch (state) {
-    case 'title':    drawTitle(); break;
-    case 'gameOver': drawGameOver(); break;
-    case 'waveAnnounce': drawWaveScreen(); break;
-    case 'playing':
-      applyShake(); drawBG(); drawLava(); drawPlats();
-      for (const e of enemies) drawEnt(e);
-      if (player) drawEnt(player);
-      drawParts(); drawFlash(); drawHUD();
-      break;
-  }
-  X.restore();
-}
+        // Lava
+        if (e.y + e.h > H - LAVA_H) {
+          e.alive = false;
+          for (let i = 0; i < 10; i++)
+            lavaPx.push({
+              x: e.x + e.w / 2 + (Math.random() - .5) * 50,
+              y: H - LAVA_H,
+              vy: -2.5 - Math.random() * 3.5,
+              sz: 2 + Math.random() * 5,
+              life: .9 + Math.random() * .7
+            });
+          sfx('lava');
+          if (isP) loseLife();
+        }
+      }
 
-function loop(t) {
-  if (!lastT) lastT = t;
-  dt = Math.min((t - lastT) / 16.67, 2.5);
-  lastT = t;
-  update(); draw();
-  requestAnimationFrame(loop);
-}
-requestAnimationFrame(loop);
-resize();
+      function doFlap(e) {
+        if (e.flapCD > 0) return;
+        e.vy = FLAP; e.flapT = 13; e.flapCD = 8; e.ground = false;
+        if (e === player) sfx('flap');
+      }
 
-// ─── Remote Score ──────────────────────────────────────────────────
-function saveRemote() {
-  try {
-    if (typeof GHScores !== 'undefined') {
-      const key = 'bjHighScoresList';
-      let list = JSON.parse(localStorage.getItem(key) || '[]');
-      list.push({ score, name: 'Player', date: new Date().toISOString() });
-      list.sort((a, b) => b.score - a.score);
-      list = list.slice(0, 20);
-      localStorage.setItem(key, JSON.stringify(list));
-      GHScores.save('blood_joust', key);
-    }
-  } catch (e) {}
-}
+      function loseLife() {
+        lives--;
+        if (lives <= 0) {
+          state = 'gameOver'; droneOff();
+          if (score > hiScore) { hiScore = score; localStorage.setItem('bjHi', hiScore); saveRemote(); }
+        } else {
+          respawnT = RESPAWN_T;
+        }
+      }
 
-})();
+      // ─── Enemy AI ──────────────────────────────────────────────────────
+      function aiUpdate(e) {
+        if (!e.alive || !player || !player.alive) {
+          // Patrol randomly when no player target
+          if (Math.random() < .06) e.vx += (Math.random() - .5) * 2;
+          if (e.y > H - LAVA_H - 120) doFlap(e);
+          if (e.vy > 3 && Math.random() < .15) doFlap(e);
+          return;
+        }
+
+        const dx = player.x - e.x, dy = player.y - e.y;
+
+        // Horizontal pursuit
+        if (Math.abs(dx) > 20) {
+          const dir = Math.sign(dx);
+          e.vx += dir * HACC * e.speed * .5;
+          e.left = dir < 0;
+        }
+        if (Math.abs(e.vx) > MAXVX * e.speed) e.vx = Math.sign(e.vx) * MAXVX * e.speed;
+
+        // Try to get above player
+        const wantUp = dy > -50 || e.y > H * .65;
+        if (wantUp && Math.random() < .12 + e.aggro * .14) doFlap(e);
+
+        // Avoid lava
+        if (e.y > H - LAVA_H - 110) doFlap(e);
+
+        // Gravity dive if above and close
+        if (dy > 60 && Math.abs(dx) < 70 && e.aggro > .45) { /* let gravity work */ }
+        else if (e.vy > 4 && Math.random() < .18 + e.aggro * .1) doFlap(e);
+
+        // Organic randomness
+        if (Math.random() < .025) e.vx += (Math.random() - .5) * 2;
+        // Avoid top of screen
+        if (e.y < -30) e.vy = Math.max(e.vy, 1);
+      }
+
+      // ─── Collision ─────────────────────────────────────────────────────
+      function collisions() {
+        if (!player || !player.alive || invulnT > 0) return;
+        const pcx = player.x + player.w / 2, pcy = player.y + player.h * .4;
+
+        for (let i = enemies.length - 1; i >= 0; i--) {
+          const e = enemies[i]; if (!e.alive) continue;
+          const ecx = e.x + e.w / 2, ecy = e.y + e.h * .4;
+          if (Math.hypot(pcx - ecx, pcy - ecy) > 38) continue;
+
+          if (pcy < ecy - 5) {
+            // Player wins
+            e.alive = false;
+            killFX(ecx, ecy);
+            score += e.type === 'deathLord' ? 500 : e.type === 'shadowRider' ? 250 : 100;
+            player.vy = -4.5;
+            for (let j = 0; j < plats.length; j++) {
+              if (ecx > plats[j].x && ecx < plats[j].x + plats[j].w && ecy < plats[j].y) {
+                addStain(ecx, j); break;
+              }
+            }
+          } else if (ecy < pcy - 5) {
+            // Enemy wins
+            player.alive = false;
+            killFX(pcx, pcy); sfx('die');
+            loseLife();
+          } else {
+            // Tie — both bounce
+            const sign = Math.sign(pcx - ecx) || 1;
+            player.vx = -sign * 4; e.vx = sign * 4;
+            player.vy = -3.5; e.vy = -3.5;
+          }
+        }
+      }
+
+      // ─── Particle Update ──────────────────────────────────────────────
+      function tickParts() {
+        // Blood
+        for (let i = bloods.length - 1; i >= 0; i--) {
+          const b = bloods[i];
+          b.vy += G * .4; b.x += b.vx; b.y += b.vy; b.life -= .017 * dt;
+          for (let j = 0; j < plats.length; j++) {
+            const p = plats[j];
+            if (b.x > p.x && b.x < p.x + p.w && b.y >= p.y && b.y - b.vy <= p.y + 5) {
+              b.vy = 0; b.vx = 0; b.y = p.y; addStain(b.x, j); b.life = Math.min(b.life, .2);
+            }
+          }
+          if (b.life <= 0 || b.y > H) bloods.splice(i, 1);
+        }
+        // Gore
+        for (let i = gores.length - 1; i >= 0; i--) {
+          const g = gores[i];
+          g.vy += G * .5; g.x += g.vx; g.y += g.vy; g.rot += g.rv; g.life -= .017 * dt;
+          for (let j = 0; j < plats.length; j++) {
+            const p = plats[j];
+            if (g.x > p.x && g.x < p.x + p.w && g.y >= p.y && g.y - g.vy <= p.y + 7 && g.bn < 1) {
+              g.vy *= -.35; g.vx *= .4; g.y = p.y - 1; g.bn++; addStain(g.x, j);
+            }
+          }
+          if (g.life <= 0 || g.y > H) gores.splice(i, 1);
+        }
+        // Bones
+        for (let i = bones.length - 1; i >= 0; i--) {
+          const b = bones[i];
+          b.vy += G * .45; b.x += b.vx; b.y += b.vy; b.rot += b.rv; b.life -= .017 * dt;
+          for (let j = 0; j < plats.length; j++) {
+            const p = plats[j];
+            if (b.x > p.x && b.x < p.x + p.w && b.y >= p.y && b.y - b.vy <= p.y + 7 && b.bn < 2) {
+              b.vy *= -.45; b.vx *= .55; b.y = p.y - 1; b.bn++;
+            }
+          }
+          if (b.life <= 0 || b.y > H) bones.splice(i, 1);
+        }
+        // Embers
+        tickEmbers();
+      }
+
+      function tickEmbers() {
+        if (embers.length < 50 && Math.random() < .25)
+          embers.push({
+            x: Math.random() * W,
+            y: H - LAVA_H + Math.random() * 12,
+            vy: -.4 - Math.random() * 1.1,
+            vx: (Math.random() - .5) * .4,
+            sz: 1 + Math.random() * 2.5,
+            life: 3 + Math.random() * 4,
+            maxL: 7
+          });
+        for (let i = embers.length - 1; i >= 0; i--) {
+          const e = embers[i];
+          e.y += e.vy; e.x += e.vx + Math.sin(frame * .015 + i) * .12; e.life -= .017;
+          if (e.life <= 0 || e.y < -10) embers.splice(i, 1);
+        }
+        for (let i = lavaPx.length - 1; i >= 0; i--) {
+          const l = lavaPx[i]; l.y += l.vy; l.vy += .06; l.life -= .017;
+          if (l.life <= 0) lavaPx.splice(i, 1);
+        }
+      }
+
+      // ─── Drawing ───────────────────────────────────────────────────────
+      function drawBG() {
+        const g = X.createLinearGradient(0, 0, 0, H);
+        g.addColorStop(0, '#080509');
+        g.addColorStop(.45, '#0d080a');
+        g.addColorStop(.8, '#180c08');
+        g.addColorStop(1, '#281005');
+        X.fillStyle = g;
+        X.fillRect(0, 0, W, H);
+      }
+
+      function drawLava() {
+        const ly = H - LAVA_H;
+        for (let x = 0; x < W; x += 3) {
+          const w1 = Math.sin(x * .018 + frame * .028) * 6;
+          const w2 = Math.sin(x * .045 + frame * .045) * 3;
+          const cy = ly + w1 + w2;
+          const b = 48 + Math.sin(x * .09 + frame * .035) * 18 | 0;
+          X.fillStyle = `hsl(${14 + Math.sin(x * .025) * 8},100%,${b}%)`;
+          X.fillRect(x, cy, 3, H - cy);
+        }
+        const gl = X.createLinearGradient(0, ly - 55, 0, ly);
+        gl.addColorStop(0, 'transparent');
+        gl.addColorStop(1, 'rgba(255,70,0,.12)');
+        X.fillStyle = gl; X.fillRect(0, ly - 55, W, 55);
+        for (const l of lavaPx) {
+          X.fillStyle = `rgba(255,${115 + Math.random() * 80 | 0},0,${Math.min(1, l.life / .5)})`;
+          X.fillRect(l.x, l.y, l.sz, l.sz);
+        }
+      }
+
+      function drawPlats() {
+        for (let i = 0; i < plats.length; i++) {
+          const p = plats[i];
+          X.fillStyle = '#18181e'; X.fillRect(p.x, p.y, p.w, p.h);
+          X.fillStyle = '#28282f'; X.fillRect(p.x, p.y, p.w, 3);
+          X.fillStyle = '#0c0c10'; X.fillRect(p.x, p.y + p.h - 3, p.w, 3);
+          miniSkull(p.x + 5, p.y + 3);
+          miniSkull(p.x + p.w - 12, p.y + 3);
+          X.fillStyle = 'rgba(255,255,255,.025)';
+          for (let sx = p.x + 14; sx < p.x + p.w - 14; sx += 14) X.fillRect(sx, p.y + 5, 7, 4);
+          for (const s of stains) {
+            if (s.pi !== i) continue;
+            X.fillStyle = 'rgba(110,8,8,.55)';
+            X.fillRect(p.x + s.rx, p.y - s.h, s.w, s.h + 2);
+            X.fillStyle = 'rgba(90,4,4,.25)';
+            X.fillRect(p.x + s.rx + s.w / 2 - .5, p.y + 1, 1, 2 + Math.random() * 4);
+          }
+        }
+      }
+
+      function miniSkull(x, y) {
+        X.fillStyle = '#3a3a3a'; X.fillRect(x, y, 7, 6); X.fillRect(x + 1, y + 6, 5, 3);
+        X.fillStyle = '#1a1a1a'; X.fillRect(x + 1, y + 2, 2, 2); X.fillRect(x + 4, y + 2, 2, 2);
+        X.fillStyle = '#2a2a2a'; X.fillRect(x + 2, y + 6, 1, 3); X.fillRect(x + 4, y + 6, 1, 3);
+      }
+
+      function drawEnt(e) {
+        if (!e.alive) return;
+        if (e === player && invulnT > 0 && invulnT % 8 < 4) return;
+        X.drawImage(spr(e.type, e.flap, e.left), e.x, e.y, e.w, e.h);
+      }
+
+      function drawParts() {
+        for (const b of bloods) {
+          X.globalAlpha = Math.min(1, b.life / 1.2); X.fillStyle = b.col;
+          X.fillRect(b.x, b.y, b.sz, b.sz);
+        }
+        X.globalAlpha = 1;
+        for (const g of gores) {
+          X.save(); X.translate(g.x, g.y); X.rotate(g.rot);
+          X.globalAlpha = Math.min(1, g.life / 1.2); X.fillStyle = g.col;
+          X.fillRect(-g.sz / 2, -g.sz / 2, g.sz, g.sz * .7); X.restore();
+        }
+        X.globalAlpha = 1;
+        for (const b of bones) {
+          X.save(); X.translate(b.x, b.y); X.rotate(b.rot);
+          X.globalAlpha = Math.min(1, b.life / 1.2); X.fillStyle = b.col;
+          X.beginPath(); X.moveTo(-b.sz / 2, 0); X.lineTo(0, -b.sz / 2);
+          X.lineTo(b.sz / 2, 0); X.lineTo(0, b.sz / 3); X.fill(); X.restore();
+        }
+        X.globalAlpha = 1;
+        for (const e of embers) {
+          const a = e.life / (e.life + 2);
+          X.fillStyle = `rgba(${200 + Math.random() * 55 | 0},${70 + Math.random() * 60 | 0},0,${a * .6})`;
+          X.fillRect(e.x, e.y, e.sz, e.sz);
+        }
+      }
+
+      // ─── HUD ───────────────────────────────────────────────────────────
+      function drawHUD() {
+        for (let i = 0; i < lives; i++) hudSkull(16 + i * 28, 14);
+        X.textAlign = 'center'; X.fillStyle = '#b02020';
+        X.font = 'bold 17px system-ui,sans-serif';
+        X.fillText('WAVE ' + wave, W / 2, 28);
+        X.textAlign = 'right'; X.fillStyle = '#e0d8c8';
+        X.font = 'bold 22px system-ui,sans-serif';
+        X.fillText(score.toLocaleString(), W - 18, 28);
+        X.font = '11px system-ui,sans-serif'; X.fillStyle = '#666';
+        X.fillText('HI: ' + hiScore.toLocaleString(), W - 18, 44);
+      }
+
+      function hudSkull(x, y) {
+        X.fillStyle = '#ccc'; X.fillRect(x, y, 12, 10); X.fillRect(x + 2, y + 10, 8, 4);
+        X.fillStyle = '#a01515'; X.fillRect(x + 2, y + 3, 3, 3); X.fillRect(x + 7, y + 3, 3, 3);
+        X.fillStyle = '#777'; X.fillRect(x + 4, y + 10, 1, 4); X.fillRect(x + 7, y + 10, 1, 4);
+      }
+
+      // ─── Screen FX ─────────────────────────────────────────────────────
+      function applyShake() {
+        if (shakeT > 0) {
+          X.translate((Math.random() - .5) * shakeI, (Math.random() - .5) * shakeI);
+          shakeT--; shakeI *= .84;
+        }
+      }
+      function drawFlash() {
+        if (flashT > 0) {
+          X.fillStyle = `rgba(170,15,15,${flashT * .055})`;
+          X.fillRect(-20, -20, W + 40, H + 40); flashT--;
+        }
+      }
+
+      // ─── Blood-drip text ───────────────────────────────────────────────
+      function bloodText(txt, x, y, size, col) {
+        X.textAlign = 'center';
+        X.font = `bold ${size}px system-ui,sans-serif`;
+        X.fillStyle = '#200000'; X.fillText(txt, x + 3, y + 3);
+        X.fillStyle = col || '#c0392b'; X.fillText(txt, x, y);
+        const w = X.measureText(txt).width;
+        const nd = Math.max(3, w / 35 | 0);
+        for (let i = 0; i < nd; i++) {
+          const dx = x - w / 2 + i * (w / (nd - 1));
+          const dLen = 12 + Math.sin(frame * .018 + i * 2.1) * 10 + (frame * .15 + i * 7) % 25;
+          X.fillStyle = 'rgba(160,15,15,.45)';
+          X.fillRect(dx, y + 6, 2, Math.min(dLen, 50));
+          X.fillRect(dx - 1, y + 6 + Math.min(dLen, 50), 4, 3);
+        }
+      }
+
+      // ─── Screens ───────────────────────────────────────────────────────
+      function drawTitle() {
+        drawBG(); drawLava(); drawParts();
+        const cx = W / 2, cy = H * .42;
+        // Silhouette jousters
+        X.fillStyle = '#140408';
+        X.fillRect(cx - 130, cy - 8, 45, 22); X.fillRect(cx - 108, cy - 26, 16, 22);
+        X.fillRect(cx - 150, cy - 2, 28, 5);
+        X.fillRect(cx + 85, cy - 8, 45, 22); X.fillRect(cx + 98, cy - 26, 16, 22);
+        X.fillRect(cx + 122, cy - 2, 28, 5);
+        X.strokeStyle = '#280808'; X.lineWidth = 3;
+        X.beginPath(); X.moveTo(cx - 150, cy + 2); X.lineTo(cx + 15, cy - 3); X.stroke();
+        X.beginPath(); X.moveTo(cx + 150, cy + 2); X.lineTo(cx - 15, cy - 3); X.stroke();
+
+        bloodText('BLOOD JOUST', cx, H * .25, Math.min(68, W * .065));
+
+        X.fillStyle = '#777'; X.font = 'italic 18px system-ui,sans-serif';
+        X.textAlign = 'center'; X.fillText('Only the highest shall survive', cx, H * .33);
+
+        const pulse = .4 + Math.sin(frame * .055) * .6;
+        X.fillStyle = `rgba(220,200,180,${Math.max(.15, pulse)})`;
+        X.font = 'bold 24px system-ui,sans-serif';
+        X.fillText('Press SPACE or Tap to Begin', cx, H * .63);
+
+        X.fillStyle = '#484848'; X.font = '14px system-ui,sans-serif';
+        X.fillText('A/D or \u2190/\u2192 to Move  \u2022  SPACE or W to Flap', cx, H * .73);
+        X.fillText('Get ABOVE enemies to joust them down!', cx, H * .78);
+
+        if (hiScore > 0) {
+          X.fillStyle = '#555'; X.font = '13px system-ui,sans-serif';
+          X.fillText('High Score: ' + hiScore.toLocaleString(), cx, H * .86);
+        }
+      }
+
+      function drawWaveScreen() {
+        drawBG(); drawLava(); drawPlats();
+        const t = waveT / 130;
+        const sc = 1 + Math.sin(t * Math.PI) * .25;
+        X.save(); X.translate(W / 2, H * .38); X.scale(sc, sc);
+        bloodText('WAVE ' + wave, 0, 0, 50);
+        X.restore();
+        if (wave > 1) {
+          X.fillStyle = '#777'; X.font = '18px system-ui,sans-serif';
+          X.textAlign = 'center'; X.fillText('WAVE COMPLETE', W / 2, H * .5);
+        }
+        drawHUD();
+      }
+
+      function drawGameOver() {
+        drawBG(); drawLava();
+        bloodText('GAME OVER', W / 2, H * .28, Math.min(64, W * .065));
+        X.textAlign = 'center';
+        X.fillStyle = '#e0d8c8'; X.font = 'bold 32px system-ui,sans-serif';
+        X.fillText('Score: ' + score.toLocaleString(), W / 2, H * .44);
+        X.fillStyle = '#777'; X.font = '20px system-ui,sans-serif';
+        X.fillText('High Score: ' + hiScore.toLocaleString(), W / 2, H * .51);
+        X.fillStyle = '#666'; X.font = '16px system-ui,sans-serif';
+        X.fillText('Wave Reached: ' + wave, W / 2, H * .57);
+        const pulse = .4 + Math.sin(frame * .055) * .6;
+        X.fillStyle = `rgba(220,200,180,${Math.max(.15, pulse)})`;
+        X.font = 'bold 22px system-ui,sans-serif';
+        X.fillText('Press SPACE or Tap to Restart', W / 2, H * .7);
+      }
+
+      // ─── Main Loop ─────────────────────────────────────────────────────
+      function update() {
+        frame++;
+        switch (state) {
+          case 'title':
+            tickEmbers();
+            if (K.Space) { K.Space = 0; startGame(); }
+            break;
+          case 'waveAnnounce':
+            tickEmbers();
+            waveT--;
+            if (waveT <= 0) state = 'playing';
+            break;
+          case 'gameOver':
+            tickEmbers();
+            if (K.Space) { K.Space = 0; state = 'title'; }
+            break;
+          case 'playing':
+            updatePlaying();
+            break;
+        }
+      }
+
+      function startGame() {
+        audio(); droneOn();
+        state = 'waveAnnounce'; wave = 1; score = 0; lives = 3;
+        stains = []; bloods = []; gores = []; bones = [];
+        mkPlayer(); spawnWave(); waveT = 130; sfx('wave');
+      }
+
+      function updatePlaying() {
+        if (player && player.alive) {
+          if (K.KeyA || K.ArrowLeft) { player.vx -= HACC; player.left = true; }
+          if (K.KeyD || K.ArrowRight) { player.vx += HACC; player.left = false; }
+          if (Math.abs(player.vx) > MAXVX) player.vx = Math.sign(player.vx) * MAXVX;
+          if (K.Space || K.KeyW) { doFlap(player); K.Space = 0; K.KeyW = 0; }
+          physEnt(player, true);
+        }
+
+        if ((!player || !player.alive) && lives > 0) {
+          respawnT--;
+          if (respawnT <= 0) mkPlayer();
+        }
+        if (invulnT > 0) invulnT--;
+
+        for (const e of enemies) { if (e.alive) { aiUpdate(e); physEnt(e, false); } }
+        collisions();
+        tickParts();
+
+        if (enemies.every(e => !e.alive)) {
+          wave++; state = 'waveAnnounce'; waveT = 130; spawnWave(); sfx('wave');
+        }
+      }
+
+      function draw() {
+        X.save();
+        switch (state) {
+          case 'title': drawTitle(); break;
+          case 'gameOver': drawGameOver(); break;
+          case 'waveAnnounce': drawWaveScreen(); break;
+          case 'playing':
+            applyShake(); drawBG(); drawLava(); drawPlats();
+            for (const e of enemies) drawEnt(e);
+            if (player) drawEnt(player);
+            drawParts(); drawFlash(); drawHUD();
+            break;
+        }
+        X.restore();
+      }
+
+      function loop(t) {
+        if (!lastT) lastT = t;
+        dt = Math.min((t - lastT) / 16.67, 2.5);
+        lastT = t;
+        update(); draw();
+        requestAnimationFrame(loop);
+      }
+      requestAnimationFrame(loop);
+      resize();
+
+      // ─── Remote Score ──────────────────────────────────────────────────
+      function saveRemote() {
+        try {
+          if (typeof GHScores !== 'undefined') {
+            const key = 'bjHighScoresList';
+            let list = JSON.parse(localStorage.getItem(key) || '[]');
+            list.push({ score, name: 'Player', date: new Date().toISOString() });
+            list.sort((a, b) => b.score - a.score);
+            list = list.slice(0, 20);
+            localStorage.setItem(key, JSON.stringify(list));
+            GHScores.save('blood_joust', key);
+          }
+        } catch (e) { }
+      }
+
+    })();
   </script>
   <script src="../scripts/github-scores.js"></script>
+  <script src="../scripts/mobile-controls.js"></script>
 </body>
+
 </html>
