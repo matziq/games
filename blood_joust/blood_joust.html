@@ -24,7 +24,9 @@
     canvas {
       display: block;
       width: 100vw;
-      height: 100vh
+      height: 100vh;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
     }
 
     .menu-link {
@@ -62,21 +64,26 @@
       justify-content: space-between;
       align-items: flex-end;
     }
+
     @media (pointer: coarse) {
-      .touch-controls { display: flex; }
+      .touch-controls {
+        display: flex;
+      }
     }
+
     .tc-group {
       display: flex;
       gap: 10px;
       pointer-events: auto;
     }
+
     .tc-btn {
       width: 72px;
       height: 72px;
       border-radius: 50%;
-      border: 2px solid rgba(192,57,43,.55);
-      background: rgba(30,8,8,.55);
-      color: rgba(255,255,255,.85);
+      border: 2px solid rgba(192, 57, 43, .55);
+      background: rgba(30, 8, 8, .55);
+      color: rgba(255, 255, 255, .85);
       font-size: 28px;
       font-weight: 700;
       display: flex;
@@ -88,10 +95,13 @@
       backdrop-filter: blur(4px);
       -webkit-backdrop-filter: blur(4px);
     }
-    .tc-btn:active, .tc-btn.pressed {
-      background: rgba(192,57,43,.45);
-      border-color: rgba(220,80,60,.8);
+
+    .tc-btn:active,
+    .tc-btn.pressed {
+      background: rgba(192, 57, 43, .45);
+      border-color: rgba(220, 80, 60, .8);
     }
+
     .tc-btn.tc-flap {
       width: 88px;
       height: 88px;
@@ -131,7 +141,11 @@
       const X = C.getContext('2d');
       let W, H;
       let plats = [];
-      function resize() { W = C.width = innerWidth; H = C.height = innerHeight; buildPlatforms(); }
+      function resize() {
+        W = C.width = innerWidth; H = C.height = innerHeight;
+        X.imageSmoothingEnabled = false;
+        buildPlatforms();
+      }
       addEventListener('resize', resize);
 
       // ─── Tuning ────────────────────────────────────────────────────────
@@ -357,7 +371,12 @@
           type, x, y, vx: 0, vy: 0, w: spW, h: spH,
           left: false, flap: 0, flapT: 0, flapCD: 0,
           ground: false, gPlat: -1, alive: true,
-          speed: 1, aggro: 0
+          speed: 1, aggro: 0,
+          // AI state
+          aiMode: 'patrol',   // patrol | approach | dive | retreat
+          aiTimer: 60 + Math.random() * 120 | 0,
+          patrolY: 0,         // target patrol height
+          patrolDir: 1         // horizontal patrol direction
         };
       }
 
@@ -378,6 +397,10 @@
           if (t === 'bloodKnight') { e.speed = .65; e.aggro = .25; }
           if (t === 'shadowRider') { e.speed = 1.1; e.aggro = .55; }
           if (t === 'deathLord') { e.speed = 1.4; e.aggro = .8; }
+          // Stagger patrol heights so they don't all cluster
+          e.patrolY = H * (.2 + .45 * (i / Math.max(1, n - 1)));
+          e.patrolDir = Math.random() < .5 ? 1 : -1;
+          e.aiTimer = 80 + Math.random() * 150 | 0;
           enemies.push(e);
         }
       }
@@ -502,39 +525,109 @@
 
       // ─── Enemy AI ──────────────────────────────────────────────────────
       function aiUpdate(e) {
-        if (!e.alive || !player || !player.alive) {
-          // Patrol randomly when no player target
-          if (Math.random() < .06) e.vx += (Math.random() - .5) * 2;
-          if (e.y > H - LAVA_H - 120) doFlap(e);
-          if (e.vy > 3 && Math.random() < .15) doFlap(e);
-          return;
+        if (!e.alive) return;
+
+        // Always avoid lava
+        if (e.y > H - LAVA_H - 100) { doFlap(e); return; }
+        // Avoid ceiling
+        if (e.y < 10) e.vy = Math.max(e.vy, 2);
+
+        // Decrement AI timer and pick new mode when it expires
+        e.aiTimer--;
+        if (e.aiTimer <= 0) {
+          if (!player || !player.alive) {
+            e.aiMode = 'patrol';
+            e.aiTimer = 100 + Math.random() * 120 | 0;
+          } else {
+            const roll = Math.random();
+            const atk = .25 + e.aggro * .35; // 0.34 – 0.53 attack chance
+            if (roll < atk) {
+              e.aiMode = 'approach';
+              e.aiTimer = 50 + Math.random() * 60 | 0;
+            } else {
+              e.aiMode = 'patrol';
+              e.patrolY = H * (.15 + Math.random() * .5);
+              e.patrolDir = Math.random() < .5 ? 1 : -1;
+              e.aiTimer = 90 + Math.random() * 140 | 0;
+            }
+          }
         }
 
-        const dx = player.x - e.x, dy = player.y - e.y;
+        const spdF = e.speed;
 
-        // Horizontal pursuit
-        if (Math.abs(dx) > 20) {
-          const dir = Math.sign(dx);
-          e.vx += dir * HACC * e.speed * .5;
-          e.left = dir < 0;
+        switch (e.aiMode) {
+          case 'patrol': {
+            // Fly at patrolY, moving horizontally in patrolDir
+            e.vx += e.patrolDir * HACC * spdF * .3;
+            e.left = e.patrolDir < 0;
+            if (Math.abs(e.vx) > MAXVX * spdF * .6) e.vx = Math.sign(e.vx) * MAXVX * spdF * .6;
+            // Maintain patrol altitude
+            if (e.y > e.patrolY + 20 && Math.random() < .15) doFlap(e);
+            if (e.vy > 3) doFlap(e);
+            // Randomly reverse patrol direction
+            if (Math.random() < .008) e.patrolDir *= -1;
+            // Screen edge bounce
+            if (e.x < 30) e.patrolDir = 1;
+            if (e.x > W - 30 - e.w) e.patrolDir = -1;
+            break;
+          }
+          case 'approach': {
+            if (!player || !player.alive) { e.aiMode = 'patrol'; break; }
+            const dx = player.x - e.x, dy = player.y - e.y;
+            // Move toward player but try to stay above
+            if (Math.abs(dx) > 15) {
+              e.vx += Math.sign(dx) * HACC * spdF * .55;
+              e.left = dx < 0;
+            }
+            if (Math.abs(e.vx) > MAXVX * spdF) e.vx = Math.sign(e.vx) * MAXVX * spdF;
+            // Try to get above player — flap when below or near same height
+            if (dy > -40 && Math.random() < .12 + e.aggro * .08) doFlap(e);
+            // If above player and close horizontally, switch to dive
+            if (dy > 30 && Math.abs(dx) < 100) {
+              e.aiMode = 'dive';
+              e.aiTimer = 30 + Math.random() * 25 | 0;
+            }
+            // If falling fast, flap to control descent
+            if (e.vy > 4 && Math.random() < .2) doFlap(e);
+            break;
+          }
+          case 'dive': {
+            if (!player || !player.alive) { e.aiMode = 'patrol'; break; }
+            const dx = player.x - e.x;
+            // Dive toward player — don't flap, let gravity work
+            if (Math.abs(dx) > 10) {
+              e.vx += Math.sign(dx) * HACC * spdF * .4;
+              e.left = dx < 0;
+            }
+            // After timer expires, retreat
+            if (e.aiTimer <= 0 || e.y > H - LAVA_H - 140) {
+              e.aiMode = 'retreat';
+              e.aiTimer = 40 + Math.random() * 50 | 0;
+            }
+            break;
+          }
+          case 'retreat': {
+            // Fly away and gain altitude
+            if (player && player.alive) {
+              const dx = player.x - e.x;
+              e.vx -= Math.sign(dx) * HACC * spdF * .3; // move away
+              e.left = e.vx < 0;
+            }
+            if (Math.abs(e.vx) > MAXVX * spdF * .7) e.vx = Math.sign(e.vx) * MAXVX * spdF * .7;
+            // Gain altitude aggressively
+            if (Math.random() < .2) doFlap(e);
+            if (e.vy > 2) doFlap(e);
+            if (e.aiTimer <= 0) {
+              e.aiMode = 'patrol';
+              e.patrolY = H * (.15 + Math.random() * .45);
+              e.aiTimer = 80 + Math.random() * 120 | 0;
+            }
+            break;
+          }
         }
-        if (Math.abs(e.vx) > MAXVX * e.speed) e.vx = Math.sign(e.vx) * MAXVX * e.speed;
-
-        // Try to get above player
-        const wantUp = dy > -50 || e.y > H * .65;
-        if (wantUp && Math.random() < .12 + e.aggro * .14) doFlap(e);
-
-        // Avoid lava
-        if (e.y > H - LAVA_H - 110) doFlap(e);
-
-        // Gravity dive if above and close
-        if (dy > 60 && Math.abs(dx) < 70 && e.aggro > .45) { /* let gravity work */ }
-        else if (e.vy > 4 && Math.random() < .18 + e.aggro * .1) doFlap(e);
 
         // Organic randomness
-        if (Math.random() < .025) e.vx += (Math.random() - .5) * 2;
-        // Avoid top of screen
-        if (e.y < -30) e.vy = Math.max(e.vy, 1);
+        if (Math.random() < .02) e.vx += (Math.random() - .5) * 1.5;
       }
 
       // ─── Collision ─────────────────────────────────────────────────────
@@ -545,7 +638,7 @@
         for (let i = enemies.length - 1; i >= 0; i--) {
           const e = enemies[i]; if (!e.alive) continue;
           const ecx = e.x + e.w / 2, ecy = e.y + e.h * .4;
-          if (Math.hypot(pcx - ecx, pcy - ecy) > 38) continue;
+          if (Math.hypot(pcx - ecx, pcy - ecy) > 52) continue;
 
           if (pcy < ecy - 5) {
             // Player wins
@@ -725,23 +818,30 @@
         }
       }
 
+      // ─── Scanline Overlay (CRT effect) ─────────────────────────────
+      function drawScanlines() {
+        X.fillStyle = 'rgba(0,0,0,.12)';
+        for (let y = 0; y < H; y += 4) X.fillRect(0, y, W, 2);
+      }
+
       // ─── HUD ───────────────────────────────────────────────────────────
+      const FONT = '"Courier New", Courier, monospace';
       function drawHUD() {
         for (let i = 0; i < lives; i++) hudSkull(16 + i * 28, 14);
-        X.textAlign = 'center'; X.fillStyle = '#b02020';
-        X.font = 'bold 17px system-ui,sans-serif';
+        X.textAlign = 'center'; X.fillStyle = '#f44';
+        X.font = `bold 18px ${FONT}`;
         X.fillText('WAVE ' + wave, W / 2, 28);
-        X.textAlign = 'right'; X.fillStyle = '#e0d8c8';
-        X.font = 'bold 22px system-ui,sans-serif';
+        X.textAlign = 'right'; X.fillStyle = '#ff0';
+        X.font = `bold 24px ${FONT}`;
         X.fillText(score.toLocaleString(), W - 18, 28);
-        X.font = '11px system-ui,sans-serif'; X.fillStyle = '#666';
-        X.fillText('HI: ' + hiScore.toLocaleString(), W - 18, 44);
+        X.font = `12px ${FONT}`; X.fillStyle = '#888';
+        X.fillText('HI: ' + hiScore.toLocaleString(), W - 18, 46);
       }
 
       function hudSkull(x, y) {
-        X.fillStyle = '#ccc'; X.fillRect(x, y, 12, 10); X.fillRect(x + 2, y + 10, 8, 4);
-        X.fillStyle = '#a01515'; X.fillRect(x + 2, y + 3, 3, 3); X.fillRect(x + 7, y + 3, 3, 3);
-        X.fillStyle = '#777'; X.fillRect(x + 4, y + 10, 1, 4); X.fillRect(x + 7, y + 10, 1, 4);
+        X.fillStyle = '#eee'; X.fillRect(x, y, 14, 12); X.fillRect(x + 2, y + 12, 10, 5);
+        X.fillStyle = '#f00'; X.fillRect(x + 2, y + 3, 4, 4); X.fillRect(x + 8, y + 3, 4, 4);
+        X.fillStyle = '#aaa'; X.fillRect(x + 4, y + 12, 2, 5); X.fillRect(x + 8, y + 12, 2, 5);
       }
 
       // ─── Screen FX ─────────────────────────────────────────────────────
@@ -758,20 +858,23 @@
         }
       }
 
-      // ─── Blood-drip text ───────────────────────────────────────────────
+      // ─── Retro arcade text ─────────────────────────────────────────
       function bloodText(txt, x, y, size, col) {
         X.textAlign = 'center';
-        X.font = `bold ${size}px system-ui,sans-serif`;
+        X.font = `bold ${size}px ${FONT}`;
+        // Shadow
         X.fillStyle = '#200000'; X.fillText(txt, x + 3, y + 3);
-        X.fillStyle = col || '#c0392b'; X.fillText(txt, x, y);
+        // Main text
+        X.fillStyle = col || '#f22'; X.fillText(txt, x, y);
+        // Pixel drip effect
         const w = X.measureText(txt).width;
-        const nd = Math.max(3, w / 35 | 0);
+        const nd = Math.max(3, w / 30 | 0);
         for (let i = 0; i < nd; i++) {
           const dx = x - w / 2 + i * (w / (nd - 1));
-          const dLen = 12 + Math.sin(frame * .018 + i * 2.1) * 10 + (frame * .15 + i * 7) % 25;
-          X.fillStyle = 'rgba(160,15,15,.45)';
-          X.fillRect(dx, y + 6, 2, Math.min(dLen, 50));
-          X.fillRect(dx - 1, y + 6 + Math.min(dLen, 50), 4, 3);
+          const dLen = 10 + Math.sin(frame * .02 + i * 2.3) * 8 + (frame * .12 + i * 5) % 20;
+          X.fillStyle = 'rgba(200,0,0,.5)';
+          X.fillRect(dx | 0, y + 6, 3, Math.min(dLen, 40) | 0);
+          X.fillRect((dx - 1) | 0, (y + 6 + Math.min(dLen, 40)) | 0, 5, 4);
         }
       }
 
@@ -789,24 +892,25 @@
         X.beginPath(); X.moveTo(cx - 150, cy + 2); X.lineTo(cx + 15, cy - 3); X.stroke();
         X.beginPath(); X.moveTo(cx + 150, cy + 2); X.lineTo(cx - 15, cy - 3); X.stroke();
 
-        bloodText('BLOOD JOUST', cx, H * .25, Math.min(68, W * .065));
+        bloodText('BLOOD JOUST', cx, H * .25, Math.min(72, W * .07));
 
-        X.fillStyle = '#777'; X.font = 'italic 18px system-ui,sans-serif';
+        X.fillStyle = '#8af'; X.font = `italic 18px ${FONT}`;
         X.textAlign = 'center'; X.fillText('Only the highest shall survive', cx, H * .33);
 
         const pulse = .4 + Math.sin(frame * .055) * .6;
-        X.fillStyle = `rgba(220,200,180,${Math.max(.15, pulse)})`;
-        X.font = 'bold 24px system-ui,sans-serif';
-        X.fillText('Press SPACE or Tap to Begin', cx, H * .63);
+        X.fillStyle = `rgba(255,255,100,${Math.max(.2, pulse)})`;
+        X.font = `bold 22px ${FONT}`;
+        X.fillText('PRESS SPACE OR TAP TO BEGIN', cx, H * .63);
 
-        X.fillStyle = '#484848'; X.font = '14px system-ui,sans-serif';
-        X.fillText('A/D or \u2190/\u2192 to Move  \u2022  SPACE or W to Flap', cx, H * .73);
-        X.fillText('Get ABOVE enemies to joust them down!', cx, H * .78);
+        X.fillStyle = '#6af'; X.font = `14px ${FONT}`;
+        X.fillText('A/D or \u2190/\u2192 = MOVE   SPACE/W = FLAP', cx, H * .73);
+        X.fillText('GET ABOVE ENEMIES TO JOUST THEM!', cx, H * .78);
 
         if (hiScore > 0) {
-          X.fillStyle = '#555'; X.font = '13px system-ui,sans-serif';
-          X.fillText('High Score: ' + hiScore.toLocaleString(), cx, H * .86);
+          X.fillStyle = '#fa0'; X.font = `14px ${FONT}`;
+          X.fillText('HIGH SCORE: ' + hiScore.toLocaleString(), cx, H * .86);
         }
+        drawScanlines();
       }
 
       function drawWaveScreen() {
@@ -814,29 +918,31 @@
         const t = waveT / 130;
         const sc = 1 + Math.sin(t * Math.PI) * .25;
         X.save(); X.translate(W / 2, H * .38); X.scale(sc, sc);
-        bloodText('WAVE ' + wave, 0, 0, 50);
+        bloodText('WAVE ' + wave, 0, 0, 54);
         X.restore();
         if (wave > 1) {
-          X.fillStyle = '#777'; X.font = '18px system-ui,sans-serif';
+          X.fillStyle = '#0f0'; X.font = `bold 20px ${FONT}`;
           X.textAlign = 'center'; X.fillText('WAVE COMPLETE', W / 2, H * .5);
         }
+        drawScanlines();
         drawHUD();
       }
 
       function drawGameOver() {
         drawBG(); drawLava();
-        bloodText('GAME OVER', W / 2, H * .28, Math.min(64, W * .065));
+        bloodText('GAME OVER', W / 2, H * .28, Math.min(68, W * .07));
         X.textAlign = 'center';
-        X.fillStyle = '#e0d8c8'; X.font = 'bold 32px system-ui,sans-serif';
-        X.fillText('Score: ' + score.toLocaleString(), W / 2, H * .44);
-        X.fillStyle = '#777'; X.font = '20px system-ui,sans-serif';
-        X.fillText('High Score: ' + hiScore.toLocaleString(), W / 2, H * .51);
-        X.fillStyle = '#666'; X.font = '16px system-ui,sans-serif';
-        X.fillText('Wave Reached: ' + wave, W / 2, H * .57);
+        X.fillStyle = '#ff0'; X.font = `bold 32px ${FONT}`;
+        X.fillText('SCORE: ' + score.toLocaleString(), W / 2, H * .44);
+        X.fillStyle = '#fa0'; X.font = `20px ${FONT}`;
+        X.fillText('HIGH SCORE: ' + hiScore.toLocaleString(), W / 2, H * .51);
+        X.fillStyle = '#8af'; X.font = `16px ${FONT}`;
+        X.fillText('WAVE REACHED: ' + wave, W / 2, H * .57);
         const pulse = .4 + Math.sin(frame * .055) * .6;
-        X.fillStyle = `rgba(220,200,180,${Math.max(.15, pulse)})`;
-        X.font = 'bold 22px system-ui,sans-serif';
-        X.fillText('Press SPACE or Tap to Restart', W / 2, H * .7);
+        X.fillStyle = `rgba(255,255,100,${Math.max(.2, pulse)})`;
+        X.font = `bold 22px ${FONT}`;
+        X.fillText('PRESS SPACE OR TAP TO RESTART', W / 2, H * .7);
+        drawScanlines();
       }
 
       // ─── Main Loop ─────────────────────────────────────────────────────
@@ -903,7 +1009,7 @@
             applyShake(); drawBG(); drawLava(); drawPlats();
             for (const e of enemies) drawEnt(e);
             if (player) drawEnt(player);
-            drawParts(); drawFlash(); drawHUD();
+            drawParts(); drawFlash(); drawScanlines(); drawHUD();
             break;
         }
         X.restore();
