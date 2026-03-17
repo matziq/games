@@ -364,7 +364,7 @@
 
       function drawBirdPx(cx, col, fp, left) {
         cx.save();
-        if (left) { cx.translate(spW, 0); cx.scale(-1, 1); }
+        if (!left) { cx.translate(spW, 0); cx.scale(-1, 1); }
 
         // Body — ostrich/stork shape
         px(cx, 9, 9, 9, 5, col.body);
