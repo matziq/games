@@ -157,6 +157,9 @@
         <div class="hud-sep" id="hud-key-sep" style="display:none"></div>
         <div class="hud-item" id="hud-key-item" style="display:none"><span style="font-size:14px">🔑</span><span
                 class="hud-val" id="hud-keys">0</span></div>
+        <div class="hud-sep" id="hud-kit-sep" style="display:none"></div>
+        <div class="hud-item" id="hud-kit-item" style="display:none"><span style="font-size:14px">🔧</span><span
+                class="hud-val" id="hud-kits">0</span></div>
         <div class="hud-sep"></div>
         <div class="hud-item"><span class="hud-label">Score</span><span class="hud-val" id="hud-score">0</span></div>
         <div class="hud-sep"></div>
@@ -169,15 +172,24 @@
             /* ═══════════════════════════════════════════════════════════════
                CONSTANTS
                ═══════════════════════════════════════════════════════════════ */
-            const W = 320, H = 180, SCALE = 2, TW = 16, TH = 16, COLS = 20, ROWS = 11;
-            const GRAVITY = 0.35, MAX_FALL = 6, JUMP_FORCE = -5.8, MOVE_SPEED = 1.8;
+            const W = 320, H = 180, TW = 16, TH = 16, COLS = 20, ROWS = 11;
+            const GRAVITY = 0.35, MAX_FALL = 6, MOVE_SPEED = 1.8;
             const WHIP_RANGE = 28, WHIP_DURATION = 200;
             const BULLET_SPEED = 4, MAX_BULLETS = 12;
             const FLOOD_SPEED = 0.08, DROWN_TIME = 3000;
+            const TRAP_DISARM_TIME = 5000; // 5 seconds to disarm
             const canvas = document.getElementById('game');
             const ctx = canvas.getContext('2d');
+            // Auto-scale to fill viewport
+            function calcScale() { return Math.max(2, Math.min(Math.floor(innerWidth / W), Math.floor((innerHeight - 34) / H))); }
+            let SCALE = calcScale();
             canvas.width = W * SCALE; canvas.height = H * SCALE;
             ctx.imageSmoothingEnabled = false;
+            window.addEventListener('resize', () => {
+              SCALE = calcScale();
+              canvas.width = W * SCALE; canvas.height = H * SCALE;
+              ctx.imageSmoothingEnabled = false;
+            });
             // offscreen buffer at native res
             const buf = document.createElement('canvas');
             buf.width = W; buf.height = H;
@@ -219,6 +231,9 @@
                 explosion() { playNoise(.4, .3); playTone(80, .3, 'sine', .2, -40) },
                 water() { playNoise(.2, .05); playTone(300, .15, 'sine', .04, 50) },
                 pickup() { playTone(700, .06, 'square', .08); playTone(900, .08, 'square', .06) },
+                trapClick() { playTone(2000, .04, 'square', .2); playTone(1500, .03, 'square', .15) },
+                disarm() { playTone(800, .08, 'sine', .1); setTimeout(() => playTone(1200, .1, 'sine', .08), 80) },
+                drip() { playTone(1800 + Math.random() * 600, .15, 'sine', .02 + Math.random() * .02, -800); },
             };
 
             /* ═══════════════════════════════════════════════════════════════
@@ -899,7 +914,8 @@
             let player = {
                 x: 0, y: 0, vx: 0, vy: 0, facing: 1, onGround: false, onLadder: false,
                 frame: 0, animTimer: 0, hearts: 3, maxHearts: 3, bullets: 6, keys: 0, score: 0,
-                roomScore: 0, whipping: false, whipTimer: 0, invincible: 0, dead: false
+                roomScore: 0, whipping: false, whipTimer: 0, invincible: 0, dead: false,
+                disarmKits: 0
             };
             let currentRoom = 0;
             let roomStates = {}; // persisted room data
@@ -970,8 +986,11 @@
                     activeItems = room.items.map(it => ({ ...it, collected: false, opened: false }));
                 }
 
-                // Load traps (reset each time)
-                activeTraps = room.traps.map(t => ({ ...t, timer: 0, active: false, warned: false, warningTimer: 0, cooldown: 0 }));
+                // Load traps — with disarm timer support
+                activeTraps = room.traps.map(t => ({
+                    ...t, timer: 0, active: false, warned: false, warningTimer: 0, cooldown: 0,
+                    triggered: false, disarmTimer: 0, disarmed: false
+                }));
 
                 // Position player
                 if (entryX !== undefined) {
@@ -1013,7 +1032,7 @@
             function startGame() {
                 state = 'playing';
                 player.hearts = 3; player.bullets = 6; player.keys = 0; player.score = 0; player.dead = false;
-                player.invincible = 0; player.whipping = false;
+                player.invincible = 0; player.whipping = false; player.disarmKits = 1;
                 roomStates = {};
                 drawGameOver._saved = false;
                 loadRoom(0);
@@ -1033,6 +1052,9 @@
                 document.getElementById('hud-keys').textContent = player.keys;
                 document.getElementById('hud-key-sep').style.display = player.keys > 0 ? '' : 'none';
                 document.getElementById('hud-key-item').style.display = player.keys > 0 ? 'flex' : 'none';
+                document.getElementById('hud-kits').textContent = player.disarmKits;
+                document.getElementById('hud-kit-sep').style.display = player.disarmKits > 0 ? '' : 'none';
+                document.getElementById('hud-kit-item').style.display = player.disarmKits > 0 ? 'flex' : 'none';
                 document.getElementById('hud-score').textContent = player.score;
                 document.getElementById('hud-room').textContent = rooms[currentRoom].name;
             }
@@ -1136,8 +1158,7 @@
                             saveRoom(currentRoom); loadRoom(room.exits.top[0], room.exits.top[1], room.exits.top[2]); return;
                         }
                     }
-                    // Jump
-                    if (inputUp() && player.onGround) { player.vy = JUMP_FORCE; player.onGround = false; SFX.jump() }
+                    // No jumping — side-scroller with ladders only
                     // Gravity
                     player.vy += GRAVITY;
                     if (player.vy > MAX_FALL) player.vy = MAX_FALL;
@@ -1270,31 +1291,61 @@
 
                 // — Arrows (from traps) —
                 for (const t of activeTraps) {
+                    if (t.disarmed) continue; // skip disarmed traps
+
                     if (t.type === 'arrow') {
-                        t.timer += dt * 1000;
-                        if (t.timer >= t.interval) {
-                            t.timer = 0;
-                            activeArrows.push({ x: t.x + (t.dir > 0 ? 16 : 0), y: t.y, vx: t.dir * 3, vy: 0, life: 2000 });
-                            SFX.arrow();
+                        // Arrow traps trigger on proximity, then disarm window
+                        const pr3 = playerRect();
+                        if (!t.triggered && rectOverlap(pr3.x, pr3.y, pr3.w, pr3.h, t.x, t.y - 16, 32, 48)) {
+                            t.triggered = true;
+                            t.disarmTimer = TRAP_DISARM_TIME;
+                            SFX.trapClick();
+                        }
+                        if (t.triggered && t.disarmTimer > 0) {
+                            t.disarmTimer -= dt * 1000;
+                            // Player can disarm with E key if near and has kit
+                            if (inputShoot() && player.disarmKits > 0 && rectOverlap(pr3.x, pr3.y, pr3.w, pr3.h, t.x, t.y - 16, 32, 48)) {
+                                player.disarmKits--;
+                                t.disarmed = true;
+                                SFX.disarm();
+                                addScore(15);
+                                updateHUD();
+                                continue;
+                            }
+                            if (t.disarmTimer <= 0) {
+                                // Trap fires!
+                                activeArrows.push({ x: t.x + (t.dir > 0 ? 16 : 0), y: t.y, vx: t.dir * 3, vy: 0, life: 2000 });
+                                SFX.arrow();
+                                t.triggered = false; // can re-trigger
+                            }
                         }
                     }
                     if (t.type === 'explosion') {
-                        // Check if player on plate
                         const pr3 = playerRect();
-                        if (!t.active && !t.warned && rectOverlap(pr3.x, pr3.y, pr3.w, pr3.h, t.x, t.y, 16, 16)) {
-                            t.warned = true; t.warningTimer = 1000;
+                        if (!t.triggered && !t.active && rectOverlap(pr3.x, pr3.y, pr3.w, pr3.h, t.x, t.y, 16, 16)) {
+                            t.triggered = true;
+                            t.disarmTimer = TRAP_DISARM_TIME;
+                            SFX.trapClick();
                         }
-                        if (t.warned && !t.active) {
-                            t.warningTimer -= dt * 1000;
-                            if (t.warningTimer <= 0) {
+                        if (t.triggered && !t.active && t.disarmTimer > 0) {
+                            t.disarmTimer -= dt * 1000;
+                            const pr4 = playerRect();
+                            if (inputShoot() && player.disarmKits > 0 && rectOverlap(pr4.x, pr4.y, pr4.w, pr4.h, t.x - 8, t.y - 8, 32, 32)) {
+                                player.disarmKits--;
+                                t.disarmed = true;
+                                SFX.disarm();
+                                addScore(20);
+                                updateHUD();
+                                continue;
+                            }
+                            if (t.disarmTimer <= 0) {
                                 t.active = true;
                                 SFX.explosion();
                                 explosions.push({ x: t.x + 8, y: t.y + 8, radius: t.radius, life: 500, maxLife: 500 });
                                 spawnParticles(t.x + 8, t.y + 8, 20, '#ff8800', 4);
                                 spawnParticles(t.x + 8, t.y + 8, 10, '#ffdd00', 3);
-                                // Damage in radius
-                                const pr4 = playerRect();
-                                if (Math.hypot(pr4.x + pr4.w / 2 - t.x - 8, pr4.y + pr4.h / 2 - t.y - 8) < t.radius) {
+                                const pr5 = playerRect();
+                                if (Math.hypot(pr5.x + pr5.w / 2 - t.x - 8, pr5.y + pr5.h / 2 - t.y - 8) < t.radius) {
                                     hurtPlayer();
                                 }
                                 for (const en of activeEnemies) {
@@ -1308,13 +1359,30 @@
                         }
                         if (t.active) {
                             t.cooldown -= dt * 1000;
-                            if (t.cooldown <= 0) { t.active = false; t.warned = false }
+                            if (t.cooldown <= 0) { t.active = false; t.triggered = false; }
                         }
                     }
                     if (t.type === 'flood') {
                         const pr3 = playerRect();
-                        if (!floodActive && rectOverlap(pr3.x, pr3.y, pr3.w, pr3.h, t.triggerX, t.triggerY, 16, 16)) {
-                            floodActive = true; SFX.water();
+                        if (!t.triggered && !floodActive && rectOverlap(pr3.x, pr3.y, pr3.w, pr3.h, t.triggerX, t.triggerY, 16, 16)) {
+                            t.triggered = true;
+                            t.disarmTimer = TRAP_DISARM_TIME;
+                            SFX.trapClick();
+                        }
+                        if (t.triggered && !floodActive && t.disarmTimer > 0) {
+                            t.disarmTimer -= dt * 1000;
+                            const pr4 = playerRect();
+                            if (inputShoot() && player.disarmKits > 0 && rectOverlap(pr4.x, pr4.y, pr4.w, pr4.h, t.triggerX - 8, t.triggerY - 8, 32, 32)) {
+                                player.disarmKits--;
+                                t.disarmed = true;
+                                SFX.disarm();
+                                addScore(25);
+                                updateHUD();
+                                continue;
+                            }
+                            if (t.disarmTimer <= 0) {
+                                floodActive = true; SFX.water();
+                            }
                         }
                         if (floodActive && floodLevel < t.maxHeight) {
                             floodLevel += t.speed;
@@ -1451,6 +1519,9 @@
                 particles = particles.filter(p => p.life > 0);
 
                 roomTorchPhase += dt * 3;
+
+                // Ambient water drip sound
+                if (Math.random() < .008) SFX.drip();
             }
 
             function interactWith(it) {
@@ -1467,15 +1538,17 @@
                     const roll = Math.random();
                     if (roll < 0.3) { addScore(30); spawnParticles(it.x + 8, it.y + 4, 6, '#FFD700'); SFX.coin() }
                     else if (roll < 0.5) { addScore(50); spawnParticles(it.x + 8, it.y + 4, 6, '#e03040'); SFX.gem() }
-                    else if (roll < 0.7) { player.bullets = Math.min(player.bullets + 3, MAX_BULLETS); SFX.pickup(); updateHUD(); spawnParticles(it.x + 8, it.y + 4, 4, '#d4a020') }
+                    else if (roll < 0.65) { player.bullets = Math.min(player.bullets + 3, MAX_BULLETS); SFX.pickup(); updateHUD(); spawnParticles(it.x + 8, it.y + 4, 4, '#d4a020') }
+                    else if (roll < 0.8) { player.disarmKits++; SFX.pickup(); updateHUD(); spawnParticles(it.x + 8, it.y + 4, 4, '#80c0ff') }
                     else { addScore(75); spawnParticles(it.x + 8, it.y + 4, 8, '#30b050'); SFX.gem() }
                 }
                 if (it.type === 'rubbish' && !it.opened) {
                     it.opened = true;
                     const roll = Math.random();
-                    if (roll < 0.25) { addScore(10); SFX.coin(); spawnParticles(it.x + 8, it.y + 4, 4, '#FFD700') }
-                    else if (roll < 0.45) { player.bullets = Math.min(player.bullets + 2, MAX_BULLETS); SFX.pickup(); updateHUD() }
-                    else if (roll < 0.6) {
+                    if (roll < 0.2) { addScore(10); SFX.coin(); spawnParticles(it.x + 8, it.y + 4, 4, '#FFD700') }
+                    else if (roll < 0.35) { player.bullets = Math.min(player.bullets + 2, MAX_BULLETS); SFX.pickup(); updateHUD() }
+                    else if (roll < 0.5) { player.disarmKits++; SFX.pickup(); updateHUD(); spawnParticles(it.x + 8, it.y + 4, 3, '#80c0ff') }
+                    else if (roll < 0.65) {
                         // Scorpion jumps out!
                         activeEnemies.push({
                             type: 'scorpion', x: it.x, y: it.y - 4, alive: true, hp: 1,
@@ -1625,12 +1698,22 @@
                     }
                 }
 
-                // Explosion warnings
+                // Trap warnings — show countdown for all triggered traps
                 for (const t of activeTraps) {
-                    if (t.type === 'explosion' && t.warned && !t.active) {
-                        bx.fillStyle = '#ff0000';
-                        bx.font = 'bold 12px monospace';
-                        bx.fillText('!', t.x + 5, t.y - 2);
+                    if (t.triggered && !t.active && !t.disarmed && t.disarmTimer > 0) {
+                        const tx = t.type === 'flood' ? t.triggerX : t.x;
+                        const ty = t.type === 'flood' ? t.triggerY : t.y;
+                        const secs = (t.disarmTimer / 1000).toFixed(1);
+                        // Flashing warning
+                        const flash = Math.sin(t.disarmTimer * .01) > 0;
+                        bx.fillStyle = flash ? '#ff0000' : '#ff8800';
+                        bx.font = 'bold 8px monospace'; bx.textAlign = 'center';
+                        bx.fillText('!' + secs + 's', tx + 8, ty - 4);
+                        if (player.disarmKits > 0) {
+                            bx.fillStyle = '#0f0';
+                            bx.fillText('[E] DISARM', tx + 8, ty - 12);
+                        }
+                        bx.textAlign = 'left';
                     }
                 }
 
@@ -1755,7 +1838,7 @@
 
                 // Controls
                 bx.fillStyle = '#a09882'; bx.font = '7px monospace';
-                bx.fillText('A/D: Move  W/Space: Jump  E: Shoot/Interact  F: Whip', W / 2, 155);
+                bx.fillText('A/D: Move  W/S: Climb  E: Interact/Shoot  F: Whip', W / 2, 155);
                 bx.fillText('Collect treasure • Avoid traps • Defeat enemies', W / 2, 166);
 
                 bx.textAlign = 'left';
