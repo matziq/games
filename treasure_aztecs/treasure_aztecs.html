@@ -661,8 +661,8 @@
                 STAIRS: 20, EXIT_L: 21, EXIT_R: 22, EXIT_T: 23, EXIT_B: 24
             };
 
-            function tileIsSolid(t) { return t === T.WALL || t === T.FLOOR || t === T.STAIRS || t === T.EXIT_T }
-            function tileIsPlatform(t) { return t === T.PLATFORM }
+            function tileIsSolid(t) { return t === T.WALL || t === T.FLOOR || t === T.EXIT_T }
+            function tileIsPlatform(t) { return t === T.PLATFORM || t === T.STAIRS }
             function tileIsLadder(t) { return t === T.LADDER }
             function tileIsSpike(t) { return t === T.SPIKE }
             function tileIsExit(t) { return t >= T.EXIT_L && t <= T.EXIT_B }
