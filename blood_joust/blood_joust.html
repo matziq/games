@@ -710,52 +710,67 @@
 
       // ─── Particles ─────────────────────────────────────────────────────
       function addBlood(x, y, n) {
-        for (let i = 0; i < n && bloods.length < P_LIM; i++)
+        for (let i = 0; i < n && bloods.length < 2000; i++)
           bloods.push({
             x, y,
-            vx: (Math.random() - .5) * 14,
-            vy: (Math.random() - .85) * 10 - 3,
-            sz: 1 + Math.random() * 4,
-            life: 3 + Math.random() * 2.5,
-            col: `hsl(${350 + Math.random() * 15},${75 + Math.random() * 25}%,${15 + Math.random() * 25}%)`
+            vx: (Math.random() - .5) * 22,
+            vy: (Math.random() - .8) * 16 - 5,
+            sz: 1 + Math.random() * 5,
+            life: 4 + Math.random() * 4,
+            col: `hsl(${348 + Math.random() * 16},${75 + Math.random() * 25}%,${12 + Math.random() * 28}%)`
           });
       }
 
       function addGore(x, y, n) {
-        for (let i = 0; i < n && gores.length < 400; i++)
+        for (let i = 0; i < n && gores.length < 600; i++)
           gores.push({
             x, y,
-            vx: (Math.random() - .5) * 12,
-            vy: (Math.random() - .7) * 11 - 2,
-            sz: 3 + Math.random() * 7,
+            vx: (Math.random() - .5) * 18,
+            vy: (Math.random() - .7) * 16 - 4,
+            sz: 4 + Math.random() * 9,
             rot: Math.random() * 6.28,
-            rv: (Math.random() - .5) * .5,
-            life: 3 + Math.random() * 3,
+            rv: (Math.random() - .5) * .7,
+            life: 5 + Math.random() * 4,
             bn: 0,
-            col: `hsl(${348 + Math.random() * 16},${70 + Math.random() * 30}%,${10 + Math.random() * 25}%)`
+            col: `hsl(${345 + Math.random() * 20},${70 + Math.random() * 30}%,${8 + Math.random() * 28}%)`
           });
       }
 
       function addBone(x, y, n) {
-        for (let i = 0; i < n && bones.length < 250; i++)
+        for (let i = 0; i < n && bones.length < 400; i++)
           bones.push({
             x, y,
-            vx: (Math.random() - .5) * 11,
-            vy: (Math.random() - .6) * 12 - 3,
-            sz: 2 + Math.random() * 4,
+            vx: (Math.random() - .5) * 16,
+            vy: (Math.random() - .6) * 15 - 5,
+            sz: 2 + Math.random() * 5,
             rot: Math.random() * 6.28,
-            rv: (Math.random() - .5) * .55,
-            life: 4 + Math.random() * 3,
+            rv: (Math.random() - .5) * .7,
+            life: 5 + Math.random() * 4,
             bn: 0,
             col: `hsl(38,${25 + Math.random() * 35}%,${72 + Math.random() * 22}%)`
           });
       }
 
       function killFX(x, y) {
-        addBlood(x, y, 45 + (Math.random() * 30 | 0));
-        addGore(x, y, 10 + (Math.random() * 8 | 0));
-        addBone(x, y, 5 + (Math.random() * 5 | 0));
-        shakeT = 18; shakeI = 14; flashT = 10;
+        // OVER-THE-TOP COMEDIC GORE
+        addBlood(x, y, 120 + (Math.random() * 60 | 0));
+        addGore(x, y, 25 + (Math.random() * 15 | 0));
+        addBone(x, y, 12 + (Math.random() * 8 | 0));
+        // Extra blood fountains in multiple directions
+        for (let d = 0; d < 8; d++) {
+          const a = d * Math.PI / 4;
+          for (let j = 0; j < 8; j++) {
+            bloods.push({
+              x, y,
+              vx: Math.cos(a) * (6 + Math.random() * 10),
+              vy: Math.sin(a) * (6 + Math.random() * 10) - 4,
+              sz: 2 + Math.random() * 5,
+              life: 4 + Math.random() * 3,
+              col: `hsl(${348 + Math.random() * 16},${80 + Math.random() * 20}%,${12 + Math.random() * 28}%)`
+            });
+          }
+        }
+        shakeT = 25; shakeI = 20; flashT = 14;
         sfx('kill');
       }
 
@@ -837,106 +852,61 @@
       function aiUpdate(e) {
         if (!e.alive) return;
 
-        // Always avoid lava
-        if (e.y > H - LAVA_H - 100) { doFlap(e); return; }
-        // Avoid ceiling
-        if (e.y < 10) e.vy = Math.max(e.vy, 2);
+        // Avoid lava
+        if (e.y > H - LAVA_H - 90) { doFlap(e); return; }
 
-        // Decrement AI timer and pick new mode when it expires
         e.aiTimer--;
+        const hasTarget = player && player.alive;
+
         if (e.aiTimer <= 0) {
-          if (!player || !player.alive) {
+          if (!hasTarget) {
             e.aiMode = 'patrol';
-            e.aiTimer = 100 + Math.random() * 120 | 0;
+            e.patrolY = H * (.3 + Math.random() * .35);
+            e.aiTimer = 60 + Math.random() * 60 | 0;
           } else {
-            const roll = Math.random();
-            const atk = .25 + e.aggro * .35; // 0.34 – 0.53 attack chance
-            if (roll < atk) {
-              e.aiMode = 'approach';
-              e.aiTimer = 50 + Math.random() * 60 | 0;
-            } else {
-              e.aiMode = 'patrol';
-              e.patrolY = H * (.15 + Math.random() * .5);
-              e.patrolDir = Math.random() < .5 ? 1 : -1;
-              e.aiTimer = 90 + Math.random() * 140 | 0;
-            }
+            // Heavily biased toward chasing the player — 85% chase
+            e.aiMode = Math.random() < .15 ? 'patrol' : 'chase';
+            e.patrolY = H * (.25 + Math.random() * .4);
+            e.patrolDir = Math.random() < .5 ? 1 : -1;
+            e.aiTimer = e.aiMode === 'chase' ? (80 + Math.random() * 100 | 0) : (30 + Math.random() * 40 | 0);
           }
         }
 
         const spdF = e.speed;
 
-        switch (e.aiMode) {
-          case 'patrol': {
-            // Fly at patrolY, moving horizontally in patrolDir
-            e.vx += e.patrolDir * HACC * spdF * .3;
-            e.left = e.patrolDir < 0;
-            if (Math.abs(e.vx) > MAXVX * spdF * .6) e.vx = Math.sign(e.vx) * MAXVX * spdF * .6;
-            // Maintain patrol altitude
-            if (e.y > e.patrolY + 20 && Math.random() < .15) doFlap(e);
-            if (e.vy > 3) doFlap(e);
-            // Randomly reverse patrol direction
-            if (Math.random() < .008) e.patrolDir *= -1;
-            // Screen edge bounce
-            if (e.x < 30) e.patrolDir = 1;
-            if (e.x > W - 30 - e.w) e.patrolDir = -1;
-            break;
+        if (e.aiMode === 'patrol') {
+          e.vx += e.patrolDir * HACC * spdF * .35;
+          e.left = e.patrolDir < 0;
+          if (Math.abs(e.vx) > MAXVX * spdF * .6) e.vx = Math.sign(e.vx) * MAXVX * spdF * .6;
+          if (e.y > e.patrolY + 15 && Math.random() < .12) doFlap(e);
+          if (e.y < e.patrolY - 30) { /* descend */ }
+          else if (e.vy > 3) doFlap(e);
+          if (Math.random() < .01) e.patrolDir *= -1;
+          if (e.x < 30) e.patrolDir = 1;
+          if (e.x > W - 30 - e.w) e.patrolDir = -1;
+          // Interrupt patrol if player nearby
+          if (hasTarget && Math.hypot(player.x - e.x, player.y - e.y) < 200) {
+            e.aiMode = 'chase';
+            e.aiTimer = 80 + Math.random() * 80 | 0;
           }
-          case 'approach': {
-            if (!player || !player.alive) { e.aiMode = 'patrol'; break; }
-            const dx = player.x - e.x, dy = player.y - e.y;
-            // Move toward player but try to stay above
-            if (Math.abs(dx) > 15) {
-              e.vx += Math.sign(dx) * HACC * spdF * .55;
-              e.left = dx < 0;
-            }
-            if (Math.abs(e.vx) > MAXVX * spdF) e.vx = Math.sign(e.vx) * MAXVX * spdF;
-            // Try to get above player — flap when below or near same height
-            if (dy > -40 && Math.random() < .12 + e.aggro * .08) doFlap(e);
-            // If above player and close horizontally, switch to dive
-            if (dy > 30 && Math.abs(dx) < 100) {
-              e.aiMode = 'dive';
-              e.aiTimer = 30 + Math.random() * 25 | 0;
-            }
-            // If falling fast, flap to control descent
-            if (e.vy > 4 && Math.random() < .2) doFlap(e);
-            break;
+        } else {
+          // CHASE mode — aggressive pursuit
+          if (!hasTarget) { e.aiMode = 'patrol'; return; }
+          const dx = player.x - e.x, dy = player.y - e.y;
+          if (Math.abs(dx) > 8) {
+            e.vx += Math.sign(dx) * HACC * spdF * .7;
+            e.left = dx < 0;
           }
-          case 'dive': {
-            if (!player || !player.alive) { e.aiMode = 'patrol'; break; }
-            const dx = player.x - e.x;
-            // Dive toward player — don't flap, let gravity work
-            if (Math.abs(dx) > 10) {
-              e.vx += Math.sign(dx) * HACC * spdF * .4;
-              e.left = dx < 0;
-            }
-            // After timer expires, retreat
-            if (e.aiTimer <= 0 || e.y > H - LAVA_H - 140) {
-              e.aiMode = 'retreat';
-              e.aiTimer = 40 + Math.random() * 50 | 0;
-            }
-            break;
-          }
-          case 'retreat': {
-            // Fly away and gain altitude
-            if (player && player.alive) {
-              const dx = player.x - e.x;
-              e.vx -= Math.sign(dx) * HACC * spdF * .3; // move away
-              e.left = e.vx < 0;
-            }
-            if (Math.abs(e.vx) > MAXVX * spdF * .7) e.vx = Math.sign(e.vx) * MAXVX * spdF * .7;
-            // Gain altitude aggressively
-            if (Math.random() < .2) doFlap(e);
-            if (e.vy > 2) doFlap(e);
-            if (e.aiTimer <= 0) {
-              e.aiMode = 'patrol';
-              e.patrolY = H * (.15 + Math.random() * .45);
-              e.aiTimer = 80 + Math.random() * 120 | 0;
-            }
-            break;
-          }
+          if (Math.abs(e.vx) > MAXVX * spdF * 1.1) e.vx = Math.sign(e.vx) * MAXVX * spdF * 1.1;
+          // Match player height — slightly above
+          const targetY = player.y - 20;
+          if (e.y > targetY + 10 && Math.random() < .2 + e.aggro * .1) doFlap(e);
+          if (e.y < targetY - 40) { /* descend naturally */ }
+          else if (e.vy > 3.5) doFlap(e);
+          // Don't hover at top
+          if (e.y < H * .08) { /* let gravity pull down */ }
         }
 
-        // Organic randomness
         if (Math.random() < .02) e.vx += (Math.random() - .5) * 1.5;
       }
 
@@ -1048,6 +1018,10 @@
 
       function tickLavaHands() {
         const ly = H - LAVA_H;
+        // Find lowest platform Y to cap hand reach
+        let lowestPlatY = 0;
+        for (const p of plats) if (p.y > lowestPlatY) lowestPlatY = p.y;
+        const maxReach = lowestPlatY + 10; // hands can't go above lowest platform
 
         // Check all alive entities near lava
         const ents = [];
@@ -1058,19 +1032,25 @@
           const bottom = ent.y + ent.h;
           const dist = ly - bottom;
 
-          // Already grabbed?
+          // Skip if entity is above a platform (standing on one or above one)
+          let abovePlat = false;
+          for (const p of plats) {
+            if (ent.x + ent.w > p.x && ent.x < p.x + p.w && bottom <= p.y + 5) {
+              abovePlat = true; break;
+            }
+          }
+
           const existing = lavaHands.find(h => h.targetEnt === ent);
 
-          if (dist < LAVA_HAND_ZONE && dist > 0 && !existing) {
-            // Chance to spawn a hand (closer = more likely)
-            const chance = .008 + (1 - dist / LAVA_HAND_ZONE) * .02;
+          if (dist < 80 && dist > 0 && !existing && !abovePlat) {
+            const chance = .006 + (1 - dist / 80) * .015;
             if (Math.random() < chance) {
               lavaHands.push({
                 x: ent.x + ent.w / 2 + (Math.random() - .5) * 20,
                 targetEnt: ent,
-                grip: 0,       // 0→1 reaching, 1 = grabbed
-                reachY: ly,    // current hand Y position
-                life: 180 + Math.random() * 120 | 0,  // how long it persists
+                grip: 0,
+                reachY: ly,
+                life: 150 + Math.random() * 100 | 0,
                 fingerAnim: 0
               });
             }
@@ -1078,23 +1058,20 @@
 
           if (existing) {
             const h = existing;
+            // Release if entity moved above a platform
+            if (abovePlat) { lavaHands.splice(lavaHands.indexOf(h), 1); continue; }
             h.fingerAnim += .15;
-            h.x += (ent.x + ent.w / 2 - h.x) * .08; // track horizontally
+            h.x += (ent.x + ent.w / 2 - h.x) * .08;
 
             if (h.grip < 1) {
-              // Reaching up toward the entity
-              h.reachY -= 1.8;
-              if (h.reachY <= bottom + 5) {
-                h.grip = 1; // grabbed!
-              }
+              h.reachY -= 1.5;
+              // Don't reach above the lowest platform
+              if (h.reachY < maxReach) { h.life = 0; }
+              if (h.reachY <= bottom + 5) { h.grip = 1; }
             } else {
-              // Gripped! Pull the entity down toward lava
               ent.vy += HAND_PULL * dt;
               h.reachY = bottom + 3;
-              // Restrict upward escape — need hard flapping
-              if (ent.vy < -3) {
-                h.life -= 8; // flapping hard breaks grip faster
-              }
+              if (ent.vy < -3) h.life -= 8;
               h.life -= 1;
             }
 
