@@ -734,25 +734,25 @@
                     name: 'Entrance Hall',
                     tiles: R(
                         '##########T#########\n' +
-                        '#                  R\n' +
-                        '#   --             R\n' +
-                        '#         --       #\n' +
-                        '#              --  #\n' +
-                        '#    --            #\n' +
-                        '#          --      #\n' +
-                        '#                  #\n' +
-                        '#  --     --    -- #\n' +
-                        '#                  #\n' +
+                        '#              H   R\n' +
+                        '#   --         H   R\n' +
+                        '#         --   H   #\n' +
+                        '#     H        --  #\n' +
+                        '#     H  --        #\n' +
+                        '#     H      --    #\n' +
+                        '#     H            #\n' +
+                        '#  --  H  --    -- #\n' +
+                        '#      H           #\n' +
                         '=====DD========DD==='
                     ),
                     exits: { right: [1, 1, 1], bottom_l: [4, 2, 1], bottom_r: [2, 6, 1] },
                     enemies: [],
                     items: [
-                        { type: 'rubbish', x: 4 * 16, y: 5 * 16 - 4 },
-                        { type: 'rubbish', x: 11 * 16, y: 3 * 16 - 4 },
+                        { type: 'rubbish', x: 5 * 16, y: 5 * 16 - 4 },
+                        { type: 'rubbish', x: 10 * 16, y: 3 * 16 - 4 },
                         { type: 'chest', x: 15 * 16, y: 4 * 16 - 4 },
                         { type: 'rubbish', x: 3 * 16, y: 8 * 16 - 4 },
-                        { type: 'rubbish', x: 10 * 16, y: 6 * 16 - 4 },
+                        { type: 'rubbish', x: 11 * 16, y: 6 * 16 - 4 },
                         { type: 'key', x: 16 * 16 + 4, y: 4 * 16 - 8 },
                     ],
                     torches: [[0, 0]],
@@ -764,11 +764,11 @@
                     name: 'Spike Pit Chamber',
                     tiles: R(
                         '####################\n' +
-                        'L                  #\n' +
-                        'L   --      --     #\n' +
-                        '#                  #\n' +
-                        '#  --         --   #\n' +
-                        '#                  R\n' +
+                        'L        H         #\n' +
+                        'L   --   H   --    #\n' +
+                        '#        H         #\n' +
+                        '#  --    H    --   #\n' +
+                        '#        H         R\n' +
                         '#       --         R\n' +
                         '#                  #\n' +
                         '#  --         --   #\n' +
@@ -780,7 +780,7 @@
                     items: [
                         { type: 'rubbish', x: 4 * 16, y: 2 * 16 - 4 },
                         { type: 'rubbish', x: 14 * 16, y: 4 * 16 - 4 },
-                        { type: 'chest', x: 7 * 16, y: 6 * 16 - 4, locked: true },
+                        { type: 'chest', x: 8 * 16, y: 6 * 16 - 4, locked: true },
                         { type: 'key', x: 3 * 16 + 4, y: 8 * 16 - 8 },
                         { type: 'rubbish', x: 14 * 16, y: 8 * 16 - 4 },
                     ],
@@ -791,21 +791,21 @@
                     name: 'Arrow Trap Corridor',
                     tiles: R(
                         '####################\n' +
-                        '#                  #\n' +
-                        '>   --      --     #\n' +
-                        '#                  #\n' +
-                        '#         --    -- #\n' +
-                        '>                  #\n' +
-                        '#    --            #\n' +
-                        '#              --  R\n' +
-                        '>                  R\n' +
+                        '#            H     #\n' +
+                        '>   --       H     #\n' +
+                        '#            H     #\n' +
+                        '#      --    H  -- #\n' +
+                        '>            H     #\n' +
+                        '#    --      H     #\n' +
+                        '#            H --  R\n' +
+                        '>            H     R\n' +
                         '#                  #\n' +
                         '====UU=============='
                     ),
                     exits: { top: [0, 17, 9], right: [5, 1, 4] },
                     enemies: [{ type: 'scorpion', x: 12 * 16, y: 9 * 16 + 4, patrol: [6 * 16, 17 * 16] }],
                     items: [
-                        { type: 'rubbish', x: 5 * 16, y: 2 * 16 - 4 },
+                        { type: 'rubbish', x: 4 * 16, y: 2 * 16 - 4 },
                         { type: 'bullets', x: 15 * 16, y: 4 * 16 - 4 },
                         { type: 'rubbish', x: 8 * 16, y: 9 * 16 - 4 },
                         { type: 'chest', x: 14 * 16, y: 7 * 16 - 4 },
@@ -823,14 +823,14 @@
                     name: 'Treasure Vault',
                     tiles: R(
                         '########TT##########\n' +
-                        '#                  #\n' +
-                        '#                  #\n' +
-                        '#  --     --    -- #\n' +
-                        '#                  #\n' +
-                        'L                  #\n' +
-                        'L   --     --      #\n' +
-                        '#            H     #\n' +
-                        '#            H  -- #\n' +
+                        '#      H           #\n' +
+                        '#      H           #\n' +
+                        '#  --  H  --    -- #\n' +
+                        '#      H           #\n' +
+                        'L      H           #\n' +
+                        'L   -- H   --      #\n' +
+                        '#      H     H     #\n' +
+                        '#      H     H  -- #\n' +
                         '#            H     #\n' +
                         '================DD=='
                     ),
@@ -839,9 +839,9 @@
                     items: [
                         { type: 'chest', x: 3 * 16, y: 3 * 16 - 4, locked: true },
                         { type: 'chest', x: 10 * 16, y: 3 * 16 - 4 },
-                        { type: 'chest', x: 15 * 16, y: 3 * 16 - 4 },
+                        { type: 'chest', x: 16 * 16, y: 3 * 16 - 4 },
                         { type: 'key', x: 5 * 16 + 4, y: 6 * 16 - 8 },
-                        { type: 'rubbish', x: 10 * 16, y: 6 * 16 - 4 },
+                        { type: 'rubbish', x: 11 * 16, y: 6 * 16 - 4 },
                         { type: 'rubbish', x: 16 * 16, y: 8 * 16 - 4 },
                     ],
                     torches: [[8, 0], [9, 0]], traps: [],
@@ -851,24 +851,25 @@
                     name: 'Flooding Chamber',
                     tiles: R(
                         '####################\n' +
-                        '#                  #\n' +
-                        '#                  #\n' +
-                        '#        SS    --  #\n' +
-                        '#       SS         #\n' +
-                        '#      SS      --  #\n' +
-                        '#     SS           #\n' +
-                        '#  P SS        --  #\n' +
-                        '#   SS             #\n' +
-                        '#  SS              #\n' +
+                        '#         H        #\n' +
+                        '#  --     H    --  #\n' +
+                        '#         H        #\n' +
+                        '#     --  H        #\n' +
+                        '#         H    --  #\n' +
+                        '#  --     H        #\n' +
+                        '#  P      H    --  #\n' +
+                        '#     --  H        #\n' +
+                        '#         H        #\n' +
                         '=UU================='
                     ),
                     exits: { top: [0, 5, 9] },
                     enemies: [],
                     items: [
-                        { type: 'rubbish', x: 16 * 16, y: 3 * 16 - 4 },
-                        { type: 'chest', x: 16 * 16, y: 5 * 16 - 4 },
-                        { type: 'rubbish', x: 16 * 16, y: 7 * 16 - 4 },
-                        { type: 'health', x: 3 * 16, y: 1 * 16 + 8 },
+                        { type: 'health', x: 3 * 16, y: 2 * 16 - 4 },
+                        { type: 'rubbish', x: 15 * 16, y: 2 * 16 - 4 },
+                        { type: 'chest', x: 15 * 16, y: 5 * 16 - 4 },
+                        { type: 'rubbish', x: 6 * 16, y: 8 * 16 - 4 },
+                        { type: 'rubbish', x: 15 * 16, y: 7 * 16 - 4 },
                     ],
                     torches: [],
                     traps: [{ type: 'flood', triggerX: 3 * 16, triggerY: 7 * 16, maxHeight: 7 * 16, speed: FLOOD_SPEED }],
@@ -879,15 +880,15 @@
                     name: 'Spider Lair',
                     tiles: R(
                         '####################\n' +
-                        '#                  R\n' +
-                        '#  --     --    -- R\n' +
-                        '#                  #\n' +
-                        'L                  #\n' +
-                        'L  --         --   #\n' +
-                        '#                  #\n' +
-                        '#       --      -- #\n' +
-                        '#                  #\n' +
-                        '#  --           -- #\n' +
+                        '#         H        R\n' +
+                        '#  --     H  -- -- R\n' +
+                        '#         H        #\n' +
+                        'L         H        #\n' +
+                        'L  --     H   --   #\n' +
+                        '#         H        #\n' +
+                        '#       --H     -- #\n' +
+                        '#         H        #\n' +
+                        '#  --     H     -- #\n' +
                         '===================='
                     ),
                     exits: { left: [2, 18, 7], right: [7, 1, 5] },
@@ -911,15 +912,15 @@
                     name: 'Explosive Room',
                     tiles: R(
                         '####################\n' +
-                        '#                  #\n' +
-                        '#  --   --   --    #\n' +
-                        '#                  #\n' +
-                        '#                  #\n' +
-                        '#   --   --   --   #\n' +
-                        '#                  #\n' +
-                        '#  P      P        #\n' +
-                        '#   --       -- -- #\n' +
-                        '#        P         #\n' +
+                        '#       H          #\n' +
+                        '#  --   H  --      #\n' +
+                        '#       H          #\n' +
+                        '#       H          #\n' +
+                        '#   --  H  --  --  #\n' +
+                        '#       H          #\n' +
+                        '#  P    H   P      #\n' +
+                        '#   --  H    -- -- #\n' +
+                        '#       H P        #\n' +
                         '==UU================'
                     ),
                     exits: { top: [3, 17, 9] },
