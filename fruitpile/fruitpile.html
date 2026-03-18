@@ -4416,21 +4416,21 @@
     </script>
     <script src="../scripts/mobile-controls.js"></script>
     <script>
-    // Sound toggle button
-    (() => {
-      const btn = document.createElement('button');
-      btn.id = 'fp-sound-btn';
-      btn.setAttribute('aria-label', 'Toggle sound');
-      btn.textContent = '🔊';
-      btn.style.cssText = 'position:fixed;top:10px;right:80px;z-index:99999;all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;font-size:22px;background:rgba(0,0,0,.45);color:#fff;border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(6px);';
-      let muted = false;
-      btn.addEventListener('click', () => {
-        muted = !muted;
-        btn.textContent = muted ? '🔇' : '🔊';
-        if (window._fpAudio) window._fpAudio.setVolume(muted ? 0 : 70);
-      });
-      document.body.appendChild(btn);
-    })();
+        // Sound toggle button
+        (() => {
+            const btn = document.createElement('button');
+            btn.id = 'fp-sound-btn';
+            btn.setAttribute('aria-label', 'Toggle sound');
+            btn.textContent = '🔊';
+            btn.style.cssText = 'position:fixed;top:10px;right:80px;z-index:99999;all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;font-size:22px;background:rgba(0,0,0,.45);color:#fff;border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(6px);';
+            let muted = false;
+            btn.addEventListener('click', () => {
+                muted = !muted;
+                btn.textContent = muted ? '🔇' : '🔊';
+                if (window._fpAudio) window._fpAudio.setVolume(muted ? 0 : 70);
+            });
+            document.body.appendChild(btn);
+        })();
     </script>
 </body>
 
