@@ -235,7 +235,26 @@
 
       // ─── Audio ─────────────────────────────────────────────────────────
       let ac = null;
-      function audio() { if (!ac) ac = new (AudioContext || webkitAudioContext)(); return ac; }
+      let masterGain = null;
+      let masterVol = +(localStorage.getItem('bjVol') || 1);
+      let sfxMuted = false;
+      let musicMuted = false;
+
+      function audio() {
+        if (!ac) {
+          ac = new (AudioContext || webkitAudioContext)();
+          masterGain = ac.createGain();
+          masterGain.gain.value = masterVol;
+          masterGain.connect(ac.destination);
+        }
+        return ac;
+      }
+      function getMaster() { audio(); return masterGain; }
+      function setVolume(v) {
+        masterVol = Math.round(Math.max(0, Math.min(1, v)) * 100) / 100;
+        localStorage.setItem('bjVol', masterVol);
+        if (masterGain) masterGain.gain.value = masterVol;
+      }
 
       function noise(len, decay, vol, mod) {
         const a = audio(), g = a.createGain(), b = a.createBuffer(1, len, a.sampleRate), d = b.getChannelData(0);
@@ -1459,7 +1478,24 @@
         switch (state) {
           case 'title':
             tickEmbers();
-            if (K.Space) { K.Space = 0; startGame(); }
+            if (K.KeyH) { K.KeyH = 0; state = 'help'; }
+            else if (K.KeyS) { K.KeyS = 0; state = 'sound'; }
+            else if (K.Space) { K.Space = 0; startGame(); }
+            break;
+          case 'help':
+            tickEmbers();
+            if (K.Space || K.Escape || K.KeyH || K.Enter) {
+              K.Space = 0; K.Escape = 0; K.KeyH = 0; K.Enter = 0;
+              state = 'title';
+            }
+            break;
+          case 'sound':
+            tickEmbers();
+            if (K.ArrowLeft) { K.ArrowLeft = 0; setVolume(masterVol - .1); }
+            if (K.ArrowRight) { K.ArrowRight = 0; setVolume(masterVol + .1); }
+            if (K.KeyF) { K.KeyF = 0; sfxMuted = !sfxMuted; }
+            if (K.KeyM) { K.KeyM = 0; musicMuted = !musicMuted; if (musicMuted) droneOff(); }
+            if (K.Space || K.Escape) { K.Space = 0; K.Escape = 0; state = 'title'; }
             break;
           case 'waveAnnounce':
             tickEmbers();
