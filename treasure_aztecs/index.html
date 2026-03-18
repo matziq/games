@@ -166,22 +166,48 @@
         <div class="hud-item hud-room" id="hud-room">Entrance Hall</div>
     </div>
     <canvas id="game"></canvas>
+
+    <!-- Mobile on-screen controls -->
+    <div id="ta-mobile" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9000;pointer-events:none;padding:0 10px max(10px,env(safe-area-inset-bottom,10px));justify-content:space-between;align-items:flex-end;">
+      <div style="display:flex;gap:8px;pointer-events:auto;">
+        <button class="ta-btn" id="ta-left" aria-label="Left">◀</button>
+        <button class="ta-btn" id="ta-right" aria-label="Right">▶</button>
+      </div>
+      <div style="display:flex;gap:8px;pointer-events:auto;">
+        <button class="ta-btn" id="ta-jump" aria-label="Jump">▲</button>
+        <button class="ta-btn" id="ta-down" aria-label="Down">▼</button>
+        <button class="ta-btn" id="ta-action" aria-label="Action" style="font-size:13px;width:64px;">ACT</button>
+        <button class="ta-btn" id="ta-whip" aria-label="Whip" style="font-size:13px;width:64px;">WHIP</button>
+      </div>
+    </div>
+    <!-- Sound toggle -->
+    <button id="ta-sound-btn" style="position:fixed;top:10px;right:12px;z-index:9999;all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;font-size:20px;background:rgba(0,0,0,.5);color:#fff;border:1px solid rgba(255,255,255,.15);" aria-label="Toggle sound">🔊</button>
+    <style>
+      .ta-btn{all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:50%;font-size:22px;font-weight:700;color:rgba(255,255,255,.85);background:rgba(139,115,85,.45);border:2px solid rgba(255,184,0,.4);touch-action:manipulation;user-select:none;-webkit-user-select:none;backdrop-filter:blur(4px);}
+      .ta-btn:active,.ta-btn.pressed{background:rgba(255,184,0,.35);}
+      @media(pointer:coarse){#ta-mobile{display:flex!important;}}
+    </style>
     <script>
         (() => {
             'use strict';
             /* ═══════════════════════════════════════════════════════════════
                CONSTANTS
                ═══════════════════════════════════════════════════════════════ */
-            const W = 320, H = 180, TW = 16, TH = 16, COLS = 20, ROWS = 11;
-            const GRAVITY = 0.35, MAX_FALL = 6, MOVE_SPEED = 1.8;
+            const W = 320, H = 320, TW = 16, TH = 16, COLS = 20, ROWS = 20;
+            const GRAVITY = 0.22, MAX_FALL = 4, JUMP_FORCE = -3.5, MOVE_SPEED = 1.2;
             const WHIP_RANGE = 28, WHIP_DURATION = 200;
-            const BULLET_SPEED = 4, MAX_BULLETS = 12;
-            const FLOOD_SPEED = 0.08, DROWN_TIME = 3000;
+            const BULLET_SPEED = 3, MAX_BULLETS = 12;
+            const FLOOD_SPEED = 0.05, DROWN_TIME = 3000;
             const TRAP_DISARM_TIME = 5000; // 5 seconds to disarm
+            let soundEnabled = true;
             const canvas = document.getElementById('game');
             const ctx = canvas.getContext('2d');
-            // Auto-scale to fill viewport
-            function calcScale() { return Math.max(2, Math.min(Math.floor(innerWidth / W), Math.floor((innerHeight - 34) / H))); }
+            // Scale: 1024x1024 base, 2048x2048 on large screens
+            function calcScale() {
+              const targetSize = Math.min(innerWidth, innerHeight - 34);
+              if (targetSize >= 2048) return Math.floor(2048 / W);
+              return Math.max(2, Math.floor(1024 / W));
+            }
             let SCALE = calcScale();
             canvas.width = W * SCALE; canvas.height = H * SCALE;
             ctx.imageSmoothingEnabled = false;
@@ -201,6 +227,7 @@
             let audioCtx;
             function ensureAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)() }
             function playTone(freq, dur, type = 'square', vol = .12, slide = 0) {
+                if (!soundEnabled) return;
                 ensureAudio(); const o = audioCtx.createOscillator(), g = audioCtx.createGain();
                 o.type = type; o.frequency.setValueAtTime(freq, audioCtx.currentTime);
                 if (slide) o.frequency.linearRampToValueAtTime(freq + slide, audioCtx.currentTime + dur);
@@ -209,6 +236,7 @@
                 o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + dur);
             }
             function playNoise(dur, vol = .1) {
+                if (!soundEnabled) return;
                 ensureAudio(); const n = audioCtx.createBufferSource(), b = audioCtx.createBuffer(1, audioCtx.sampleRate * dur, audioCtx.sampleRate);
                 const d = b.getChannelData(0); for (let i = 0; i < d.length; i++)d[i] = (Math.random() * 2 - 1);
                 n.buffer = b; const g = audioCtx.createGain(); g.gain.setValueAtTime(vol, audioCtx.currentTime);
@@ -953,12 +981,29 @@
                 else if (state === 'gameover') showTitle();
             });
 
-            function inputLeft() { return keys['ArrowLeft'] || keys['KeyA'] }
-            function inputRight() { return keys['ArrowRight'] || keys['KeyD'] }
-            function inputUp() { return keys['ArrowUp'] || keys['KeyW'] || keys['Space'] }
-            function inputDown() { return keys['ArrowDown'] || keys['KeyS'] }
-            function inputShoot() { return keys['KeyE'] }
-            function inputWhip() { return keys['KeyF'] }
+            function inputLeft() { return keys['ArrowLeft'] || keys['KeyA'] || keys['_tLeft'] }
+            function inputRight() { return keys['ArrowRight'] || keys['KeyD'] || keys['_tRight'] }
+            function inputUp() { return keys['ArrowUp'] || keys['KeyW'] || keys['Space'] || keys['_tUp'] }
+            function inputDown() { return keys['ArrowDown'] || keys['KeyS'] || keys['_tDown'] }
+            function inputShoot() { return keys['KeyE'] || keys['_tAction'] }
+            function inputWhip() { return keys['KeyF'] || keys['_tWhip'] }
+
+            // Wire mobile controls
+            function taBind(id, k) {
+              const el = document.getElementById(id); if (!el) return;
+              el.addEventListener('touchstart', e => { e.preventDefault(); keys[k] = true; el.classList.add('pressed'); }, { passive: false });
+              el.addEventListener('touchend', e => { e.preventDefault(); keys[k] = false; el.classList.remove('pressed'); }, { passive: false });
+              el.addEventListener('touchcancel', () => { keys[k] = false; el.classList.remove('pressed'); });
+            }
+            taBind('ta-left', '_tLeft'); taBind('ta-right', '_tRight');
+            taBind('ta-jump', '_tUp'); taBind('ta-down', '_tDown');
+            taBind('ta-action', '_tAction'); taBind('ta-whip', '_tWhip');
+
+            // Sound toggle
+            document.getElementById('ta-sound-btn').addEventListener('click', () => {
+              soundEnabled = !soundEnabled;
+              document.getElementById('ta-sound-btn').textContent = soundEnabled ? '🔊' : '🔇';
+            });
 
             /* ═══════════════════════════════════════════════════════════════
                ROOM MANAGEMENT
@@ -1158,7 +1203,8 @@
                             saveRoom(currentRoom); loadRoom(room.exits.top[0], room.exits.top[1], room.exits.top[2]); return;
                         }
                     }
-                    // No jumping — side-scroller with ladders only
+                    // Short jump — enough for stairs/pits, not full platformer
+                    if (inputUp() && player.onGround) { player.vy = JUMP_FORCE; player.onGround = false; SFX.jump() }
                     // Gravity
                     player.vy += GRAVITY;
                     if (player.vy > MAX_FALL) player.vy = MAX_FALL;
