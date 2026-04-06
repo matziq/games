@@ -558,6 +558,39 @@
             text-align: right;
         }
 
+        .hs-table .seed {
+            color: #888;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .hs-pager {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .hs-pager button {
+            padding: 4px 12px;
+            background: #333;
+            border: none;
+            border-radius: 6px;
+            color: #aaa;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .hs-pager button:disabled {
+            opacity: 0.3;
+            cursor: default;
+        }
+
         .close-hs {
             margin-top: 12px;
             padding: 8px 24px;
@@ -811,11 +844,17 @@
                     <tr>
                         <th>#</th>
                         <th>Name</th>
+                        <th class="seed">Seed</th>
                         <th class="score">Score</th>
                     </tr>
                 </thead>
                 <tbody id="hs-body"></tbody>
             </table>
+            <div class="hs-pager">
+                <button id="hs-prev" onclick="hsPagePrev()">◀ Prev</button>
+                <span id="hs-page-info">1 / 1</span>
+                <button id="hs-next" onclick="hsPageNext()">Next ▶</button>
+            </div>
             <button class="close-hs" onclick="hideHighScores()">Close</button>
         </div>
     </div>
@@ -1224,11 +1263,10 @@
             if (score <= 0) return false;
             const all = getAllHighScores();
             const name = localStorage.getItem('wordlePlayerName') || '???';
-            const entry = { name, score, date: new Date().toISOString().slice(0, 10) };
+            const entry = { name, score, seed: currentSeed || '', date: new Date().toISOString().slice(0, 10) };
             all.push(entry);
             all.sort((a, b) => b.score - a.score);
-            const trimmed = all.slice(0, 20);
-            localStorage.setItem(HS_KEY, JSON.stringify(trimmed));
+            localStorage.setItem(HS_KEY, JSON.stringify(all));
             if (window.GHScores) GHScores.save('wordle', HS_KEY);
             return true;
         }
@@ -1240,24 +1278,44 @@
 
         let pendingScore = 0;
 
+        const HS_PER_PAGE = 10;
+        let hsPage = 0;
+
         function renderHighScores() {
             const all = getAllHighScores();
             const body = document.getElementById('hs-body');
+            const totalPages = Math.max(1, Math.ceil(all.length / HS_PER_PAGE));
+            if (hsPage >= totalPages) hsPage = totalPages - 1;
+            if (hsPage < 0) hsPage = 0;
+
             if (!all.length) {
-                body.innerHTML = '<tr><td colspan="3" style="color:#555;padding:16px;">No scores yet</td></tr>';
-                return;
+                body.innerHTML = '<tr><td colspan="4" style="color:#555;padding:16px;">No scores yet</td></tr>';
+            } else {
+                const start = hsPage * HS_PER_PAGE;
+                const page = all.slice(start, start + HS_PER_PAGE);
+                const medals = ['🥇', '🥈', '🥉'];
+                body.innerHTML = page.map((e, i) => {
+                    const rank = start + i;
+                    const seedTxt = e.seed || '—';
+                    return `<tr>
+                        <td class="rank">${rank < 3 ? (medals[rank] || (rank + 1)) : (rank + 1)}</td>
+                        <td class="name">${escapeHtml(e.name)}</td>
+                        <td class="seed">${escapeHtml(seedTxt)}</td>
+                        <td class="score">${e.score}</td>
+                    </tr>`;
+                }).join('');
             }
-            const medals = ['🥇', '🥈', '🥉'];
-            body.innerHTML = all.slice(0, 10).map((e, i) => `
-            <tr>
-                <td class="rank">${medals[i] || (i + 1)}</td>
-                <td class="name">${escapeHtml(e.name)}</td>
-                <td class="score">${e.score}</td>
-            </tr>
-        `).join('');
+
+            document.getElementById('hs-page-info').textContent = `${hsPage + 1} / ${totalPages}`;
+            document.getElementById('hs-prev').disabled = hsPage <= 0;
+            document.getElementById('hs-next').disabled = hsPage >= totalPages - 1;
         }
 
+        function hsPagePrev() { hsPage--; renderHighScores(); }
+        function hsPageNext() { hsPage++; renderHighScores(); }
+
         function showHighScores() {
+            hsPage = 0;
             renderHighScores();
             document.getElementById('hs-overlay').classList.add('show');
         }
@@ -1652,7 +1710,7 @@
 
     <script src="../scripts/github-scores.js"></script>
     <script>
-        if (window.GHScores) GHScores.load('wordle', 'wordleHighScores', 20).then(() => { renderHighScores(); }).catch(() => { });
+        if (window.GHScores) GHScores.load('wordle', 'wordleHighScores').then(() => { renderHighScores(); }).catch(() => { });
     </script>
 </body>
 
