@@ -1,0 +1,8 @@
+{
+  "webDir": "www",
+  "appName": "Blood Joust",
+  "server": {
+    "androidScheme": "https"
+  },
+  "appId": "com.matziq.bloodjoust"
+}

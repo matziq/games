@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">FruitPile</string>
+    <string name="title_activity_main">FruitPile</string>
+    <string name="package_name">com.matziq.fruitpile</string>
+    <string name="custom_url_scheme">com.matziq.fruitpile</string>
+</resources>

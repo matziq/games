@@ -1,0 +1,8 @@
+{
+  "webDir": "www",
+  "appName": "Betris",
+  "server": {
+    "androidScheme": "https"
+  },
+  "appId": "com.matziq.betris"
+}

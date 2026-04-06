@@ -55,14 +55,14 @@
     .touch-controls {
       display: none;
       position: fixed;
-      bottom: 0;
+      top: 0;
       left: 0;
       right: 0;
       z-index: 9000;
       pointer-events: none;
-      padding: 0 12px max(14px, env(safe-area-inset-bottom, 14px));
+      padding: max(14px, env(safe-area-inset-top, 14px)) 12px 0;
       justify-content: space-between;
-      align-items: flex-end;
+      align-items: flex-start;
     }
 
     @media (pointer: coarse) {

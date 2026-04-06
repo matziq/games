@@ -194,10 +194,11 @@
         #buttons {
             display: flex;
             justify-content: space-between;
-            align-items: flex-end;
+            align-items: flex-start;
             width: 100%;
-            margin-top: auto;
-            padding-bottom: max(60px, calc(env(safe-area-inset-bottom, 16px) + 56px));
+            margin-bottom: auto;
+            padding-top: 4px;
+            order: -1;
         }
 
         .game-btn {
@@ -759,7 +760,7 @@
             }
 
             #buttons {
-                padding-bottom: max(56px, calc(env(safe-area-inset-bottom, 8px) + 52px));
+                padding-bottom: 0;
                 gap: 4px;
             }
 
@@ -826,7 +827,7 @@
             }
 
             #buttons {
-                padding-bottom: max(56px, calc(env(safe-area-inset-bottom, 4px) + 52px));
+                padding-bottom: 0;
             }
 
             .btn-circle {
@@ -867,7 +868,7 @@
             }
 
             #buttons {
-                padding-bottom: max(52px, calc(env(safe-area-inset-bottom, 2px) + 48px));
+                padding-bottom: 0;
             }
 
             .btn-circle {

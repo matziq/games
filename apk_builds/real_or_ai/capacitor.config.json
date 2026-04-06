@@ -1,0 +1,8 @@
+{
+  "webDir": "www",
+  "appName": "Real or AI",
+  "server": {
+    "androidScheme": "https"
+  },
+  "appId": "com.matziq.realorai"
+}

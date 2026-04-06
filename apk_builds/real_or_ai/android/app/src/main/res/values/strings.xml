@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Real or AI</string>
+    <string name="title_activity_main">Real or AI</string>
+    <string name="package_name">com.matziq.realorai</string>
+    <string name="custom_url_scheme">com.matziq.realorai</string>
+</resources>

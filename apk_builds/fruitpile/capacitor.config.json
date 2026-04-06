@@ -1,0 +1,8 @@
+{
+  "webDir": "www",
+  "appName": "FruitPile",
+  "server": {
+    "androidScheme": "https"
+  },
+  "appId": "com.matziq.fruitpile"
+}

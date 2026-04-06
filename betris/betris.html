@@ -127,10 +127,11 @@
         #buttons {
             display: flex;
             justify-content: space-between;
-            align-items: flex-end;
+            align-items: flex-start;
             width: 100%;
-            padding: 4px 0 max(60px, calc(env(safe-area-inset-bottom, 8px) + 56px));
+            padding: 4px 0;
             flex-shrink: 0;
+            order: -2;
         }
 
         .game-btn {
@@ -573,7 +574,7 @@
             }
 
             #buttons {
-                padding: 2px 0 max(56px, calc(env(safe-area-inset-bottom, 4px) + 52px));
+                padding: 2px 0;
                 gap: 2px;
             }
 
@@ -629,7 +630,7 @@
 
         @media (max-height: 700px) {
             #buttons {
-                padding-bottom: max(56px, calc(env(safe-area-inset-bottom, 4px) + 52px));
+                padding-bottom: 0;
             }
 
             .btn-circle {
@@ -665,7 +666,7 @@
             }
 
             #buttons {
-                padding: 2px 0 max(52px, calc(env(safe-area-inset-bottom, 2px) + 48px));
+                padding: 2px 0;
             }
 
             .btn-circle {
@@ -737,7 +738,7 @@
             }
 
             #buttons {
-                padding-bottom: max(48px, calc(env(safe-area-inset-bottom, 2px) + 44px));
+                padding-bottom: 0;
             }
         }
     </style>

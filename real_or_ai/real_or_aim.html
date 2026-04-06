@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Real or AI</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			background: #222;
+			color: #fff;
+			text-align: center;
+		}
+
+			display: block;
+			text-align: center;
+			font-size: 13px;
+			font-weight: 700;
+			color: #09f;
+			text-decoration: none;
+			padding: 4px 0;
+			transition: color 0.15s;
+			letter-spacing: 0.3px;
+		}
+
+			color: #4dc3ff;
+		}
+
+			outline: 3px solid rgba(0, 153, 255, .6);
+			outline-offset: 2px;
+		}
+
+		.game-container {
+			margin: 40px auto;
+			max-width: 740px;
+			background: #333;
+			border-radius: 12px;
+			padding: 32px;
+			box-shadow: 0 4px 24px #0006;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+		}
+
+		.images {
+			display: flex;
+			justify-content: center;
+			gap: 32px;
+			margin: 32px 0;
+			width: 100%;
+			flex-wrap: wrap;
+		}
+
+		.images img {
+			width: 100%;
+			height: 320px;
+			max-width: 100%;
+			object-fit: contain;
+			background: #111;
+			-webkit-user-drag: none;
+		}
+
+		@media (max-width: 720px) {
+			.images {
+				gap: 16px;
+			}
+
+			.images img {
+				height: min(60vh, 360px);
+			}
+		}
+
+
+		.score {
+			font-size: 1.3em;
+			margin: 24px 0;
+		}
+
+		.btn {
+			background: #09f;
+			color: #fff;
+			border: none;
+			padding: 12px 32px;
+			border-radius: 6px;
+			font-size: 1em;
+			cursor: pointer;
+			margin-top: 24px;
+		}
+
+		.btn:disabled {
+			background: #555;
+			cursor: not-allowed;
+		}
+
+		#instructions {
+			font-size: 1.2em;
+			margin: 18px 0;
+			color: #ffd700;
+		}
+
+		#instructions .ai-emphasis {
+			color: #ff4da6;
+			font-weight: 900;
+			letter-spacing: 0.03em;
+			text-transform: uppercase;
+			text-decoration: underline;
+			text-decoration-thickness: 3px;
+			text-underline-offset: 4px;
+			text-shadow:
+				0 0 6px rgba(255, 77, 166, 0.8),
+				0 0 18px rgba(255, 77, 166, 0.5);
+		}
+
+		/* Image wrapper for fullscreen toggle */
+		.img-wrap {
+			position: relative;
+			display: inline-flex;
+			flex-direction: column;
+			width: min(320px, calc(50% - 16px));
+			border: 4px solid #444;
+			border-radius: 8px;
+			overflow: hidden;
+			transition: border-color 0.2s;
+		}
+
+		.img-wrap img {
+			width: 100%;
+		}
+
+		.img-zoom-btn {
+			position: absolute;
+			top: 8px;
+			right: 8px;
+			width: 32px;
+			height: 32px;
+			border-radius: 8px;
+			border: none;
+			background: rgba(0, 0, 0, 0.55);
+			color: #fff;
+			font-size: 16px;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			z-index: 5;
+			opacity: 0.7;
+			transition: opacity 0.15s;
+		}
+
+		.img-zoom-btn:hover {
+			opacity: 1;
+		}
+
+		/* Fullscreen overlay for zoomed image */
+		#img-fullscreen {
+			display: none;
+			position: fixed;
+			inset: 0;
+			z-index: 100;
+			background: rgba(0, 0, 0, 0.92);
+			align-items: center;
+			justify-content: center;
+			cursor: pointer;
+			touch-action: none;
+			-webkit-user-select: none;
+			user-select: none;
+		}
+
+		#img-fullscreen.show {
+			display: flex;
+		}
+
+		#img-fullscreen img {
+			max-width: 95vw;
+			max-height: 95vh;
+			object-fit: contain;
+			border-radius: 8px;
+			pointer-events: none;
+			touch-action: none;
+			-webkit-user-drag: none;
+			user-select: none;
+		}
+
+		@media (max-width: 720px) {
+			.img-wrap {
+				width: 100%;
+			}
+		}
+
+		.choose-btn {
+			display: block;
+			width: 100%;
+			margin-top: 8px;
+			padding: 10px 0;
+			font-size: 1.1em;
+			font-weight: 700;
+			border-radius: 8px;
+			background: #09f;
+			color: #fff;
+			border: none;
+			cursor: pointer;
+			transition: background 0.15s;
+		}
+		.choose-btn:hover:not(:disabled) { background: #0bf; }
+		.choose-btn:disabled { background: #555; cursor: not-allowed; opacity: 0.6; }
+
+		.img-wrap.right { border-color: #3f3; }
+		.img-wrap.wrong { border-color: #f33; }
+		.img-wrap.right .choose-btn { background: #3f3; color: #222; }
+		.img-wrap.wrong .choose-btn { background: #f33; color: #fff; }
+	</style>
+</head>
+
+<body>
+	<div class="game-container">
+		<h1>Real or AI?</h1>
+		<div id="round-info"></div>
+		<div id="instructions">Choose the <span class="ai-emphasis">AI</span> image</div>
+		<div class="images" id="images"></div>
+		<div id="feedback"></div>
+		<div class="score" id="score"></div>
+		<button class="btn" id="nextBtn" style="display:none;">Next</button>
+		<button class="btn" id="restartBtn" style="display:none;">Restart</button>
+			style="display:none;text-decoration:none;text-align:center;background:transparent;color:#09f;border:1px solid rgba(0,153,255,0.3);">←
+		<button class="btn" id="roaiScoresBtn" style="background:#ffd700;color:#222;margin-top:12px;">🏆 High
+			Scores</button>
+	</div>
+
+	<div id="img-fullscreen" oncontextmenu="return false">
+		<img id="fs-img" src="" alt="Fullscreen image">
+	</div>
+
+	<div id="roai-hs-modal"
+		style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.8);z-index:20;">
+		<div
+			style="background:#333;border:1px solid #555;border-radius:16px;padding:26px;min-width:290px;max-width:88%;max-height:80vh;overflow-y:auto;color:#fff;font-family:inherit;text-align:left;">
+			<h2 style="text-align:center;margin:0 0 18px;font-size:22px;color:#ffd700;">🏆 High Scores</h2>
+			<div id="roai-hs-wrap"></div>
+			<button class="btn" id="roaiHsClose" style="width:100%;margin-top:18px;">Close</button>
+		</div>
+	</div>
+	<script src="image_manifest.js"></script>
+	<script>
+		// Dynamic image loading - will be populated by scanning folders
+		let aiImages = [];
+		let realImages = [];
+		let totalRounds = 0;
+
+		function setScanStatus(text) {
+			const imagesEl = document.getElementById('images');
+			if (imagesEl) imagesEl.innerHTML = `<p>${text}</p>`;
+		}
+
+		function getManifest() {
+			return (window.__REAL_OR_AI_MANIFEST__ && typeof window.__REAL_OR_AI_MANIFEST__ === 'object')
+				? window.__REAL_OR_AI_MANIFEST__
+				: null;
+		}
+
+		function unique(list) {
+			return Array.from(new Set(list));
+		}
+
+		function takeFirst(list, n) {
+			return list.slice(0, Math.max(0, n));
+		}
+
+		// Function to dynamically load images from folders
+		async function loadImagesFromFolders() {
+			setScanStatus('Loading image manifest...');
+			try {
+				const manifest = getManifest();
+				if (manifest) {
+					// Use manifest for file:// compatibility (no fetch required).
+					aiImages = takeFirst(unique(manifest.ai || []), 100);
+					realImages = takeFirst(unique(manifest.real || []), 100);
+				} else {
+					// Fallback: try to scrape a directory listing (works only when served by a web server that
+					// exposes directory indexes). This usually won't work under file://.
+					setScanStatus('Scanning folders for images...');
+					const [aiResponse, realResponse] = await Promise.all([
+						fetch('ai/'),
+						fetch('real/'),
+					]);
+					const [aiText, realText] = await Promise.all([
+						aiResponse.text(),
+						realResponse.text(),
+					]);
+					aiImages = takeFirst(unique(extractImageFilenames(aiText, 'ai/')), 100);
+					realImages = takeFirst(unique(extractImageFilenames(realText, 'real/')), 100);
+				}
+
+				// Fixed 10 rounds per game
+				totalRounds = 20;
+
+				console.log('Loaded image lists:', { ai: aiImages.length, real: realImages.length });
+				console.log(`Game will have ${totalRounds} rounds`);
+			} catch (error) {
+				console.error('Could not load images.');
+				setScanStatus(
+					'Could not load images. If you are opening this as a local file, make sure image_manifest.js exists next to this HTML (real_or_ai/image_manifest.js).'
+				);
+				aiImages = [];
+				realImages = [];
+				totalRounds = 0;
+			}
+		}
+
+		// Extract image filenames from directory listing HTML
+		function extractImageFilenames(html, folder) {
+			const imageExtensions = /\.(jpg|jpeg|png|gif|bmp|webp)$/i;
+			const images = [];
+
+			// Look for href links in directory listing
+			const hrefRegex = /href="([^"]+)"/gi;
+			let match;
+
+			while ((match = hrefRegex.exec(html)) !== null) {
+				const filename = match[1];
+				// Skip parent directory links and non-image files
+				if (filename !== '../' && imageExtensions.test(filename)) {
+					images.push(folder + filename);
+				}
+			}
+
+			return images;
+		}
+		let pairs = [];
+		let currentRound = 0;
+		let score = 0;
+
+		// ── High Score System ─────────────────────
+		const ROAI_HS_KEY = 'realOrAi-highscores';
+		let roaiLastNewHsIdx = -1;
+		let roaiPendingScore = null;
+
+		function getRoaiHighScores() {
+			try { return JSON.parse(localStorage.getItem(ROAI_HS_KEY)) || []; } catch { return []; }
+		}
+		function addRoaiHighScore(scoreVal, totalVal, nameVal) {
+			const list = getRoaiHighScores();
+			const pct = totalVal > 0 ? Math.round((scoreVal / totalVal) * 100) : 0;
+			const entry = { score: scoreVal, total: totalVal, pct: pct, name: (nameVal || '').toUpperCase(), date: new Date().toISOString() };
+			let inserted = false;
+			for (let i = 0; i < list.length; i++) {
+				const existPct = list[i].pct != null ? list[i].pct : (list[i].total > 0 ? Math.round((list[i].score / list[i].total) * 100) : 0);
+				if (pct > existPct) { list.splice(i, 0, entry); inserted = true; roaiLastNewHsIdx = i; break; }
+			}
+			if (!inserted && list.length < 5) { roaiLastNewHsIdx = list.length; list.push(entry); inserted = true; }
+			else if (!inserted) { roaiLastNewHsIdx = -1; return false; }
+			if (list.length > 5) list.length = 5;
+			localStorage.setItem(ROAI_HS_KEY, JSON.stringify(list));
+			if (window.GHScores) GHScores.save('real_or_ai', ROAI_HS_KEY);
+			return true;
+		}
+		function renderRoaiHighScores() {
+			const list = getRoaiHighScores();
+			const wrap = document.getElementById('roai-hs-wrap');
+			if (list.length === 0) { wrap.innerHTML = '<p style="text-align:center;color:#888;padding:30px 0;">No scores yet.</p>'; return; }
+			const mc = ['#ffd700', '#c0c0c0', '#cd7f32'];
+			let html = '<table style="width:100%;border-collapse:collapse;"><thead><tr><th style="font-size:11px;text-transform:uppercase;color:#999;padding:6px 8px;text-align:center;border-bottom:1px solid #555;">#</th><th style="font-size:11px;text-transform:uppercase;color:#999;padding:6px 8px;text-align:left;border-bottom:1px solid #555;">Score</th><th style="font-size:11px;text-transform:uppercase;color:#999;padding:6px 8px;text-align:left;border-bottom:1px solid #555;">Name</th><th style="font-size:11px;text-transform:uppercase;color:#999;padding:6px 8px;text-align:left;border-bottom:1px solid #555;">Date</th></tr></thead><tbody>';
+			list.forEach((e, i) => {
+				const bg = i === roaiLastNewHsIdx ? 'background:rgba(255,215,0,0.06);' : '';
+				const col = i < 3 ? `color:${mc[i]};` : '';
+				const d = new Date(e.date);
+				const ds = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' });
+				const ePct = e.pct != null ? e.pct : (e.total > 0 ? Math.round((e.score / e.total) * 100) : 0);
+				html += `<tr style="${bg}"><td style="text-align:center;font-weight:700;padding:10px 8px;border-bottom:1px solid #444;${col}">${i + 1}</td><td style="font-weight:900;color:#09f;padding:10px 8px;border-bottom:1px solid #444;">${ePct}%</td><td style="font-weight:700;padding:10px 8px;border-bottom:1px solid #444;">${e.name || '---'}</td><td style="font-size:11px;color:#888;padding:10px 8px;border-bottom:1px solid #444;">${ds}</td></tr>`;
+			});
+			html += '</tbody></table>';
+			wrap.innerHTML = html;
+		}
+		function showRoaiHighScores() { renderRoaiHighScores(); document.getElementById('roai-hs-modal').style.display = 'flex'; }
+		function hideRoaiHighScores() { document.getElementById('roai-hs-modal').style.display = 'none'; roaiLastNewHsIdx = -1; }
+		function saveRoaiName() {
+			const inp = document.getElementById('roai-hs-name');
+			if (!inp || inp.disabled) return;
+			const name = inp.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase();
+			if (roaiPendingScore !== null) { addRoaiHighScore(roaiPendingScore.score, roaiPendingScore.total, name); roaiPendingScore = null; }
+			inp.disabled = true; inp.value = name || '------'; inp.style.borderColor = '#3f3';
+			const btn = document.getElementById('roai-save-name');
+			if (btn) { btn.textContent = '\u2713'; btn.style.background = '#3f3'; btn.style.color = '#222'; btn.disabled = true; }
+			const msg = document.getElementById('roai-name-saved');
+			if (msg) msg.style.display = 'block';
+		}
+
+		document.getElementById('roaiScoresBtn').addEventListener('click', showRoaiHighScores);
+		document.getElementById('roaiHsClose').addEventListener('click', hideRoaiHighScores);
+
+		function shuffle(arr) {
+			for (let i = arr.length - 1; i > 0; i--) {
+				const j = Math.floor(Math.random() * (i + 1));
+				[arr[i], arr[j]] = [arr[j], arr[i]];
+			}
+			return arr;
+		}
+
+		function extractNumericId(path, prefix) {
+			// Matches: ai/ai_1234.jpg or real/real_1234.png
+			// Also tolerant of different folder names and extensions.
+			const rx = new RegExp(String.raw`(?:^|/)${prefix}_(\d+)\.[a-z0-9]+$`, 'i');
+			const m = path.match(rx);
+			return m ? Number(m[1]) : null;
+		}
+
+		// Bag-style image pools: cycle through all images before repeating
+		let aiBag = [];
+		let realBag = [];
+
+		function drawFromBag(bag, source) {
+			if (bag.length === 0) {
+				// Refill bag with all images, shuffled
+				bag.push(...shuffle([...source]));
+			}
+			return bag.pop();
+		}
+
+		function pickPairs() {
+			const count = Math.min(20, aiImages.length, realImages.length);
+			pairs = [];
+			const usedAi = new Set();
+			const usedReal = new Set();
+			for (let i = 0; i < count; i++) {
+				let ai, real;
+				// Draw from bag, skip if already used this game
+				let attempts = 0;
+				do { ai = drawFromBag(aiBag, aiImages); attempts++; } while (usedAi.has(ai) && attempts < aiImages.length * 2);
+				usedAi.add(ai);
+				attempts = 0;
+				do { real = drawFromBag(realBag, realImages); attempts++; } while (usedReal.has(real) && attempts < realImages.length * 2);
+				usedReal.add(real);
+				pairs.push({ ai, real });
+			}
+		}
+
+		function waitForImgLoad(img) {
+			return new Promise((resolve) => {
+				if (img.complete && img.naturalWidth > 0) { resolve(); return; }
+				img.addEventListener('load', () => resolve(), { once: true });
+				img.addEventListener('error', () => {
+					// Retry once by re-setting src with a cache-buster
+					const retrySrc = img.src + (img.src.includes('?') ? '&' : '?') + 'r=' + Date.now();
+					img.addEventListener('load', () => resolve(), { once: true });
+					img.addEventListener('error', () => resolve(), { once: true });
+					img.src = retrySrc;
+				}, { once: true });
+			});
+		}
+
+		async function showRound() {
+			document.getElementById('feedback').textContent = '';
+			document.getElementById('nextBtn').style.display = 'none';
+			document.getElementById('restartBtn').style.display = 'none';
+			document.getElementById('menuBtnGO').style.display = 'none';
+			const pct = pairs.length > 0 ? Math.round((score / pairs.length) * 100) : 0;
+			document.getElementById('score').textContent = `Score: ${pct}% (${score}/${pairs.length})`;
+			document.getElementById('round-info').textContent = `Round ${currentRound + 1} of ${pairs.length}`;
+			const pair = pairs[currentRound];
+			// Randomize left/right
+			const leftIsAI = Math.random() < 0.5;
+			const leftImg = leftIsAI ? pair.ai : pair.real;
+			const rightImg = leftIsAI ? pair.real : pair.ai;
+			const imagesDiv = document.getElementById('images');
+			imagesDiv.innerHTML = '<p>Loading images...</p>';
+			// Create image elements with wrappers and zoom buttons
+			const imgElements = [];
+			function makeImgWrap(src, alt, choiceType) {
+				const wrap = document.createElement('div');
+				wrap.className = 'img-wrap';
+				wrap.style.visibility = 'hidden';
+				const img = document.createElement('img');
+				img.src = src;
+				img.alt = alt;
+				img.draggable = false;
+				img.oncontextmenu = (e) => e.preventDefault();
+				img.addEventListener('touchstart', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+				const zoomBtn = document.createElement('button');
+				zoomBtn.className = 'img-zoom-btn';
+				zoomBtn.textContent = '⛶';
+				zoomBtn.title = 'View fullscreen';
+				zoomBtn.onclick = (e) => { e.stopPropagation(); toggleFullscreenImg(src); };
+				const chooseBtn = document.createElement('button');
+				chooseBtn.className = 'btn choose-btn';
+				chooseBtn.textContent = '👆 This is AI';
+				chooseBtn.onclick = () => handleChoice(choiceType, wrap);
+				wrap.appendChild(img);
+				wrap.appendChild(zoomBtn);
+				wrap.appendChild(chooseBtn);
+				imgElements.push(img);
+				return wrap;
+			}
+			const leftWrap = makeImgWrap(leftImg, 'Left Image', leftIsAI ? 'ai' : 'real');
+			const rightWrap = makeImgWrap(rightImg, 'Right Image', leftIsAI ? 'real' : 'ai');
+			// Insert into DOM (hidden) so the browser starts loading
+			imagesDiv.innerHTML = '';
+			imagesDiv.appendChild(leftWrap);
+			imagesDiv.appendChild(rightWrap);
+			// Wait for both images to load, then reveal
+			await Promise.all(imgElements.map(waitForImgLoad));
+			leftWrap.style.visibility = '';
+			rightWrap.style.visibility = '';
+		}
+
+		function toggleFullscreenImg(src) {
+			const overlay = document.getElementById('img-fullscreen');
+			const fsImg = document.getElementById('fs-img');
+			if (overlay.classList.contains('show') && fsImg.src.endsWith(src)) {
+				overlay.classList.remove('show');
+			} else {
+				fsImg.src = src;
+				overlay.classList.add('show');
+			}
+		}
+		document.getElementById('img-fullscreen').addEventListener('click', () => {
+			document.getElementById('img-fullscreen').classList.remove('show');
+		});
+
+		function handleChoice(selected, wrapElem) {
+			// Disable all choose buttons
+			document.querySelectorAll('.choose-btn').forEach(btn => btn.disabled = true);
+			const img = wrapElem.querySelector('img');
+			if (selected === 'ai') {
+				score++;
+				wrapElem.classList.add('right');
+				document.getElementById('feedback').textContent = 'Correct! That is the AI image.';
+			} else {
+				wrapElem.classList.add('wrong');
+				document.getElementById('feedback').textContent = 'Wrong! That is a real image.';
+			}
+			const pctNow = pairs.length > 0 ? Math.round((score / pairs.length) * 100) : 0;
+			document.getElementById('score').textContent = `Score: ${pctNow}% (${score}/${pairs.length})`;
+			document.getElementById('nextBtn').style.display = 'inline-block';
+			if (currentRound === pairs.length - 1) {
+				document.getElementById('nextBtn').textContent = 'See Results';
+			} else {
+				document.getElementById('nextBtn').textContent = 'Next';
+			}
+		}
+
+		document.getElementById('nextBtn').onclick = async function () {
+			currentRound++;
+			if (currentRound < pairs.length) {
+				await showRound();
+			} else {
+				showResults();
+			}
+		};
+
+		function showResults() {
+			document.getElementById('images').innerHTML = '';
+			document.getElementById('round-info').textContent = 'Game Over!';
+			document.getElementById('score').textContent = '';
+			document.getElementById('nextBtn').style.display = 'none';
+
+			const finalPct = pairs.length > 0 ? Math.round((score / pairs.length) * 100) : 0;
+			const list = getRoaiHighScores();
+			const lastPct = list.length > 0 ? (list[list.length - 1].pct != null ? list[list.length - 1].pct : (list[list.length - 1].total > 0 ? Math.round((list[list.length - 1].score / list[list.length - 1].total) * 100) : 0)) : 0;
+			const makesLb = score > 0 && (list.length < 5 || finalPct > lastPct);
+			roaiPendingScore = { score, total: pairs.length };
+
+			let feedHtml = `Your final score: ${finalPct}% (${score}/${pairs.length})`;
+			if (makesLb) {
+				const topPct = list.length > 0 ? (list[0].pct != null ? list[0].pct : (list[0].total > 0 ? Math.round((list[0].score / list[0].total) * 100) : 0)) : 0;
+				const isNewBest = list.length === 0 || finalPct > topPct;
+				feedHtml += isNewBest ? '<br>\ud83c\udfc6 New High Score!' : '<br>\ud83d\udccb You made the leaderboard!';
+				feedHtml += `<div style="margin:10px 0;">
+					<div style="font-size:13px;color:#ffd700;margin-bottom:6px;">Enter your name:</div>
+					<div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+						<input id="roai-hs-name" type="text" maxlength="6" autocomplete="off" spellcheck="false" style="width:120px;padding:6px 10px;font-size:18px;font-weight:bold;text-align:center;
+							background:#444;color:#fff;border:2px solid #09f;border-radius:8px;outline:none;
+							text-transform:uppercase;letter-spacing:2px;font-family:inherit;" placeholder="______">
+						<button id="roai-save-name" class="btn" style="margin-top:0;padding:6px 14px;font-size:14px;">Save</button>
+					</div>
+					<div id="roai-name-saved" style="font-size:11px;color:#3f3;margin-top:4px;display:none;">&#10003; Name saved!</div>
+					<div style="font-size:10px;color:#888;margin-top:3px;">Up to 6 letters</div>
+				</div>`;
+			} else {
+				addRoaiHighScore(score, pairs.length, '');
+			}
+
+			document.getElementById('feedback').innerHTML = feedHtml;
+			document.getElementById('restartBtn').style.display = 'inline-block';
+			document.getElementById('menuBtnGO').style.display = 'inline-block';
+
+			if (makesLb) {
+				setTimeout(() => {
+					const saveBtn = document.getElementById('roai-save-name');
+					const nameInp = document.getElementById('roai-hs-name');
+					if (saveBtn) saveBtn.addEventListener('click', saveRoaiName);
+					if (nameInp) {
+						nameInp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); saveRoaiName(); } });
+						nameInp.focus();
+					}
+				}, 50);
+			}
+		}
+
+		document.getElementById('restartBtn').onclick = function () {
+			// Auto-save pending
+			if (roaiPendingScore !== null) {
+				const inp = document.getElementById('roai-hs-name');
+				const name = inp && !inp.disabled ? inp.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase() : '';
+				addRoaiHighScore(roaiPendingScore.score, roaiPendingScore.total, name);
+				roaiPendingScore = null;
+			}
+			roaiLastNewHsIdx = -1;
+			startGame();
+		};
+
+		async function startGame() {
+			// Show loading message
+			document.getElementById('round-info').textContent = 'Loading images...';
+			document.getElementById('images').innerHTML = '<p>Scanning folders for images...</p>';
+
+			// Load images from folders
+			await loadImagesFromFolders();
+
+			// Check if we have enough images to play
+			if (aiImages.length === 0 || realImages.length === 0) {
+				document.getElementById('round-info').textContent = 'Error: No images found!';
+				document.getElementById('images').innerHTML = '<p>Please make sure you have images in both ai/ and real/ folders.</p>';
+				return;
+			}
+
+			// Start the game
+			pickPairs();
+			currentRound = 0;
+			score = 0;
+			await showRound();
+		}
+
+		// Start the game on load
+		startGame();
+	</script>
+	<script src="../scripts/github-scores.js"></script>
+	<script>
+		if (window.GHScores) GHScores.load('real_or_ai', 'realOrAi-highscores', 5).catch(() => { });
+	</script>
+</body>
+
+</html>
