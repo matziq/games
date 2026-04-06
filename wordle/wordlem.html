@@ -1275,7 +1275,7 @@
             }
 
             const result = evaluateGuess(currentGuess, targetWord);
-            revealRow(currentRow, result);
+            revealRow(currentRow, result, currentGuess);
 
             guesses.push(currentGuess);
             const won = currentGuess === targetWord;
@@ -1323,7 +1323,7 @@
             return result;
         }
 
-        function revealRow(row, result) {
+        function revealRow(row, result, guess) {
             for (let i = 0; i < WORD_LENGTH; i++) {
                 const tile = document.getElementById(`tile-${row}-${i}`);
                 const delay = i * 300;
@@ -1333,7 +1333,7 @@
                     // Apply color at the midpoint of the flip
                     setTimeout(() => {
                         tile.classList.add(result[i]);
-                        updateKeyboard(currentGuess[i], result[i]);
+                        updateKeyboard(guess[i], result[i]);
                     }, 250);
                 }, delay);
             }
