@@ -882,8 +882,9 @@
 
     <!-- Game Over Overlay -->
     <div id="game-over" class="overlay">
-        <span style="position:absolute;top:14px;right:18px;font-size:22px;color:#555;cursor:pointer;z-index:10;"
-            onclick="document.getElementById('game-over').classList.remove('show')">&times;</span>
+        <div style="position:relative;max-width:340px;width:100%;">
+            <span style="position:absolute;top:-8px;right:-8px;font-size:22px;color:#888;cursor:pointer;z-index:10;background:#1a1a1a;border:1px solid #333;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;line-height:1;"
+                onclick="document.getElementById('game-over').classList.remove('show')">&times;</span>
         <h1 id="go-title"></h1>
         <div class="final-word" id="go-word"></div>
         <div class="stat-label">Guesses</div>
@@ -908,6 +909,7 @@
         <a href="../gamemenu.html"
             style="display:inline-block;margin-top:10px;padding:8px 20px;font-size:14px;font-weight:700;color:#29B6F6;text-decoration:none;border:1px solid rgba(41,182,246,0.3);border-radius:10px;">←
             Games Menu</a>
+        </div>
     </div>
 
     <!-- High Scores Overlay -->
