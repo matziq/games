@@ -91,24 +91,6 @@
     }
 
     /* ------------------------------------------------------------------ */
-    /*  Auto-fullscreen on first user interaction                          */
-    /* ------------------------------------------------------------------ */
-    let autoFsTriggered = false;
-    function tryAutoFullscreen() {
-        if (autoFsTriggered) return;
-        autoFsTriggered = true;
-        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-            const el = document.documentElement;
-            if (el.requestFullscreen) el.requestFullscreen().catch(() => { });
-            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-        }
-        document.removeEventListener('pointerdown', tryAutoFullscreen);
-        document.removeEventListener('keydown', tryAutoFullscreen);
-    }
-    document.addEventListener('pointerdown', tryAutoFullscreen, { once: true });
-    document.addEventListener('keydown', tryAutoFullscreen, { once: true });
-
-    /* ------------------------------------------------------------------ */
     /*  Wire everything up once DOM ready                                  */
     /* ------------------------------------------------------------------ */
     function init() {
