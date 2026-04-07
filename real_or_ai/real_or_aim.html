@@ -9,24 +9,32 @@
 			background: #222;
 			color: #fff;
 			text-align: center;
+			margin: 0;
+			padding: 0;
+			position: fixed;
+			width: 100%;
+			height: 100%;
+			height: 100dvh;
+			overflow-y: auto;
+			-webkit-overflow-scrolling: touch;
 		}
 
-			display: block;
-			text-align: center;
-			font-size: 13px;
-			font-weight: 700;
-			color: #09f;
-			text-decoration: none;
-			padding: 4px 0;
-			transition: color 0.15s;
-			letter-spacing: 0.3px;
+		display: block;
+		text-align: center;
+		font-size: 13px;
+		font-weight: 700;
+		color: #09f;
+		text-decoration: none;
+		padding: 4px 0;
+		transition: color 0.15s;
+		letter-spacing: 0.3px;
 		}
 
-			color: #4dc3ff;
+		color: #4dc3ff;
 		}
 
-			outline: 3px solid rgba(0, 153, 255, .6);
-			outline-offset: 2px;
+		outline: 3px solid rgba(0, 153, 255, .6);
+		outline-offset: 2px;
 		}
 
 		.game-container {
@@ -200,13 +208,34 @@
 			cursor: pointer;
 			transition: background 0.15s;
 		}
-		.choose-btn:hover:not(:disabled) { background: #0bf; }
-		.choose-btn:disabled { background: #555; cursor: not-allowed; opacity: 0.6; }
 
-		.img-wrap.right { border-color: #3f3; }
-		.img-wrap.wrong { border-color: #f33; }
-		.img-wrap.right .choose-btn { background: #3f3; color: #222; }
-		.img-wrap.wrong .choose-btn { background: #f33; color: #fff; }
+		.choose-btn:hover:not(:disabled) {
+			background: #0bf;
+		}
+
+		.choose-btn:disabled {
+			background: #555;
+			cursor: not-allowed;
+			opacity: 0.6;
+		}
+
+		.img-wrap.right {
+			border-color: #3f3;
+		}
+
+		.img-wrap.wrong {
+			border-color: #f33;
+		}
+
+		.img-wrap.right .choose-btn {
+			background: #3f3;
+			color: #222;
+		}
+
+		.img-wrap.wrong .choose-btn {
+			background: #f33;
+			color: #fff;
+		}
 	</style>
 </head>
 
@@ -220,7 +249,8 @@
 		<div class="score" id="score"></div>
 		<button class="btn" id="nextBtn" style="display:none;">Next</button>
 		<button class="btn" id="restartBtn" style="display:none;">Restart</button>
-			style="display:none;text-decoration:none;text-align:center;background:transparent;color:#09f;border:1px solid rgba(0,153,255,0.3);">←
+		style="display:none;text-decoration:none;text-align:center;background:transparent;color:#09f;border:1px solid
+		rgba(0,153,255,0.3);">←
 		<button class="btn" id="roaiScoresBtn" style="background:#ffd700;color:#222;margin-top:12px;">🏆 High
 			Scores</button>
 	</div>
