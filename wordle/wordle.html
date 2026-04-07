@@ -883,32 +883,34 @@
     <!-- Game Over Overlay -->
     <div id="game-over" class="overlay">
         <div style="position:relative;max-width:340px;width:100%;">
-            <span style="position:absolute;top:-8px;right:-8px;font-size:22px;color:#888;cursor:pointer;z-index:10;background:#1a1a1a;border:1px solid #333;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;line-height:1;"
+            <span
+                style="position:absolute;top:-8px;right:-8px;font-size:22px;color:#888;cursor:pointer;z-index:10;background:#1a1a1a;border:1px solid #333;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;line-height:1;"
                 onclick="document.getElementById('game-over').classList.remove('show')">&times;</span>
-        <h1 id="go-title"></h1>
-        <div class="final-word" id="go-word"></div>
-        <div class="stat-label">Guesses</div>
-        <div class="stat-value" id="go-guesses"></div>
-        <div class="hs-label" id="go-hs"></div>
-        <div id="name-entry">
-            <div class="label">Enter your name:</div>
-            <div class="input-row">
-                <input id="hs-name" type="text" maxlength="6" autocomplete="off" spellcheck="false"
-                    placeholder="______">
-                <button id="save-name-btn" onclick="saveName()">Save</button>
+            <h1 id="go-title"></h1>
+            <div class="final-word" id="go-word"></div>
+            <div class="stat-label">Guesses</div>
+            <div class="stat-value" id="go-guesses"></div>
+            <div class="hs-label" id="go-hs"></div>
+            <div id="name-entry">
+                <div class="label">Enter your name:</div>
+                <div class="input-row">
+                    <input id="hs-name" type="text" maxlength="6" autocomplete="off" spellcheck="false"
+                        placeholder="______">
+                    <button id="save-name-btn" onclick="saveName()">Save</button>
+                </div>
+                <div id="name-saved-msg" style="font-size:12px;color:#66BB6A;margin-top:6px;display:none;">&#10003; Name
+                    saved!</div>
+                <div style="font-size:11px;color:#555;margin-top:4px;">Up to 6 letters</div>
             </div>
-            <div id="name-saved-msg" style="font-size:12px;color:#66BB6A;margin-top:6px;display:none;">&#10003; Name
-                saved!</div>
-            <div style="font-size:11px;color:#555;margin-top:4px;">Up to 6 letters</div>
-        </div>
-        <div id="seed-reminder" style="font-size:12px;color:#888;margin-top:8px;font-family:'Courier New',monospace;">
-            Seed: <span id="go-seed" style="color:#29B6F6;cursor:pointer;letter-spacing:1px;"
-                onclick="copySeed()"></span> — save it to replay!</div>
-        <button class="overlay-btn primary" onclick="submitHighScore()">Play Again</button>
-        <button class="overlay-btn secondary" onclick="showHighScores()">🏆 Win History</button>
-        <a href="../gamemenu.html"
-            style="display:inline-block;margin-top:10px;padding:8px 20px;font-size:14px;font-weight:700;color:#29B6F6;text-decoration:none;border:1px solid rgba(41,182,246,0.3);border-radius:10px;">←
-            Games Menu</a>
+            <div id="seed-reminder"
+                style="font-size:12px;color:#888;margin-top:8px;font-family:'Courier New',monospace;">
+                Seed: <span id="go-seed" style="color:#29B6F6;cursor:pointer;letter-spacing:1px;"
+                    onclick="copySeed()"></span> — save it to replay!</div>
+            <button class="overlay-btn primary" onclick="submitHighScore()">Play Again</button>
+            <button class="overlay-btn secondary" onclick="showHighScores()">🏆 Win History</button>
+            <a href="../gamemenu.html"
+                style="display:inline-block;margin-top:10px;padding:8px 20px;font-size:14px;font-weight:700;color:#29B6F6;text-decoration:none;border:1px solid rgba(41,182,246,0.3);border-radius:10px;">←
+                Games Menu</a>
         </div>
     </div>
 
