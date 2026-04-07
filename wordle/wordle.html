@@ -280,7 +280,7 @@
             align-items: center;
             gap: 6px;
             margin-top: auto;
-            padding: 6px 0;
+            padding: 4px 0 0;
             width: 100%;
             max-width: 500px;
         }
@@ -303,10 +303,10 @@
             font-size: 14px;
             font-weight: 700;
             text-transform: uppercase;
-            background: #1a1a1a;
-            border: 1px solid #333;
+            background: #252525;
+            border: 1px solid #444;
             border-radius: 6px;
-            color: #fff;
+            color: #eee;
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
             transition: background 0.15s, border-color 0.15s, color 0.15s;
@@ -347,7 +347,8 @@
             justify-content: space-between;
             align-items: flex-start;
             width: 100%;
-            padding: 4px 0;
+            max-width: 500px;
+            padding: 4px 0 2px;
             flex-shrink: 0;
         }
 
@@ -756,22 +757,70 @@
 
         /* === Responsive === */
         @media (max-height: 680px) {
-            #title { font-size: clamp(22px, 6vw, 32px); margin: 2px 0 0; }
-            #stats-row { margin-bottom: 2px; font-size: 11px; }
-            #seed-row { margin-bottom: 2px; font-size: 11px; }
-            #board { max-height: 48vh; gap: 4px; }
-            .key { height: 44px; }
-            #buttons { padding: 2px 0; }
-            .btn-circle { width: 32px; height: 32px; font-size: 16px; }
-            .game-btn { font-size: 9px; }
+            #title {
+                font-size: clamp(22px, 6vw, 32px);
+                margin: 2px 0 0;
+            }
+
+            #stats-row {
+                margin-bottom: 2px;
+                font-size: 11px;
+            }
+
+            #seed-row {
+                margin-bottom: 2px;
+                font-size: 11px;
+            }
+
+            #board {
+                max-height: 48vh;
+                gap: 4px;
+            }
+
+            .key {
+                height: 44px;
+            }
+
+            #buttons {
+                padding: 2px 0;
+            }
+
+            .btn-circle {
+                width: 32px;
+                height: 32px;
+                font-size: 16px;
+            }
+
+            .game-btn {
+                font-size: 9px;
+            }
         }
 
         @media (max-height: 560px) {
-            #title { font-size: 20px; margin: 1px 0 0; }
-            #stats-row { display: none; }
-            #board { max-height: 44vh; gap: 3px; }
-            .key { height: 38px; font-size: 12px; }
-            .btn-circle { width: 28px; height: 28px; font-size: 14px; }
+            #title {
+                font-size: 20px;
+                margin: 1px 0 0;
+            }
+
+            #stats-row {
+                display: none;
+            }
+
+            #board {
+                max-height: 44vh;
+                gap: 3px;
+            }
+
+            .key {
+                height: 38px;
+                font-size: 12px;
+            }
+
+            .btn-circle {
+                width: 28px;
+                height: 28px;
+                font-size: 14px;
+            }
         }
 
         @media (max-width: 360px) {
@@ -811,6 +860,8 @@
 
         <div id="board"></div>
 
+        <div id="keyboard"></div>
+
         <div id="buttons">
             <button class="game-btn new-game-btn" onclick="confirmNewGame()">
                 <div class="btn-circle">+</div>
@@ -825,8 +876,6 @@
                 Scores
             </button>
         </div>
-
-        <div id="keyboard"></div>
     </div>
 
     <div id="toast"></div>
@@ -851,9 +900,11 @@
                 saved!</div>
             <div style="font-size:11px;color:#555;margin-top:4px;">Up to 6 letters</div>
         </div>
-        <div id="seed-reminder" style="font-size:12px;color:#888;margin-top:8px;font-family:'Courier New',monospace;">Seed: <span id="go-seed" style="color:#29B6F6;cursor:pointer;letter-spacing:1px;" onclick="copySeed()"></span> — save it to replay!</div>
+        <div id="seed-reminder" style="font-size:12px;color:#888;margin-top:8px;font-family:'Courier New',monospace;">
+            Seed: <span id="go-seed" style="color:#29B6F6;cursor:pointer;letter-spacing:1px;"
+                onclick="copySeed()"></span> — save it to replay!</div>
         <button class="overlay-btn primary" onclick="submitHighScore()">Play Again</button>
-        <button class="overlay-btn secondary" onclick="showHighScores()">🏆 High Scores</button>
+        <button class="overlay-btn secondary" onclick="showHighScores()">🏆 Win History</button>
         <a href="../gamemenu.html"
             style="display:inline-block;margin-top:10px;padding:8px 20px;font-size:14px;font-weight:700;color:#29B6F6;text-decoration:none;border:1px solid rgba(41,182,246,0.3);border-radius:10px;">←
             Games Menu</a>
@@ -862,7 +913,7 @@
     <!-- High Scores Overlay -->
     <div id="hs-overlay">
         <div class="hs-panel">
-            <h2>🏆 High Scores</h2>
+            <h2>🏆 Win History</h2>
             <table class="hs-table">
                 <thead>
                     <tr>
