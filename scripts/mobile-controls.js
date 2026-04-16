@@ -8,13 +8,13 @@
  * The control is a floating button at the bottom-right corner.
  */
 (() => {
-    'use strict';
+  'use strict';
 
-    /* ------------------------------------------------------------------ */
-    /*  Styles                                                             */
-    /* ------------------------------------------------------------------ */
-    const css = document.createElement('style');
-    css.textContent = `
+  /* ------------------------------------------------------------------ */
+  /*  Styles                                                             */
+  /* ------------------------------------------------------------------ */
+  const css = document.createElement('style');
+  css.textContent = `
     /* ===== Mobile Controls ===== */
     #mc-toolbar {
       position: fixed;
@@ -62,49 +62,49 @@
       #mc-toolbar { bottom: 10px; right: 10px; }
     }
   `;
-    document.head.appendChild(css);
+  document.head.appendChild(css);
 
-    /* ------------------------------------------------------------------ */
-    /*  Build toolbar                                                      */
-    /* ------------------------------------------------------------------ */
-    const bar = document.createElement('div');
-    bar.id = 'mc-toolbar';
-    bar.innerHTML = `
+  /* ------------------------------------------------------------------ */
+  /*  Build toolbar                                                      */
+  /* ------------------------------------------------------------------ */
+  const bar = document.createElement('div');
+  bar.id = 'mc-toolbar';
+  bar.innerHTML = `
     <button id="mc-fs-btn" title="Toggle fullscreen" aria-label="Toggle fullscreen">
       <span class="mc-enter">⛶</span>
       <span class="mc-exit">✕</span>
     </button>
   `;
 
-    /* ------------------------------------------------------------------ */
-    /*  Fullscreen logic                                                   */
-    /* ------------------------------------------------------------------ */
-    function toggleFullscreen() {
-        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-            const el = document.documentElement;
-            if (el.requestFullscreen) el.requestFullscreen().catch(() => { });
-            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-        } else {
-            if (document.exitFullscreen) document.exitFullscreen().catch(() => { });
-            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-        }
-    }
-
-    /* ------------------------------------------------------------------ */
-    /*  Wire everything up once DOM ready                                  */
-    /* ------------------------------------------------------------------ */
-    function init() {
-        document.body.appendChild(bar);
-        document.getElementById('mc-fs-btn').addEventListener('click', toggleFullscreen);
-        document.getElementById('mc-fs-btn').addEventListener('touchend', (e) => {
-            e.preventDefault();
-            toggleFullscreen();
-        });
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+  /* ------------------------------------------------------------------ */
+  /*  Fullscreen logic                                                   */
+  /* ------------------------------------------------------------------ */
+  function toggleFullscreen() {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      const el = document.documentElement;
+      if (el.requestFullscreen) el.requestFullscreen().catch(() => { });
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
     } else {
-        init();
+      if (document.exitFullscreen) document.exitFullscreen().catch(() => { });
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
     }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Wire everything up once DOM ready                                  */
+  /* ------------------------------------------------------------------ */
+  function init() {
+    document.body.appendChild(bar);
+    document.getElementById('mc-fs-btn').addEventListener('click', toggleFullscreen);
+    document.getElementById('mc-fs-btn').addEventListener('touchend', (e) => {
+      e.preventDefault();
+      toggleFullscreen();
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();

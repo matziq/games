@@ -997,6 +997,13 @@
         <div class="settings-content">
             <h2>&#9881; Settings</h2>
             <div class="setting-row">
+                <span>Difficulty</span>
+                <select id="opt-difficulty" onchange="onDifficultyChange()">
+                    <option value="regular" selected>Regular</option>
+                    <option value="easy">Easy</option>
+                </select>
+            </div>
+            <div class="setting-row" id="row-size">
                 <span>Board Size</span>
                 <select id="opt-size">
                     <option value="5" selected>5 &times; 5 (Normal)</option>
@@ -1004,7 +1011,7 @@
                     <option value="7">7 &times; 7</option>
                 </select>
             </div>
-            <div class="setting-row">
+            <div class="setting-row" id="row-match">
                 <span>Match Needed</span>
                 <select id="opt-match">
                     <option value="2">2 (Easy)</option>
@@ -1049,6 +1056,7 @@
         // ── State ──────────────────────────────────────────────────
         let gridSize = 5;
         let matchCount = 3;
+        let difficulty = 'regular'; // 'easy' or 'regular'
         let soundOn = true;
         let soundVolume = 60;
 
@@ -1074,7 +1082,7 @@
             localStorage.removeItem('dcHighScore');
         })();
 
-        function hsKey() { return gridSize + '_' + matchCount; }
+        function hsKey() { return gridSize + '_' + matchCount + '_' + difficulty; }
 
         function getAllHighScores() {
             try { return JSON.parse(localStorage.getItem(HS_STORAGE_KEY)) || {}; }
@@ -1133,8 +1141,9 @@
         function renderHighScores() {
             const list = getHighScoreList();
             const wrap = document.getElementById('hs-table-wrap');
+            const diffLabel = difficulty === 'easy' ? 'Easy' : 'Regular';
             document.getElementById('hs-config-label').textContent =
-                gridSize + '\u00D7' + gridSize + ' board, match ' + matchCount;
+                diffLabel + ' \u2022 ' + gridSize + '\u00D7' + gridSize + ' board, match ' + matchCount;
 
             if (list.length === 0) {
                 wrap.innerHTML = '<div class="hs-empty">No scores yet. Play a game!</div>';
@@ -1379,8 +1388,9 @@
         function spawnPiece() {
             // Check if any double (2-cell) placement is possible
             const canFitDouble = canPlaceDouble();
-            // Only allow doubles when there are at least 2 distinct values available
-            const dbl = canFitDouble && maxSpawnVal >= 2 && Math.random() < 6 / 7;
+            // Easy mode: always single dice. Regular: 90% doubles, 10% singles
+            const dblChance = difficulty === 'easy' ? 0 : 0.9;
+            const dbl = canFitDouble && maxSpawnVal >= 2 && Math.random() < dblChance;
             const firstVal = randVal();
             piece = {
                 type: dbl ? 'double' : 'single',
@@ -2057,23 +2067,39 @@
             document.getElementById('help-modal').classList.toggle('show');
         }
 
+        function onDifficultyChange() {
+            const isEasy = document.getElementById('opt-difficulty').value === 'easy';
+            document.getElementById('opt-size').disabled = isEasy;
+            document.getElementById('opt-match').disabled = isEasy;
+            document.getElementById('row-size').style.opacity = isEasy ? '0.4' : '1';
+            document.getElementById('row-match').style.opacity = isEasy ? '0.4' : '1';
+            if (isEasy) {
+                document.getElementById('opt-size').value = '5';
+                document.getElementById('opt-match').value = '3';
+            }
+        }
+
         function toggleSettings() {
             const m = document.getElementById('settings-modal');
             m.classList.toggle('show');
+            document.getElementById('opt-difficulty').value = difficulty;
             document.getElementById('opt-size').value = String(gridSize);
             document.getElementById('opt-match').value = String(matchCount);
             document.getElementById('opt-volume').value = String(soundVolume);
+            onDifficultyChange();
         }
 
         function applySettings() {
-            const newSize = parseInt(document.getElementById('opt-size').value);
-            const newMatch = parseInt(document.getElementById('opt-match').value);
+            const newDiff = document.getElementById('opt-difficulty').value;
+            const newSize = newDiff === 'easy' ? 5 : parseInt(document.getElementById('opt-size').value);
+            const newMatch = newDiff === 'easy' ? 3 : parseInt(document.getElementById('opt-match').value);
             soundVolume = parseInt(document.getElementById('opt-volume').value) || 0;
             soundOn = soundVolume > 0;
             if (_dcMaster) _dcMaster.gain.value = soundVolume / 100;
-            const needsRestart = (newSize !== gridSize || newMatch !== matchCount);
+            const needsRestart = (newSize !== gridSize || newMatch !== matchCount || newDiff !== difficulty);
             gridSize = newSize;
             matchCount = newMatch;
+            difficulty = newDiff;
             saveSettings();
             document.getElementById('settings-modal').classList.remove('show');
             if (needsRestart) init();
@@ -2083,6 +2109,7 @@
             localStorage.setItem('dcSettings', JSON.stringify({
                 gridSize,
                 matchCount,
+                difficulty,
                 soundVolume
             }));
         }
@@ -2091,8 +2118,9 @@
             try {
                 const saved = JSON.parse(localStorage.getItem('dcSettings'));
                 if (saved) {
-                    gridSize = saved.gridSize || 5;
-                    matchCount = saved.matchCount || 3;
+                    difficulty = saved.difficulty || 'regular';
+                    gridSize = difficulty === 'easy' ? 5 : (saved.gridSize || 5);
+                    matchCount = difficulty === 'easy' ? 3 : (saved.matchCount || 3);
                     if (saved.soundVolume !== undefined) {
                         soundVolume = saved.soundVolume;
                         soundOn = soundVolume > 0;
@@ -2100,6 +2128,7 @@
                         soundOn = saved.soundOn !== undefined ? saved.soundOn : true;
                         soundVolume = soundOn ? 60 : 0;
                     }
+                    document.getElementById('opt-difficulty').value = difficulty;
                     document.getElementById('opt-size').value = String(gridSize);
                     document.getElementById('opt-match').value = String(matchCount);
                     document.getElementById('opt-volume').value = String(soundVolume);
