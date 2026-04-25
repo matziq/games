@@ -9,8 +9,8 @@
     <title>Treasure of the Aztecs</title>
     <style>
         :root {
-            --bg: #0a0a0c;
-            --ui: #151518;
+            --bg: #0a0806;
+            --ui: #1a1510;
             --text: #e8dcc8;
             --gold: #ffb800;
             --red: #ff4d4d;
@@ -45,7 +45,6 @@
             left: 0;
             width: 100vw;
             height: calc(100vh - 34px);
-            height: calc(100dvh - 34px);
         }
 
         #hud {
@@ -158,95 +157,27 @@
         <div class="hud-sep" id="hud-key-sep" style="display:none"></div>
         <div class="hud-item" id="hud-key-item" style="display:none"><span style="font-size:14px">🔑</span><span
                 class="hud-val" id="hud-keys">0</span></div>
-        <div class="hud-sep" id="hud-kit-sep" style="display:none"></div>
-        <div class="hud-item" id="hud-kit-item" style="display:none"><span style="font-size:14px">🔧</span><span
-                class="hud-val" id="hud-kits">0</span></div>
         <div class="hud-sep"></div>
         <div class="hud-item"><span class="hud-label">Score</span><span class="hud-val" id="hud-score">0</span></div>
         <div class="hud-sep"></div>
         <div class="hud-item hud-room" id="hud-room">Entrance Hall</div>
     </div>
     <canvas id="game"></canvas>
-
-    <!-- Mobile on-screen controls -->
-    <div id="ta-mobile"
-        style="display:none;position:fixed;top:0;left:0;right:0;z-index:9000;pointer-events:none;padding:max(10px,env(safe-area-inset-top,10px)) 10px 0;justify-content:space-between;align-items:flex-start;">
-        <div style="display:flex;gap:8px;pointer-events:auto;">
-            <button class="ta-btn" id="ta-left" aria-label="Left">◀</button>
-            <button class="ta-btn" id="ta-right" aria-label="Right">▶</button>
-        </div>
-        <div style="display:flex;gap:8px;pointer-events:auto;">
-            <button class="ta-btn" id="ta-jump" aria-label="Jump">▲</button>
-            <button class="ta-btn" id="ta-down" aria-label="Down">▼</button>
-            <button class="ta-btn" id="ta-action" aria-label="Action" style="font-size:13px;width:64px;">ACT</button>
-            <button class="ta-btn" id="ta-whip" aria-label="Whip" style="font-size:13px;width:64px;">WHIP</button>
-        </div>
-    </div>
-    <!-- Sound toggle -->
-    <button id="ta-sound-btn"
-        style="position:fixed;top:10px;right:12px;z-index:9999;all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;font-size:20px;background:rgba(0,0,0,.5);color:#fff;border:1px solid rgba(255,255,255,.15);"
-        aria-label="Toggle sound">🔊</button>
-    <style>
-        .ta-btn {
-            all: unset;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            font-size: 22px;
-            font-weight: 700;
-            color: rgba(255, 255, 255, .85);
-            background: rgba(139, 115, 85, .45);
-            border: 2px solid rgba(255, 184, 0, .4);
-            touch-action: manipulation;
-            user-select: none;
-            -webkit-user-select: none;
-            backdrop-filter: blur(4px);
-        }
-
-        .ta-btn:active,
-        .ta-btn.pressed {
-            background: rgba(255, 184, 0, .35);
-        }
-
-        @media(pointer:coarse) {
-            #ta-mobile {
-                display: flex !important;
-            }
-        }
-    </style>
     <script>
         (() => {
             'use strict';
             /* ═══════════════════════════════════════════════════════════════
                CONSTANTS
                ═══════════════════════════════════════════════════════════════ */
-            const W = 320, H = 176, TW = 16, TH = 16, COLS = 20, ROWS = 11;
-            const GRAVITY = 0.22, MAX_FALL = 4, JUMP_FORCE = -3.5, MOVE_SPEED = 1.2;
+            const W = 320, H = 180, SCALE = 2, TW = 16, TH = 16, COLS = 20, ROWS = 11;
+            const GRAVITY = 0.35, MAX_FALL = 6, JUMP_FORCE = -5.8, MOVE_SPEED = 1.8;
             const WHIP_RANGE = 28, WHIP_DURATION = 200;
-            const BULLET_SPEED = 3, MAX_BULLETS = 12;
-            const FLOOD_SPEED = 0.05, DROWN_TIME = 3000;
-            const TRAP_DISARM_TIME = 5000; // 5 seconds to disarm
-            let soundEnabled = true;
+            const BULLET_SPEED = 4, MAX_BULLETS = 12;
+            const FLOOD_SPEED = 0.08, DROWN_TIME = 3000;
             const canvas = document.getElementById('game');
             const ctx = canvas.getContext('2d');
-            // Scale to fill viewport — integer scale for crisp pixels
-            function calcScale() {
-                const maxW = innerWidth;
-                const maxH = innerHeight - 34;
-                return Math.max(3, Math.min(Math.floor(maxW / W), Math.floor(maxH / H)));
-            }
-            let SCALE = calcScale();
             canvas.width = W * SCALE; canvas.height = H * SCALE;
             ctx.imageSmoothingEnabled = false;
-            window.addEventListener('resize', () => {
-                SCALE = calcScale();
-                canvas.width = W * SCALE; canvas.height = H * SCALE;
-                ctx.imageSmoothingEnabled = false;
-            });
             // offscreen buffer at native res
             const buf = document.createElement('canvas');
             buf.width = W; buf.height = H;
@@ -258,7 +189,6 @@
             let audioCtx;
             function ensureAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)() }
             function playTone(freq, dur, type = 'square', vol = .12, slide = 0) {
-                if (!soundEnabled) return;
                 ensureAudio(); const o = audioCtx.createOscillator(), g = audioCtx.createGain();
                 o.type = type; o.frequency.setValueAtTime(freq, audioCtx.currentTime);
                 if (slide) o.frequency.linearRampToValueAtTime(freq + slide, audioCtx.currentTime + dur);
@@ -267,7 +197,6 @@
                 o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + dur);
             }
             function playNoise(dur, vol = .1) {
-                if (!soundEnabled) return;
                 ensureAudio(); const n = audioCtx.createBufferSource(), b = audioCtx.createBuffer(1, audioCtx.sampleRate * dur, audioCtx.sampleRate);
                 const d = b.getChannelData(0); for (let i = 0; i < d.length; i++)d[i] = (Math.random() * 2 - 1);
                 n.buffer = b; const g = audioCtx.createGain(); g.gain.setValueAtTime(vol, audioCtx.currentTime);
@@ -290,9 +219,6 @@
                 explosion() { playNoise(.4, .3); playTone(80, .3, 'sine', .2, -40) },
                 water() { playNoise(.2, .05); playTone(300, .15, 'sine', .04, 50) },
                 pickup() { playTone(700, .06, 'square', .08); playTone(900, .08, 'square', .06) },
-                trapClick() { playTone(2000, .04, 'square', .2); playTone(1500, .03, 'square', .15) },
-                disarm() { playTone(800, .08, 'sine', .1); setTimeout(() => playTone(1200, .1, 'sine', .08), 80) },
-                drip() { playTone(1800 + Math.random() * 600, .15, 'sine', .02 + Math.random() * .02, -800); },
             };
 
             /* ═══════════════════════════════════════════════════════════════
@@ -304,122 +230,107 @@
             function hsl(h, s, l) { return `hsl(${h},${s}%,${l}%)` }
             function rgba(r, g, b, a) { return `rgba(${r},${g},${b},${a})` }
 
-            // Stone wall tile — dark gray dungeon brick with heavy detail
+            // Stone wall tile — classic Aztec tan brick
             const tileStone = makeCanvas(16, 16, (c) => {
-                c.fillStyle = '#3a3a3e'; c.fillRect(0, 0, 16, 16);
+                c.fillStyle = '#8B7355'; c.fillRect(0, 0, 16, 16);
+                // Brick pattern - 2 rows of offset bricks
                 const rows = [{ y: 0, h: 7, off: 0 }, { y: 8, h: 7, off: 4 }];
                 for (const row of rows) {
-                    c.fillStyle = '#111114'; c.fillRect(0, row.y + row.h, 16, 1);
+                    c.fillStyle = '#1a1408'; c.fillRect(0, row.y + row.h, 16, 1); // mortar line
                     for (let bx = 0; bx < 20; bx += 8) {
                         const x = (bx + row.off) % 20;
                         if (x >= 16) continue;
                         const w = Math.min(7, 16 - x);
-                        // Base brick color with variation
-                        const lum = 24 + ((x * 7 + row.y * 11) % 12);
-                        c.fillStyle = `hsl(220,${3 + (x * 3 + row.y * 5) % 5}%,${lum}%)`;
+                        // Brick face
+                        c.fillStyle = `hsl(35,${25 + (x * 3 + row.y * 7) % 15}%,${42 + (x * 5 + row.y * 3) % 12}%)`;
                         c.fillRect(x, row.y, w, row.h);
-                        // Internal stone texture — random darker spots
-                        for (let tx = x; tx < x + w; tx += 2) {
-                            for (let ty = row.y; ty < row.y + row.h; ty += 2) {
-                                const v = ((tx * 13 + ty * 7) % 17);
-                                if (v < 4) {
-                                    c.fillStyle = `rgba(0,0,0,${0.08 + v * 0.03})`;
-                                    c.fillRect(tx, ty, 1 + (v % 2), 1 + (v % 2));
-                                } else if (v > 14) {
-                                    c.fillStyle = `rgba(255,255,255,${0.04})`;
-                                    c.fillRect(tx, ty, 1, 1);
-                                }
-                            }
-                        }
-                        // Top-left highlight
-                        c.fillStyle = 'rgba(255,255,255,0.1)';
+                        // Light edge top-left
+                        c.fillStyle = 'rgba(255,220,160,0.25)';
                         c.fillRect(x, row.y, w, 1); c.fillRect(x, row.y, 1, row.h);
-                        // Bottom-right shadow
+                        // Dark edge bottom-right
                         c.fillStyle = 'rgba(0,0,0,0.3)';
                         c.fillRect(x, row.y + row.h - 1, w, 1); c.fillRect(x + w - 1, row.y, 1, row.h);
-                        // Mortar
-                        c.fillStyle = '#111114'; c.fillRect(x > 0 ? x - 1 : 0, row.y, 1, row.h);
+                        // Mortar between bricks
+                        c.fillStyle = '#1a1408'; c.fillRect(x > 0 ? x - 1 : 0, row.y, 1, row.h);
                     }
                 }
-                // Cracks
-                c.fillStyle = 'rgba(0,0,0,0.2)';
-                c.fillRect(3, 2, 1, 4); c.fillRect(4, 5, 1, 2); c.fillRect(10, 1, 1, 3);
-                c.fillRect(11, 9, 1, 4); c.fillRect(12, 12, 1, 2);
-                // Moss accents
-                c.fillStyle = 'rgba(50,100,35,0.15)';
-                c.fillRect(1, 0, 3, 1); c.fillRect(9, 7, 2, 1); c.fillRect(14, 14, 2, 1);
+                // Subtle hieroglyph scratches
+                c.fillStyle = 'rgba(255,200,80,0.08)';
+                c.fillRect(3, 3, 2, 3); c.fillRect(6, 2, 1, 4); c.fillRect(11, 4, 2, 2);
             });
 
-            // Stone floor — dark gray with heavy texture
+            // Stone floor — lighter top surface with clear edge
             const tileFloor = makeCanvas(16, 16, (c) => {
-                c.fillStyle = '#383838'; c.fillRect(0, 0, 16, 16);
+                c.fillStyle = '#7a6a50'; c.fillRect(0, 0, 16, 16);
+                // Block pattern
                 for (let x = 0; x < 16; x += 8) {
-                    c.fillStyle = `hsl(220,${3 + x % 5}%,${22 + x % 6}%)`;
+                    c.fillStyle = `hsl(32,${22 + x % 10}%,${38 + x % 8}%)`;
                     c.fillRect(x, 1, 7, 14);
-                    // Stone texture within each block
-                    for (let px = x; px < x + 7; px += 2) {
-                        for (let py = 1; py < 15; py += 2) {
-                            const v = ((px * 11 + py * 13) % 11);
-                            if (v < 3) { c.fillStyle = 'rgba(0,0,0,0.1)'; c.fillRect(px, py, 1, 1); }
-                            else if (v > 8) { c.fillStyle = 'rgba(255,255,255,0.04)'; c.fillRect(px, py, 1, 1); }
-                        }
-                    }
-                    c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(x + 7, 0, 1, 16);
+                    c.fillStyle = 'rgba(0,0,0,0.2)'; c.fillRect(x + 7, 0, 1, 16);
                 }
-                c.fillStyle = 'rgba(255,255,255,0.15)'; c.fillRect(0, 0, 16, 2);
-                c.fillStyle = 'rgba(0,0,0,0.4)'; c.fillRect(0, 14, 16, 2);
-                // Cracks
-                c.fillStyle = 'rgba(0,0,0,0.15)'; c.fillRect(5, 4, 1, 3); c.fillRect(12, 8, 1, 4);
+                // Top highlight
+                c.fillStyle = 'rgba(255,220,160,0.3)'; c.fillRect(0, 0, 16, 2);
+                // Bottom shadow
+                c.fillStyle = 'rgba(0,0,0,0.35)'; c.fillRect(0, 14, 16, 2);
             });
 
-            // Platform — gray stone ledge with texture
+            // Platform — visible stone ledge with thick edge
             const tilePlatform = makeCanvas(16, 16, (c) => {
-                c.fillStyle = '#505055'; c.fillRect(0, 0, 16, 6);
-                c.fillStyle = '#353538'; c.fillRect(0, 6, 16, 3);
-                for (let px = 0; px < 16; px += 2) {
-                    const v = (px * 7) % 9;
-                    if (v < 3) { c.fillStyle = 'rgba(0,0,0,0.08)'; c.fillRect(px, 1, 2, 4); }
-                    if (v > 6) { c.fillStyle = 'rgba(255,255,255,0.05)'; c.fillRect(px, 2, 1, 2); }
-                }
-                c.fillStyle = 'rgba(255,255,255,0.18)'; c.fillRect(0, 0, 16, 1);
-                c.fillStyle = 'rgba(0,0,0,0.45)'; c.fillRect(0, 8, 16, 1);
-                c.fillStyle = 'rgba(0,0,0,0.15)'; c.fillRect(7, 0, 1, 6);
-                c.fillStyle = 'rgba(50,100,35,0.25)';
-                c.fillRect(1, 0, 3, 1); c.fillRect(10, 0, 4, 1); c.fillRect(6, 5, 2, 1);
+                // Main stone surface
+                c.fillStyle = '#9B8B6B'; c.fillRect(0, 0, 16, 5);
+                // Under-edge
+                c.fillStyle = '#6B5B3B'; c.fillRect(0, 5, 16, 3);
+                // Top highlight
+                c.fillStyle = 'rgba(255,220,160,0.35)'; c.fillRect(0, 0, 16, 1);
+                // Bottom shadow
+                c.fillStyle = 'rgba(0,0,0,0.4)'; c.fillRect(0, 7, 16, 1);
+                // Block divisions
+                c.fillStyle = 'rgba(0,0,0,0.2)'; c.fillRect(7, 0, 1, 5);
+                // Moss spots
+                c.fillStyle = 'rgba(80,140,60,0.35)';
+                c.fillRect(2, 0, 2, 1); c.fillRect(10, 0, 3, 1);
             });
 
-            // Ladder — weathered wood
+            // Ladder — wooden with highlights
             const tileLadder = makeCanvas(16, 16, (c) => {
-                c.fillStyle = '#5a5045';
+                // Side rails
+                c.fillStyle = '#8B7355';
                 c.fillRect(2, 0, 3, 16); c.fillRect(11, 0, 3, 16);
-                c.fillStyle = 'rgba(255,255,255,0.08)';
+                // Rail highlights
+                c.fillStyle = 'rgba(255,220,160,0.15)';
                 c.fillRect(3, 0, 1, 16); c.fillRect(12, 0, 1, 16);
-                c.fillStyle = '#6a6055';
+                // Rungs
+                c.fillStyle = '#9B8365';
                 c.fillRect(2, 3, 12, 2); c.fillRect(2, 10, 12, 2);
-                c.fillStyle = 'rgba(255,255,255,0.06)';
+                // Rung highlights
+                c.fillStyle = 'rgba(255,220,160,0.1)';
                 c.fillRect(2, 3, 12, 1); c.fillRect(2, 10, 12, 1);
             });
 
-            // Background — deep dark void
+            // Background wall — dark void inside rooms (classic Aztec style)
             const tileBg = makeCanvas(16, 16, (c) => {
-                c.fillStyle = '#080808'; c.fillRect(0, 0, 16, 16);
-                for (let i = 0; i < 4; i++) {
-                    c.fillStyle = `rgba(20,20,22,${0.15 + Math.random() * 0.1})`;
+                c.fillStyle = '#0a0806'; c.fillRect(0, 0, 16, 16);
+                // Very subtle stone texture hints
+                for (let i = 0; i < 3; i++) {
+                    c.fillStyle = `rgba(30,25,18,${0.15 + Math.random() * 0.1})`;
                     const x = Math.random() * 12 | 0, y = Math.random() * 12 | 0;
                     c.fillRect(x, y, 3 + Math.random() * 3 | 0, 3 + Math.random() * 3 | 0);
                 }
             });
 
-            // Spikes — steel on dark stone
+            // Spikes — metallic on dark floor
             const tileSpike = makeCanvas(16, 16, (c) => {
-                c.fillStyle = '#080808'; c.fillRect(0, 0, 16, 16);
-                c.fillStyle = '#3a3a3a'; c.fillRect(0, 12, 16, 4);
-                c.fillStyle = '#999';
+                c.fillStyle = '#0a0806'; c.fillRect(0, 0, 16, 16);
+                // Base
+                c.fillStyle = '#5a4e3c'; c.fillRect(0, 12, 16, 4);
+                // Spike triangles
+                c.fillStyle = '#aaa';
                 for (let i = 0; i < 4; i++) {
                     const sx = i * 4;
                     c.beginPath(); c.moveTo(sx, 12); c.lineTo(sx + 2, 2); c.lineTo(sx + 4, 12); c.fill();
                 }
-                c.fillStyle = '#ccc';
+                // Tips highlight
+                c.fillStyle = '#ddd';
                 for (let i = 0; i < 4; i++) { c.fillRect(i * 4 + 1, 3, 1, 2) }
             });
 
@@ -432,49 +343,54 @@
 
             // Torch (for wall decoration)
             const tileTorch = makeCanvas(16, 16, (c) => {
-                c.fillStyle = '#4a4a48'; c.fillRect(6, 6, 4, 10);
-                c.fillStyle = '#5a5a58'; c.fillRect(7, 6, 2, 10);
+                c.fillStyle = '#5a4e3c'; c.fillRect(6, 6, 4, 10);// holder
+                c.fillStyle = '#8B7355'; c.fillRect(7, 6, 2, 10);
             });
 
-            // Arrow trap face — carved stone face (gray)
+            // Arrow trap face — carved stone face
             const tileArrowTrap = makeCanvas(16, 16, (c) => {
-                c.fillStyle = '#404044'; c.fillRect(0, 0, 16, 16);
-                c.fillStyle = '#2a2a2e'; c.fillRect(2, 2, 12, 12);
-                c.fillStyle = '#0a0a0c';
+                c.fillStyle = '#8B7355'; c.fillRect(0, 0, 16, 16);
+                // Recessed face
+                c.fillStyle = '#5a4830'; c.fillRect(2, 2, 12, 12);
+                // Eyes (dark hollows)
+                c.fillStyle = '#1a0a00';
                 c.fillRect(4, 4, 3, 3); c.fillRect(9, 4, 3, 3);
-                c.fillStyle = 'rgba(255,0,0,0.4)';
+                // Eye glow
+                c.fillStyle = 'rgba(255,0,0,0.5)';
                 c.fillRect(5, 5, 1, 1); c.fillRect(10, 5, 1, 1);
-                c.fillStyle = '#0a0a0c'; c.fillRect(5, 9, 6, 3);
-                c.fillStyle = 'rgba(255,255,255,0.1)'; c.fillRect(5, 9, 6, 1);
+                // Mouth (arrow exits here)
+                c.fillStyle = '#1a0a00'; c.fillRect(5, 9, 6, 3);
+                // Mouth edge
+                c.fillStyle = 'rgba(255,220,160,0.2)'; c.fillRect(5, 9, 6, 1);
             });
 
-            // Pressure plate (gray)
+            // Pressure plate
             const tilePlate = makeCanvas(16, 16, (c) => {
-                c.fillStyle = '#181818'; c.fillRect(0, 0, 16, 16);
-                c.fillStyle = '#555558'; c.fillRect(2, 12, 12, 3);
-                c.fillStyle = 'rgba(255,255,255,0.15)'; c.fillRect(3, 12, 10, 1);
+                c.fillStyle = '#2a2318'; c.fillRect(0, 0, 16, 16);
+                c.fillStyle = '#8a7a60'; c.fillRect(2, 12, 12, 3);
+                c.fillStyle = 'rgba(255,200,0,0.3)'; c.fillRect(3, 12, 10, 1);
                 c.fillStyle = 'rgba(0,0,0,0.3)'; c.fillRect(2, 15, 12, 1);
             });
 
-            // Treasure chest (closed) — wooden with iron bands
+            // Treasure chest (closed)
             const tileChest = makeCanvas(16, 16, (c) => {
-                c.fillStyle = '#6B4E14'; c.fillRect(2, 6, 12, 9);
-                c.fillStyle = '#7B5E24'; c.fillRect(2, 6, 12, 4);
-                c.fillStyle = '#5B3E0A'; c.fillRect(3, 5, 10, 2);
+                c.fillStyle = '#8B6914'; c.fillRect(2, 6, 12, 9);
+                c.fillStyle = '#A07828'; c.fillRect(2, 6, 12, 4);
+                // lid curve
+                c.fillStyle = '#6B4E0A'; c.fillRect(3, 5, 10, 2);
+                // lock
                 c.fillStyle = '#FFD700'; c.fillRect(7, 9, 2, 3);
                 c.fillStyle = 'rgba(0,0,0,0.2)'; c.fillRect(2, 15, 12, 1);
             });
 
-            // Rubbish pile — gray/green debris
+            // Rubbish pile
             const tileRubbish = makeCanvas(16, 16, (c) => {
-                c.fillStyle = '#3a3a38'; c.fillRect(1, 10, 14, 6);
-                c.fillStyle = '#2e2e2c'; c.fillRect(3, 7, 10, 4);
-                c.fillStyle = '#454543'; c.fillRect(5, 5, 6, 3);
-                c.fillStyle = '#4a4a48'; c.fillRect(2, 9, 3, 2); c.fillRect(10, 8, 4, 3);
-                // Hint of green moss
-                c.fillStyle = 'rgba(60,120,40,0.25)'; c.fillRect(4, 6, 2, 1); c.fillRect(9, 9, 2, 1);
-                // Hint of purple/magenta debris
-                c.fillStyle = 'rgba(140,60,140,0.2)'; c.fillRect(1, 11, 2, 2); c.fillRect(12, 10, 2, 2);
+                c.fillStyle = '#4a4030'; c.fillRect(1, 10, 14, 6);
+                c.fillStyle = '#3a3228'; c.fillRect(3, 7, 10, 4);
+                c.fillStyle = '#5a5040'; c.fillRect(5, 5, 6, 3);
+                // debris
+                c.fillStyle = '#6a6050'; c.fillRect(2, 9, 3, 2); c.fillRect(10, 8, 4, 3);
+                c.fillStyle = 'rgba(255,200,0,0.1)'; c.fillRect(7, 11, 2, 1);// hint of gold
             });
 
             // Coin
@@ -607,23 +523,22 @@
 
             // Enemy sprites
             const spriteSnake = makeCanvas(16, 8, (c) => {
-                c.fillStyle = '#308028';
+                c.fillStyle = '#408030';
                 c.fillRect(0, 4, 14, 3); c.fillRect(12, 2, 3, 3);
-                c.fillStyle = '#206018'; c.fillRect(2, 5, 4, 1); c.fillRect(8, 5, 3, 1);
-                c.fillStyle = '#e03030'; c.fillRect(14, 3, 2, 1);
-                c.fillStyle = '#111'; c.fillRect(13, 2, 1, 1);
-                // Orange/green pattern
-                c.fillStyle = 'rgba(200,120,0,0.4)'; c.fillRect(4, 4, 2, 1); c.fillRect(8, 4, 2, 1);
-                c.fillStyle = 'rgba(100,200,60,0.3)'; c.fillRect(1, 5, 1, 1); c.fillRect(6, 4, 1, 1);
+                c.fillStyle = '#306020'; c.fillRect(2, 5, 4, 1); c.fillRect(8, 5, 3, 1);
+                c.fillStyle = '#e03030'; c.fillRect(14, 3, 2, 1);//tongue
+                c.fillStyle = '#222'; c.fillRect(13, 2, 1, 1);//eye
+                c.fillStyle = 'rgba(255,255,0,0.3)'; c.fillRect(4, 4, 1, 1); c.fillRect(8, 4, 1, 1);//pattern
             });
 
             const spriteScorpion = makeCanvas(14, 10, (c) => {
-                c.fillStyle = '#c07020';
-                c.fillRect(2, 5, 8, 4);
-                c.fillRect(0, 7, 3, 2); c.fillRect(11, 7, 3, 2);
+                c.fillStyle = '#8B4513';
+                c.fillRect(2, 5, 8, 4);// body
+                c.fillRect(0, 7, 3, 2); c.fillRect(11, 7, 3, 2);// claws
+                // tail
                 c.fillRect(9, 2, 2, 4); c.fillRect(10, 0, 2, 3); c.fillRect(11, 0, 2, 1);
-                c.fillStyle = '#a05810'; c.fillRect(3, 6, 6, 2);
-                c.fillStyle = '#FF4040'; c.fillRect(12, 0, 1, 1);
+                c.fillStyle = '#6B3503'; c.fillRect(3, 6, 6, 2);
+                c.fillStyle = '#FF4040'; c.fillRect(12, 0, 1, 1);//stinger
             });
 
             const spriteSpider = makeCanvas(12, 10, (c) => {
@@ -662,8 +577,8 @@
                 STAIRS: 20, EXIT_L: 21, EXIT_R: 22, EXIT_T: 23, EXIT_B: 24
             };
 
-            function tileIsSolid(t) { return t === T.WALL || t === T.FLOOR || t === T.EXIT_T }
-            function tileIsPlatform(t) { return t === T.PLATFORM || t === T.STAIRS }
+            function tileIsSolid(t) { return t === T.WALL || t === T.FLOOR || t === T.STAIRS || t === T.EXIT_T }
+            function tileIsPlatform(t) { return t === T.PLATFORM }
             function tileIsLadder(t) { return t === T.LADDER }
             function tileIsSpike(t) { return t === T.SPIKE }
             function tileIsExit(t) { return t >= T.EXIT_L && t <= T.EXIT_B }
@@ -735,25 +650,25 @@
                     name: 'Entrance Hall',
                     tiles: R(
                         '##########T#########\n' +
-                        '#              H   R\n' +
-                        '#   --         H   R\n' +
-                        '#         --   H   #\n' +
-                        '#     H        --  #\n' +
-                        '#     H  --        #\n' +
-                        '#     H      --    #\n' +
-                        '#     H            #\n' +
-                        '#  --  H  --    -- #\n' +
-                        '#      H           #\n' +
+                        '#                  R\n' +
+                        '#   --             R\n' +
+                        '#         --       #\n' +
+                        '#              --  #\n' +
+                        '#    --            #\n' +
+                        '#          --      #\n' +
+                        '#                  #\n' +
+                        '#  --     --    -- #\n' +
+                        '#                  #\n' +
                         '=====DD========DD==='
                     ),
                     exits: { right: [1, 1, 1], bottom_l: [4, 2, 1], bottom_r: [2, 6, 1] },
                     enemies: [],
                     items: [
-                        { type: 'rubbish', x: 5 * 16, y: 5 * 16 - 4 },
-                        { type: 'rubbish', x: 10 * 16, y: 3 * 16 - 4 },
+                        { type: 'rubbish', x: 4 * 16, y: 5 * 16 - 4 },
+                        { type: 'rubbish', x: 11 * 16, y: 3 * 16 - 4 },
                         { type: 'chest', x: 15 * 16, y: 4 * 16 - 4 },
                         { type: 'rubbish', x: 3 * 16, y: 8 * 16 - 4 },
-                        { type: 'rubbish', x: 11 * 16, y: 6 * 16 - 4 },
+                        { type: 'rubbish', x: 10 * 16, y: 6 * 16 - 4 },
                         { type: 'key', x: 16 * 16 + 4, y: 4 * 16 - 8 },
                     ],
                     torches: [[0, 0]],
@@ -765,11 +680,11 @@
                     name: 'Spike Pit Chamber',
                     tiles: R(
                         '####################\n' +
-                        'L        H         #\n' +
-                        'L   --   H   --    #\n' +
-                        '#        H         #\n' +
-                        '#  --    H    --   #\n' +
-                        '#        H         R\n' +
+                        'L                  #\n' +
+                        'L   --      --     #\n' +
+                        '#                  #\n' +
+                        '#  --         --   #\n' +
+                        '#                  R\n' +
                         '#       --         R\n' +
                         '#                  #\n' +
                         '#  --         --   #\n' +
@@ -781,7 +696,7 @@
                     items: [
                         { type: 'rubbish', x: 4 * 16, y: 2 * 16 - 4 },
                         { type: 'rubbish', x: 14 * 16, y: 4 * 16 - 4 },
-                        { type: 'chest', x: 8 * 16, y: 6 * 16 - 4, locked: true },
+                        { type: 'chest', x: 7 * 16, y: 6 * 16 - 4, locked: true },
                         { type: 'key', x: 3 * 16 + 4, y: 8 * 16 - 8 },
                         { type: 'rubbish', x: 14 * 16, y: 8 * 16 - 4 },
                     ],
@@ -792,21 +707,21 @@
                     name: 'Arrow Trap Corridor',
                     tiles: R(
                         '####################\n' +
-                        '#            H     #\n' +
-                        '>   --       H     #\n' +
-                        '#            H     #\n' +
-                        '#      --    H  -- #\n' +
-                        '>            H     #\n' +
-                        '#    --      H     #\n' +
-                        '#            H --  R\n' +
-                        '>            H     R\n' +
+                        '#                  #\n' +
+                        '>   --      --     #\n' +
+                        '#                  #\n' +
+                        '#         --    -- #\n' +
+                        '>                  #\n' +
+                        '#    --            #\n' +
+                        '#              --  R\n' +
+                        '>                  R\n' +
                         '#                  #\n' +
                         '====UU=============='
                     ),
                     exits: { top: [0, 17, 9], right: [5, 1, 4] },
                     enemies: [{ type: 'scorpion', x: 12 * 16, y: 9 * 16 + 4, patrol: [6 * 16, 17 * 16] }],
                     items: [
-                        { type: 'rubbish', x: 4 * 16, y: 2 * 16 - 4 },
+                        { type: 'rubbish', x: 5 * 16, y: 2 * 16 - 4 },
                         { type: 'bullets', x: 15 * 16, y: 4 * 16 - 4 },
                         { type: 'rubbish', x: 8 * 16, y: 9 * 16 - 4 },
                         { type: 'chest', x: 14 * 16, y: 7 * 16 - 4 },
@@ -824,14 +739,14 @@
                     name: 'Treasure Vault',
                     tiles: R(
                         '########TT##########\n' +
-                        '#      H           #\n' +
-                        '#      H           #\n' +
-                        '#  --  H  --    -- #\n' +
-                        '#      H           #\n' +
-                        'L      H           #\n' +
-                        'L   -- H   --      #\n' +
-                        '#      H     H     #\n' +
-                        '#      H     H  -- #\n' +
+                        '#                  #\n' +
+                        '#                  #\n' +
+                        '#  --     --    -- #\n' +
+                        '#                  #\n' +
+                        'L                  #\n' +
+                        'L   --     --      #\n' +
+                        '#            H     #\n' +
+                        '#            H  -- #\n' +
                         '#            H     #\n' +
                         '================DD=='
                     ),
@@ -840,9 +755,9 @@
                     items: [
                         { type: 'chest', x: 3 * 16, y: 3 * 16 - 4, locked: true },
                         { type: 'chest', x: 10 * 16, y: 3 * 16 - 4 },
-                        { type: 'chest', x: 16 * 16, y: 3 * 16 - 4 },
+                        { type: 'chest', x: 15 * 16, y: 3 * 16 - 4 },
                         { type: 'key', x: 5 * 16 + 4, y: 6 * 16 - 8 },
-                        { type: 'rubbish', x: 11 * 16, y: 6 * 16 - 4 },
+                        { type: 'rubbish', x: 10 * 16, y: 6 * 16 - 4 },
                         { type: 'rubbish', x: 16 * 16, y: 8 * 16 - 4 },
                     ],
                     torches: [[8, 0], [9, 0]], traps: [],
@@ -852,25 +767,24 @@
                     name: 'Flooding Chamber',
                     tiles: R(
                         '####################\n' +
-                        '#         H        #\n' +
-                        '#  --     H    --  #\n' +
-                        '#         H        #\n' +
-                        '#     --  H        #\n' +
-                        '#         H    --  #\n' +
-                        '#  --     H        #\n' +
-                        '#  P      H    --  #\n' +
-                        '#     --  H        #\n' +
-                        '#         H        #\n' +
+                        '#                  #\n' +
+                        '#                  #\n' +
+                        '#        SS    --  #\n' +
+                        '#       SS         #\n' +
+                        '#      SS      --  #\n' +
+                        '#     SS           #\n' +
+                        '#  P SS        --  #\n' +
+                        '#   SS             #\n' +
+                        '#  SS              #\n' +
                         '=UU================='
                     ),
                     exits: { top: [0, 5, 9] },
                     enemies: [],
                     items: [
-                        { type: 'health', x: 3 * 16, y: 2 * 16 - 4 },
-                        { type: 'rubbish', x: 15 * 16, y: 2 * 16 - 4 },
-                        { type: 'chest', x: 15 * 16, y: 5 * 16 - 4 },
-                        { type: 'rubbish', x: 6 * 16, y: 8 * 16 - 4 },
-                        { type: 'rubbish', x: 15 * 16, y: 7 * 16 - 4 },
+                        { type: 'rubbish', x: 16 * 16, y: 3 * 16 - 4 },
+                        { type: 'chest', x: 16 * 16, y: 5 * 16 - 4 },
+                        { type: 'rubbish', x: 16 * 16, y: 7 * 16 - 4 },
+                        { type: 'health', x: 3 * 16, y: 1 * 16 + 8 },
                     ],
                     torches: [],
                     traps: [{ type: 'flood', triggerX: 3 * 16, triggerY: 7 * 16, maxHeight: 7 * 16, speed: FLOOD_SPEED }],
@@ -881,15 +795,15 @@
                     name: 'Spider Lair',
                     tiles: R(
                         '####################\n' +
-                        '#         H        R\n' +
-                        '#  --     H  -- -- R\n' +
-                        '#         H        #\n' +
-                        'L         H        #\n' +
-                        'L  --     H   --   #\n' +
-                        '#         H        #\n' +
-                        '#       --H     -- #\n' +
-                        '#         H        #\n' +
-                        '#  --     H     -- #\n' +
+                        '#                  R\n' +
+                        '#  --     --    -- R\n' +
+                        '#                  #\n' +
+                        'L                  #\n' +
+                        'L  --         --   #\n' +
+                        '#                  #\n' +
+                        '#       --      -- #\n' +
+                        '#                  #\n' +
+                        '#  --           -- #\n' +
                         '===================='
                     ),
                     exits: { left: [2, 18, 7], right: [7, 1, 5] },
@@ -913,15 +827,15 @@
                     name: 'Explosive Room',
                     tiles: R(
                         '####################\n' +
-                        '#       H          #\n' +
-                        '#  --   H  --      #\n' +
-                        '#       H          #\n' +
-                        '#       H          #\n' +
-                        '#   --  H  --  --  #\n' +
-                        '#       H          #\n' +
-                        '#  P    H   P      #\n' +
-                        '#   --  H    -- -- #\n' +
-                        '#       H P        #\n' +
+                        '#                  #\n' +
+                        '#  --   --   --    #\n' +
+                        '#                  #\n' +
+                        '#                  #\n' +
+                        '#   --   --   --   #\n' +
+                        '#                  #\n' +
+                        '#  P      P        #\n' +
+                        '#   --       -- -- #\n' +
+                        '#        P         #\n' +
                         '==UU================'
                     ),
                     exits: { top: [3, 17, 9] },
@@ -985,8 +899,7 @@
             let player = {
                 x: 0, y: 0, vx: 0, vy: 0, facing: 1, onGround: false, onLadder: false,
                 frame: 0, animTimer: 0, hearts: 3, maxHearts: 3, bullets: 6, keys: 0, score: 0,
-                roomScore: 0, whipping: false, whipTimer: 0, invincible: 0, dead: false,
-                disarmKits: 0
+                roomScore: 0, whipping: false, whipTimer: 0, invincible: 0, dead: false
             };
             let currentRoom = 0;
             let roomStates = {}; // persisted room data
@@ -1024,29 +937,12 @@
                 else if (state === 'gameover') showTitle();
             });
 
-            function inputLeft() { return keys['ArrowLeft'] || keys['KeyA'] || keys['_tLeft'] }
-            function inputRight() { return keys['ArrowRight'] || keys['KeyD'] || keys['_tRight'] }
-            function inputUp() { return keys['ArrowUp'] || keys['KeyW'] || keys['Space'] || keys['_tUp'] }
-            function inputDown() { return keys['ArrowDown'] || keys['KeyS'] || keys['_tDown'] }
-            function inputShoot() { return keys['KeyE'] || keys['_tAction'] }
-            function inputWhip() { return keys['KeyF'] || keys['_tWhip'] }
-
-            // Wire mobile controls
-            function taBind(id, k) {
-                const el = document.getElementById(id); if (!el) return;
-                el.addEventListener('touchstart', e => { e.preventDefault(); keys[k] = true; el.classList.add('pressed'); }, { passive: false });
-                el.addEventListener('touchend', e => { e.preventDefault(); keys[k] = false; el.classList.remove('pressed'); }, { passive: false });
-                el.addEventListener('touchcancel', () => { keys[k] = false; el.classList.remove('pressed'); });
-            }
-            taBind('ta-left', '_tLeft'); taBind('ta-right', '_tRight');
-            taBind('ta-jump', '_tUp'); taBind('ta-down', '_tDown');
-            taBind('ta-action', '_tAction'); taBind('ta-whip', '_tWhip');
-
-            // Sound toggle
-            document.getElementById('ta-sound-btn').addEventListener('click', () => {
-                soundEnabled = !soundEnabled;
-                document.getElementById('ta-sound-btn').textContent = soundEnabled ? '🔊' : '🔇';
-            });
+            function inputLeft() { return keys['ArrowLeft'] || keys['KeyA'] }
+            function inputRight() { return keys['ArrowRight'] || keys['KeyD'] }
+            function inputUp() { return keys['ArrowUp'] || keys['KeyW'] || keys['Space'] }
+            function inputDown() { return keys['ArrowDown'] || keys['KeyS'] }
+            function inputShoot() { return keys['KeyE'] }
+            function inputWhip() { return keys['KeyF'] }
 
             /* ═══════════════════════════════════════════════════════════════
                ROOM MANAGEMENT
@@ -1074,11 +970,8 @@
                     activeItems = room.items.map(it => ({ ...it, collected: false, opened: false }));
                 }
 
-                // Load traps — with disarm timer support
-                activeTraps = room.traps.map(t => ({
-                    ...t, timer: 0, active: false, warned: false, warningTimer: 0, cooldown: 0,
-                    triggered: false, disarmTimer: 0, disarmed: false
-                }));
+                // Load traps (reset each time)
+                activeTraps = room.traps.map(t => ({ ...t, timer: 0, active: false, warned: false, warningTimer: 0, cooldown: 0 }));
 
                 // Position player
                 if (entryX !== undefined) {
@@ -1120,7 +1013,7 @@
             function startGame() {
                 state = 'playing';
                 player.hearts = 3; player.bullets = 6; player.keys = 0; player.score = 0; player.dead = false;
-                player.invincible = 0; player.whipping = false; player.disarmKits = 1;
+                player.invincible = 0; player.whipping = false;
                 roomStates = {};
                 drawGameOver._saved = false;
                 loadRoom(0);
@@ -1140,9 +1033,6 @@
                 document.getElementById('hud-keys').textContent = player.keys;
                 document.getElementById('hud-key-sep').style.display = player.keys > 0 ? '' : 'none';
                 document.getElementById('hud-key-item').style.display = player.keys > 0 ? 'flex' : 'none';
-                document.getElementById('hud-kits').textContent = player.disarmKits;
-                document.getElementById('hud-kit-sep').style.display = player.disarmKits > 0 ? '' : 'none';
-                document.getElementById('hud-kit-item').style.display = player.disarmKits > 0 ? 'flex' : 'none';
                 document.getElementById('hud-score').textContent = player.score;
                 document.getElementById('hud-room').textContent = rooms[currentRoom].name;
             }
@@ -1246,7 +1136,7 @@
                             saveRoom(currentRoom); loadRoom(room.exits.top[0], room.exits.top[1], room.exits.top[2]); return;
                         }
                     }
-                    // Short jump — enough for stairs/pits, not full platformer
+                    // Jump
                     if (inputUp() && player.onGround) { player.vy = JUMP_FORCE; player.onGround = false; SFX.jump() }
                     // Gravity
                     player.vy += GRAVITY;
@@ -1380,61 +1270,31 @@
 
                 // — Arrows (from traps) —
                 for (const t of activeTraps) {
-                    if (t.disarmed) continue; // skip disarmed traps
-
                     if (t.type === 'arrow') {
-                        // Arrow traps trigger on proximity, then disarm window
-                        const pr3 = playerRect();
-                        if (!t.triggered && rectOverlap(pr3.x, pr3.y, pr3.w, pr3.h, t.x, t.y - 16, 32, 48)) {
-                            t.triggered = true;
-                            t.disarmTimer = TRAP_DISARM_TIME;
-                            SFX.trapClick();
-                        }
-                        if (t.triggered && t.disarmTimer > 0) {
-                            t.disarmTimer -= dt * 1000;
-                            // Player can disarm with E key if near and has kit
-                            if (inputShoot() && player.disarmKits > 0 && rectOverlap(pr3.x, pr3.y, pr3.w, pr3.h, t.x, t.y - 16, 32, 48)) {
-                                player.disarmKits--;
-                                t.disarmed = true;
-                                SFX.disarm();
-                                addScore(15);
-                                updateHUD();
-                                continue;
-                            }
-                            if (t.disarmTimer <= 0) {
-                                // Trap fires!
-                                activeArrows.push({ x: t.x + (t.dir > 0 ? 16 : 0), y: t.y, vx: t.dir * 3, vy: 0, life: 2000 });
-                                SFX.arrow();
-                                t.triggered = false; // can re-trigger
-                            }
+                        t.timer += dt * 1000;
+                        if (t.timer >= t.interval) {
+                            t.timer = 0;
+                            activeArrows.push({ x: t.x + (t.dir > 0 ? 16 : 0), y: t.y, vx: t.dir * 3, vy: 0, life: 2000 });
+                            SFX.arrow();
                         }
                     }
                     if (t.type === 'explosion') {
+                        // Check if player on plate
                         const pr3 = playerRect();
-                        if (!t.triggered && !t.active && rectOverlap(pr3.x, pr3.y, pr3.w, pr3.h, t.x, t.y, 16, 16)) {
-                            t.triggered = true;
-                            t.disarmTimer = TRAP_DISARM_TIME;
-                            SFX.trapClick();
+                        if (!t.active && !t.warned && rectOverlap(pr3.x, pr3.y, pr3.w, pr3.h, t.x, t.y, 16, 16)) {
+                            t.warned = true; t.warningTimer = 1000;
                         }
-                        if (t.triggered && !t.active && t.disarmTimer > 0) {
-                            t.disarmTimer -= dt * 1000;
-                            const pr4 = playerRect();
-                            if (inputShoot() && player.disarmKits > 0 && rectOverlap(pr4.x, pr4.y, pr4.w, pr4.h, t.x - 8, t.y - 8, 32, 32)) {
-                                player.disarmKits--;
-                                t.disarmed = true;
-                                SFX.disarm();
-                                addScore(20);
-                                updateHUD();
-                                continue;
-                            }
-                            if (t.disarmTimer <= 0) {
+                        if (t.warned && !t.active) {
+                            t.warningTimer -= dt * 1000;
+                            if (t.warningTimer <= 0) {
                                 t.active = true;
                                 SFX.explosion();
                                 explosions.push({ x: t.x + 8, y: t.y + 8, radius: t.radius, life: 500, maxLife: 500 });
                                 spawnParticles(t.x + 8, t.y + 8, 20, '#ff8800', 4);
                                 spawnParticles(t.x + 8, t.y + 8, 10, '#ffdd00', 3);
-                                const pr5 = playerRect();
-                                if (Math.hypot(pr5.x + pr5.w / 2 - t.x - 8, pr5.y + pr5.h / 2 - t.y - 8) < t.radius) {
+                                // Damage in radius
+                                const pr4 = playerRect();
+                                if (Math.hypot(pr4.x + pr4.w / 2 - t.x - 8, pr4.y + pr4.h / 2 - t.y - 8) < t.radius) {
                                     hurtPlayer();
                                 }
                                 for (const en of activeEnemies) {
@@ -1448,30 +1308,13 @@
                         }
                         if (t.active) {
                             t.cooldown -= dt * 1000;
-                            if (t.cooldown <= 0) { t.active = false; t.triggered = false; }
+                            if (t.cooldown <= 0) { t.active = false; t.warned = false }
                         }
                     }
                     if (t.type === 'flood') {
                         const pr3 = playerRect();
-                        if (!t.triggered && !floodActive && rectOverlap(pr3.x, pr3.y, pr3.w, pr3.h, t.triggerX, t.triggerY, 16, 16)) {
-                            t.triggered = true;
-                            t.disarmTimer = TRAP_DISARM_TIME;
-                            SFX.trapClick();
-                        }
-                        if (t.triggered && !floodActive && t.disarmTimer > 0) {
-                            t.disarmTimer -= dt * 1000;
-                            const pr4 = playerRect();
-                            if (inputShoot() && player.disarmKits > 0 && rectOverlap(pr4.x, pr4.y, pr4.w, pr4.h, t.triggerX - 8, t.triggerY - 8, 32, 32)) {
-                                player.disarmKits--;
-                                t.disarmed = true;
-                                SFX.disarm();
-                                addScore(25);
-                                updateHUD();
-                                continue;
-                            }
-                            if (t.disarmTimer <= 0) {
-                                floodActive = true; SFX.water();
-                            }
+                        if (!floodActive && rectOverlap(pr3.x, pr3.y, pr3.w, pr3.h, t.triggerX, t.triggerY, 16, 16)) {
+                            floodActive = true; SFX.water();
                         }
                         if (floodActive && floodLevel < t.maxHeight) {
                             floodLevel += t.speed;
@@ -1608,9 +1451,6 @@
                 particles = particles.filter(p => p.life > 0);
 
                 roomTorchPhase += dt * 3;
-
-                // Ambient water drip sound
-                if (Math.random() < .008) SFX.drip();
             }
 
             function interactWith(it) {
@@ -1627,17 +1467,15 @@
                     const roll = Math.random();
                     if (roll < 0.3) { addScore(30); spawnParticles(it.x + 8, it.y + 4, 6, '#FFD700'); SFX.coin() }
                     else if (roll < 0.5) { addScore(50); spawnParticles(it.x + 8, it.y + 4, 6, '#e03040'); SFX.gem() }
-                    else if (roll < 0.65) { player.bullets = Math.min(player.bullets + 3, MAX_BULLETS); SFX.pickup(); updateHUD(); spawnParticles(it.x + 8, it.y + 4, 4, '#d4a020') }
-                    else if (roll < 0.8) { player.disarmKits++; SFX.pickup(); updateHUD(); spawnParticles(it.x + 8, it.y + 4, 4, '#80c0ff') }
+                    else if (roll < 0.7) { player.bullets = Math.min(player.bullets + 3, MAX_BULLETS); SFX.pickup(); updateHUD(); spawnParticles(it.x + 8, it.y + 4, 4, '#d4a020') }
                     else { addScore(75); spawnParticles(it.x + 8, it.y + 4, 8, '#30b050'); SFX.gem() }
                 }
                 if (it.type === 'rubbish' && !it.opened) {
                     it.opened = true;
                     const roll = Math.random();
-                    if (roll < 0.2) { addScore(10); SFX.coin(); spawnParticles(it.x + 8, it.y + 4, 4, '#FFD700') }
-                    else if (roll < 0.35) { player.bullets = Math.min(player.bullets + 2, MAX_BULLETS); SFX.pickup(); updateHUD() }
-                    else if (roll < 0.5) { player.disarmKits++; SFX.pickup(); updateHUD(); spawnParticles(it.x + 8, it.y + 4, 3, '#80c0ff') }
-                    else if (roll < 0.65) {
+                    if (roll < 0.25) { addScore(10); SFX.coin(); spawnParticles(it.x + 8, it.y + 4, 4, '#FFD700') }
+                    else if (roll < 0.45) { player.bullets = Math.min(player.bullets + 2, MAX_BULLETS); SFX.pickup(); updateHUD() }
+                    else if (roll < 0.6) {
                         // Scorpion jumps out!
                         activeEnemies.push({
                             type: 'scorpion', x: it.x, y: it.y - 4, alive: true, hp: 1,
@@ -1654,7 +1492,7 @@
                RENDER
                ═══════════════════════════════════════════════════════════════ */
             function render() {
-                bx.fillStyle = '#0a0a0c'; bx.fillRect(0, 0, W, H);
+                bx.fillStyle = '#1a1510'; bx.fillRect(0, 0, W, H);
 
                 if (state === 'title') { drawTitle(); blitToMain(); return }
                 if (state === 'gameover') { drawGameOver(); blitToMain(); return }
@@ -1787,22 +1625,12 @@
                     }
                 }
 
-                // Trap warnings — show countdown for all triggered traps
+                // Explosion warnings
                 for (const t of activeTraps) {
-                    if (t.triggered && !t.active && !t.disarmed && t.disarmTimer > 0) {
-                        const tx = t.type === 'flood' ? t.triggerX : t.x;
-                        const ty = t.type === 'flood' ? t.triggerY : t.y;
-                        const secs = (t.disarmTimer / 1000).toFixed(1);
-                        // Flashing warning
-                        const flash = Math.sin(t.disarmTimer * .01) > 0;
-                        bx.fillStyle = flash ? '#ff0000' : '#ff8800';
-                        bx.font = 'bold 8px monospace'; bx.textAlign = 'center';
-                        bx.fillText('!' + secs + 's', tx + 8, ty - 4);
-                        if (player.disarmKits > 0) {
-                            bx.fillStyle = '#0f0';
-                            bx.fillText('[E] DISARM', tx + 8, ty - 12);
-                        }
-                        bx.textAlign = 'left';
+                    if (t.type === 'explosion' && t.warned && !t.active) {
+                        bx.fillStyle = '#ff0000';
+                        bx.font = 'bold 12px monospace';
+                        bx.fillText('!', t.x + 5, t.y - 2);
                     }
                 }
 
@@ -1883,13 +1711,13 @@
                 bx.fillStyle = 'rgba(0,0,0,0.6)'; bx.fillRect(0, 0, W, H);
 
                 // Temple doorway shape
-                bx.fillStyle = '#0a0a0c';
+                bx.fillStyle = '#1a1510';
                 bx.fillRect(W / 2 - 40, 40, 80, 140);
                 bx.beginPath(); bx.arc(W / 2, 40, 40, Math.PI, 0); bx.fill();
 
                 // Torches
                 for (const tx of [W / 2 - 60, W / 2 + 55]) {
-                    bx.fillStyle = '#3a3a3a'; bx.fillRect(tx, 50, 6, 20);
+                    bx.fillStyle = '#5a3a1a'; bx.fillRect(tx, 50, 6, 20);
                     const flk = Math.sin(titlePhase * 3 + (tx > W / 2 ? 1 : 0)) * 0.2 + 0.8;
                     bx.fillStyle = `rgba(255,${140 + Math.random() * 40 | 0},0,${0.8 * flk})`;
                     bx.fillRect(tx - 1, 42, 8, 10);
@@ -1927,7 +1755,7 @@
 
                 // Controls
                 bx.fillStyle = '#a09882'; bx.font = '7px monospace';
-                bx.fillText('A/D: Move  W/S: Climb  E: Interact/Shoot  F: Whip', W / 2, 155);
+                bx.fillText('A/D: Move  W/Space: Jump  E: Shoot/Interact  F: Whip', W / 2, 155);
                 bx.fillText('Collect treasure • Avoid traps • Defeat enemies', W / 2, 166);
 
                 bx.textAlign = 'left';
