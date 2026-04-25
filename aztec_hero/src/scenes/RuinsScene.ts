@@ -10,6 +10,7 @@ export class RuinsScene extends Phaser.Scene{
   private platforms!:Phaser.Physics.Arcade.StaticGroup;
   private ladders!:Phaser.Physics.Arcade.StaticGroup;
   private onLadder=false;
+  private ladderGrace=0; // frames to keep onLadder true after losing overlap
   private spikes!:Phaser.Physics.Arcade.StaticGroup;
   private gems!:Phaser.Physics.Arcade.StaticGroup;
   private bonePiles!:Phaser.Physics.Arcade.StaticGroup;
@@ -380,8 +381,15 @@ export class RuinsScene extends Phaser.Scene{
   update(_time:number,delta:number){
     if(this.escaped||this.dying)return;
     const dt=delta/1000;
-    // Check ladder overlap each frame
-    this.onLadder=this.physics.overlap(this.player,this.ladders);
+    // Check ladder overlap each frame — use grace frames so the player
+    // can pass through platforms that have ladders going through them.
+    if(this.physics.overlap(this.player,this.ladders)){
+      this.onLadder=true;this.ladderGrace=6;
+    }else if(this.ladderGrace>0){
+      this.ladderGrace--; // keep onLadder true for a few extra frames
+    }else{
+      this.onLadder=false;
+    }
     this.updateRopes(dt);
     this.movePlayer();this.moveEnemies();this.moveWater(dt);
     this.handleTorch(delta);
