@@ -1,10 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-    <defs>
-        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#7c5cff"/>
-            <stop offset="1" stop-color="#00d4ff"/>
-        </linearGradient>
-    </defs>
-    <rect width="64" height="64" rx="14" fill="#0b1022"/>
-    <text x="32" y="46" font-family="ui-sans-serif, system-ui, 'Segoe UI', Roboto, Arial, sans-serif" font-size="40" font-weight="800" text-anchor="middle" fill="url(#g)">M</text>
+  <style>
+    .bg { fill: #0b1022; }
+    .pad { fill: #7c5cff; stroke: #00d4ff; stroke-width: 2; }
+    .detail { fill: #ffffff; stroke: #ffffff; stroke-width: 3; stroke-linecap: round; }
+    @media (prefers-color-scheme: light) {
+      .bg { fill: #f7f4ef; }
+      .pad { fill: #7c5cff; stroke: #0b1022; }
+      .detail { fill: #ffffff; stroke: #ffffff; }
+    }
+  </style>
+  <rect class="bg" width="64" height="64" rx="14"/>
+  <path class="pad" d="M20 22h24c7 0 12 7 10 14l-3 11c-1 4-6 5-9 2l-5-6H27l-5 6c-3 3-8 2-9-2l-3-11c-2-7 3-14 10-14Z"/>
+  <path class="detail" d="M19 32h10M24 27v10"/>
+  <circle class="detail" cx="41" cy="31" r="2"/>
+  <circle class="detail" cx="47" cy="36" r="2"/>
 </svg>
