@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Countdown to Grand Theft Auto VI with the latest official news.">
+  <meta name="theme-color" content="#160a2b">
+  <title>GTA VI - Countdown to Vice City</title>
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --midnight: #160a2b;
+      --deep-violet: #2c1656;
+      --hot-pink: #ff2e92;
+      --sunset-orange: #ff8c3c;
+      --electric-blue: #2f6fe0;
+      --cream: #fff5da;
+      --panel: rgba(22, 10, 43, 0.76);
+      --panel-border: rgba(255, 140, 60, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--midnight);
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      overflow-x: hidden;
+      color: var(--cream);
+      background:
+        radial-gradient(circle at 50% 38%, rgba(255, 46, 146, 0.3), transparent 27rem),
+        linear-gradient(180deg, var(--midnight) 0%, var(--deep-violet) 55%, var(--hot-pink) 110%);
+      font-family: "Rajdhani", sans-serif;
+    }
+
+    body::before {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image:
+        radial-gradient(circle at 14% 18%, var(--cream) 0 1px, transparent 1.5px),
+        radial-gradient(circle at 82% 12%, var(--cream) 0 1px, transparent 1.5px),
+        radial-gradient(circle at 69% 31%, var(--cream) 0 1px, transparent 1.5px),
+        radial-gradient(circle at 31% 8%, var(--cream) 0 1px, transparent 1.5px);
+      background-size: 19rem 17rem, 23rem 21rem, 29rem 25rem, 31rem 27rem;
+      content: "";
+      opacity: 0.35;
+      pointer-events: none;
+    }
+
+    main {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      min-height: 100vh;
+      flex-direction: column;
+      align-items: center;
+      padding: clamp(3rem, 7vh, 5rem) 1.25rem 2rem;
+    }
+
+    .logo {
+      margin: 0;
+      font-family: "Anton", sans-serif;
+      font-size: clamp(4.5rem, 16vw, 9rem);
+      font-style: italic;
+      letter-spacing: -0.06em;
+      line-height: 0.82;
+      text-transform: uppercase;
+      transform: skew(-5deg);
+    }
+
+    .logo span {
+      color: var(--sunset-orange);
+      font-size: 0.6em;
+      text-shadow: 0.07em 0.07em 0 var(--hot-pink);
+    }
+
+    .eyebrow {
+      margin-top: 1.2rem;
+      color: var(--sunset-orange);
+      font-family: "Anton", sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.45em;
+      text-transform: uppercase;
+    }
+
+    .countdown {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: clamp(0.6rem, 2vw, 1.6rem);
+      margin: 2.4rem 0 1.2rem;
+    }
+
+    .unit {
+      min-width: 90px;
+      padding: 1.1rem clamp(0.9rem, 2vw, 1.6rem);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      background: linear-gradient(160deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.01));
+      box-shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.18);
+      text-align: center;
+      backdrop-filter: blur(3px);
+    }
+
+    .num {
+      color: var(--sunset-orange);
+      font-family: "Anton", sans-serif;
+      font-size: clamp(2.2rem, 6vw, 3.6rem);
+      line-height: 1;
+    }
+
+    .label {
+      margin-top: 0.3rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.22em;
+      opacity: 0.75;
+      text-transform: uppercase;
+    }
+
+    .release-line {
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+      letter-spacing: 0.08em;
+      opacity: 0.85;
+      text-align: center;
+    }
+
+    .release-line strong {
+      color: var(--sunset-orange);
+      font-weight: 600;
+    }
+
+    .news {
+      width: min(620px, 92vw);
+      margin: 0 0 2.4rem;
+      padding: 1rem 1.1rem;
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      background: var(--panel);
+      box-shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.18);
+      backdrop-filter: blur(8px);
+    }
+
+    .news-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.45rem;
+    }
+
+    .news-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0;
+      color: var(--sunset-orange);
+      font-family: "Anton", sans-serif;
+      font-size: 0.76rem;
+      font-weight: 400;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .news-label::before {
+      width: 0.45rem;
+      height: 0.45rem;
+      border-radius: 50%;
+      background: var(--hot-pink);
+      content: "";
+    }
+
+    .news time {
+      font-size: 0.74rem;
+      letter-spacing: 0.08em;
+      opacity: 0.65;
+      text-transform: uppercase;
+    }
+
+    .news-title {
+      margin: 0;
+      font-size: clamp(1.05rem, 3vw, 1.25rem);
+      line-height: 1.25;
+    }
+
+    .news-copy {
+      margin: 0.35rem 0 0;
+      line-height: 1.45;
+      opacity: 0.78;
+    }
+
+    .news-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-top: 0.7rem;
+      color: var(--sunset-orange);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+    }
+
+    .news-link:hover {
+      text-decoration: underline;
+    }
+
+    .news-link:focus-visible {
+      border-radius: 3px;
+      outline: 3px solid var(--cream);
+      outline-offset: 4px;
+    }
+
+    .horizon-section {
+      width: min(720px, 92vw);
+    }
+
+    .horizon-label,
+    .dates-row {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .horizon-label {
+      margin-bottom: 0.5rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.18em;
+      opacity: 0.75;
+      text-transform: uppercase;
+    }
+
+    .horizon-bar {
+      width: 100%;
+      height: 34px;
+      overflow: hidden;
+      border: 1px solid var(--panel-border);
+      border-radius: 17px;
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow: inset 0 0 0.9rem rgba(0, 0, 0, 0.4);
+    }
+
+    .horizon-fill {
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--electric-blue), var(--hot-pink) 70%, var(--sunset-orange));
+      transform: scaleX(0);
+      transform-origin: left center;
+      transition: transform 0.6s ease;
+    }
+
+    .horizon-pct {
+      margin-top: 0.7rem;
+      font-family: "Anton", sans-serif;
+      font-size: 1.4rem;
+      letter-spacing: 0.04em;
+      text-align: center;
+    }
+
+    .horizon-pct span {
+      color: var(--sunset-orange);
+    }
+
+    .dates-row {
+      margin-top: 0.6rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      opacity: 0.6;
+    }
+
+    footer {
+      margin-top: auto;
+      padding-top: 4rem;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      opacity: 0.45;
+      text-align: center;
+    }
+
+    @media (max-width: 480px) {
+      .unit {
+        min-width: 72px;
+        padding: 0.8rem 0.7rem;
+      }
+
+      .num {
+        font-size: 2rem;
+      }
+
+      .news-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .horizon-fill {
+        transition: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 class="logo">Grand<br>Theft Auto <span>VI</span></h1>
+    <div class="eyebrow">Leonida awaits</div>
+
+    <div class="countdown" aria-label="Time remaining until GTA VI releases">
+      <div class="unit"><div class="num" id="days">00</div><div class="label">Days</div></div>
+      <div class="unit"><div class="num" id="hours">00</div><div class="label">Hours</div></div>
+      <div class="unit"><div class="num" id="minutes">00</div><div class="label">Minutes</div></div>
+      <div class="unit"><div class="num" id="seconds">00</div><div class="label">Seconds</div></div>
+    </div>
+
+    <div class="release-line">GTA VI lands <strong>November 19, 2026</strong> at midnight ET.</div>
+
+    <aside class="news" aria-labelledby="news-title">
+      <div class="news-heading">
+        <h2 class="news-label" id="news-title">Latest GTA VI news</h2>
+        <time datetime="2026-05-06">May 6, 2026</time>
+      </div>
+      <h3 class="news-title">Grand Theft Auto VI is set to launch November 19, 2026</h3>
+      <p class="news-copy">Rockstar's latest official update confirms the release date for PlayStation 5 and Xbox Series X|S.</p>
+      <a class="news-link" href="https://www.rockstargames.com/VI" target="_blank" rel="noopener noreferrer">
+        Read the official update <span aria-hidden="true">&rarr;</span>
+      </a>
+    </aside>
+
+    <div class="horizon-section">
+      <div class="horizon-label"><span>Announcement</span><span>Release</span></div>
+      <div class="horizon-bar" role="progressbar" aria-label="Wait completed" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div class="horizon-fill" id="horizonFill"></div>
+      </div>
+      <div class="horizon-pct" id="horizonPct">0% <span>of the wait is over</span></div>
+      <div class="dates-row"><span>Dec 4, 2023</span><span>Nov 19, 2026</span></div>
+    </div>
+
+    <footer>Not affiliated with Rockstar Games or Take-Two Interactive.</footer>
+  </main>
+
+  <script>
+    const startDate = new Date("2023-12-04T18:10:00-05:00");
+    const endDate = new Date("2026-11-19T00:00:00-05:00");
+    const progressBar = document.querySelector('[role="progressbar"]');
+
+    function updateCountdown() {
+      const now = new Date();
+      const difference = Math.max(0, endDate - now);
+      const secondsRemaining = Math.floor(difference / 1000);
+      const values = {
+        days: Math.floor(secondsRemaining / 86400),
+        hours: Math.floor((secondsRemaining % 86400) / 3600),
+        minutes: Math.floor((secondsRemaining % 3600) / 60),
+        seconds: secondsRemaining % 60
+      };
+
+      Object.entries(values).forEach(([id, value]) => {
+        document.getElementById(id).textContent = String(value).padStart(2, "0");
+      });
+
+      const totalWait = endDate - startDate;
+      const percentage = difference === 0
+        ? 100
+        : Math.max(0, Math.min(100, ((now - startDate) / totalWait) * 100));
+      const roundedPercentage = percentage.toFixed(1);
+
+      document.getElementById("horizonFill").style.transform = `scaleX(${percentage / 100})`;
+      document.getElementById("horizonPct").innerHTML = difference === 0
+        ? '100% <span>It is out now</span>'
+        : `${roundedPercentage}% <span>of the wait is over</span>`;
+      progressBar.setAttribute("aria-valuenow", Math.round(percentage));
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+  </script>
+</body>
+</html>

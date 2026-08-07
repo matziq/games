@@ -16,6 +16,7 @@ This repo is a small collection of single-file browser games.
 - **FruitPile** – physics fruit pile game with **Explosion** and **Merge** modes. Entry: `fruitpile/fruitpile.html`
 - **Geodes** – geode-themed game. Entry: `geodes/geodes.html`
 - **Real or AI** – pick which photo is real vs AI-generated. Entry: `real_or_ai/real_or_ai.html`
+- **GTA VI Countdown** – release countdown and the latest official GTA VI news. Entry: `gtavi_countdown/index.html`
 
 ## About `gamemenu.html`
 
@@ -26,6 +27,7 @@ This repo is a small collection of single-file browser games.
 - `geodes/geodes.html`
 - `real_or_ai/real_or_ai.html`
 - `fruitpile/fruitpile.html`
+- `gtavi_countdown/index.html`
 
 ## Serving locally (recommended)
 
