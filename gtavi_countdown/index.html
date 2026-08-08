@@ -9,7 +9,7 @@
   <link rel="icon" type="image/svg+xml" href="../favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --midnight: #160a2b;
@@ -68,25 +68,14 @@
     }
 
     .logo {
+      width: min(560px, 82vw);
       margin: 0;
-      font-family: "Bebas Neue", "Arial Narrow", sans-serif;
-      font-size: clamp(2.75rem, 12vw, 8rem);
-      font-weight: 400;
-      letter-spacing: 0.02em;
-      line-height: 0.9;
-      text-align: center;
-      text-transform: uppercase;
     }
 
-    .logo-word {
+    .logo img {
       display: block;
-      white-space: nowrap;
-    }
-
-    .logo-six {
-      color: var(--sunset-orange);
-      font-size: 0.62em;
-      text-shadow: 0.07em 0.07em 0 var(--hot-pink);
+      width: 100%;
+      height: auto;
     }
 
     .eyebrow {
@@ -318,8 +307,7 @@
 <body>
   <main>
     <h1 class="logo">
-      <span class="logo-word">Grand</span>
-      <span class="logo-word">Theft Auto <span class="logo-six">VI</span></span>
+      <img src="./gta-vi-logo.png" alt="Grand Theft Auto VI" width="1239" height="876" fetchpriority="high">
     </h1>
     <div class="eyebrow">Leonida awaits</div>
 
