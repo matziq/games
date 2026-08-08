@@ -136,7 +136,7 @@
 
     .news {
       width: min(620px, 92vw);
-      margin: 0 0 2.4rem;
+      margin: 3rem 0 0;
       padding: 1rem 1.1rem;
       border: 1px solid var(--panel-border);
       border-radius: 12px;
@@ -272,8 +272,7 @@
     }
 
     footer {
-      margin-top: auto;
-      padding-top: 4rem;
+      padding-top: 1.25rem;
       font-size: 0.7rem;
       letter-spacing: 0.1em;
       opacity: 0.45;
@@ -320,6 +319,15 @@
 
     <div class="release-line">GTA VI lands <strong>November 19, 2026</strong> at midnight ET.</div>
 
+    <div class="horizon-section">
+      <div class="horizon-label"><span>Announcement</span><span>Release</span></div>
+      <div class="horizon-bar" role="progressbar" aria-label="Wait completed" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div class="horizon-fill" id="horizonFill"></div>
+      </div>
+      <div class="horizon-pct" id="horizonPct">0% <span>of the wait is over</span></div>
+      <div class="dates-row"><span>Dec 4, 2023</span><span>Nov 19, 2026</span></div>
+    </div>
+
     <aside class="news" aria-labelledby="news-title">
       <div class="news-heading">
         <h2 class="news-label" id="news-title">Latest GTA VI news</h2>
@@ -331,15 +339,6 @@
         Read the official update <span aria-hidden="true">&rarr;</span>
       </a>
     </aside>
-
-    <div class="horizon-section">
-      <div class="horizon-label"><span>Announcement</span><span>Release</span></div>
-      <div class="horizon-bar" role="progressbar" aria-label="Wait completed" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-        <div class="horizon-fill" id="horizonFill"></div>
-      </div>
-      <div class="horizon-pct" id="horizonPct">0% <span>of the wait is over</span></div>
-      <div class="dates-row"><span>Dec 4, 2023</span><span>Nov 19, 2026</span></div>
-    </div>
 
     <footer>Not affiliated with Rockstar Games or Take-Two Interactive.</footer>
   </main>
