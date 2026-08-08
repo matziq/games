@@ -9,7 +9,7 @@
   <link rel="icon" type="image/svg+xml" href="../favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --midnight: #160a2b;
@@ -69,18 +69,23 @@
 
     .logo {
       margin: 0;
-      font-family: "Anton", sans-serif;
-      font-size: clamp(4.5rem, 16vw, 9rem);
-      font-style: italic;
-      letter-spacing: -0.06em;
-      line-height: 0.98;
+      font-family: "Bebas Neue", "Arial Narrow", sans-serif;
+      font-size: clamp(2.75rem, 12vw, 8rem);
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      line-height: 0.9;
+      text-align: center;
       text-transform: uppercase;
-      transform: skew(-5deg);
     }
 
-    .logo span {
+    .logo-word {
+      display: block;
+      white-space: nowrap;
+    }
+
+    .logo-six {
       color: var(--sunset-orange);
-      font-size: 0.6em;
+      font-size: 0.62em;
       text-shadow: 0.07em 0.07em 0 var(--hot-pink);
     }
 
@@ -312,7 +317,10 @@
 </head>
 <body>
   <main>
-    <h1 class="logo">Grand<br>Theft Auto <span>VI</span></h1>
+    <h1 class="logo">
+      <span class="logo-word">Grand</span>
+      <span class="logo-word">Theft Auto <span class="logo-six">VI</span></span>
+    </h1>
     <div class="eyebrow">Leonida awaits</div>
 
     <div class="countdown" aria-label="Time remaining until GTA VI releases">
