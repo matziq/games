@@ -326,6 +326,11 @@
             --c2: #ab47bc;
         }
 
+        .ineonpulse {
+            --c1: #63f4ff;
+            --c2: #ff4fd8;
+        }
+
         .icon svg {
             width: 34px;
             height: 34px;
@@ -354,6 +359,30 @@
         </header>
 
         <section class="grid" aria-label="Games">
+            <h2 class="section-title">Apps</h2>
+
+            <a class="card" href="./neon_pulse/" target="_self" rel="noopener">
+                <div class="icon ineonpulse" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                        <defs>
+                            <linearGradient id="gneonpulse" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0" stop-color="var(--c1)" />
+                                <stop offset="1" stop-color="var(--c2)" />
+                            </linearGradient>
+                        </defs>
+                        <path class="grad" stroke="url(#gneonpulse)" d="M2 13h4l2-7 4 13 3-10 2 4h5" />
+                        <circle class="grad" stroke="url(#gneonpulse)" cx="12" cy="12" r="9" opacity=".45" />
+                    </svg>
+                </div>
+                <div class="meta">
+                    <div class="name">
+                        <h2>Neon Pulse</h2>
+                        <span class="pill">Audio</span>
+                    </div>
+                    <p class="desc">Play local MP3, WAV, and FLAC files with reactive sci-fi visualizers.</p>
+                </div>
+            </a>
+
             <h2 class="section-title">Games</h2>
 
             <a class="card" href="./gtavi_countdown/" target="_self" rel="noopener">
