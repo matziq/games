@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "neon_pulse/**"
+      - "neon_pulse/index.html"
       - "apk_builds/neon_pulse/**"
       - ".github/workflows/build-neon-pulse.yml"
 
