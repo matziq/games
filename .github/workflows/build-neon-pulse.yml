@@ -1,0 +1,59 @@
+name: Build Neon Pulse APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "neon_pulse/index.html"
+      - "apk_builds/neon_pulse/**"
+      - ".github/workflows/build-neon-pulse.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apk_builds/package-lock.json
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Install Capacitor
+        working-directory: apk_builds
+        run: npm ci
+
+      - name: Sync web assets
+        shell: pwsh
+        run: |
+          Copy-Item neon_pulse/index.html apk_builds/neon_pulse/www/index.html -Force
+          Set-Location apk_builds/neon_pulse
+          npx cap sync android
+
+      - name: Build debug APK
+        working-directory: apk_builds/neon_pulse/android
+        run: chmod +x gradlew && ./gradlew assembleDebug
+
+      - name: Stage artifact
+        shell: pwsh
+        run: Copy-Item apk_builds/neon_pulse/android/app/build/outputs/apk/debug/app-debug.apk neon_pulse/neon_pulse.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: neon-pulse-apk
+          path: neon_pulse/neon_pulse.apk
+          if-no-files-found: error

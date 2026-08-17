@@ -8,6 +8,7 @@ $buildDir = $PSScriptRoot
 
 # Game definitions: source HTML, app name, package ID
 $games = @(
+    @{ id = 'neon_pulse'; src = 'neon_pulse/index.html'; name = 'Neon Pulse'; pkg = 'com.matziq.neonpulse' },
     @{ id = '2048'; src = '2048/2048m.html'; name = '2048'; pkg = 'com.matziq.g2048' },
     @{ id = 'bee'; src = 'bee/beem.html'; name = 'Bee'; pkg = 'com.matziq.bee' },
     @{ id = 'betris'; src = 'betris/betrism.html'; name = 'Betris'; pkg = 'com.matziq.betris' },

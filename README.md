@@ -1,6 +1,6 @@
 # Games
 
-This repo is a small collection of single-file browser games.
+This repo is a small collection of single-file browser games and apps.
 
 ## Quick start
 
@@ -17,6 +17,10 @@ This repo is a small collection of single-file browser games.
 - **Geodes** – geode-themed game. Entry: `geodes/geodes.html`
 - **Real or AI** – pick which photo is real vs AI-generated. Entry: `real_or_ai/real_or_ai.html`
 - **GTA VI Countdown** – release countdown and the latest official GTA VI news. Entry: `gtavi_countdown/index.html`
+
+## Included apps
+
+- **Neon Pulse** – local MP3, WAV, and FLAC player with reactive visualizers. Entry: `neon_pulse/index.html`
 
 ## About `gamemenu.html`
 

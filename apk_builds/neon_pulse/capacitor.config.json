@@ -1,0 +1,8 @@
+{
+  "appId": "com.matziq.neonpulse",
+  "appName": "Neon Pulse",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
