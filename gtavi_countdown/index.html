@@ -181,6 +181,13 @@
       text-transform: uppercase;
     }
 
+    .news-status {
+      color: var(--sunset-orange);
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
     .news-title {
       margin: 0;
       font-size: clamp(1.05rem, 3vw, 1.25rem);
@@ -331,12 +338,13 @@
     <aside class="news" aria-labelledby="news-title">
       <div class="news-heading">
         <h2 class="news-label" id="news-title">Latest GTA VI news</h2>
-        <time datetime="2026-05-06">May 6, 2026</time>
+        <span class="news-status" id="news-status" role="status" aria-live="polite">Updating...</span>
       </div>
-      <h3 class="news-title">Grand Theft Auto VI is set to launch November 19, 2026</h3>
-      <p class="news-copy">Rockstar's latest official update confirms the release date for PlayStation 5 and Xbox Series X|S.</p>
-      <a class="news-link" href="https://www.rockstargames.com/VI" target="_blank" rel="noopener noreferrer">
-        Read the official update <span aria-hidden="true">&rarr;</span>
+      <time class="news-date" id="news-date" datetime="2026-05-06">May 6, 2026</time>
+      <h3 class="news-title" id="news-headline">Grand Theft Auto VI is set to launch November 19, 2026</h3>
+      <p class="news-copy" id="news-copy">Rockstar's latest official update confirms the release date for PlayStation 5 and Xbox Series X|S.</p>
+      <a class="news-link" id="news-link" href="https://www.rockstargames.com/VI" target="_blank" rel="noopener noreferrer">
+        Read the update <span aria-hidden="true">&rarr;</span>
       </a>
     </aside>
 
@@ -347,6 +355,13 @@
     const startDate = new Date("2023-12-04T18:10:00-05:00");
     const endDate = new Date("2026-11-19T00:00:00-05:00");
     const progressBar = document.querySelector('[role="progressbar"]');
+    const newsFeedUrl = "https://news.google.com/rss/search?q=GTA+VI+Rockstar+Games&hl=en-US&gl=US&ceid=US:en";
+    const newsApiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(newsFeedUrl)}`;
+    const newsDate = document.getElementById("news-date");
+    const newsHeadline = document.getElementById("news-headline");
+    const newsCopy = document.getElementById("news-copy");
+    const newsLink = document.getElementById("news-link");
+    const newsStatus = document.getElementById("news-status");
 
     function updateCountdown() {
       const now = new Date();
@@ -376,8 +391,65 @@
       progressBar.setAttribute("aria-valuenow", Math.round(percentage));
     }
 
+    function stripMarkup(value) {
+      const documentFragment = new DOMParser().parseFromString(value || "", "text/html");
+      return documentFragment.body.textContent.trim();
+    }
+
+    function formatNewsDate(value) {
+      const parsedDate = new Date(value);
+      if (Number.isNaN(parsedDate.getTime())) {
+        return null;
+      }
+
+      return {
+        datetime: parsedDate.toISOString(),
+        label: new Intl.DateTimeFormat(undefined, {
+          month: "short",
+          day: "numeric",
+          year: "numeric"
+        }).format(parsedDate)
+      };
+    }
+
+    async function updateNews() {
+      try {
+        const response = await fetch(`${newsApiUrl}&_=${Date.now()}`, { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error(`News feed request failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+        const item = data.items?.find(candidate => candidate?.title && candidate?.link);
+        if (!item) {
+          throw new Error("News feed returned no articles");
+        }
+
+        const published = formatNewsDate(item.pubDate);
+        newsHeadline.textContent = stripMarkup(item.title);
+        newsCopy.textContent = stripMarkup(item.description || "Read the latest GTA VI coverage.");
+        newsLink.href = item.link;
+        newsLink.firstChild.textContent = "Read the full story ";
+
+        if (published) {
+          newsDate.dateTime = published.datetime;
+          newsDate.textContent = published.label;
+        } else {
+          newsDate.removeAttribute("datetime");
+          newsDate.textContent = "Latest";
+        }
+
+        newsStatus.textContent = "Live feed";
+      } catch (error) {
+        console.warn("Unable to load live GTA VI news.", error);
+        newsStatus.textContent = "Feed unavailable";
+      }
+    }
+
     updateCountdown();
     setInterval(updateCountdown, 1000);
+    updateNews();
+    setInterval(updateNews, 15 * 60 * 1000);
   </script>
 </body>
 </html>
