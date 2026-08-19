@@ -343,7 +343,7 @@
       <time class="news-date" id="news-date" datetime="2026-05-06">May 6, 2026</time>
       <h3 class="news-title" id="news-headline">Grand Theft Auto VI is set to launch November 19, 2026</h3>
       <p class="news-copy" id="news-copy">Rockstar's latest official update confirms the release date for PlayStation 5 and Xbox Series X|S.</p>
-      <a class="news-link" id="news-link" href="https://www.rockstargames.com/VI" target="_blank" rel="noopener noreferrer">
+      <a class="news-link" id="news-link" href="https://www.rockstargames.com/newswire?tag=vi" target="_blank" rel="noopener noreferrer">
         Read the update <span aria-hidden="true">&rarr;</span>
       </a>
     </aside>
@@ -355,8 +355,27 @@
     const startDate = new Date("2023-12-04T18:10:00-05:00");
     const endDate = new Date("2026-11-19T00:00:00-05:00");
     const progressBar = document.querySelector('[role="progressbar"]');
-    const newsFeedUrl = "https://news.google.com/rss/search?q=GTA+VI+Rockstar+Games&hl=en-US&gl=US&ceid=US:en";
-    const newsApiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(newsFeedUrl)}`;
+    const newsFeedUrl = "https://www.rockstargames.com/newswire?tag=vi";
+    const newsGraphVariables = {
+      tagId: 0,
+      tagIdHash: "vi",
+      page: 1,
+      metaUrl: "/newswire",
+      limit: 1,
+      locale: "en_us"
+    };
+    const newsGraphExtensions = {
+      persistedQuery: {
+        version: 1,
+        sha256Hash: "7ec00215aecc70de257b0719a1dfcfa84fe57fdc7bf5c10ec2e8f377defede58"
+      }
+    };
+    const newsGraphUrl = new URL("https://graph.rockstargames.com/");
+    newsGraphUrl.searchParams.set("origin", "https://www.rockstargames.com");
+    newsGraphUrl.searchParams.set("operationName", "NewswireList");
+    newsGraphUrl.searchParams.set("variables", JSON.stringify(newsGraphVariables));
+    newsGraphUrl.searchParams.set("extensions", JSON.stringify(newsGraphExtensions));
+    const newsApiUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(newsGraphUrl)}`;
     const newsDate = document.getElementById("news-date");
     const newsHeadline = document.getElementById("news-headline");
     const newsCopy = document.getElementById("news-copy");
@@ -420,16 +439,16 @@
         }
 
         const data = await response.json();
-        const item = data.items?.find(candidate => candidate?.title && candidate?.link);
+        const item = data.data?.posts?.results?.find(candidate => candidate?.title && candidate?.url);
         if (!item) {
           throw new Error("News feed returned no articles");
         }
 
-        const published = formatNewsDate(item.pubDate);
+        const published = formatNewsDate(item.created);
         newsHeadline.textContent = stripMarkup(item.title);
-        newsCopy.textContent = stripMarkup(item.description || "Read the latest GTA VI coverage.");
-        newsLink.href = item.link;
-        newsLink.firstChild.textContent = "Read the full story ";
+        newsCopy.textContent = "Read the latest official Grand Theft Auto VI update from Rockstar Games.";
+        newsLink.href = new URL(item.url, newsFeedUrl).href;
+        newsLink.firstChild.textContent = "Read the official update ";
 
         if (published) {
           newsDate.dateTime = published.datetime;
@@ -439,7 +458,7 @@
           newsDate.textContent = "Latest";
         }
 
-        newsStatus.textContent = "Live feed";
+        newsStatus.textContent = "Official feed";
       } catch (error) {
         console.warn("Unable to load live GTA VI news.", error);
         newsStatus.textContent = "Feed unavailable";
