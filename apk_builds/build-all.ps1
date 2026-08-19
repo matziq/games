@@ -13,7 +13,7 @@ $games = @(
     @{ id = 'bee'; src = 'bee/beem.html'; name = 'Bee'; pkg = 'com.matziq.bee' },
     @{ id = 'betris'; src = 'betris/betrism.html'; name = 'Betris'; pkg = 'com.matziq.betris' },
     @{ id = 'blood_joust'; src = 'blood_joust/blood_joustm.html'; name = 'Blood Joust'; pkg = 'com.matziq.bloodjoust' },
-    @{ id = 'domino_combo'; src = 'domino_combo/index.html'; name = 'Domino Combo'; pkg = 'com.matziq.dominocombo' },
+    @{ id = 'domino_combo'; src = 'domino_combo/dist/index.html'; name = 'Domino Combo'; pkg = 'com.matziq.dominocombo' },
     @{ id = 'fruitpile'; src = 'fruitpile/fruitpilem.html'; name = 'FruitPile'; pkg = 'com.matziq.fruitpile' },
     @{ id = 'geodes'; src = 'geodes/geodesm.html'; name = 'Geodes'; pkg = 'com.matziq.geodes' },
     @{ id = 'real_or_ai'; src = 'real_or_ai/real_or_aim.html'; name = 'Real or AI'; pkg = 'com.matziq.realorai' },
