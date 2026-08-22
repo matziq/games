@@ -1,8 +1,8 @@
 {
-  "webDir": "www",
   "appName": "Treasure Aztecs",
+  "appId": "com.matziq.treasureaztecs",
   "server": {
     "androidScheme": "https"
   },
-  "appId": "com.matziq.treasureaztecs"
+  "webDir": "www"
 }

@@ -2,8 +2,10 @@
 <html>
 
 <head>
-    <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
-    <link rel="apple-touch-icon" href="../favicon.svg" />
+	<link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+	<link rel="apple-touch-icon" href="../favicon.svg" />
+	<meta name="viewport"
+		content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 	<title>Real or AI</title>
 	<style>
 		body {
@@ -205,19 +207,39 @@
 			cursor: pointer;
 			transition: background 0.15s;
 		}
-		.choose-btn:hover:not(:disabled) { background: #0bf; }
-		.choose-btn:disabled { background: #555; cursor: not-allowed; opacity: 0.6; }
 
-		.img-wrap.right { border-color: #3f3; }
-		.img-wrap.wrong { border-color: #f33; }
-		.img-wrap.right .choose-btn { background: #3f3; color: #222; }
-		.img-wrap.wrong .choose-btn { background: #f33; color: #fff; }
+		.choose-btn:hover:not(:disabled) {
+			background: #0bf;
+		}
+
+		.choose-btn:disabled {
+			background: #555;
+			cursor: not-allowed;
+			opacity: 0.6;
+		}
+
+		.img-wrap.right {
+			border-color: #3f3;
+		}
+
+		.img-wrap.wrong {
+			border-color: #f33;
+		}
+
+		.img-wrap.right .choose-btn {
+			background: #3f3;
+			color: #222;
+		}
+
+		.img-wrap.wrong .choose-btn {
+			background: #f33;
+			color: #fff;
+		}
 	</style>
 </head>
 
 <body>
 	<div class="game-container">
-		<a class="menu-link" href="../gamemenu.html" aria-label="Back to games menu">← Games Menu</a>
 		<h1>Real or AI?</h1>
 		<div id="round-info"></div>
 		<div id="instructions">Choose the <span class="ai-emphasis">AI</span> image</div>
@@ -226,9 +248,6 @@
 		<div class="score" id="score"></div>
 		<button class="btn" id="nextBtn" style="display:none;">Next</button>
 		<button class="btn" id="restartBtn" style="display:none;">Restart</button>
-		<a class="btn" id="menuBtnGO" href="../gamemenu.html"
-			style="display:none;text-decoration:none;text-align:center;background:transparent;color:#09f;border:1px solid rgba(0,153,255,0.3);">←
-			Games Menu</a>
 		<button class="btn" id="roaiScoresBtn" style="background:#ffd700;color:#222;margin-top:12px;">🏆 High
 			Scores</button>
 	</div>
@@ -458,7 +477,6 @@
 			document.getElementById('feedback').textContent = '';
 			document.getElementById('nextBtn').style.display = 'none';
 			document.getElementById('restartBtn').style.display = 'none';
-			document.getElementById('menuBtnGO').style.display = 'none';
 			const pct = pairs.length > 0 ? Math.round((score / pairs.length) * 100) : 0;
 			document.getElementById('score').textContent = `Score: ${pct}% (${score}/${pairs.length})`;
 			document.getElementById('round-info').textContent = `Round ${currentRound + 1} of ${pairs.length}`;
@@ -587,7 +605,6 @@
 
 			document.getElementById('feedback').innerHTML = feedHtml;
 			document.getElementById('restartBtn').style.display = 'inline-block';
-			document.getElementById('menuBtnGO').style.display = 'inline-block';
 
 			if (makesLb) {
 				setTimeout(() => {
