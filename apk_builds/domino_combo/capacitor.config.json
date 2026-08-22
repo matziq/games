@@ -1,8 +1,8 @@
 {
-  "webDir": "www",
   "appName": "Domino Combo",
+  "appId": "com.matziq.dominocombo",
   "server": {
     "androidScheme": "https"
   },
-  "appId": "com.matziq.dominocombo"
+  "webDir": "www"
 }

@@ -2,8 +2,10 @@
 <html lang="en">
 
 <head>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+    <link rel="apple-touch-icon" href="../favicon.svg" />
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -39,12 +41,9 @@
 
     #game {
       position: fixed;
-      /* Portrait mode: constrain width, let height fill */
-      width: min(100vw, 1024px);
-      height: calc(100vh - 40px);
-      height: calc(100dvh - 40px);
-      max-width: 1024px;
-      /* Below the HUD bar */
+      width: min(100vw, calc((100dvh - 40px) * 9 / 16));
+      height: min(calc(100vw * 16 / 9), calc(100dvh - 40px));
+      max-width: none;
       top: 40px;
       left: 50%;
       transform: translateX(-50%);
@@ -134,7 +133,7 @@
 
     #controls {
       position: fixed;
-      top: 46px;
+      bottom: 14px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
@@ -145,7 +144,7 @@
     @media (max-width: 768px) {
       #controls {
         gap: 8px;
-        top: 38px;
+        bottom: 10px;
       }
     }
 
@@ -334,23 +333,26 @@
       display: none !important;
     }
 
-    position: fixed;
-    top: 10px;
-    left: 12px;
-    z-index: 7;
-    text-decoration: none;
-    font-weight: 700;
-    font-size: 13px;
-    color: #ff6a00;
-    transition: color 0.15s;
-    letter-spacing: 0.3px;
+    .menu-link {
+      position: fixed;
+      top: 10px;
+      left: 12px;
+      z-index: 7;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 13px;
+      color: #ff6a00;
+      transition: color 0.15s;
+      letter-spacing: 0.3px;
     }
 
-    color: #ffab40;
+    .menu-link:hover {
+      color: #ffab40;
     }
 
-    outline: 3px solid rgba(255, 106, 0, .5);
-    outline-offset: 2px;
+    .menu-link:focus-visible {
+      outline: 3px solid rgba(255, 106, 0, .5);
+      outline-offset: 2px;
     }
   </style>
 </head>
@@ -417,9 +419,6 @@
         <div class="pill">Most rare ➜ Diamond → Ruby → Emerald → Sapphire → Amethyst → Amber</div>
       </div>
       <button class="cta" id="playBtn">Play</button>
-      style="display:inline-block;margin-top:10px;padding:8px
-      20px;font-size:14px;font-weight:700;color:#ff6a00;text-decoration:none;border:1px solid
-      rgba(255,106,0,0.3);border-radius:10px;">←
     </div>
 
     <div id="geo-hs-modal"
@@ -517,10 +516,18 @@
         }
 
         function resize() {
-          // Use window.innerHeight for reliable visible viewport on mobile
-          const hudH = 40;
-          const cw = Math.min(window.innerWidth, 1024);
-          const ch = window.innerHeight - hudH;
+          // Force a 9:16 portrait playfield so trajectories stay consistent on every device.
+          const hudH = window.innerWidth <= 768 ? 32 : 40;
+          const viewportW = window.innerWidth;
+          const viewportH = (window.visualViewport?.height || window.innerHeight) - hudH;
+          const targetRatio = 9 / 16;
+          let cw = Math.min(viewportW, viewportH * targetRatio);
+          let ch = cw / targetRatio;
+          if (ch > viewportH) {
+            ch = viewportH;
+            cw = ch * targetRatio;
+          }
+          canvas.style.top = `${hudH + Math.max(0, (viewportH - ch) / 2)}px`;
           canvas.style.width = `${cw}px`;
           canvas.style.height = `${ch}px`;
           W = canvas.width = Math.floor(cw * DPR);
@@ -1608,8 +1615,7 @@
             const x = (touch.clientX - rect.left) * scaleX;
             const y = (touch.clientY - rect.top) * scaleY;
 
-            // Create a synthetic event object for onClick
-            onClick({ offsetX: x, offsetY: y });
+            onClick({ clientX: touch.clientX, clientY: touch.clientY, button: 0 });
           }
         }, { passive: false });
 
@@ -2166,63 +2172,12 @@
       })();
     </script>
     <script>
-      // Scale up the game rendering and keep clicks accurate
+      // Geodes is locked to a 9:16 playfield above; leave the canvas unscaled so input stays exact.
       (() => {
-        const SCALE = 1.25; // adjust as desired
-
         const canvas = document.getElementById('game');
         if (!canvas) return;
-
-        // Apply visual scale to the canvas only (HUD/controls unaffected)
-        // Compose with the centering transform already on #game
         canvas.style.transformOrigin = 'top center';
-        canvas.style.transform = `translateX(-50%) scale(${SCALE})`;
-        // canvas.style.pointerEvents = 'none'; // we'll proxy input
-
-        // Only create and append the proxy if the canvas exists
-        if (canvas) {
-          // Create a transparent proxy to capture and remap input to the canvas
-          const proxy = document.createElement('div');
-          Object.assign(proxy.style, {
-            position: 'fixed',
-            inset: '0',
-            zIndex: '4',
-            background: 'transparent'
-          });
-          document.body.appendChild(proxy);
-
-          function forwardMouse(ev) {
-            const r = canvas.getBoundingClientRect();
-            // Compute scale factors between the canvas's untransformed client size and the transformed rect
-            const scaleX = canvas.clientWidth / r.width;
-            const scaleY = canvas.clientHeight / r.height;
-            // Map screen coords back to the canvas' unscaled coordinate space using the ratio
-            const clientX = r.left + (ev.clientX - r.left) * scaleX;
-            const clientY = r.top + (ev.clientY - r.top) * scaleY;
-
-            const e2 = new MouseEvent('mousedown', {
-              bubbles: true,
-              cancelable: true,
-              clientX, clientY,
-              // Touch events may not have these properties, so fallback to sensible defaults
-              button: typeof ev.button === 'number' ? ev.button : 0,
-              buttons: typeof ev.buttons === 'number' ? ev.buttons : 1,
-              ctrlKey: !!ev.ctrlKey, shiftKey: !!ev.shiftKey, altKey: !!ev.altKey, metaKey: !!ev.metaKey
-            });
-            canvas.dispatchEvent(e2);
-            ev.preventDefault();
-          }
-          proxy.addEventListener('mousedown', forwardMouse);
-          proxy.addEventListener('contextmenu', (ev) => { ev.preventDefault(); });
-
-          // Basic touch support -> synthesize a mousedown
-          proxy.addEventListener('touchstart', (ev) => {
-            const t = ev.changedTouches && ev.changedTouches[0];
-            if (!t) return;
-            forwardMouse(t);
-            ev.preventDefault();
-          }, { passive: false });
-        }
+        canvas.style.transform = 'translateX(-50%)';
       })();
     </script>
     <script>
@@ -2262,6 +2217,7 @@
     <script>
       if (window.GHScores) GHScores.load('geodes', 'geodes-highscores', 5).catch(() => { });
     </script>
+    <script src="../scripts/mobile-controls.js"></script>
 </body>
 
 </html>

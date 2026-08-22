@@ -2,8 +2,10 @@
 <html lang="en">
 
 <head>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+    <link rel="apple-touch-icon" href="../favicon.svg" />
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
   <title>Blood Joust</title>
   <style>
     * {
@@ -18,13 +20,14 @@
       height: 100%;
       overflow: hidden;
       background: #000;
-      font-family: system-ui, sans-serif
+      font-family: system-ui, sans-serif;
     }
 
     canvas {
       display: block;
       width: 100vw;
       height: 100vh;
+      height: 100dvh;
       image-rendering: pixelated;
       image-rendering: crisp-edges;
     }

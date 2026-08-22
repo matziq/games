@@ -2,8 +2,10 @@
 <html lang="en">
 
 <head>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+    <link rel="apple-touch-icon" href="../favicon.svg" />
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Treasure of the Aztecs</title>
@@ -110,23 +112,26 @@
             background: rgba(255, 184, 0, .2)
         }
 
-        position: fixed;
-        top: 10px;
-        left: 12px;
-        z-index: 7;
-        text-decoration: none;
-        font-weight: 700;
-        font-size: 13px;
-        color: var(--gold);
-        transition: color .15s;
-        letter-spacing: .3px
+        .menu-link {
+            position: fixed;
+            top: 10px;
+            left: 12px;
+            z-index: 7;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--gold);
+            transition: color .15s;
+            letter-spacing: .3px
         }
 
-        color: #ffdb70
+        .menu-link:hover {
+            color: #ffdb70
         }
 
-        outline: 3px solid rgba(255, 184, 0, .4);
-        outline-offset: 2px
+        .menu-link:focus-visible {
+            outline: 3px solid rgba(255, 184, 0, .4);
+            outline-offset: 2px
         }
 
         @media(max-width:680px) {
@@ -165,7 +170,7 @@
 
     <!-- Mobile on-screen controls -->
     <div id="ta-mobile"
-        style="display:none;position:fixed;top:0;left:0;right:0;z-index:9000;pointer-events:none;padding:max(10px,env(safe-area-inset-top,10px)) 10px 0;justify-content:space-between;align-items:flex-start;">
+        style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:9000;pointer-events:none;padding:0 10px max(10px,env(safe-area-inset-bottom,10px));justify-content:space-between;align-items:flex-end;">
         <div style="display:flex;gap:8px;pointer-events:auto;">
             <button class="ta-btn" id="ta-left" aria-label="Left">◀</button>
             <button class="ta-btn" id="ta-right" aria-label="Right">▶</button>
@@ -1978,6 +1983,7 @@
             requestAnimationFrame(ts => { lastTime = ts; gameLoop(ts) });
         })();
     </script>
+    <script src="../scripts/mobile-controls.js"></script>
     <script src="../scripts/github-scores.js"></script>
 </body>
 

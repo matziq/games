@@ -2,8 +2,10 @@
 <html lang="en">
 
 <head>
+    <link rel="icon" type="image/svg+xml" href="./assets/favicon-9QJXOnHe.svg" />
+    <link rel="apple-touch-icon" href="./assets/favicon-9QJXOnHe.svg" />
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Aztec Hero</title>
   <style>
     html,
@@ -44,7 +46,7 @@
     .hint {
       position: fixed;
       left: 12px;
-      top: 12px;
+      bottom: 12px;
       color: rgba(255, 255, 255, 0.75);
       font: 12px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial;
       user-select: none;
@@ -58,26 +60,25 @@
       font-weight: 650;
     }
 
-    position: fixed;
-    top: 10px;
-    left: 12px;
-    z-index: 9998;
-    text-decoration: none;
-    font-weight: 700;
-    font-size: 13px;
-    color: #c4a060;
-    transition: color 0.15s;
-    letter-spacing: 0.3px;
-    font-family: system-ui,
-    -apple-system,
-    Segoe UI,
-    Roboto,
-    Arial;
+    .menu-link {
+      position: fixed;
+      top: 10px;
+      left: 12px;
+      z-index: 9998;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 13px;
+      color: #c4a060;
+      transition: color 0.15s;
+      letter-spacing: 0.3px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
     }
 
-    color: #e0c080;
+    .menu-link:hover {
+      color: #e0c080;
     }
   </style>
+  <script type="module" crossorigin src="./assets/index-B1YHLdev.js"></script>
 </head>
 
 <body>
@@ -107,8 +108,7 @@
         log(`Unhandled promise rejection:\n${e.reason}`);
       });
     })();
-  </script>
-  <script type="module" src="/src/main.ts"></script>
+  </script>
 
   <!-- Mobile touch controls -->
   <div id="touch-controls">
@@ -128,12 +128,12 @@
   <style>
     #touch-controls {
       position: fixed;
-      top: 0;
+      bottom: 0;
       left: 0;
       right: 0;
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: flex-end;
       padding: 12px 16px;
       z-index: 9000;
       pointer-events: none;
@@ -282,6 +282,7 @@
     })();
   </script>
 
+  <script src="../scripts/mobile-controls.js"></script>
 
   <!-- High Score System -->
   <div id="aztec-hs-modal"

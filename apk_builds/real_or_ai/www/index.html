@@ -2,6 +2,9 @@
 <html>
 
 <head>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+    <link rel="apple-touch-icon" href="../favicon.svg" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 	<title>Real or AI</title>
 	<style>
 		body {
@@ -11,6 +14,7 @@
 			text-align: center;
 		}
 
+		.menu-link {
 			display: block;
 			text-align: center;
 			font-size: 13px;
@@ -22,9 +26,11 @@
 			letter-spacing: 0.3px;
 		}
 
+		.menu-link:hover {
 			color: #4dc3ff;
 		}
 
+		.menu-link:focus-visible {
 			outline: 3px solid rgba(0, 153, 255, .6);
 			outline-offset: 2px;
 		}
@@ -220,7 +226,6 @@
 		<div class="score" id="score"></div>
 		<button class="btn" id="nextBtn" style="display:none;">Next</button>
 		<button class="btn" id="restartBtn" style="display:none;">Restart</button>
-			style="display:none;text-decoration:none;text-align:center;background:transparent;color:#09f;border:1px solid rgba(0,153,255,0.3);">←
 		<button class="btn" id="roaiScoresBtn" style="background:#ffd700;color:#222;margin-top:12px;">🏆 High
 			Scores</button>
 	</div>
@@ -450,7 +455,6 @@
 			document.getElementById('feedback').textContent = '';
 			document.getElementById('nextBtn').style.display = 'none';
 			document.getElementById('restartBtn').style.display = 'none';
-			document.getElementById('menuBtnGO').style.display = 'none';
 			const pct = pairs.length > 0 ? Math.round((score / pairs.length) * 100) : 0;
 			document.getElementById('score').textContent = `Score: ${pct}% (${score}/${pairs.length})`;
 			document.getElementById('round-info').textContent = `Round ${currentRound + 1} of ${pairs.length}`;
@@ -579,7 +583,6 @@
 
 			document.getElementById('feedback').innerHTML = feedHtml;
 			document.getElementById('restartBtn').style.display = 'inline-block';
-			document.getElementById('menuBtnGO').style.display = 'inline-block';
 
 			if (makesLb) {
 				setTimeout(() => {
@@ -635,6 +638,7 @@
 	<script>
 		if (window.GHScores) GHScores.load('real_or_ai', 'realOrAi-highscores', 5).catch(() => { });
 	</script>
+	<script src="../scripts/mobile-controls.js"></script>
 </body>
 
 </html>
