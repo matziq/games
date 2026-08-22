@@ -1,8 +1,8 @@
 {
-  "webDir": "www",
   "appName": "Bee",
+  "appId": "com.matziq.bee",
   "server": {
     "androidScheme": "https"
   },
-  "appId": "com.matziq.bee"
+  "webDir": "www"
 }

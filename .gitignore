@@ -1,3 +1,13 @@
 node_modules/
 .DS_Store
 *.log
+# Nested independent repositories
+ai_image_fun/
+Alina_Sound_Board/
+Sound_Board/
+matziq.github.io/
+fine-tuning-dials/
+# Android/Capacitor build output
+apk_builds/**/android/.gradle/
+apk_builds/**/android/build/
+apk_builds/**/android/app/build/

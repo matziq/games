@@ -1,7 +1,6 @@
 package com.matziq.aztechero;
 
 import android.os.Bundle;
-import android.view.View;
 import android.view.WindowManager;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
