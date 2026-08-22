@@ -340,11 +340,11 @@
         <h2 class="news-label" id="news-title">Latest GTA VI news</h2>
         <span class="news-status" id="news-status" role="status" aria-live="polite">Updating...</span>
       </div>
-      <time class="news-date" id="news-date" datetime="2026-05-06">May 6, 2026</time>
-      <h3 class="news-title" id="news-headline">Grand Theft Auto VI is set to launch November 19, 2026</h3>
-      <p class="news-copy" id="news-copy">Rockstar's latest official update confirms the release date for PlayStation 5 and Xbox Series X|S.</p>
-      <a class="news-link" id="news-link" href="https://www.rockstargames.com/VI" target="_blank" rel="noopener noreferrer">
-        Read the update <span aria-hidden="true">&rarr;</span>
+      <time class="news-date" id="news-date" datetime="2026-08-06">Aug 6, 2026</time>
+      <h3 class="news-title" id="news-headline">Grand Theft Auto VI: An Extended Look</h3>
+      <p class="news-copy" id="news-copy">An extended look at Grand Theft Auto VI is coming to Netflix on August 27, 2026, with the full update also available later on Rockstar's official channels.</p>
+      <a class="news-link" id="news-link" href="https://www.rockstargames.com/newswire/article/9k2kaa1o3297k9/grand-theft-auto-vi-an-extended-look" target="_blank" rel="noopener noreferrer">
+        Read the official update <span aria-hidden="true">&rarr;</span>
       </a>
     </aside>
 
@@ -355,7 +355,7 @@
     const startDate = new Date("2023-12-04T18:10:00-05:00");
     const endDate = new Date("2026-11-19T00:00:00-05:00");
     const progressBar = document.querySelector('[role="progressbar"]');
-    const newsFeedUrl = "https://news.google.com/rss/search?q=GTA+VI+Rockstar+Games&hl=en-US&gl=US&ceid=US:en";
+    const newsFeedUrl = "https://news.google.com/rss/search?q=site:rockstargames.com/newswire/article+GTA+VI&hl=en-US&gl=US&ceid=US:en";
     const newsApiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(newsFeedUrl)}`;
     const newsDate = document.getElementById("news-date");
     const newsHeadline = document.getElementById("news-headline");
@@ -420,16 +420,28 @@
         }
 
         const data = await response.json();
-        const item = data.items?.find(candidate => candidate?.title && candidate?.link);
+        const item = data.items
+          ?.filter(candidate => {
+            const title = candidate?.title || "";
+            return title.endsWith(" - Rockstar Games")
+              && /(?:GTA VI|Grand Theft Auto VI)/i.test(title)
+              && candidate.link;
+          })
+          .sort((first, second) => new Date(second.pubDate) - new Date(first.pubDate))[0];
         if (!item) {
-          throw new Error("News feed returned no articles");
+          throw new Error("Rockstar Newswire feed returned no articles");
         }
 
         const published = formatNewsDate(item.pubDate);
-        newsHeadline.textContent = stripMarkup(item.title);
-        newsCopy.textContent = stripMarkup(item.description || "Read the latest GTA VI coverage.");
-        newsLink.href = item.link;
-        newsLink.firstChild.textContent = "Read the full story ";
+        const title = stripMarkup(item.title).replace(/ - Rockstar Games$/, "");
+        newsHeadline.textContent = title;
+        newsCopy.textContent = title === "Grand Theft Auto VI: An Extended Look"
+          ? "An extended look at Grand Theft Auto VI is coming to Netflix on August 27, 2026, with the full update also available later on Rockstar's official channels."
+          : stripMarkup(item.description || "Read the latest official GTA VI update.");
+        newsLink.href = title === "Grand Theft Auto VI: An Extended Look"
+          ? "https://www.rockstargames.com/newswire/article/9k2kaa1o3297k9/grand-theft-auto-vi-an-extended-look"
+          : item.link;
+        newsLink.firstChild.textContent = "Read the official update ";
 
         if (published) {
           newsDate.dateTime = published.datetime;
