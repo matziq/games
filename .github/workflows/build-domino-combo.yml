@@ -1,0 +1,67 @@
+name: Build Domino Combo APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "domino_combo/index.html"
+      - "domino_combo/src/**"
+      - "domino_combo/package-lock.json"
+      - "apk_builds/domino_combo/**"
+      - ".github/workflows/build-domino-combo.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            apk_builds/package-lock.json
+            domino_combo/package-lock.json
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Build the web app
+        working-directory: domino_combo
+        run: npm ci && npm run build
+
+      - name: Install Capacitor
+        working-directory: apk_builds
+        run: npm ci
+
+      - name: Sync web assets
+        shell: pwsh
+        run: |
+          Copy-Item domino_combo/dist/index.html apk_builds/domino_combo/www/index.html -Force
+          Set-Location apk_builds/domino_combo
+          npx cap sync android
+
+      - name: Build debug APK
+        working-directory: apk_builds/domino_combo/android
+        run: chmod +x gradlew && ./gradlew assembleDebug
+
+      - name: Stage artifact
+        shell: pwsh
+        run: Copy-Item apk_builds/domino_combo/android/app/build/outputs/apk/debug/app-debug.apk domino_combo/domino_combo.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: domino-combo-apk
+          path: domino_combo/domino_combo.apk
+          if-no-files-found: error
