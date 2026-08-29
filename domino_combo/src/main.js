@@ -17,7 +17,7 @@ import {
   shouldCollapseForMode,
   collapseDirectionForMode,
   explosionTargets,
-  collapseColumns,
+  collapseBoard,
   SIX_EXPLOSION_THRESHOLD,
   computeScore,
   sanitizeName,
@@ -702,8 +702,8 @@ function processMatches() {
     );
 
     if (shouldCollapse) {
-      const collapseDirection = collapseDirectionForMode(gameMode, groups);
-      const { board: collapsed, moved } = collapseColumns(
+      const collapseDirection = collapseDirectionForMode(gameMode);
+      const { board: collapsed, moved } = collapseBoard(
         board,
         gridSize,
         collapseDirection,
