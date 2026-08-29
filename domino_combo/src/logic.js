@@ -90,8 +90,10 @@ export function hsKey(gridSize, matchCount, mode = 'classic', difficulty = DEFAU
 // Chaos mode: a matched group of this size or larger triggers a full-board
 // gravity collapse, which can cascade into further combos.
 export const CHAOS_MATCH_THRESHOLD = 4;
-export const SIX_MATCH_THRESHOLD = 3;
 export const SIX_EXPLOSION_THRESHOLD = 4;
+
+// Ultimate Chaos picks one of these at random for every collapse.
+export const COLLAPSE_DIRECTIONS = ['down', 'up', 'left', 'right'];
 
 // Board cells a piece would occupy if anchored at (r, c).
 export function cellsFor(r, c, piece) {
@@ -243,33 +245,49 @@ export function triggersCollapse(groups, threshold = CHAOS_MATCH_THRESHOLD) {
   return groups.some((g) => g.cells.length >= threshold);
 }
 
-// Chaos modes use a lower collapse threshold for sixes. The configured match
-// requirement still wins on Hard, where a three-tile group is not a match.
-export function triggersChaosCollapse(groups, matchCount = SIX_MATCH_THRESHOLD) {
-  return groups.some((group) => {
-    const collapseThreshold =
-      group.val === 6
-        ? Math.max(SIX_MATCH_THRESHOLD, matchCount)
-        : Math.max(CHAOS_MATCH_THRESHOLD, matchCount);
-    return group.cells.length >= collapseThreshold;
-  });
+// Chaos modes need at least four matching tiles before the board moves. A
+// stricter match requirement (Hard) raises the bar instead of lowering it.
+export function collapseThreshold(matchCount = CHAOS_MATCH_THRESHOLD) {
+  return Math.max(CHAOS_MATCH_THRESHOLD, matchCount);
+}
+
+// Four or more sixes detonate instead of merging, destroying every tile in the
+// single-cell ring around the matched group.
+export function isExplodingSixGroup(group) {
+  return group.val === 6 && group.cells.length >= SIX_EXPLOSION_THRESHOLD;
+}
+
+// Groups big enough to drag the whole board. In Chaos an exploding six clears
+// its blast radius in place, so it never causes a collapse; in Ultimate Chaos
+// every qualifying match — sixes included — throws the board.
+export function triggersChaosCollapse(
+  groups,
+  matchCount = CHAOS_MATCH_THRESHOLD,
+  gameMode = 'chaos',
+) {
+  const threshold = collapseThreshold(matchCount);
+  return groups.some(
+    (group) =>
+      group.cells.length >= threshold &&
+      !(gameMode === 'chaos' && isExplodingSixGroup(group)),
+  );
 }
 
 export function shouldCollapseForMode(gameMode, groups, matchCount) {
   return (
     (gameMode === 'chaos' || gameMode === 'ultra') &&
-    triggersChaosCollapse(groups, matchCount)
+    triggersChaosCollapse(groups, matchCount, gameMode)
   );
 }
 
-// Ultimate Chaos reverses gravity only when at least four sixes explode.
-export function collapseDirectionForMode(gameMode, groups) {
-  const reversesGravity =
-    gameMode === 'ultra' &&
-    groups.some(
-      (group) => group.val === 6 && group.cells.length >= SIX_EXPLOSION_THRESHOLD,
-    );
-  return reversesGravity ? 'up' : 'down';
+// Chaos always pulls straight down. Ultimate Chaos picks one of the four
+// directions at random every time the board collapses.
+export function collapseDirectionForMode(gameMode, rng = Math.random) {
+  if (gameMode !== 'ultra') return 'down';
+  const index = Math.floor(rng() * COLLAPSE_DIRECTIONS.length);
+  return COLLAPSE_DIRECTIONS[
+    Math.min(Math.max(index, 0), COLLAPSE_DIRECTIONS.length - 1)
+  ];
 }
 
 // Find every occupied cell touching an exploding group, including diagonals.
@@ -302,22 +320,30 @@ export function explosionTargets(board, gridSize, sourceCells, excludedCells = s
   return [...targets.values()];
 }
 
-// Apply gravity to every column in either direction. Returns a fresh board
-// plus the list of tiles that moved, leaving the input board untouched.
-export function collapseColumns(board, gridSize, direction = 'down') {
+// Apply gravity to the whole board in any of the four directions. Returns a
+// fresh board plus the list of tiles that moved, leaving the input untouched.
+export function collapseBoard(board, gridSize, direction = 'down') {
   const newBoard = createBoard(gridSize);
   const moved = [];
+  const horizontal = direction === 'left' || direction === 'right';
+  const towardStart = direction === 'up' || direction === 'left';
 
-  for (let c = 0; c < gridSize; c++) {
+  for (let line = 0; line < gridSize; line++) {
     const vals = [];
-    for (let r = 0; r < gridSize; r++) {
-      if (board[r][c] !== null) vals.push({ r, val: board[r][c] });
+    for (let i = 0; i < gridSize; i++) {
+      const r = horizontal ? line : i;
+      const c = horizontal ? i : line;
+      if (board[r][c] !== null) vals.push({ i, val: board[r][c] });
     }
-    vals.forEach((entry, i) => {
-      const newR = direction === 'up' ? i : gridSize - vals.length + i;
-      newBoard[newR][c] = entry.val;
-      if (newR !== entry.r) {
-        moved.push({ r0: entry.r, c0: c, r1: newR, c1: c, val: entry.val });
+    vals.forEach((entry, k) => {
+      const target = towardStart ? k : gridSize - vals.length + k;
+      const r0 = horizontal ? line : entry.i;
+      const c0 = horizontal ? entry.i : line;
+      const r1 = horizontal ? line : target;
+      const c1 = horizontal ? target : line;
+      newBoard[r1][c1] = entry.val;
+      if (r1 !== r0 || c1 !== c0) {
+        moved.push({ r0, c0, r1, c1, val: entry.val });
       }
     });
   }

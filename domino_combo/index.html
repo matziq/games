@@ -454,12 +454,44 @@
             }
         }
 
+        @keyframes gravityLeft {
+            from {
+                transform: translateX(18px);
+                opacity: 0.7;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes gravityRight {
+            from {
+                transform: translateX(-18px);
+                opacity: 0.7;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
         .gravity-down .die {
             animation: gravityDown 0.3s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         .gravity-up .die {
             animation: gravityUp 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .gravity-left .die {
+            animation: gravityLeft 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .gravity-right .die {
+            animation: gravityRight 0.3s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         @keyframes clearPulse {
@@ -1341,7 +1373,7 @@
                     <span class="mode-number">02</span>
                     <span class="mode-copy">
                         <span class="mode-name">Chaos</span>
-                        <span class="mode-description">Special sixes explode, then every collapse pulls downward.</span>
+                        <span class="mode-description">Match four to collapse the board downward. Four sixes blow up their neighbors in place.</span>
                     </span>
                     <span class="mode-arrow" aria-hidden="true">&rarr;</span>
                 </button>
@@ -1349,7 +1381,7 @@
                     <span class="mode-number">03</span>
                     <span class="mode-copy">
                         <span class="mode-name">Ultimate Chaos</span>
-                        <span class="mode-description">Match four sixes to explode the board and reverse gravity.</span>
+                        <span class="mode-description">Every collapse hurls the board in a random direction &mdash; even after a six explodes.</span>
                     </span>
                     <span class="mode-arrow" aria-hidden="true">&rarr;</span>
                 </button>
@@ -1422,11 +1454,12 @@
                     next value.</p>
                 <p style="margin-bottom:10px;">Chain reactions earn <b style="color:#FF6D00;">bonus points</b>!</p>
                 <p style="margin-bottom:10px;">Red <b style="color:#EF5350;">6s</b> vanish when matched.</p>
-                <p style="margin-bottom:10px;"><b style="color:#FF8A65;">Chaos:</b> 4+ matching tiles or
-                    3+ sixes collapse downward (4+ of either on Hard). Match 4+ sixes to destroy and score every
-                    neighboring tile before the collapse.</p>
-                <p style="margin-bottom:10px;"><b style="color:#FF3D00;">Ultimate Chaos:</b> uses the same match and
-                    explosion rules, but matching 4+ sixes makes every surviving tile fall upward.</p>
+                <p style="margin-bottom:10px;"><b style="color:#FF8A65;">Chaos:</b> matching 4+ tiles collapses the
+                    board downward. Matching 4+ sixes instead destroys and scores every tile in the ring around them
+                    &mdash; nothing falls after that blast.</p>
+                <p style="margin-bottom:10px;"><b style="color:#FF3D00;">Ultimate Chaos:</b> same 4+ thresholds and
+                    six explosions, but every collapse throws the board up, down, left or right at random &mdash; and
+                    exploding sixes trigger a collapse too.</p>
                 <p style="margin-bottom:0;">Game ends when no moves remain.</p>
             </div>
             <button class="close-settings" id="btn-help-close" style="margin-top:14px;">Got It</button>
