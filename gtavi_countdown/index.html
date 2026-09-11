@@ -57,6 +57,106 @@
       pointer-events: none;
     }
 
+    .topnav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 10;
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem clamp(1.25rem, 4vw, 2.5rem);
+      background: linear-gradient(180deg, rgba(22, 10, 43, 0.85) 0%, rgba(22, 10, 43, 0.55) 70%, transparent 100%);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+    }
+
+    .wordmark {
+      margin: 0;
+      color: var(--cream);
+      font-family: "Anton", sans-serif;
+      font-size: clamp(0.9rem, 2vw, 1.1rem);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .wordmark .accent {
+      color: var(--hot-pink);
+    }
+
+    .nav-toggle {
+      display: flex;
+      width: 2rem;
+      flex-direction: column;
+      gap: 0.32rem;
+      padding: 0.4rem;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+
+    .nav-toggle span {
+      display: block;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--cream);
+    }
+
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1.4rem;
+    }
+
+    .cta-btn {
+      padding: 0.75rem 1.8rem;
+      border-radius: 999px;
+      font-family: "Rajdhani", sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .cta-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .cta-btn:focus-visible {
+      outline: 3px solid var(--cream);
+      outline-offset: 3px;
+    }
+
+    .cta-btn--solid {
+      color: var(--midnight);
+      background: linear-gradient(90deg, var(--hot-pink), var(--sunset-orange));
+      box-shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.28);
+    }
+
+    .cta-btn--ghost {
+      color: var(--cream);
+      border: 1px solid var(--panel-border);
+      background: transparent;
+    }
+
+    .cta-btn--ghost:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .platform-line {
+      margin-top: 0.9rem;
+      color: var(--cream);
+      font-size: 0.72rem;
+      letter-spacing: 0.28em;
+      opacity: 0.6;
+      text-transform: uppercase;
+    }
+
     main {
       position: relative;
       z-index: 1;
@@ -64,7 +164,7 @@
       min-height: 100vh;
       flex-direction: column;
       align-items: center;
-      padding: clamp(3rem, 7vh, 5rem) 1.25rem 2rem;
+      padding: clamp(6rem, 14vh, 8.5rem) 1.25rem 2rem;
     }
 
     .logo {
@@ -311,11 +411,26 @@
   </style>
 </head>
 <body>
+  <nav class="topnav" aria-label="Primary">
+    <p class="wordmark">GRAND THEFT AUTO<span class="accent"> VI</span></p>
+    <button class="nav-toggle" type="button" aria-label="Open menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </nav>
+
   <main>
     <h1 class="logo">
       <img src="./gta-vi-logo.png" alt="Grand Theft Auto VI" width="1239" height="876" fetchpriority="high">
     </h1>
     <div class="eyebrow">Leonida awaits</div>
+
+    <div class="cta-row">
+      <a class="cta-btn cta-btn--solid" href="https://www.rockstargames.com/VI" target="_blank" rel="noopener noreferrer">Pre-order Now</a>
+      <a class="cta-btn cta-btn--ghost" href="https://www.rockstargames.com/newswire" target="_blank" rel="noopener noreferrer">Watch Trailer</a>
+    </div>
+    <div class="platform-line">PS5 &middot; Xbox Series X|S &middot; PC</div>
 
     <div class="countdown" aria-label="Time remaining until GTA VI releases">
       <div class="unit"><div class="num" id="days">00</div><div class="label">Days</div></div>
