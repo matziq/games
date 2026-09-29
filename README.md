@@ -17,6 +17,7 @@ This repo is a small collection of single-file browser games and apps.
 - **Geodes** – geode-themed game. Entry: `geodes/geodes.html`
 - **Real or AI** – pick which photo is real vs AI-generated. Entry: `real_or_ai/real_or_ai.html`
 - **GTA VI Countdown** – release countdown and the latest official GTA VI news. Entry: `gtavi_countdown/index.html`
+- **Token Hearth** – AI token fireplace with a fluid-simulated fire, hosted on the main site. Entry: <https://memconfigmgr.org/token-hearth/>
 
 ## Included apps
 
