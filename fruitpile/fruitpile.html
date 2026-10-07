@@ -967,8 +967,8 @@
             const DRIED_CHERRY = { key: 'dried_cherry', name: 'Dried Cherry', radius: 14, color: '#5a2020', accent: '#8b4040', texture: 'speckle' };
 
             // Fruit fly decay constants
-            const FLY_IDLE_MS = 10000;       // 10 seconds before fly appears
-            const FLY_SHRINK_MS = 2000;      // 2 seconds of fly buzzing before shrink
+            const FLY_IDLE_MS = 20000;       // 20 seconds before fly appears
+            const FLY_SHRINK_MS = 4000;      // 4 seconds of fly buzzing before shrink
             const DRIED_CHERRY_LIFE_MS = 10000; // dried cherry vanishes after 10s
 
             const fruitByKey = new Map(FRUITS.map(f => [f.key, f]));
@@ -1436,8 +1436,8 @@
                         If they bounce apart first, the fuse cancels. Bigger groups are worth more.
                     </div>
                     <div style="margin-bottom:8px;">
-                        <b>Fruit Merge</b>: when 2+ of the same fruit touch, they merge after the fuse into the next fruit size.
-                        Make your <b>first diamond</b>, then keep growing. Two diamonds touching triggers a huge shockwave.
+                        <b>Fruit Merge</b>: when 2+ of the same fruit stay touching through the fuse, they merge into the next fruit size.
+                        If they bounce apart first, the fuse cancels. Make your <b>first diamond</b>, then keep growing. Two diamonds touching triggers a huge shockwave.
                     </div>
                 `;
                 infoBodyEl.appendChild(rules);
@@ -1451,7 +1451,8 @@
                         Swap the current and next fruit once per drop to set up your next match.
                         Small fruit earn more in Explode; larger fruit earn more in Merge.
                         Keep settled fruit below the dashed line. A visible <b>3-second warning</b> gives you time to clear a match.
-                        Classic has no wind or decay. Optional Chaos brings back gusts and fruit that shrink after 12 idle seconds.
+                        Classic has no wind or decay. Optional Chaos brings back gusts. A fruit fly arrives after <b>20 idle seconds</b> and shrinks the fruit 4 seconds later.
+                        If another fruit hits the one a fly is attacking, the fly jumps to a different fruit and its timer starts over.
                         Orange, Apple and Peach can drop after you match all three small types; Melon and Watermelon unlock after matching all three medium types.
                     </div>
                 `;
@@ -2239,13 +2240,8 @@
                     // force-resolve it no matter what (prevents "flashing forever").
                     if (overdueAge > FORCE_CLEAR_MAX_AGE_MS) {
                         b.plugin._overdueSince = 0;
-                        if (gameMode === GAME_MODES.MERGE) {
-                            clearArmed(b);
-                            removeBodyFromWorld(b);
-                        } else {
-                            // A separated explosion fuse must not delete or detonate the fruit.
-                            clearArmed(b);
-                        }
+                        // A separated match must not delete, merge, or detonate the fruit.
+                        clearArmed(b);
                         resolved++;
                         continue;
                     }
@@ -2269,26 +2265,8 @@
 
                     const other = findAnyTouchingSameFruit(b, fk, list);
                     if (!other) {
-                        if (gameMode === GAME_MODES.EXPLODE) {
-                            clearArmed(b);
-                            b.plugin._overdueSince = 0;
-                            continue;
-                        }
-                        // Still armed, but currently not touching.
-                        // Keep trying briefly; if it remains overdue too long, force resolve.
-                        if (overdueAge > OVERDUE_GRACE_MS) {
-                            b.plugin._overdueSince = 0;
-                            if (gameMode === GAME_MODES.MERGE) {
-                                clearArmed(b);
-                                removeBodyFromWorld(b);
-                            } else {
-                                explodeCluster([b], list);
-                            }
-                            resolved++;
-                        } else {
-                            // Don't keep extending the deadline forever; keep it overdue and let
-                            // the grace/absolute safety net handle it.
-                        }
+                        clearArmed(b);
+                        b.plugin._overdueSince = 0;
                         continue;
                     }
 
@@ -2296,62 +2274,13 @@
 
                     const cluster = findTouchingCluster(b, other, fk, list);
                     if (!cluster || cluster.length < 2) {
-                        if (gameMode === GAME_MODES.EXPLODE) {
-                            clearArmed(b);
-                            b.plugin._overdueSince = 0;
-                            continue;
-                        }
-                        // Rare: a touching partner was found but cluster resolve failed.
-                        // Don't let this leave a permanently flashing fruit.
-                        if (overdueAge > OVERDUE_GRACE_MS) {
-                            b.plugin._overdueSince = 0;
-                            if (gameMode === GAME_MODES.MERGE) {
-                                clearArmed(b);
-                                removeBodyFromWorld(b);
-                            } else {
-                                explodeCluster([b], list);
-                            }
-                            resolved++;
-                        } else {
-                            // Keep it overdue; avoid perpetually re-arming.
-                        }
+                        clearArmed(b);
+                        b.plugin._overdueSince = 0;
                         continue;
                     }
 
                     if (gameMode === GAME_MODES.MERGE) {
-                        // Merge-mode bonus contract: if a 3+ group began flashing but later
-                        // became only 2 touching at the resolve moment, still try to include
-                        // other same-fruit bodies that were armed for that same event.
-                        // This keeps the awarded multiplier consistent with what the player saw.
-                        const mergedSet = new Map();
-                        for (const bb of cluster) mergedSet.set(bb.id, bb);
-
-                        // Centroid of the touching cluster.
-                        let cx = 0, cy = 0;
-                        for (const bb of cluster) {
-                            cx += bb.position.x;
-                            cy += bb.position.y;
-                        }
-                        cx /= cluster.length;
-                        cy /= cluster.length;
-
-                        // Pull in any other same-fruit bodies that are currently overdue-armed
-                        // and near the cluster. (These are the usual "3rd fruit left behind" cases.)
-                        for (const bb of list) {
-                            if (!isFruitBody(bb)) continue;
-                            if (removedIds.has(bb.id)) continue;
-                            if (bb.plugin?.fruitKey !== fk) continue;
-                            if (mergedSet.has(bb.id)) continue;
-                            const until = bb.plugin?.armedUntil || 0;
-                            if (!(until > 0 && until <= tNow)) continue; // overdue armed
-                            const dx = (bb.position.x || 0) - cx;
-                            const dy = (bb.position.y || 0) - cy;
-                            if (dx * dx + dy * dy > MERGE_OVERDUE_EXTRA_RADIUS * MERGE_OVERDUE_EXTRA_RADIUS) continue;
-                            mergedSet.set(bb.id, bb);
-                        }
-
-                        const mergedCluster = Array.from(mergedSet.values());
-                        mergeCluster(mergedCluster, list);
+                        mergeCluster(cluster, list);
                     } else {
                         stageExplosionCluster(cluster, list, fk);
                     }
@@ -2360,7 +2289,6 @@
             }
 
             function releaseSeparatedExplosionFuses(bodies) {
-                if (gameMode !== GAME_MODES.EXPLODE) return;
                 const list = bodies || Composite.allBodies(world);
                 for (const b of list) {
                     if (!isFruitBody(b) || removedIds.has(b.id) || explodedIds.has(b.id)) continue;
@@ -3988,9 +3916,6 @@
                                 const body = Composite.get(world, id, 'body');
                                 // If this body is staged for explosion, it should remain flashing until its step.
                                 if (!body) return;
-                                // Merge-mode contract: once a fruit begins flashing it should NOT stop
-                                // unless it resolves (merge/forced clear). So never clear armed here.
-                                if (gameMode === GAME_MODES.MERGE) return;
                                 // If still legitimately armed, do not clear (prevents “flashing stops” survivors).
                                 if ((body.plugin?.armedUntil || 0) > nowMs()) return;
                                 if (!explodedIds.has(id)) clearArmed(body);
@@ -4009,28 +3934,23 @@
                             const bInWorld = Composite.get(world, item.bId, 'body');
                             if (!aInWorld || !bInWorld) {
                                 // One or both bodies got removed before detonation.
-                                if (aInWorld) { if (gameMode !== GAME_MODES.MERGE) clearArmed(aInWorld); } else clearArmedById(item.aId);
-                                if (bInWorld) { if (gameMode !== GAME_MODES.MERGE) clearArmed(bInWorld); } else clearArmedById(item.bId);
+                                if (aInWorld) clearArmed(aInWorld); else clearArmedById(item.aId);
+                                if (bInWorld) clearArmed(bInWorld); else clearArmedById(item.bId);
                                 continue;
                             }
 
                             // Safety: must still be the same fruit.
                             if (aInWorld.plugin?.fruitKey !== item.fruitKey || bInWorld.plugin?.fruitKey !== item.fruitKey) {
-                                if (gameMode !== GAME_MODES.MERGE) {
-                                    clearArmed(aInWorld);
-                                    clearArmed(bInWorld);
-                                }
+                                clearArmed(aInWorld);
+                                clearArmed(bInWorld);
                                 continue;
                             }
 
-                            let cluster = findTouchingCluster(aInWorld, bInWorld, item.fruitKey, bodies);
-                            if (gameMode === GAME_MODES.EXPLODE) {
-                                // Seeds are included even after they bounce apart. Use only the
-                                // fruit that are still physically connected to one another.
-                                const fromA = findTouchingCluster(aInWorld, aInWorld, item.fruitKey, bodies);
-                                const fromB = findTouchingCluster(bInWorld, bInWorld, item.fruitKey, bodies);
-                                cluster = fromA.length >= fromB.length ? fromA : fromB;
-                            }
+                            // Seeds are included even after they bounce apart. Both modes resolve
+                            // only the fruit that are still physically connected.
+                            const fromA = findTouchingCluster(aInWorld, aInWorld, item.fruitKey, bodies);
+                            const fromB = findTouchingCluster(bInWorld, bInWorld, item.fruitKey, bodies);
+                            let cluster = fromA.length >= fromB.length ? fromA : fromB;
                             if (cluster.length >= 2) {
                                 // Dynamic fuse: base 3s + 1s per extra fruit.
                                 // If the cluster has grown since the event was queued,
@@ -4137,7 +4057,7 @@
                                         explodeQueue.pop();
                                     }
                                 }
-                            } else if (gameMode === GAME_MODES.EXPLODE) {
+                            } else {
                                 clearArmed(aInWorld);
                                 clearArmed(bInWorld);
                             }
@@ -4154,6 +4074,30 @@
             }
 
             // --- Collisions ---
+            function scareFly(host, hitter) {
+                if (!host?.plugin?.flyStartedAt || !isFruitBody(hitter) || hitter.id === host.id) return;
+                const eligible = (body) => isFruitBody(body) && !removedIds.has(body.id)
+                    && body.plugin.fruitKey !== 'diamond' && body.plugin.fruitKey !== 'dried_cherry';
+                const others = Composite.allBodies(world).filter(body => eligible(body) && body.id !== host.id);
+                const away = others.filter(body => body.id !== hitter.id && !body.plugin.flyStartedAt);
+                const pool = away.length ? away : others.filter(body => !body.plugin.flyStartedAt);
+                const choices = pool.length ? pool : others;
+                let target = null;
+                let best = Infinity;
+                for (const body of choices) {
+                    const dx = body.position.x - host.position.x;
+                    const dy = body.position.y - host.position.y;
+                    const dist = dx * dx + dy * dy;
+                    if (dist < best) { best = dist; target = body; }
+                }
+                host.plugin.flyStartedAt = undefined;
+                host.plugin.lastActivityAt = nowMs();
+                if (!target) return;
+                target.plugin.flyStartedAt = nowMs();
+                target.plugin.lastActivityAt = nowMs() - FLY_IDLE_MS;
+                audio.buzz();
+            }
+
             function onCollisionStart(event) {
                 for (const pair of event.pairs) {
                     const a = pair.bodyA;
@@ -4245,6 +4189,8 @@
                     }
 
                     if (!isFruitBody(a) || !isFruitBody(b)) continue;
+                    if (a.plugin?.flyStartedAt) scareFly(a, b);
+                    if (b.plugin?.flyStartedAt) scareFly(b, a);
                     queueExplosion(a, b);
                 }
             }

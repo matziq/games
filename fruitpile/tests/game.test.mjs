@@ -8,7 +8,7 @@ const output = path.resolve(process.argv[2] || String.raw`D:\AI_Output\Fruitpile
 process.env.PLAYWRIGHT_BROWSERS_PATH ||= path.join(output, 'browsers');
 const require = createRequire(path.join(output, 'tools', 'package.json'));
 const { chromium } = require('playwright');
-const htmlPath = path.join(output, 'FruitPile-2.0.2.html');
+const htmlPath = path.join(output, 'FruitPile-2.0.3.html');
 const html = fs.readFileSync(htmlPath, 'utf8');
 const artifacts = path.join(output, 'tests');
 fs.mkdirSync(artifacts, { recursive: true });
@@ -67,7 +67,22 @@ window.testGame = {
   save: (score,name) => addFpHighScore(score,name),
   queue: (a,b) => {currentFruit=fruitByKey.get(a);nextFruit=fruitByKey.get(b);updateHud();},
   idleFruit: () => { const b=fruitBodyAt(260,600,fruitByKey.get('apple')); b.plugin.lastActivityAt=-20000; World.add(world,b); },
-  seedRandom: () => {let s=42;Math.random=()=>((s=Math.imul(s,1664525)+1013904223>>>0)/4294967296);}
+  seedRandom: () => {let s=42;Math.random=()=>((s=Math.imul(s,1664525)+1013904223>>>0)/4294967296);},
+  flies: () => Composite.allBodies(world).filter(isFruitBody).map(b => ({key:b.plugin.fruitKey, fly:!!b.plugin.flyStartedAt})),
+  plantFly: () => {
+    const apple = fruitBodyAt(180, 500, fruitByKey.get('apple'));
+    apple.plugin.flyStartedAt = nowMs() - 500;
+    apple.plugin.lastActivityAt = nowMs() - 30000;
+    const grape = fruitBodyAt(340, 500, fruitByKey.get('grape'));
+    grape.plugin.lastActivityAt = nowMs();
+    const peach = fruitBodyAt(250, 640, fruitByKey.get('peach'));
+    peach.plugin.lastActivityAt = nowMs();
+    World.add(world, [apple, grape, peach]);
+    return { apple: apple.id, grape: grape.id };
+  },
+  scare: (hostId, hitterId) => scareFly(Composite.get(world, hostId, 'body'), Composite.get(world, hitterId, 'body')),
+  freezeFruit: () => { for (const b of Composite.allBodies(world)) if (isFruitBody(b)) Body.setStatic(b, true); },
+  setChaos: (on) => { settings.chaos = !!on; }
 };
 `;
 assert.equal((html.match(/            start\(\);/g) || []).length, 1);
@@ -104,7 +119,7 @@ try {
             await page.evaluate(mode => {
                 testGame.begin(mode);
                 const ids = testGame.pair();
-                const release = mode === 'explode' ? testGame.hold(ids) : null;
+                const release = testGame.hold(ids);
                 try { testGame.frames(150); } finally { if (release) release(); }
             }, mode);
             const s = await state(page);
@@ -123,7 +138,13 @@ try {
         const outcomes = [];
         for (const hz of [30, 60, 120]) {
             const { page, context } = await setup();
-            await page.evaluate(hz => { testGame.seedRandom(); testGame.begin('merge'); testGame.pair(); testGame.frames(hz * 3, 1000 / hz); }, hz);
+            await page.evaluate(hz => {
+                testGame.seedRandom();
+                testGame.begin('merge');
+                const ids = testGame.pair();
+                const release = testGame.hold(ids);
+                try { testGame.frames(hz * 3, 1000 / hz); } finally { release(); }
+            }, hz);
             outcomes.push(await state(page));
             await context.close();
         }
@@ -219,7 +240,7 @@ try {
         assert(await page.locator('#reducedEffects').isChecked());
         assert(await page.locator('#chaosMode').isChecked());
         assert.equal((await state(page)).gameMode, 'merge');
-        await page.evaluate(() => { testGame.begin('merge'); testGame.idleFruit(); testGame.frames(200); });
+        await page.evaluate(() => { testGame.begin('merge'); testGame.idleFruit(); testGame.frames(300); });
         assert.equal((await state(page)).runChaos, true);
         assert.equal((await state(page)).bodies[0].key, 'orange');
         await page.evaluate(() => { testGame.save(1000, 'TEST'); });
@@ -274,6 +295,42 @@ try {
         assert.equal(result.melonsLeft, 0);
         assert.equal(result.diamondsLater, 1);
         assert(result.blastScore < 1000, 'one blast must not be followed by a diamond detonation');
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    await test('Merge stays in contact, and a hit moves the fruit fly onto another fruit', async () => {
+        const { page, context, errors } = await setup();
+        const result = await page.evaluate(() => {
+            testGame.begin('merge');
+            const bounced = testGame.pair('cherry');
+            const releaseBounce = testGame.hold(bounced);
+            try { testGame.frames(20); } finally { releaseBounce(); }
+            testGame.separate(bounced[1], 70);
+            testGame.frames(120);
+            const separated = testGame.state().bodies.map(b => b.key).sort();
+            testGame.begin('merge');
+            const held = testGame.pair('cherry', 20);
+            const releaseHeld = testGame.hold(held);
+            try { testGame.frames(80); } finally { releaseHeld(); }
+            const merged = testGame.state().bodies.map(b => b.key);
+            testGame.setChaos(true);
+            testGame.begin('explode');
+            const planted = testGame.plantFly();
+            testGame.scare(planted.apple, planted.grape);
+            testGame.freezeFruit();
+            const moved = testGame.flies();
+            testGame.frames(140);
+            const beforeOldDeadline = testGame.flies();
+            testGame.frames(180);
+            return { separated, merged, moved, beforeOldDeadline, later: testGame.flies() };
+        });
+        assert.deepEqual(result.separated, ['cherry', 'cherry']);
+        assert.deepEqual(result.merged, ['grape']);
+        assert.equal(result.moved.find(b => b.key === 'apple').fly, false);
+        assert.equal(result.moved.find(b => b.key === 'peach').fly, true);
+        assert.equal(result.moved.find(b => b.key === 'grape').fly, false);
+        assert(result.beforeOldDeadline.some(b => b.key === 'peach'), JSON.stringify(result.beforeOldDeadline));
+        assert(!result.later.some(b => b.key === 'peach'), JSON.stringify(result.later));
         assert.deepEqual(errors, []);
         await context.close();
     });
