@@ -8,7 +8,7 @@ const output = path.resolve(process.argv[2] || String.raw`D:\AI_Output\Fruitpile
 process.env.PLAYWRIGHT_BROWSERS_PATH ||= path.join(output, 'browsers');
 const require = createRequire(path.join(output, 'tools', 'package.json'));
 const { chromium } = require('playwright');
-const htmlPath = path.join(output, 'FruitPile-2.0.1.html');
+const htmlPath = path.join(output, 'FruitPile-2.0.2.html');
 const html = fs.readFileSync(htmlPath, 'utf8');
 const artifacts = path.join(output, 'tests');
 fs.mkdirSync(artifacts, { recursive: true });
@@ -173,7 +173,7 @@ try {
     });
     await test('Pause/help/scores/background freeze physics and fuse; restart clears all queues', async () => {
         const { page, context, errors } = await setup();
-        await page.evaluate(() => { testGame.begin('explode'); testGame.pair(); testGame.frames(20); });
+        await page.evaluate(() => { testGame.begin('explode'); const ids = testGame.pair(); window.__releaseHold = testGame.hold(ids); testGame.frames(20); });
         await page.locator('#btnPause').click();
         const before = await state(page);
         await page.evaluate(() => testGame.frames(500));
@@ -185,7 +185,7 @@ try {
         await page.locator('#btnScores').click();
         await page.locator('#fpHsClose').click();
         await page.locator('#btnPlay').click();
-        await page.evaluate(() => { testGame.stopRaf(); testGame.frames(150); });
+        await page.evaluate(() => { testGame.stopRaf(); testGame.frames(150); window.__releaseHold(); });
         assert((await state(page)).score > 0);
         await page.evaluate(() => {
             Object.defineProperty(document, 'hidden', { configurable: true, value: true });
@@ -332,6 +332,19 @@ try {
             await page.setViewportSize({ width, height });
             await page.waitForTimeout(80);
             await page.evaluate(() => testGame.frames(1, 0));
+            await page.evaluate(() => {
+                const tip = document.getElementById('toast');
+                tip.textContent = 'Drop these two cherries together for your first pop.';
+                tip.classList.add('show');
+            });
+            const tipPlacement = await page.evaluate(() => {
+                const tip = document.getElementById('toast').getBoundingClientRect();
+                const board = document.getElementById('game').getBoundingClientRect();
+                const overlaps = tip.width > 0 && tip.height > 0 && !(tip.right <= board.left || tip.left >= board.right || tip.bottom <= board.top || tip.top >= board.bottom);
+                return { overlaps, inView: tip.top >= -1 && tip.left >= -1 && tip.bottom <= innerHeight + 1 && tip.right <= innerWidth + 1 };
+            });
+            assert.equal(tipPlacement.overlaps, false, `${width}x${height}: help covers the bowl`);
+            assert.equal(tipPlacement.inView, true, `${width}x${height}: help is off screen`);
             await page.screenshot({ path: path.join(artifacts, `game-${width}x${height}.png`) });
             assert.deepEqual(errors, []);
             await context.close();
@@ -345,12 +358,16 @@ try {
         page.on('request', r => requests.push(r.url()));
         await page.goto(pathToFileURL(htmlPath).href);
         await page.locator('#btnPlay').click();
-        for (let i = 0; i < 6; i++) {
-            await page.locator('#btnDrop').click();
-            await page.waitForTimeout(400);
-        }
-        await page.waitForTimeout(2500);
-        assert(Number(await page.locator('#score').innerText()) > 0);
+        await page.locator('#btnDrop').click();
+        await page.waitForTimeout(900);
+        const visibleFruit = await page.locator('#game').evaluate(canvas => {
+            const data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+            let opaque = 0;
+            for (let i = 3; i < data.length; i += 16) if (data[i] > 128) opaque++;
+            return opaque;
+        });
+        assert(visibleFruit > 400, 'offline drop did not render on the bowl');
+        assert(Number.isFinite(Number(await page.locator('#score').innerText())));
         assert.deepEqual(errors, []);
         assert(requests.every(url => url.startsWith('file:') || url.startsWith('data:')));
         await context.close();

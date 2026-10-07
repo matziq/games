@@ -24,7 +24,7 @@ function Invoke-Checked([string]$Exe, [string[]]$Arguments) {
     if ($LASTEXITCODE -ne 0) { throw "$Exe failed with exit code $LASTEXITCODE" }
 }
 Invoke-Checked 'node' @((Join-Path $PSScriptRoot 'build.mjs'), $OutputRoot)
-Copy-Item (Join-Path $OutputRoot 'FruitPile-2.0.1.html') (Join-Path $assets 'index.html') -Force
+Copy-Item (Join-Path $OutputRoot 'FruitPile-2.0.2.html') (Join-Path $assets 'index.html') -Force
 Invoke-Checked "$BuildTools\aapt2.exe" @('compile', '--dir', "$PSScriptRoot\android\res", '-o', "$stage\resources.zip")
 Invoke-Checked "$BuildTools\aapt2.exe" @('link', '-o', "$stage\unsigned.apk", '-I', $PlatformJar,
     '--manifest', "$PSScriptRoot\android\AndroidManifest.xml", '-A', $assets, "$stage\resources.zip")
@@ -43,7 +43,7 @@ if (!(Test-Path -LiteralPath $key)) {
         '-alias', 'androiddebugkey', '-keypass', 'android', '-keyalg', 'RSA', '-keysize', '2048',
         '-validity', '10000', '-dname', 'CN=Android Debug,O=Android,C=US')
 }
-$apk = Join-Path $OutputRoot 'FruitPile-2.0.1-test.apk'
+$apk = Join-Path $OutputRoot 'FruitPile-2.0.2-test.apk'
 Invoke-Checked "$JavaHome\bin\java.exe" @('-jar', "$BuildTools\lib\apksigner.jar", 'sign', '--ks', $key,
     '--ks-pass', 'pass:android', '--key-pass', 'pass:android', '--out', $apk, "$stage\aligned.apk")
 Invoke-Checked "$JavaHome\bin\java.exe" @('-jar', "$BuildTools\lib\apksigner.jar", 'verify', '--verbose', '--print-certs', $apk)
@@ -56,10 +56,10 @@ try {
     if (!$asset -or !$zip.GetEntry('classes.dex') -or !$zip.GetEntry('AndroidManifest.xml')) { throw 'APK is incomplete' }
     $reader = [System.IO.StreamReader]::new($asset.Open())
     try { $packed = $reader.ReadToEnd() } finally { $reader.Dispose() }
-    $release = [System.IO.File]::ReadAllText((Join-Path $OutputRoot 'FruitPile-2.0.1.html'))
+    $release = [System.IO.File]::ReadAllText((Join-Path $OutputRoot 'FruitPile-2.0.2.html'))
     if ($packed -cne $release) { throw 'APK contains stale HTML' }
 } finally { $zip.Dispose() }
-$hashes = @('FruitPile-2.0.1.html', 'FruitPile-2.0.1-test.apk') | ForEach-Object {
+$hashes = @('FruitPile-2.0.2.html', 'FruitPile-2.0.2-test.apk') | ForEach-Object {
     "$((Get-FileHash (Join-Path $OutputRoot $_) -Algorithm SHA256).Hash.ToLowerInvariant())  $_"
 }
 [System.IO.File]::WriteAllLines((Join-Path $OutputRoot 'SHA256SUMS.txt'), $hashes)
