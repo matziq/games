@@ -20,6 +20,7 @@
       --good: #35dd8a;
       --bad: #ff4d6d;
       --muted: #90a0b7;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     html,
@@ -27,65 +28,50 @@
       margin: 0;
       padding: 0;
       height: 100%;
+      height: 100dvh;
       background: radial-gradient(1200px 800px at 50% 50%, #121826 0%, #0c0f14 60%, #080b10 100%);
       color: var(--text);
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, Noto Sans, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
       user-select: none;
       overflow: hidden;
-      touch-action: manipulation;
-      /* Improve touch responsiveness */
+      width: 100%;
+      touch-action: none;
+      overscroll-behavior: none;
       -webkit-touch-callout: none;
-      /* Disable iOS callouts */
       -webkit-tap-highlight-color: transparent;
-      /* Remove tap highlights */
     }
 
     #game {
       position: fixed;
-      width: min(100vw, calc((100dvh - 40px) * 9 / 16));
-      height: min(calc(100vw * 16 / 9), calc(100dvh - 40px));
-      max-width: none;
-      top: 40px;
-      left: 50%;
-      transform: translateX(-50%);
       display: block;
-      border-radius: 0;
+      top: 0;
+      left: 0;
+      touch-action: none;
+      cursor: crosshair;
     }
 
     #hud {
       position: fixed;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
+      top: env(safe-area-inset-top, 0px);
+      left: 0;
+      right: 0;
       display: flex;
-      gap: 8px;
+      gap: 6px;
       align-items: center;
-      padding: 6px 10px;
-      height: 28px;
-      border-radius: 0 0 10px 10px;
-      background: rgba(12, 15, 20, 0.85);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-top: none;
+      justify-content: center;
+      flex-wrap: wrap;
+      padding: 6px 8px;
+      height: auto;
+      background: transparent;
+      border: none;
+      box-shadow: none;
       z-index: 5;
-      font-size: 14px;
+      font-size: 13px;
+      pointer-events: none;
     }
 
-    @media (max-width: 768px) {
-      #hud {
-        gap: 6px;
-        padding: 4px 8px;
-        font-size: 12px;
-        height: 24px;
-      }
-
-      #game {
-        top: 32px;
-        height: calc(100vh - 32px);
-        height: calc(100dvh - 32px);
-      }
+    #hud .chip {
+      pointer-events: none;
     }
 
     .chip {
@@ -132,21 +118,101 @@
       text-align: right;
     }
 
-    #controls {
-      position: fixed;
-      bottom: 14px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 10px;
-      z-index: 5;
+    body:has(#overlay:not(.hidden)) #dock,
+    body:has(#overlay:not(.hidden)) #tools {
+      visibility: hidden;
+      pointer-events: none;
     }
 
-    @media (max-width: 768px) {
-      #controls {
-        gap: 8px;
-        bottom: 10px;
-      }
+    #dock {
+      position: fixed;
+      left: max(8px, env(safe-area-inset-left));
+      right: max(8px, env(safe-area-inset-right));
+      bottom: max(8px, env(safe-area-inset-bottom));
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 8px;
+      z-index: 8;
+      pointer-events: none;
+    }
+
+    #tools {
+      position: fixed;
+      left: 50%;
+      bottom: calc(76px + env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      z-index: 8;
+      width: min(560px, calc(100vw - 16px));
+      padding: 10px;
+      border-radius: 14px;
+      background: rgba(12, 15, 20, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    #pauseVeil {
+      position: fixed;
+      inset: 0;
+      z-index: 7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(8, 11, 16, 0.55);
+    }
+
+    #pauseVeil .panel {
+      text-align: center;
+      padding: 22px 20px;
+      border-radius: 16px;
+      background: rgba(18, 23, 34, 0.94);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .fab {
+      pointer-events: auto;
+      min-width: 64px;
+      min-height: 56px;
+      padding: 10px 14px;
+      font-size: 16px;
+    }
+
+    #rocketBtn.armed {
+      background: linear-gradient(180deg, rgba(255, 80, 20, 0.55), rgba(255, 80, 20, 0.2));
+      border-color: rgba(255, 180, 120, 0.9);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+    }
+
+    .chip.flash {
+      animation: missFlash 0.35s ease;
+    }
+
+    @keyframes missFlash {
+      from { background: rgba(255, 77, 109, 0.45); }
+      to { background: rgba(255, 255, 255, 0.06); }
+    }
+
+    #overlay details.help {
+      text-align: left;
+      margin: 8px auto 0;
+      max-width: 640px;
+    }
+
+    #overlay details.help summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: #ffcf5a;
+      margin-bottom: 8px;
+    }
+
+    .mobile-hints {
+      color: #c9d4e3;
+      font-size: 14px;
+      margin: 10px auto 0;
     }
 
     button {
@@ -377,35 +443,47 @@
     </div>
   </div>
 
-  <div id="controls">
-    <button id="startBtn" title="Start / Resume">Start</button>
-    <button id="pauseBtn" title="Pause">Pause</button>
-    <button id="resetBtn" title="Reset">Reset</button>
-    <button id="muteBtn" title="Mute / Unmute Audio">🔊</button>
-    <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);cursor:pointer;">
+  <div id="dock">
+    <button id="pauseBtn" class="fab" type="button" title="Pause">Pause</button>
+    <button id="menuBtn" class="fab" type="button" title="Menu">Menu</button>
+    <button id="rocketBtn" class="fab" type="button" title="Arm a rocket, then tap a target">🚀 <span id="rocketBtnCount">0</span></button>
+  </div>
+  <div id="tools" class="hidden">
+    <button id="startBtn" type="button" title="Start / Resume">Start</button>
+    <button id="resetBtn" type="button" title="Reset">Reset</button>
+    <button id="muteBtn" type="button" title="Mute / Unmute Audio">🔊</button>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer;min-height:44px;">
+      Vol
       <input id="geoVolSlider" type="range" min="0" max="100" value="60"
-        style="width:60px;accent-color:var(--accent);cursor:pointer;">
+        style="width:120px;accent-color:var(--accent);cursor:pointer;">
     </label>
-    <button id="scoresBtn" title="High Scores">🏆</button>
+    <button id="scoresBtn" type="button" title="High Scores">Scores</button>
+  </div>
+  <div id="pauseVeil" class="hidden">
+    <div class="panel">
+      <h2 style="margin:0 0 8px;">Paused</h2>
+      <p style="margin:0 0 14px;color:#c9d4e3;">Tap Resume, or press Pause again.</p>
+      <button id="resumeBtn" class="cta" type="button">Resume</button>
+    </div>
   </div>
 
   <div id="overlay">
     <div class="panel">
       <h1>GEODES</h1>
-      <p class="big">Click objects erupting from the volcano to crack them open. Geodes contain valuable gems, while
-        rocks just break apart. Fireballs explode and break all geodes on screen at once. The game ends when
-        <strong>20</strong> geodes escape the screen.
-      </p>
+      <p class="big">Tap geodes before they fall back in. Rocks are decoys. The run ends when <strong>20</strong> geodes escape.</p>
+      <p class="mobile-hints">Tap to crack · tap the gem to collect · hold or tap 🚀, then tap a target</p>
+      <button class="cta" id="playBtn" type="button">Play</button>
 
+      <details class="help">
+        <summary>How to play</summary>
       <div class="row">
-        <div class="pill">🌋 <strong>Geodes</strong> — Dark spheres with silver specks. Click to crack open and release
+        <div class="pill">🌋 <strong>Geodes</strong> — Dark spheres with a crystal crack. Tap to crack them and release
           gems.</div>
-        <div class="pill">🪨 <strong>Rocks</strong> — Gray stones. Click to break into pieces (no gems, no penalty for
+        <div class="pill">🪨 <strong>Rocks</strong> — Jagged gray stones. Tap to break them (no gems, no penalty for
           missing).</div>
-        <div class="pill">🔥 <strong>Fireballs</strong> — Rare glowing orbs. Click to explode and turn all geodes into
+        <div class="pill">🔥 <strong>Fireballs</strong> — Rare glowing orbs. Tap to explode and turn all geodes into
           diamonds!</div>
-        <div class="pill">🚀 <strong>Rockets</strong> — Earn by collecting crystals. Right-click to launch. Explodes on
-          impact! Lead your target!</div>
+        <div class="pill">🚀 <strong>Rockets</strong> — Earn one by collecting a crystal. Right-click, long-press, or arm the rocket button, then tap the target.</div>
       </div>
 
       <div class="row">
@@ -417,9 +495,9 @@
         <div class="pill">🟠 Amber — 10</div>
       </div>
       <div class="row">
-        <div class="pill">Most rare ➜ Diamond → Ruby → Emerald → Sapphire → Amethyst → Amber</div>
+        <div class="pill">Most rare: Diamond, Ruby, Emerald, Sapphire, Amethyst, Amber</div>
       </div>
-      <button class="cta" id="playBtn">Play</button>
+      </details>
     </div>
 
     <div id="geo-hs-modal"
@@ -451,9 +529,22 @@
         const muteBtn = document.getElementById('muteBtn');
 
         // World & game state
-        let W = 0, H = 0, DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-        let lastTime = 0, running = false, gameOver = false;
+        let W = 0, H = 0, DPR = 1;
+        let lastTime = 0, running = false, gameOver = false, paused = false;
         let score = 0, missed = 0;
+        const coarsePointer = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+        const lite = coarsePointer || (navigator.hardwareConcurrency || 8) <= 4;
+        const HIT_PAD = coarsePointer ? 28 : 8;
+        let rocketArmed = false;
+        let hoverTarget = null;
+        const pointers = new Map();
+        const spriteCache = new Map();
+        const rocketBtn = document.getElementById('rocketBtn');
+        const rocketBtnCount = document.getElementById('rocketBtnCount');
+        const toolsEl = document.getElementById('tools');
+        const pauseVeil = document.getElementById('pauseVeil');
+        const menuBtn = document.getElementById('menuBtn');
+        const introHtml = overlay.querySelector('p.big').innerHTML;
 
         // Volcano position (center) and mouth radius
         const volcano = { x: 0, y: 0, mouthR: 26 };
@@ -514,28 +605,51 @@
           missedEl.textContent = missed.toString();
           speedEl.textContent = `${globalSpeedMult().toFixed(1)}×`;
           if (rocketEl) rocketEl.textContent = rocketCount.toString();
+          if (rocketBtnCount) rocketBtnCount.textContent = rocketCount.toString();
+          if (rocketBtn) {
+            rocketBtn.classList.toggle('armed', rocketArmed && rocketCount > 0);
+            rocketBtn.disabled = rocketCount <= 0 && !rocketArmed;
+          }
+        }
+
+        function buzz(ms) {
+          if (!coarsePointer || !navigator.vibrate) return;
+          navigator.vibrate(ms);
+        }
+
+        function motion() {
+          const shortest = Math.min(canvas.clientWidth || 400, canvas.clientHeight || 700);
+          const fit = coarsePointer ? clamp(shortest / 520, 0.68, 1) : 1;
+          return globalSpeedMult() * 0.4 * fit;
         }
 
         function resize() {
-          // Force a 9:16 portrait playfield so trajectories stay consistent on every device.
-          const hudH = window.innerWidth <= 768 ? 32 : 40;
           const viewportW = window.innerWidth;
-          const viewportH = (window.visualViewport?.height || window.innerHeight) - hudH;
-          const targetRatio = 9 / 16;
-          let cw = Math.min(viewportW, viewportH * targetRatio);
-          let ch = cw / targetRatio;
-          if (ch > viewportH) {
+          const viewportH = window.visualViewport?.height || window.innerHeight;
+          const narrow = viewportW < 900;
+          let cw, ch, left;
+          if (narrow) {
+            cw = viewportW;
             ch = viewportH;
-            cw = ch * targetRatio;
+            left = 0;
+          } else {
+            ch = viewportH;
+            cw = Math.min(560, ch * 9 / 16, viewportW);
+            left = Math.max(0, (viewportW - cw) / 2);
           }
-          canvas.style.top = `${hudH + Math.max(0, (viewportH - ch) / 2)}px`;
+          canvas.style.transform = 'none';
+          canvas.style.top = '0px';
+          canvas.style.left = `${left}px`;
           canvas.style.width = `${cw}px`;
           canvas.style.height = `${ch}px`;
-          W = canvas.width = Math.floor(cw * DPR);
-          H = canvas.height = Math.floor(ch * DPR);
+          DPR = Math.max(1, Math.min(lite ? 1.5 : 2, window.devicePixelRatio || 1));
+          W = canvas.width = Math.max(1, Math.floor(cw * DPR));
+          H = canvas.height = Math.max(1, Math.floor(ch * DPR));
           ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+          const safeBottom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom')) || 0;
           volcano.x = cw / 2;
-          volcano.y = ch - 40; // Position volcano at bottom of visible viewport
+          volcano.y = ch - Math.max(36, safeBottom + 22);
+          spriteCache.clear();
         }
         window.addEventListener('resize', resize, { passive: true });
         if (window.visualViewport) window.visualViewport.addEventListener('resize', resize, { passive: true });
@@ -562,7 +676,7 @@
           const angle = rand(-Math.PI / 4, -3 * Math.PI / 4); // Upward arc between -45° and -135°
           const dir = { x: Math.cos(angle), y: Math.sin(angle) };
           const baseSpeed = rand(350, 500); // Even higher launch speed for dramatic arcs
-          const radius = rand(18, 30); // Larger than rocks (14-24) but smaller than fireballs (20-28)
+          const radius = coarsePointer ? rand(22, 34) : rand(18, 30);
           const spin = rand(1.5, -1.5);
           const col = GEODE_COLORS[(Math.random() * GEODE_COLORS.length) | 0];
 
@@ -598,7 +712,7 @@
           const angle = rand(-Math.PI / 4, -3 * Math.PI / 4);
           const dir = { x: Math.cos(angle), y: Math.sin(angle) };
           const baseSpeed = rand(350, 500);
-          const radius = rand(14, 24); // Slightly smaller than geodes on average
+          const radius = coarsePointer ? rand(12, 20) : rand(14, 24);
           const spin = rand(1.5, -1.5);
           const col = ROCK_COLORS[(Math.random() * ROCK_COLORS.length) | 0];
 
@@ -608,6 +722,7 @@
             vx: dir.x * baseSpeed,
             vy: dir.y * baseSpeed,
             r: radius, spin, rot: rand(Math.PI * 2), color: col,
+            seed: (Math.random() * 20) | 0,
             clicked: false, escaped: false
           });
         }
@@ -687,7 +802,6 @@
           if (awarded > 0) {
             score += awarded;
             updateHUD();
-            if (typeof sfxGem === 'function') sfxGem(Math.min(1000, awarded));
           }
         }
 
@@ -699,7 +813,7 @@
             const drift = rand(12, -12);
             gems.push({
               type: t.name, color: t.color, points: t.points,
-              x, y, r: 14, rot: rand(Math.PI * 2), vrot: rand(1.2, -1.2),
+              x, y, r: coarsePointer ? 18 : 14, rot: rand(Math.PI * 2), vrot: rand(1.2, -1.2),
               vx: drift, vy: rand(-10, -30),
               life: 8.0, ttl: 8.0, alpha: 1
             });
@@ -714,7 +828,7 @@
           const free = !!opts.free;
           gems.push({
             type: diamondType.name, color: diamondType.color, points: free ? 0 : diamondType.points,
-            x, y, r: 14, rot: rand(Math.PI * 2), vrot: rand(1.2, -1.2),
+            x, y, r: coarsePointer ? 18 : 14, rot: rand(Math.PI * 2), vrot: rand(1.2, -1.2),
             vx: drift, vy: rand(-10, -30),
             life: 8.0, ttl: 8.0, alpha: 1,
             free // mark so code can choose to treat it specially if needed
@@ -815,130 +929,127 @@
           ctx.arcTo(x, y, x + w, y, rr);
         }
 
+        function geodeSprite(color, radius) {
+          const r = Math.max(8, Math.round(radius));
+          const key = `g|${color}|${r}`;
+          let sprite = spriteCache.get(key);
+          if (sprite) return sprite;
+          const pad = 4;
+          const size = (r + pad) * 2;
+          sprite = document.createElement('canvas');
+          sprite.width = sprite.height = size;
+          const g = sprite.getContext('2d');
+          g.translate(size / 2, size / 2);
+          const body = g.createRadialGradient(-r * 0.25, -r * 0.3, r * 0.1, 0, 0, r);
+          body.addColorStop(0, '#4a4a55');
+          body.addColorStop(0.45, color);
+          body.addColorStop(1, '#050505');
+          g.fillStyle = body;
+          g.beginPath();
+          g.arc(0, 0, r, 0, Math.PI * 2);
+          g.fill();
+          g.strokeStyle = 'rgba(190, 255, 236, 0.9)';
+          g.lineWidth = Math.max(1.5, r * 0.08);
+          g.beginPath();
+          g.moveTo(-r * 0.2, -r * 0.55);
+          g.lineTo(0, -r * 0.05);
+          g.lineTo(-r * 0.12, r * 0.08);
+          g.lineTo(r * 0.28, r * 0.48);
+          g.stroke();
+          g.fillStyle = '#bffff0';
+          g.beginPath();
+          g.arc(0, -r * 0.02, Math.max(2, r * 0.14), 0, Math.PI * 2);
+          g.fill();
+          g.fillStyle = '#e4e4e4';
+          for (let i = 0; i < 6; i++) {
+            const a = i * 1.9;
+            g.beginPath();
+            g.arc(Math.cos(a) * r * 0.58, Math.sin(a * 1.4) * r * 0.5, 1.1, 0, Math.PI * 2);
+            g.fill();
+          }
+          spriteCache.set(key, sprite);
+          return sprite;
+        }
+
+        function rockSprite(color, radius, seed) {
+          const r = Math.max(8, Math.round(radius));
+          const key = `r|${color}|${r}|${seed}`;
+          let sprite = spriteCache.get(key);
+          if (sprite) return sprite;
+          const pad = 4;
+          const size = (r + pad) * 2;
+          sprite = document.createElement('canvas');
+          sprite.width = sprite.height = size;
+          const g = sprite.getContext('2d');
+          g.translate(size / 2, size / 2);
+          g.fillStyle = color;
+          g.beginPath();
+          for (let i = 0; i < 6; i++) {
+            const a = i * (Math.PI * 2 / 6) + seed;
+            const rr = r * (0.72 + ((seed * (i + 3)) % 7) / 28);
+            const px = Math.cos(a) * rr;
+            const py = Math.sin(a) * rr;
+            i ? g.lineTo(px, py) : g.moveTo(px, py);
+          }
+          g.closePath();
+          g.fill();
+          g.strokeStyle = 'rgba(255,255,255,0.12)';
+          g.stroke();
+          spriteCache.set(key, sprite);
+          return sprite;
+        }
+
+        function fireballSprite() {
+          let sprite = spriteCache.get('fb');
+          if (sprite) return sprite;
+          const r = 32;
+          sprite = document.createElement('canvas');
+          sprite.width = sprite.height = r * 4;
+          const g = sprite.getContext('2d');
+          g.translate(r * 2, r * 2);
+          const glow = g.createRadialGradient(0, 0, r * 0.2, 0, 0, r * 1.8);
+          glow.addColorStop(0, 'rgba(255,207,90,0.9)');
+          glow.addColorStop(0.45, 'rgba(255,106,0,0.45)');
+          glow.addColorStop(1, 'rgba(255,106,0,0)');
+          g.fillStyle = glow;
+          g.beginPath();
+          g.arc(0, 0, r * 1.8, 0, Math.PI * 2);
+          g.fill();
+          const body = g.createRadialGradient(0, 0, 2, 0, 0, r);
+          body.addColorStop(0, '#fff6d8');
+          body.addColorStop(0.4, '#ffcf5a');
+          body.addColorStop(1, '#9a2400');
+          g.fillStyle = body;
+          g.beginPath();
+          g.arc(0, 0, r, 0, Math.PI * 2);
+          g.fill();
+          spriteCache.set('fb', sprite);
+          return sprite;
+        }
+
         function drawGeode(g) {
+          const sprite = geodeSprite(g.color, g.r);
           ctx.save();
           ctx.translate(g.x, g.y);
           ctx.rotate(g.rot);
-
-          // Main geode body - dark rounded shape
-          const rg = ctx.createRadialGradient(0, 0, g.r * 0.2, 0, 0, g.r * 1.2);
-          rg.addColorStop(0, lighten(g.color, 0.4)); // Lighter center
-          rg.addColorStop(0.6, g.color); // Main dark color
-          rg.addColorStop(1, darken(g.color, 0.3)); // Darker edge
-          ctx.fillStyle = rg;
-
-          // Rounded geode shape (circle with slight irregularity)
-          ctx.beginPath();
-          ctx.arc(0, 0, g.r, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Silver specks scattered across surface
-          ctx.fillStyle = '#c0c0c0'; // Silver color
-          for (let i = 0; i < 12; i++) {
-            const speckAngle = (i * 2.1 + g.rot * 0.5) % (Math.PI * 2);
-            const speckDist = g.r * (0.3 + (Math.sin(i * 1.7) * 0.4));
-            const speckSize = 1 + Math.sin(i * 2.3) * 0.8;
-
-            const sx = Math.cos(speckAngle) * speckDist;
-            const sy = Math.sin(speckAngle) * speckDist;
-
-            ctx.beginPath();
-            ctx.arc(sx, sy, speckSize, 0, Math.PI * 2);
-            ctx.fill();
-          }
-
-          // Brighter silver specks for extra sparkle
-          ctx.fillStyle = '#e8e8e8';
-          for (let i = 0; i < 6; i++) {
-            const speckAngle = (i * 1.8 + g.rot * 0.3) % (Math.PI * 2);
-            const speckDist = g.r * (0.2 + (Math.cos(i * 1.9) * 0.5));
-            const speckSize = 0.5 + Math.cos(i * 2.7) * 0.3;
-
-            const sx = Math.cos(speckAngle) * speckDist;
-            const sy = Math.sin(speckAngle) * speckDist;
-
-            ctx.beginPath();
-            ctx.arc(sx, sy, speckSize, 0, Math.PI * 2);
-            ctx.fill();
-          }
-
-          // Subtle edge highlight
-          ctx.strokeStyle = 'rgba(192,192,192,0.3)'; // Silver edge
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
-
+          ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
           ctx.restore();
         }
 
         function drawFireball(f) {
-          ctx.save();
-          ctx.translate(f.x, f.y);
-
-          // Pulsing effect
-          f.pulsePhase += 0.15;
-          const pulse = 1 + Math.sin(f.pulsePhase) * 0.2;
-          const r = f.r * pulse;
-
-          // Outer glow
-          const glowGrad = ctx.createRadialGradient(0, 0, r * 0.3, 0, 0, r * 1.8);
-          glowGrad.addColorStop(0, 'rgba(255,106,0,0.8)');
-          glowGrad.addColorStop(0.4, 'rgba(255,106,0,0.4)');
-          glowGrad.addColorStop(1, 'rgba(255,106,0,0.0)');
-          ctx.fillStyle = glowGrad;
-          ctx.beginPath();
-          ctx.arc(0, 0, r * 1.8, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Main fireball body
-          const fireGrad = ctx.createRadialGradient(0, 0, r * 0.2, 0, 0, r);
-          fireGrad.addColorStop(0, '#ffcf5a');
-          fireGrad.addColorStop(0.4, '#ff6a00');
-          fireGrad.addColorStop(0.8, '#d24d00');
-          fireGrad.addColorStop(1, '#8b1a00');
-          ctx.fillStyle = fireGrad;
-          ctx.beginPath();
-          ctx.arc(0, 0, r, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Hot core highlight
-          ctx.fillStyle = 'rgba(255,255,255,0.6)';
-          ctx.beginPath();
-          ctx.ellipse(-r * 0.3, -r * 0.25, r * 0.15, r * 0.1, Math.PI / 8, 0, Math.PI * 2);
-          ctx.fill();
-
-          ctx.restore();
+          f.pulsePhase += lite ? 0.08 : 0.15;
+          const pulse = 1 + Math.sin(f.pulsePhase) * 0.12;
+          const sprite = fireballSprite();
+          const drawR = f.r * pulse * 1.8;
+          ctx.drawImage(sprite, f.x - drawR, f.y - drawR, drawR * 2, drawR * 2);
         }
 
-        function drawRock(r) {
+        function drawRock(rock) {
+          const sprite = rockSprite(rock.color, rock.r, rock.seed || 1);
           ctx.save();
-          ctx.translate(r.x, r.y);
-          ctx.rotate(r.rot);
-
-          // Simple rock gradient (duller than geodes)
-          const rg = ctx.createRadialGradient(0, 0, r.r * 0.3, 0, 0, r.r * 1.1);
-          rg.addColorStop(0, lighten(r.color, 0.2));
-          rg.addColorStop(0.6, r.color);
-          rg.addColorStop(1, darken(r.color, 0.3));
-          ctx.fillStyle = rg;
-
-          // Irregular rock shape (more jagged than geodes)
-          const sides = 6;
-          ctx.beginPath();
-          for (let i = 0; i < sides; i++) {
-            const a = i * (Math.PI * 2 / sides) + 0.2;
-            const rr = r.r * (0.7 + Math.sin(i * 2.3 + r.rot) * 0.15); // More irregular
-            const px = Math.cos(a) * rr;
-            const py = Math.sin(a) * rr;
-            i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
-          }
-          ctx.closePath();
-          ctx.fill();
-
-          // Subtle edge (no bright highlight like geodes)
-          ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-          ctx.lineWidth = 1;
-          ctx.stroke();
-
+          ctx.translate(rock.x, rock.y);
+          ctx.rotate(rock.rot);
+          ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
           ctx.restore();
         }
 
@@ -968,15 +1079,12 @@
           g.shimmerPhase = (g.shimmerPhase || 0) + 0.12;
           const shimmer = 0.7 + Math.sin(g.shimmerPhase) * 0.3;
 
-          // Outer glow for visibility
-          const glowGrad = ctx.createRadialGradient(0, 0, g.r * 0.5, 0, 0, g.r * 2.2);
-          glowGrad.addColorStop(0, g.color + '80'); // 50% opacity
-          glowGrad.addColorStop(0.6, g.color + '20'); // 12% opacity
-          glowGrad.addColorStop(1, g.color + '00'); // transparent
-          ctx.fillStyle = glowGrad;
+          ctx.globalAlpha = g.alpha * 0.28;
+          ctx.fillStyle = g.color;
           ctx.beginPath();
-          ctx.arc(0, 0, g.r * 2.2, 0, Math.PI * 2);
+          ctx.arc(0, 0, g.r * (lite ? 1.5 : 1.8), 0, Math.PI * 2);
           ctx.fill();
+          ctx.globalAlpha = g.alpha;
 
           // Main gem body
           ctx.fillStyle = g.color;
@@ -1012,7 +1120,7 @@
 
           // Sparkle points around the gem
           const sparkleTime = g.shimmerPhase * 0.7;
-          for (let i = 0; i < 4; i++) {
+          for (let i = 0; i < (lite ? 0 : 4); i++) {
             const sparklePhase = sparkleTime + i * Math.PI / 2;
             const sparkleIntensity = Math.max(0, Math.sin(sparklePhase)) * g.alpha;
             if (sparkleIntensity > 0.3) {
@@ -1113,14 +1221,14 @@
           spawnTimer += dt * 1000;
           if (spawnTimer >= SPAWN_INTERVAL_MS) {
             spawnTimer = 0;
-            if (!gameOver) spawnGeode();
+            if (!gameOver && geodes.length < (lite ? 8 : 12)) spawnGeode();
           }
 
           // Spawn rocks
           rockTimer += dt * 1000;
-          if (rockTimer >= ROCK_INTERVAL_MS) {
+          if (rockTimer >= (coarsePointer ? 980 : ROCK_INTERVAL_MS)) {
             rockTimer = 0;
-            if (!gameOver) spawnRock();
+            if (!gameOver && rocks.length < (lite ? 6 : 10)) spawnRock();
           }
 
           // Spawn fireballs (rare)
@@ -1129,8 +1237,6 @@
             fireballTimer = 0;
             if (!gameOver) spawnFireball();
           }
-
-          const gSpeed = globalSpeedMult();
 
           // Update & draw shards
           for (let i = shards.length - 1; i >= 0; i--) {
@@ -1151,10 +1257,10 @@
 
             // Apply physics: horizontal velocity stays constant, vertical velocity affected by gravity
             // Use a slower speed multiplier for more manageable gameplay at start
-            const slowSpeed = gSpeed * 0.4; // Slow down geodes to 40% of normal speed
+            const slowSpeed = motion();
             g.x += g.vx * slowSpeed * dt;
             g.y += g.vy * slowSpeed * dt;
-            g.vy += 300 * slowSpeed * dt; // Scale gravity with speed so trajectory shape is preserved
+            g.vy += 300 * slowSpeed * dt;
 
             // Bounce off screen edges
             if (g.x - g.r < 0) { g.x = g.r; g.vx = Math.abs(g.vx) * 0.8; }
@@ -1175,8 +1281,8 @@
                 g.y = rock.y + ny * minDist;
                 // Reflect geode velocity off collision normal
                 const dot = g.vx * nx + g.vy * ny;
-                g.vx -= 2 * dot * nx;
-                g.vy -= 2 * dot * ny;
+                g.vx = (g.vx - 1.4 * dot * nx) * 0.82;
+                g.vy = (g.vy - 1.4 * dot * ny) * 0.82;
               }
             }
 
@@ -1188,6 +1294,13 @@
               geodes.splice(i, 1);
               missed++;
               updateHUD();
+              buzz(30);
+              const missedChip = missedEl.closest('.chip');
+              if (missedChip) {
+                missedChip.classList.remove('flash');
+                void missedChip.offsetWidth;
+                missedChip.classList.add('flash');
+              }
               if (missed >= MAX_MISSED) endGame();
             }
           }
@@ -1197,7 +1310,7 @@
             const fb = fireballs[i];
 
             // Apply same physics as geodes
-            const slowSpeed = gSpeed * 0.4;
+            const slowSpeed = motion();
             fb.x += fb.vx * slowSpeed * dt;
             fb.y += fb.vy * slowSpeed * dt;
             fb.vy += 300 * slowSpeed * dt;
@@ -1224,7 +1337,7 @@
             rock.rot += rock.spin * dt;
 
             // Apply same physics as geodes
-            const slowSpeed = gSpeed * 0.4;
+            const slowSpeed = motion();
             rock.x += rock.vx * slowSpeed * dt;
             rock.y += rock.vy * slowSpeed * dt;
             rock.vy += 300 * slowSpeed * dt;
@@ -1274,8 +1387,6 @@
             ctx.globalAlpha = a * 0.4;
             ctx.strokeStyle = '#00e5ff';
             ctx.lineWidth = 6;
-            ctx.shadowColor = '#00e5ff';
-            ctx.shadowBlur = 18;
             ctx.beginPath();
             ctx.moveTo(lb.x1, lb.y1);
             ctx.lineTo(lb.x2, lb.y2);
@@ -1284,7 +1395,6 @@
             ctx.globalAlpha = a;
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 2;
-            ctx.shadowBlur = 8;
             ctx.beginPath();
             ctx.moveTo(lb.x1, lb.y1);
             ctx.lineTo(lb.x2, lb.y2);
@@ -1317,8 +1427,6 @@
             ctx.globalAlpha = 0.3;
             ctx.strokeStyle = tb.color;
             ctx.lineWidth = 2;
-            ctx.shadowColor = tb.color;
-            ctx.shadowBlur = 10;
             ctx.setLineDash([4, 4]);
             ctx.beginPath();
             ctx.moveTo(gunTipX, gunTipY);
@@ -1332,13 +1440,6 @@
             ctx.fillStyle = tb.color;
             ctx.beginPath();
             ctx.arc(tb.x, tb.y, 5, 0, Math.PI * 2);
-            ctx.fill();
-            // Glow
-            ctx.globalAlpha = 0.4;
-            ctx.shadowColor = tb.color;
-            ctx.shadowBlur = 12;
-            ctx.beginPath();
-            ctx.arc(tb.x, tb.y, 8, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
           }
@@ -1399,6 +1500,20 @@
             }
           }
 
+          const particleCap = lite ? 70 : 160;
+          if (particles.length > particleCap) particles.splice(0, particles.length - particleCap);
+
+          if (hoverTarget && running) {
+            const o = hoverTarget.obj;
+            ctx.save();
+            ctx.strokeStyle = hoverTarget.kind === 'geode' ? '#d8fff6' : hoverTarget.kind === 'fireball' ? '#ffcf5a' : '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(o.x, o.y, o.r + 7, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+          }
+
           // Update & draw sparkles
           for (let i = particles.length - 1; i >= 0; i--) {
             const p = particles[i];
@@ -1420,7 +1535,7 @@
         }
 
         // Starry ambient field
-        const starField = Array.from({ length: 120 }, () => ({
+        const starField = Array.from({ length: lite ? 36 : 80 }, () => ({
           x: Math.random(), y: Math.random(), s: rand(0.2, 1.2), a: rand(0.4, 0.9)
         }));
         function drawBackgroundStars() {
@@ -1454,101 +1569,179 @@
           }
         }
 
-        // Click handling
-        function onClick(ev) {
-          if (gameOver) return;
-          // Only handle left clicks (button 0)
-          if (ev.button && ev.button !== 0) return;
+        function canvasPoint(ev) {
           const rect = canvas.getBoundingClientRect();
-          const x = (ev.clientX - rect.left);
-          const y = (ev.clientY - rect.top);
-
-          let hitSomething = false;
-
-          // Prefer clicking gems first — tractor beam pulls them to the gun
-          for (let i = gems.length - 1; i >= 0; i--) {
-            const gm = gems[i];
-            if (hitGem(gm, x, y)) {
-              fireLaser(gm.x, gm.y);
-              tractorBeams.push({ x: gm.x, y: gm.y, color: gm.color, points: gm.points });
-              gems.splice(i, 1);
-              hitSomething = true;
-              return;
-            }
-          }
-
-          // Then fireballs (priority over geodes for special effect)
-          for (let i = fireballs.length - 1; i >= 0; i--) {
-            const fb = fireballs[i];
-            if (dist2(x, y, fb.x, fb.y) <= Math.pow(fb.r + 5, 2)) {
-              fb.clicked = true;
-              fireLaser(fb.x, fb.y);
-              fireballs.splice(i, 1);
-              explodeFireball(fb);
-              hitSomething = true;
-              return;
-            }
-          }
-
-          // Then rocks (break but no gems)
-          for (let i = rocks.length - 1; i >= 0; i--) {
-            const rock = rocks[i];
-            if (dist2(x, y, rock.x, rock.y) <= Math.pow(rock.r + 2, 2)) {
-              rock.clicked = true;
-              fireLaser(rock.x, rock.y);
-              rocks.splice(i, 1);
-              makeShards(rock.x, rock.y, rock.color, { x: rock.vx / 100, y: rock.vy / 100 });
-              // Rocks now give a small score when clicked
-              score += 5; // regular rocks worth 5 points
-              updateHUD();
-              if (typeof sfxRockCrumble === 'function') sfxRockCrumble();
-              hitSomething = true;
-              return;
-            }
-          }
-
-          // Then geodes
-          const GEODE_SCALE = 1.4; // Must match the scale used in the visual patch
-          for (let i = geodes.length - 1; i >= 0; i--) {
-            const g = geodes[i];
-            // Apply scale to geode radius for hit detection
-            if (dist2(x, y, g.x, g.y) <= Math.pow((g.r + 2) * GEODE_SCALE, 2)) {
-              g.clicked = true;
-              fireLaser(g.x, g.y);
-              geodes.splice(i, 1);
-              makeShards(g.x, g.y, g.color, { x: g.vx / 100, y: g.vy / 100 }); // Use velocity for shard direction
-              maybeSpawnGem(g.x, g.y - 4);
-              if (typeof sfxRockCrumble === 'function') sfxRockCrumble();
-              if (typeof sfxGeode === 'function') sfxGeode();
-              hitSomething = true;
-              return;
-            }
-          }
-
-          // Fire laser even if nothing was hit
-          if (!hitSomething) {
-            fireLaser(x, y);
-          }
+          const sx = rect.width ? canvas.clientWidth / rect.width : 1;
+          const sy = rect.height ? canvas.clientHeight / rect.height : 1;
+          return {
+            x: (ev.clientX - rect.left) * sx,
+            y: (ev.clientY - rect.top) * sy
+          };
         }
-        canvas.addEventListener('mousedown', onClick);
 
-        // Right-click to fire rocket
-        canvas.addEventListener('contextmenu', (ev) => { ev.preventDefault(); });
-        canvas.addEventListener('mousedown', (ev) => {
-          if (ev.button !== 2) return;
-          ev.preventDefault();
-          if (gameOver || !running) return;
-          if (rocketCount <= 0) return;
+        function pickTarget(x, y) {
+          let best = null;
+          let bestScore = Infinity;
+          const consider = (obj, kind, pad, bias) => {
+            const reach = obj.r + pad;
+            const dx = x - obj.x;
+            const dy = y - obj.y;
+            const d2 = dx * dx + dy * dy;
+            if (d2 > reach * reach) return;
+            const score = Math.sqrt(d2) - obj.r + bias;
+            if (score < bestScore) {
+              bestScore = score;
+              best = { obj, kind };
+            }
+          };
+          for (let i = gems.length - 1; i >= 0; i--) consider(gems[i], 'gem', HIT_PAD + 12, -12);
+          for (let i = fireballs.length - 1; i >= 0; i--) consider(fireballs[i], 'fireball', HIT_PAD + 8, -6);
+          for (let i = geodes.length - 1; i >= 0; i--) consider(geodes[i], 'geode', HIT_PAD + 6, -2);
+          for (let i = rocks.length - 1; i >= 0; i--) consider(rocks[i], 'rock', Math.max(6, HIT_PAD - 8), 8);
+          return best;
+        }
+
+        function collectGem(gm) {
+          fireLaser(gm.x, gm.y);
+          tractorBeams.push({ x: gm.x, y: gm.y, color: gm.color, points: gm.points });
+          const idx = gems.indexOf(gm);
+          if (idx >= 0) gems.splice(idx, 1);
+          buzz(12);
+        }
+
+        function launchRocket(tx, ty) {
+          if (gameOver || !running || rocketCount <= 0) return false;
           rocketCount--;
+          rocketArmed = false;
           updateHUD();
-          const rect = canvas.getBoundingClientRect();
-          const tx = ev.clientX - rect.left;
-          const ty = ev.clientY - rect.top;
           const gunX = volcano.x;
           const gunY = volcano.y + 6 - 14 - 8;
-          rockets.push({ x: gunX, y: gunY, tx, ty, speed: 250 });
+          rockets.push({ x: gunX, y: gunY, tx, ty, speed: coarsePointer ? 340 : 280 });
           if (typeof sfxRocket === 'function') sfxRocket();
+          buzz(18);
+          return true;
+        }
+
+        function strike(x, y) {
+          if (gameOver || !running) return;
+          const gunX = volcano.x;
+          const gunY = volcano.y + 6 - 22;
+          if (gems.length && dist2(x, y, gunX, gunY) <= 44 * 44) {
+            let nearest = gems[0];
+            let best = Infinity;
+            for (const gm of gems) {
+              const d = dist2(x, y, gm.x, gm.y);
+              if (d < best) { best = d; nearest = gm; }
+            }
+            collectGem(nearest);
+            return;
+          }
+          const hit = pickTarget(x, y);
+          if (!hit) {
+            fireLaser(x, y);
+            return;
+          }
+          const obj = hit.obj;
+          if (hit.kind === 'gem') {
+            collectGem(obj);
+            return;
+          }
+          if (hit.kind === 'fireball') {
+            obj.clicked = true;
+            fireLaser(obj.x, obj.y);
+            fireballs.splice(fireballs.indexOf(obj), 1);
+            explodeFireball(obj);
+            buzz(20);
+            return;
+          }
+          if (hit.kind === 'rock') {
+            obj.clicked = true;
+            fireLaser(obj.x, obj.y);
+            rocks.splice(rocks.indexOf(obj), 1);
+            makeShards(obj.x, obj.y, obj.color, { x: obj.vx / 100, y: obj.vy / 100 });
+            score += 5;
+            updateHUD();
+            if (typeof sfxRockCrumble === 'function') sfxRockCrumble();
+            buzz(8);
+            return;
+          }
+          obj.clicked = true;
+          fireLaser(obj.x, obj.y);
+          geodes.splice(geodes.indexOf(obj), 1);
+          makeShards(obj.x, obj.y, obj.color, { x: obj.vx / 100, y: obj.vy / 100 });
+          maybeSpawnGem(obj.x, obj.y - 4);
+          if (typeof sfxRockCrumble === 'function') sfxRockCrumble();
+          if (typeof sfxGeode === 'function') sfxGeode();
+          buzz(10);
+        }
+
+        // Pointer aiming: slide onto a target, release to fire. Long-press fires a rocket.
+        function onClick(ev) {
+          if (gameOver) return;
+          if (ev.button && ev.button !== 0) return;
+          const p = canvasPoint(ev);
+          strike(p.x, p.y);
+        }
+        canvas.addEventListener('contextmenu', (ev) => { ev.preventDefault(); });
+        canvas.addEventListener('pointerdown', (ev) => {
+          if (ev.pointerType === 'mouse' && ev.button === 2) {
+            ev.preventDefault();
+            const p = canvasPoint(ev);
+            launchRocket(p.x, p.y);
+            return;
+          }
+          if (ev.button && ev.button !== 0) return;
+          ev.preventDefault();
+          const p = canvasPoint(ev);
+          const rec = { x: p.x, y: p.y, t: performance.now(), moved: false, fired: false, timer: 0 };
+          rec.timer = setTimeout(() => {
+            const cur = pointers.get(ev.pointerId);
+            if (!cur || cur.fired || cur.moved || rocketCount <= 0 || !running) return;
+            cur.fired = true;
+            launchRocket(cur.x, cur.y);
+          }, 420);
+          pointers.set(ev.pointerId, rec);
+          hoverTarget = pickTarget(p.x, p.y);
+          try { canvas.setPointerCapture(ev.pointerId); } catch (err) { /* ignore */ }
         });
+        canvas.addEventListener('pointermove', (ev) => {
+          const rec = pointers.get(ev.pointerId);
+          if (!rec) {
+            if (ev.pointerType === 'mouse') {
+              const p = canvasPoint(ev);
+              hoverTarget = pickTarget(p.x, p.y);
+            }
+            return;
+          }
+          const p = canvasPoint(ev);
+          if (Math.hypot(p.x - rec.x, p.y - rec.y) > 10) rec.moved = true;
+          rec.x = p.x;
+          rec.y = p.y;
+          hoverTarget = pickTarget(p.x, p.y);
+          if (!rec.fired && !rec.moved && performance.now() - rec.t > 380 && rocketCount > 0) {
+            rec.fired = true;
+            launchRocket(p.x, p.y);
+          }
+        });
+        function releasePointer(ev) {
+          const rec = pointers.get(ev.pointerId);
+          if (!rec) return;
+          clearTimeout(rec.timer);
+          pointers.delete(ev.pointerId);
+          const p = canvasPoint(ev);
+          hoverTarget = null;
+          if (rec.fired || gameOver || !running) return;
+          if (rocketArmed) launchRocket(p.x, p.y);
+          else strike(p.x, p.y);
+        }
+        canvas.addEventListener('pointerup', releasePointer);
+        canvas.addEventListener('pointercancel', (ev) => {
+          const rec = pointers.get(ev.pointerId);
+          if (rec) clearTimeout(rec.timer);
+          pointers.delete(ev.pointerId);
+          hoverTarget = null;
+        });
+        canvas.addEventListener('touchmove', (ev) => { ev.preventDefault(); }, { passive: false });
 
         // Rocket explosion — destroys everything in blast radius
         function rocketExplode(rx, ry) {
@@ -1604,22 +1797,6 @@
           laserBeams.push({ x1: rx - blastR, y1: ry, x2: rx + blastR, y2: ry, life: 0.2, ttl: 0.2 });
         }
 
-        // Add touch support for mobile devices
-        canvas.addEventListener('touchstart', function (e) {
-          e.preventDefault(); // Prevent scrolling
-          const rect = canvas.getBoundingClientRect();
-          const scaleX = canvas.width / rect.width;
-          const scaleY = canvas.height / rect.height;
-
-          for (let i = 0; i < e.touches.length; i++) {
-            const touch = e.touches[i];
-            const x = (touch.clientX - rect.left) * scaleX;
-            const y = (touch.clientY - rect.top) * scaleY;
-
-            onClick({ clientX: touch.clientX, clientY: touch.clientY, button: 0 });
-          }
-        }, { passive: false });
-
         function hitGem(g, x, y) {
           // Approximate by circle / diamond bounding
           const r = g.r * 1.0;
@@ -1631,25 +1808,43 @@
         function startGame() {
           if (gameOver) return;
           running = true;
+          paused = false;
           overlay.classList.add('hidden');
+          pauseVeil.classList.add('hidden');
+          toolsEl.classList.add('hidden');
         }
         function pauseGame() {
+          if (!running && !paused) return;
+          if (paused) {
+            startGame();
+            return;
+          }
           running = false;
+          paused = true;
+          pauseVeil.classList.remove('hidden');
         }
         function resetGame() {
-          running = false; gameOver = false;
+          running = false; paused = false; gameOver = false;
           score = 0; missed = 0;
           geodes.length = 0; rocks.length = 0; shards.length = 0; gems.length = 0; particles.length = 0; fireballs.length = 0; laserBeams.length = 0; rockets.length = 0; tractorBeams.length = 0;
           spawnTimer = 0; rockTimer = 0; fireballTimer = 0;
           rocketCount = 0;
+          rocketArmed = false;
+          hoverTarget = null;
           updateHUD();
+          pauseVeil.classList.add('hidden');
           overlay.classList.remove('hidden');
           overlay.querySelector('h1').textContent = 'GEODES';
           overlay.querySelector('.cta').textContent = 'Play';
+          const infoP = overlay.querySelector('p.big');
+          if (infoP) infoP.innerHTML = introHtml;
         }
         function endGame() {
           gameOver = true;
           running = false;
+          paused = false;
+          rocketArmed = false;
+          pauseVeil.classList.add('hidden');
           overlay.classList.remove('hidden');
           overlay.querySelector('h1').textContent = 'Game Over';
           overlay.querySelector('.cta').textContent = 'Play Again';
@@ -1758,34 +1953,16 @@
           if (gameOver) resetGame();
           startGame();
         });
-        playBtn.addEventListener('touchend', (e) => {
-          e.preventDefault();
-          if (geoPendingScore !== null) {
-            const inp = document.getElementById('geo-hs-name');
-            const name = inp && !inp.disabled ? inp.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase() : '';
-            addGeoHighScore(geoPendingScore, name); geoPendingScore = null;
-          }
-          geoLastNewHsIdx = -1;
-          if (gameOver) resetGame();
-          startGame();
-        });
-
         startBtn.addEventListener('click', startGame);
-        startBtn.addEventListener('touchend', (e) => {
-          e.preventDefault();
-          startGame();
-        });
-
         pauseBtn.addEventListener('click', pauseGame);
-        pauseBtn.addEventListener('touchend', (e) => {
-          e.preventDefault();
-          pauseGame();
-        });
-
+        document.getElementById('resumeBtn').addEventListener('click', startGame);
         resetBtn.addEventListener('click', resetGame);
-        resetBtn.addEventListener('touchend', (e) => {
-          e.preventDefault();
-          resetGame();
+        menuBtn.addEventListener('click', () => toolsEl.classList.toggle('hidden'));
+        rocketBtn.addEventListener('click', () => {
+          if (rocketCount <= 0) return;
+          rocketArmed = !rocketArmed;
+          updateHUD();
+          buzz(8);
         });
 
         muteBtn.addEventListener('click', function () {
@@ -1797,11 +1974,6 @@
           if (window.audioMuted) { slider.value = '0'; if (master) master.gain.value = 0; }
           else { slider.value = '60'; if (master) master.gain.value = 0.6; }
         });
-        muteBtn.addEventListener('touchend', function (e) {
-          e.preventDefault();
-          muteBtn.click();
-        });
-
         document.getElementById('geoVolSlider').addEventListener('input', function () {
           const v = Number(this.value);
           window.audioMuted = v === 0;
@@ -2130,7 +2302,8 @@
             const so = new MutationObserver(() => {
               const cur = parseInt(scoreEl.textContent || '0', 10) || 0;
               if (cur > lastScore) {
-                sfxGem(cur - lastScore);
+                const delta = cur - lastScore;
+                if (delta !== 5) sfxGem(delta);
 
                 // Check for milestone achievement (every 1000 points)
                 const lastMilestone = Math.floor(lastScore / 1000);
@@ -2159,16 +2332,6 @@
             mo.observe(missedEl, { childList: true, characterData: true, subtree: true });
           }
 
-          // Geode crack approximation: canvas click that didn't change score in this tick
-          canvas?.addEventListener('mousedown', () => {
-            const before = parseInt(scoreEl?.textContent || '0', 10) || 0;
-            // Run after game click handler
-            setTimeout(() => {
-              const after = parseInt(scoreEl?.textContent || '0', 10) || 0;
-              const isOverlayHidden = overlay?.classList.contains('hidden');
-              if (isOverlayHidden && after === before) sfxGeode();
-            }, 0);
-          });
         });
       })();
     </script>
@@ -2177,8 +2340,7 @@
       (() => {
         const canvas = document.getElementById('game');
         if (!canvas) return;
-        canvas.style.transformOrigin = 'top center';
-        canvas.style.transform = 'translateX(-50%)';
+        canvas.style.transformOrigin = 'top left';
       })();
     </script>
     <script>
@@ -2214,11 +2376,23 @@
         // canvas.style.transform = 'none';
       })();
     </script>
-    <script src="../scripts/github-scores.js"></script>
     <script>
-      if (window.GHScores) GHScores.load('geodes', 'geodes-highscores', 5).catch(() => { });
+      (function () {
+        function boot() {
+          if (window.GHScores) GHScores.load('geodes', 'geodes-highscores', 5).catch(function () { });
+        }
+        var s = document.createElement('script');
+        s.src = '../scripts/github-scores.js';
+        s.onload = boot;
+        s.onerror = function () {
+          var fallback = document.createElement('script');
+          fallback.src = 'scripts/github-scores.js';
+          fallback.onload = boot;
+          document.body.appendChild(fallback);
+        };
+        document.body.appendChild(s);
+      })();
     </script>
-    <script src="../scripts/mobile-controls.js"></script>
 </body>
 
 </html>
