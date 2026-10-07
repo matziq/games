@@ -54,7 +54,7 @@
 			gap: 32px;
 			margin: 32px 0;
 			width: 100%;
-			flex-wrap: wrap;
+			flex-wrap: nowrap;
 		}
 
 		.images img {
@@ -188,8 +188,17 @@
 		}
 
 		@media (max-width: 720px) {
+			.images {
+				gap: 8px;
+			}
+
 			.img-wrap {
-				width: 100%;
+				width: calc(50% - 4px);
+			}
+
+			.choose-btn {
+				font-size: 0.85em;
+				padding: 8px 2px;
 			}
 		}
 
@@ -298,8 +307,8 @@
 				const manifest = getManifest();
 				if (manifest) {
 					// Use manifest for file:// compatibility (no fetch required).
-					aiImages = takeFirst(unique(manifest.ai || []), 100);
-					realImages = takeFirst(unique(manifest.real || []), 100);
+					aiImages = unique(manifest.ai || []);
+					realImages = unique(manifest.real || []);
 				} else {
 					// Fallback: try to scrape a directory listing (works only when served by a web server that
 					// exposes directory indexes). This usually won't work under file://.
@@ -312,8 +321,8 @@
 						aiResponse.text(),
 						realResponse.text(),
 					]);
-					aiImages = takeFirst(unique(extractImageFilenames(aiText, 'ai/')), 100);
-					realImages = takeFirst(unique(extractImageFilenames(realText, 'real/')), 100);
+					aiImages = unique(extractImageFilenames(aiText, 'ai/'));
+					realImages = unique(extractImageFilenames(realText, 'real/'));
 				}
 
 				// Fixed 10 rounds per game
@@ -413,9 +422,34 @@
 		document.getElementById('roaiScoresBtn').addEventListener('click', showRoaiHighScores);
 		document.getElementById('roaiHsClose').addEventListener('click', hideRoaiHighScores);
 
+		function randomBit() {
+			if (window.crypto && typeof crypto.getRandomValues === 'function') {
+				const buf = new Uint8Array(1);
+				crypto.getRandomValues(buf);
+				return (buf[0] & 1) === 1;
+			}
+			return Math.random() < 0.5;
+		}
+
+		function randomIndex(count) {
+			if (count <= 1) return 0;
+			if (window.crypto && typeof crypto.getRandomValues === 'function') {
+				const max = 0x100000000;
+				const limit = max - (max % count);
+				const buf = new Uint32Array(1);
+				let value;
+				do {
+					crypto.getRandomValues(buf);
+					value = buf[0];
+				} while (value >= limit);
+				return value % count;
+			}
+			return Math.floor(Math.random() * count);
+		}
+
 		function shuffle(arr) {
 			for (let i = arr.length - 1; i > 0; i--) {
-				const j = Math.floor(Math.random() * (i + 1));
+				const j = randomIndex(i + 1);
 				[arr[i], arr[j]] = [arr[j], arr[i]];
 			}
 			return arr;
@@ -429,33 +463,35 @@
 			return m ? Number(m[1]) : null;
 		}
 
-		// Bag-style image pools: cycle through all images before repeating
-		let aiBag = [];
-		let realBag = [];
-
-		function drawFromBag(bag, source) {
-			if (bag.length === 0) {
-				// Refill bag with all images, shuffled
-				bag.push(...shuffle([...source]));
+		function indexImagesById(list, prefix) {
+			const map = new Map();
+			for (const path of list) {
+				const id = extractNumericId(path, prefix);
+				if (id == null || map.has(id)) continue;
+				map.set(id, path);
 			}
-			return bag.pop();
+			return map;
 		}
 
 		function pickPairs() {
-			const count = Math.min(20, aiImages.length, realImages.length);
+			const aiById = indexImagesById(aiImages, 'ai');
+			const realById = indexImagesById(realImages, 'real');
+			const ids = [];
+			for (const id of aiById.keys()) {
+				if (realById.has(id)) ids.push(id);
+			}
+			shuffle(ids);
+			const count = Math.min(totalRounds || 20, ids.length);
 			pairs = [];
-			const usedAi = new Set();
-			const usedReal = new Set();
 			for (let i = 0; i < count; i++) {
-				let ai, real;
-				// Draw from bag, skip if already used this game
-				let attempts = 0;
-				do { ai = drawFromBag(aiBag, aiImages); attempts++; } while (usedAi.has(ai) && attempts < aiImages.length * 2);
-				usedAi.add(ai);
-				attempts = 0;
-				do { real = drawFromBag(realBag, realImages); attempts++; } while (usedReal.has(real) && attempts < realImages.length * 2);
-				usedReal.add(real);
-				pairs.push({ ai, real });
+				const id = ids[i];
+				pairs.push({
+					id,
+					ai: aiById.get(id),
+					real: realById.get(id),
+					// Independent cryptographic coin flip. Not based on id or round number.
+					aiOnLeft: randomBit()
+				});
 			}
 		}
 
@@ -481,8 +517,7 @@
 			document.getElementById('score').textContent = `Score: ${pct}% (${score}/${pairs.length})`;
 			document.getElementById('round-info').textContent = `Round ${currentRound + 1} of ${pairs.length}`;
 			const pair = pairs[currentRound];
-			// Randomize left/right
-			const leftIsAI = Math.random() < 0.5;
+			const leftIsAI = pair.aiOnLeft === true;
 			const leftImg = leftIsAI ? pair.ai : pair.real;
 			const rightImg = leftIsAI ? pair.real : pair.ai;
 			const imagesDiv = document.getElementById('images');
@@ -648,6 +683,11 @@
 
 			// Start the game
 			pickPairs();
+			if (pairs.length === 0) {
+				document.getElementById('round-info').textContent = 'Error: No matching pairs found!';
+				document.getElementById('images').innerHTML = '<p>Each round needs real_#### and ai_#### images with the same number.</p>';
+				return;
+			}
 			currentRound = 0;
 			score = 0;
 			await showRound();
