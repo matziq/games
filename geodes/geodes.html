@@ -454,14 +454,14 @@
   <div id="overlay">
     <div class="panel">
       <h1>GEODES</h1>
-      <p class="big">The volcano is in the distance. Shoot geodes before they reach the laser. <strong>One geode hitting the gun ends the run.</strong></p>
-      <p class="mobile-hints">Tap to shoot · some stay small and climb · others grow as they come at you · 10 geodes grant a missile</p>
+      <p class="big">The volcano sits in the bottom third. Geodes arc out of it, then fall. <strong>One geode hitting the gun ends the run.</strong></p>
+      <p class="mobile-hints">Tap to shoot · they launch up and arc back down · 10 geodes grant a missile</p>
       <button class="cta" id="playBtn" type="button">Play</button>
 
       <details class="help">
         <summary>How to play</summary>
       <div class="row">
-        <div class="pill">🌋 <strong>Geodes</strong> — Dark spheres with a crystal crack. Tap to crack them and release
+        <div class="pill">🌋 <strong>Geodes</strong> — Dark spheres launched from the volcano. They arc up, then fall. Tap to crack them and release
           gems.</div>
         <div class="pill">🪨 <strong>Rocks</strong> — Jagged gray stones. Tap to break them (no gems, no penalty for
           missing).</div>
@@ -640,11 +640,12 @@
           H = canvas.height = Math.max(1, Math.floor(ch * DPR));
           ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
           const safeBottom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom')) || 0;
-          const coneH = Math.min(cw, ch) * 0.15;
-          volcano.x = cw / 2;
-          volcano.y = ch * 0.25 + coneH * 0.92;
-          gun.x = cw / 2;
-          gun.y = ch - Math.max(72, safeBottom + 48);
+          const shape = volcanoShape(cw, ch);
+          volcano.x = shape.x;
+          volcano.y = shape.baseY;
+          volcano.mouthY = shape.mouthY;
+          gun.x = shape.x;
+          gun.y = Math.min(ch - Math.max(54, safeBottom + 24), shape.mouthY + shape.height * 0.62);
           spriteCache.clear();
         }
         window.addEventListener('resize', resize, { passive: true });
@@ -666,54 +667,79 @@
           return GEM_TYPES[GEM_TYPES.length - 1];
         }
 
+        function volcanoShape(cw, ch) {
+          const w = cw || canvas.clientWidth || 400;
+          const h = ch || canvas.clientHeight || 700;
+          const height = h * 0.30;
+          const baseW = Math.min(w * 0.78, height * 2.15);
+          const baseY = h - 2;
+          return { x: w / 2, baseY, mouthY: baseY - height, height, baseW, topW: baseW * 0.22 };
+        }
+
         function volcanoMouth() {
-          const h = Math.min(canvas.clientWidth, canvas.clientHeight) * 0.15;
-          return { x: volcano.x, y: volcano.y - h * 0.92 };
+          if (!volcano.mouthY) {
+            const shape = volcanoShape();
+            volcano.x = shape.x;
+            volcano.y = shape.baseY;
+            volcano.mouthY = shape.mouthY;
+          }
+          return { x: volcano.x, y: volcano.mouthY };
+        }
+
+        function eruptionPuff(x, y) {
+          for (let i = 0; i < 10; i++) {
+            const life = rand(0.25, 0.55);
+            particles.push({
+              x, y: y + 2,
+              vx: rand(-70, 70),
+              vy: rand(-160, -40),
+              life, ttl: life,
+              size: rand(2, 5),
+              color: ['#ff6a00', '#ffcf5a', '#6a4030'][i % 3]
+            });
+          }
         }
 
         function makeFlyer(baseR) {
-          const roll = Math.random();
-          const mode = roll < 0.34 ? 'up' : 'in';
-          const threat = mode === 'in' && Math.random() < 0.72;
+          const mouth = volcanoMouth();
+          const h = canvas.clientHeight || 700;
+          const toward = Math.random() < 0.68;
+          const rise = h * rand(toward ? 0.40 : 0.28, toward ? 0.60 : 0.48);
+          const g = h * 1.05;
+          const boost = 0.9 + 0.12 * globalSpeedMult();
+          const vy = -Math.sqrt(2 * g * rise) * boost;
+          const side = toward ? rand(-0.38, 0.38) : (Math.random() < 0.5 ? -1 : 1) * rand(0.75, 1.15);
+          const vx = side * h * rand(0.18, 0.32) * boost;
+          eruptionPuff(mouth.x, mouth.y);
           return {
-            mode,
-            threat,
-            depth: 0.03,
-            lane: mode === 'up' ? rand(-0.45, 0.45) : (threat ? rand(-0.2, 0.2) : rand(-0.95, 0.95)),
-            speed: (mode === 'up' ? rand(0.28, 0.42) : rand(0.09, 0.14)) * globalSpeedMult(),
+            threat: toward,
+            vx, vy,
+            x: mouth.x + rand(-6, 6),
+            y: mouth.y + 4,
+            r: baseR * (coarsePointer ? 0.82 : 0.74),
             baseR,
-            x: volcano.x,
-            y: volcano.y,
-            r: baseR * 0.22,
             clicked: false
           };
         }
 
-        function projectFlyer(o) {
-          const mouth = volcanoMouth();
-          const cw = canvas.clientWidth || 1;
-          if (o.mode === 'up') {
-            const t = clamp(o.depth, 0, 1.2);
-            o.x = mouth.x + o.lane * (18 + t * 54);
-            o.y = mouth.y - t * (mouth.y + 36);
-            o.r = o.baseR * (0.24 + t * 0.05);
-            return;
-          }
-          const t = clamp(o.depth, 0, 1);
-          const ease = Math.pow(t, 0.78);
-          const nearX = gun.x + o.lane * cw * 0.42;
-          const nearY = gun.y + 4;
-          o.x = mouth.x + (nearX - mouth.x) * ease;
-          o.y = mouth.y + (nearY - mouth.y) * ease;
-          o.r = o.baseR * (0.2 + 0.92 * Math.pow(t, 0.72));
+        function stepFlyer(o, dt) {
+          const h = canvas.clientHeight || 700;
+          const g = h * 1.05 * (0.82 + 0.18 * globalSpeedMult());
+          o.vy += g * dt;
+          o.x += o.vx * dt;
+          o.y += o.vy * dt;
+          if (o.spin) o.rot += o.spin * dt;
+          const cw = canvas.clientWidth || 400;
+          if (o.x < o.r) { o.x = o.r; o.vx = Math.abs(o.vx) * 0.82; }
+          if (o.x > cw - o.r) { o.x = cw - o.r; o.vx = -Math.abs(o.vx) * 0.82; }
         }
 
         function hitsGun(o) {
-          if (o.mode !== 'in' || !o.threat) return false;
+          if (o.vy < 40) return false;
           const dx = o.x - gun.x;
-          const dy = o.y - (gun.y - 8);
-          const reach = 34 + o.r * 0.25;
-          return o.depth > 0.9 && dx * dx + dy * dy < reach * reach;
+          const dy = o.y - gun.y;
+          const reach = 34 + o.r * 0.4;
+          return dx * dx + dy * dy < reach * reach;
         }
 
         // Geode creation
@@ -723,18 +749,15 @@
           const col = GEODE_COLORS[(Math.random() * GEODE_COLORS.length) | 0];
           const g = makeFlyer(radius);
           Object.assign(g, { spin, rot: rand(Math.PI * 2), color: col });
-          projectFlyer(g);
           geodes.push(g);
         }
 
         // Fireball creation
         function spawnFireball() {
           const fb = makeFlyer(rand(24, 32));
-          fb.mode = 'in';
           fb.threat = true;
-          fb.lane = rand(-0.16, 0.16);
+          fb.vx *= 0.35;
           Object.assign(fb, { rot: 0, pulsePhase: 0 });
-          projectFlyer(fb);
           fireballs.push(fb);
         }
 
@@ -748,7 +771,6 @@
             spin, rot: rand(Math.PI * 2), color: col,
             seed: (Math.random() * 20) | 0
           });
-          projectFlyer(rock);
           rocks.push(rock);
         }
 
@@ -868,58 +890,56 @@
         // Drawing helpers
         function drawGround() {
           const w = canvas.clientWidth, h = canvas.clientHeight;
-          const mouth = volcanoMouth();
-          const haze = ctx.createLinearGradient(0, mouth.y - 40, 0, gun.y);
-          haze.addColorStop(0, 'rgba(120, 140, 170, 0.16)');
-          haze.addColorStop(0.45, 'rgba(40, 48, 64, 0.05)');
-          haze.addColorStop(1, 'rgba(0, 0, 0, 0)');
-          ctx.fillStyle = haze;
-          ctx.fillRect(0, mouth.y - 50, w, gun.y - mouth.y + 80);
-
-          ctx.beginPath();
-          ctx.moveTo(mouth.x - 18, mouth.y + 8);
-          ctx.lineTo(mouth.x + 18, mouth.y + 8);
-          ctx.lineTo(w * 0.92, h);
-          ctx.lineTo(w * 0.08, h);
-          ctx.closePath();
-          const slope = ctx.createLinearGradient(mouth.x, mouth.y, mouth.x, h);
-          slope.addColorStop(0, 'rgba(70, 78, 96, 0.35)');
-          slope.addColorStop(1, 'rgba(18, 20, 28, 0.55)');
-          ctx.fillStyle = slope;
-          ctx.fill();
+          const shape = volcanoShape(w, h);
+          const sky = ctx.createLinearGradient(0, h * 0.45, 0, shape.mouthY);
+          sky.addColorStop(0, 'rgba(0,0,0,0)');
+          sky.addColorStop(1, 'rgba(70, 48, 36, 0.18)');
+          ctx.fillStyle = sky;
+          ctx.fillRect(0, h * 0.45, w, shape.mouthY - h * 0.45);
         }
 
         function drawVolcano() {
-          const x = volcano.x, y = volcano.y;
-          const shortest = Math.min(canvas.clientWidth, canvas.clientHeight);
-          const baseW = shortest * 0.16;
-          const height = shortest * 0.15;
+          const shape = volcanoShape();
+          const x = shape.x;
+          const y = shape.baseY;
+          const height = shape.height;
+          const baseW = shape.baseW;
+          const topW = shape.topW;
+          const mouthY = shape.mouthY;
           ctx.save();
-          ctx.globalAlpha = 0.82;
+          ctx.globalAlpha = 1;
 
-          const lg = ctx.createRadialGradient(x, y - height, 2, x, y - height, 28);
-          lg.addColorStop(0, 'rgba(255,120,40,0.45)');
-          lg.addColorStop(1, 'rgba(255,120,40,0)');
+          const lg = ctx.createRadialGradient(x, mouthY, 4, x, mouthY, topW * 1.8);
+          lg.addColorStop(0, 'rgba(255,140,40,0.85)');
+          lg.addColorStop(0.45, 'rgba(255,80,20,0.28)');
+          lg.addColorStop(1, 'rgba(255,80,20,0)');
           ctx.fillStyle = lg;
           ctx.beginPath();
-          ctx.arc(x, y - height, 28, 0, Math.PI * 2);
+          ctx.arc(x, mouthY, topW * 1.8, 0, Math.PI * 2);
           ctx.fill();
 
-          const topW = baseW * 0.28;
-          ctx.fillStyle = '#3a4254';
+          const rock = ctx.createLinearGradient(x - baseW / 2, mouthY, x + baseW / 2, y);
+          rock.addColorStop(0, '#5c4638');
+          rock.addColorStop(0.45, '#3a2c28');
+          rock.addColorStop(1, '#241814');
+          ctx.fillStyle = rock;
           ctx.beginPath();
-          ctx.moveTo(x - topW / 2, y - height);
-          ctx.lineTo(x + topW / 2, y - height);
+          ctx.moveTo(x - topW / 2, mouthY);
+          ctx.lineTo(x + topW / 2, mouthY);
           ctx.lineTo(x + baseW / 2, y);
           ctx.lineTo(x - baseW / 2, y);
           ctx.closePath();
           ctx.fill();
 
           ctx.fillStyle = '#ff9a3c';
-          ctx.fillRect(x - topW / 2 - 2, y - height - 4, topW + 4, 7);
+          ctx.fillRect(x - topW / 2 - 3, mouthY - 6, topW + 6, 10);
+          ctx.fillStyle = '#ffcf5a';
+          ctx.beginPath();
+          ctx.ellipse(x, mouthY + 2, topW * 0.38, 6, 0, 0, Math.PI * 2);
+          ctx.fill();
           ctx.fillStyle = '#1a120e';
           ctx.beginPath();
-          ctx.ellipse(x, y - height + 1, topW * 0.42, 4, 0, 0, Math.PI * 2);
+          ctx.ellipse(x, mouthY + 4, topW * 0.28, 4, 0, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
         }
@@ -1349,22 +1369,17 @@
           }
 
           function stepList(list, kind) {
+            const floor = canvas.clientHeight + 28;
             for (let i = list.length - 1; i >= 0; i--) {
               const o = list[i];
-              o.depth += o.speed * dt;
-              if (o.spin) o.rot += o.spin * dt;
-              projectFlyer(o);
-              if (o.mode === 'up' && o.y < -o.r - 8) {
+              stepFlyer(o, dt);
+              if (kind === 'geode' && hitsGun(o)) {
                 list.splice(i, 1);
-                continue;
+                endGame('A geode hit the gun. One hit ends the run.');
+                return;
               }
-              if (o.mode === 'in' && (o.depth >= 1.05 || o.y > canvas.clientHeight + 20)) {
-                if (kind === 'geode' && hitsGun(o)) {
-                  list.splice(i, 1);
-                  endGame('A geode hit the gun. One hit ends the run.');
-                  return;
-                }
-                if (kind === 'rock') makeShards(o.x, o.y, o.color, { x: 0, y: 1 }, o.r / 22);
+              if (o.y > floor) {
+                if (kind === 'rock') makeShards(o.x, canvas.clientHeight - 8, o.color, { x: 0, y: 1 });
                 list.splice(i, 1);
               }
             }
@@ -1373,7 +1388,7 @@
           if (gameOver) { requestAnimationFrame(loop); return; }
           stepList(fireballs, 'fireball');
           stepList(rocks, 'rock');
-          threatClose = geodes.some(g => g.mode === 'in' && g.threat && g.depth > 0.68);
+          threatClose = geodes.some(g => g.vy > 20 && g.y > gun.y - 170 && Math.abs(g.x - gun.x) < 110);
           const podTarget = rocketCount > 0 ? 1 : 0;
           podExtend += (podTarget - podExtend) * Math.min(1, dt * 4.5);
 
@@ -1381,18 +1396,15 @@
           for (const g of geodes) flyers.push({ o: g, kind: 'geode' });
           for (const r of rocks) flyers.push({ o: r, kind: 'rock' });
           for (const f of fireballs) flyers.push({ o: f, kind: 'fireball' });
-          flyers.sort((a, b) => a.o.depth - b.o.depth);
+          flyers.sort((a, b) => a.o.y - b.o.y);
           function paintFlyer(item) {
-            ctx.save();
-            ctx.globalAlpha = item.o.mode === 'up' ? 0.75 : (0.55 + 0.45 * item.o.depth);
             if (item.kind === 'geode') drawGeode(item.o);
             else if (item.kind === 'rock') drawRock(item.o);
             else drawFireball(item.o);
-            ctx.restore();
           }
-          for (const item of flyers) if (item.o.depth < 0.78) paintFlyer(item);
+          for (const item of flyers) if (item.o.y < gun.y - 8) paintFlyer(item);
           drawGun();
-          for (const item of flyers) if (item.o.depth >= 0.78) paintFlyer(item);
+          for (const item of flyers) if (item.o.y >= gun.y - 8) paintFlyer(item);
 
           // Update & draw gems
           for (let i = gems.length - 1; i >= 0; i--) {
