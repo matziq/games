@@ -1,6 +1,6 @@
 # Real or AI
 
-This game picks 1 image from `ai/` and 1 image from `real/` each round.
+Each round shows one matched pair at the same time: `real_0023.jpg` and `ai_0023.jpg` (same number, any extension). Which image is on the left is a fresh cryptographic coin flip, so the AI image is not stuck on one side.
 
 ## Run
 
@@ -21,7 +21,7 @@ From the repo root (`D:\aaaScripts\Games`), run:
 powershell -ExecutionPolicy Bypass -File .\scripts\generate-real-or-ai-manifest.ps1 -MaxPerFolder 100
 ```
 
-That will rebuild `real_or_ai/image_manifest.js` using the first 100 images from each folder.
+That rebuilds `real_or_ai/image_manifest.js` from number-matched pairs (`real_0023` with `ai_0023`). It does not renumber files. `-MaxPerFolder 100` caps complete pairs. Use `-MaxPerFolder 0` to include every pair.
 
 ## Folder structure
 
