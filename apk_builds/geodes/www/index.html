@@ -455,13 +455,13 @@
     <div class="panel">
       <h1>GEODES</h1>
       <p class="big">The volcano sits in the bottom third. Geodes arc out of it, then fall. <strong>One geode hitting the gun ends the run.</strong></p>
-      <p class="mobile-hints">Tap to shoot Â· they launch up and arc back down Â· 10 geodes grant a missile</p>
+      <p class="mobile-hints">Tap to shoot Â· they rise slowly, arc, then fall at a steady speed Â· later eruptions get faster</p>
       <button class="cta" id="playBtn" type="button">Play</button>
 
       <details class="help">
         <summary>How to play</summary>
       <div class="row">
-        <div class="pill">ðŸŒ‹ <strong>Geodes</strong> â€” Dark spheres launched from the volcano. They arc up, then fall. Tap to crack them and release
+        <div class="pill">ðŸŒ‹ <strong>Geodes</strong> â€” Dark spheres launched from the volcano. They creep out, arc up, then fall at a steady speed. Tap to crack them and release
           gems.</div>
         <div class="pill">ðŸª¨ <strong>Rocks</strong> â€” Jagged gray stones. Tap to break them (no gems, no penalty for
           missing).</div>
@@ -579,10 +579,15 @@
           '#1a1a1a', '#0f0f0f', '#2a2a2a', '#1f1f1f', '#252525', '#1c1c1c'
         ];
 
-        // Compute global speed multiplier: +10% every 1000 points
+        // Eruptions start slow, then new ones get faster as the run goes on.
+        let runTime = 0;
+        function pace() {
+          const time = Math.min(1, runTime / 90);
+          const scored = Math.min(0.65, score / 4500);
+          return 0.34 + 0.9 * time + scored;
+        }
         function globalSpeedMult() {
-          const tiers = Math.floor(score / 1000);
-          return 1 + 0.10 * tiers;
+          return pace();
         }
 
         function updateHUD() {
@@ -703,19 +708,30 @@
         function makeFlyer(baseR) {
           const mouth = volcanoMouth();
           const h = canvas.clientHeight || 700;
+          const w = canvas.clientWidth || 400;
+          const p = pace();
           const toward = Math.random() < 0.68;
-          const rise = h * rand(toward ? 0.40 : 0.28, toward ? 0.60 : 0.48);
-          const g = h * 1.05;
-          const boost = 0.9 + 0.12 * globalSpeedMult();
-          const vy = -Math.sqrt(2 * g * rise) * boost;
-          const side = toward ? rand(-0.38, 0.38) : (Math.random() < 0.5 ? -1 : 1) * rand(0.75, 1.15);
-          const vx = side * h * rand(0.18, 0.32) * boost;
+          const rise = h * rand(toward ? 0.32 : 0.22, toward ? 0.48 : 0.38);
+          const speed = p / 0.34;
+          const climb = h * 0.055 * speed;
+          const fallSpeed = h * 0.09 * speed;
+          const side = toward ? rand(-0.12, 0.12) : (Math.random() < 0.5 ? -1 : 1) * rand(0.38, 0.86);
+          const apexY = mouth.y - rise;
+          const fallDist = Math.max(90, h + 24 - apexY);
+          const flight = rise / climb + fallDist / fallSpeed;
+          const landX = clamp(mouth.x + side * w * 0.46, 28, w - 28);
           eruptionPuff(mouth.x, mouth.y);
           return {
             threat: toward,
-            vx, vy,
-            x: mouth.x + rand(-6, 6),
-            y: mouth.y + 4,
+            phase: 'up',
+            age: 0,
+            startY: mouth.y + 2,
+            rise,
+            climb,
+            fallSpeed,
+            vx: (landX - mouth.x) / Math.max(1.6, flight),
+            x: mouth.x + rand(-5, 5),
+            y: mouth.y + 2,
             r: baseR * (coarsePointer ? 0.82 : 0.74),
             baseR,
             clicked: false
@@ -723,11 +739,24 @@
         }
 
         function stepFlyer(o, dt) {
-          const h = canvas.clientHeight || 700;
-          const g = h * 1.05 * (0.82 + 0.18 * globalSpeedMult());
-          o.vy += g * dt;
-          o.x += o.vx * dt;
-          o.y += o.vy * dt;
+          o.age += dt;
+          const emerge = Math.min(1, o.age / 0.85);
+          const scale = 0.18 + 0.82 * emerge;
+          if (o.phase === 'up') {
+            const climbed = o.startY - o.y;
+            const remain = o.rise - climbed;
+            const apexEase = remain < o.rise * 0.3 ? Math.max(0.16, remain / (o.rise * 0.3)) : 1;
+            const step = o.climb * scale * apexEase * dt;
+            if (step >= remain) {
+              o.y = o.startY - o.rise;
+              o.phase = 'down';
+            } else {
+              o.y -= step;
+            }
+          } else {
+            o.y += o.fallSpeed * dt;
+          }
+          o.x += o.vx * (o.phase === 'up' ? scale : 1) * dt;
           if (o.spin) o.rot += o.spin * dt;
           const cw = canvas.clientWidth || 400;
           if (o.x < o.r) { o.x = o.r; o.vx = Math.abs(o.vx) * 0.82; }
@@ -735,7 +764,7 @@
         }
 
         function hitsGun(o) {
-          if (o.vy < 40) return false;
+          if (o.phase !== 'down') return false;
           const dx = o.x - gun.x;
           const dy = o.y - gun.y;
           const reach = 34 + o.r * 0.4;
@@ -1334,17 +1363,19 @@
           drawGround();
           drawVolcano();
           aimGun();
+          runTime += dt;
+          const spawnPace = Math.max(0.48, Math.min(1.35, pace()));
 
           // Spawn geodes
           spawnTimer += dt * 1000;
-          if (spawnTimer >= SPAWN_INTERVAL_MS) {
+          if (spawnTimer >= SPAWN_INTERVAL_MS / spawnPace) {
             spawnTimer = 0;
             if (!gameOver && geodes.length < (lite ? 8 : 12)) spawnGeode();
           }
 
           // Spawn rocks
           rockTimer += dt * 1000;
-          if (rockTimer >= (coarsePointer ? 980 : ROCK_INTERVAL_MS)) {
+          if (rockTimer >= (coarsePointer ? 980 : ROCK_INTERVAL_MS) / spawnPace) {
             rockTimer = 0;
             if (!gameOver && rocks.length < (lite ? 6 : 10)) spawnRock();
           }
@@ -1388,7 +1419,7 @@
           if (gameOver) { requestAnimationFrame(loop); return; }
           stepList(fireballs, 'fireball');
           stepList(rocks, 'rock');
-          threatClose = geodes.some(g => g.vy > 20 && g.y > gun.y - 170 && Math.abs(g.x - gun.x) < 110);
+          threatClose = geodes.some(g => g.phase === 'down' && g.y > gun.y - 170 && Math.abs(g.x - gun.x) < 110);
           const podTarget = rocketCount > 0 ? 1 : 0;
           podExtend += (podTarget - podExtend) * Math.min(1, dt * 4.5);
 
@@ -1876,7 +1907,7 @@
           running = false; paused = false; gameOver = false;
           score = 0; missed = 0;
           geodes.length = 0; rocks.length = 0; shards.length = 0; gems.length = 0; particles.length = 0; fireballs.length = 0; laserBeams.length = 0; rockets.length = 0; tractorBeams.length = 0;
-          spawnTimer = 0; rockTimer = 0; fireballTimer = 0;
+          spawnTimer = 0; rockTimer = 0; fireballTimer = 0; runTime = 0;
           rocketCount = 0;
           geodesCracked = 0;
           podExtend = 0;
