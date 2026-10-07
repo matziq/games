@@ -2,11 +2,10 @@
 <html lang="en">
 
 <head>
-    <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
-    <link rel="apple-touch-icon" href="../favicon.svg" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='36' r='24' fill='%23e63946'/%3E%3Cpath d='M32 14Q40 0 52 8' stroke='%237cf7c4' stroke-width='6' fill='none'/%3E%3C/svg%3E" />
     <meta charset="utf-8" />
     <meta name="viewport"
-        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+        content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#0b1020" />
     <title>FruitPile</title>
     <style>
@@ -77,46 +76,6 @@
             justify-content: space-between;
             pointer-events: none;
             z-index: 3;
-        }
-
-        @media (max-width: 560px) {
-            .hud {
-                flex-wrap: nowrap;
-                justify-content: space-between;
-                padding: 8px;
-                gap: 6px;
-            }
-
-            .hud .panel {
-                width: auto;
-                padding: 6px 8px;
-                gap: 4px;
-            }
-
-            /* Hide Current, Next, Mode, Diamond rows on mobile */
-            .hud .panel>div:nth-child(n+3) {
-                display: none !important;
-            }
-
-            .hud .panel.buttons {
-                justify-content: flex-end;
-                flex-wrap: nowrap;
-                gap: 4px;
-            }
-
-            /* Hide menu link in HUD on mobile */
-            .hud .panel.buttons>a {
-                display: none;
-            }
-
-            .hud .panel.buttons button {
-                padding: 6px 8px;
-                font-size: 11px;
-            }
-
-            #toast {
-                display: none !important;
-            }
         }
 
         .panel {
@@ -360,81 +319,146 @@
                 transition: none !important;
             }
         }
+
+        * { box-sizing: border-box; }
+        [hidden] { display: none !important; }
+        #app {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            grid-template-rows: auto minmax(0, 1fr) auto;
+            padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
+                max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+            gap: 8px;
+        }
+        .hud {
+            position: relative;
+            inset: auto;
+            padding: 0;
+            display: grid;
+            gap: 6px;
+            width: min(100%, 600px);
+            justify-self: center;
+            pointer-events: auto;
+            grid-row: 1;
+            min-width: 0;
+            justify-content: stretch;
+        }
+        .topline, .queue, .statusline { display: flex; align-items: center; gap: 10px; }
+        .topline { justify-content: space-between; }
+        .brand { font-weight: 850; color: var(--accent); font-size: 20px; }
+        .label { color: #c2ccdb; font-size: 12px; }
+        .value { font-weight: 750; font-variant-numeric: tabular-nums; }
+        #score { font-size: 22px; }
+        .queue { justify-content: space-between; font-size: 14px; gap: 5px; }
+        .queue > div { display: flex; gap: 5px; align-items: center; }
+        .queue canvas { width: 26px; height: 26px; }
+        .statusline { justify-content: space-between; font-size: 13px; }
+        .chain { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        #goal { flex: 1; color: #e1e9f6; }
+        #goalProgress, #comboProgress { width: 100%; height: 5px; accent-color: var(--accent); display: block; }
+        #comboProgress { width: 42px; height: 4px; }
+        #arena { position: relative; grid-row: 2; min-height: 0; min-width: 0; display: grid; place-items: center; }
+        #game { position: relative; inset: auto; border-radius: 12px; background: #0b1324; }
+        #danger { position: absolute; top: 24%; color: #ffb4bb; background: #261522; padding: 6px 10px; border-radius: 8px; z-index: 2; pointer-events: none; font-weight: 700; }
+        #danger:empty { display: none; }
+        #controls { grid-row: 3; display: flex; justify-content: center; gap: 8px; z-index: 3; }
+        #controls button { padding: 8px; }
+        button, .modeToggle button { min-width: 44px; min-height: 44px; font-size: 14px; touch-action: manipulation; }
+        button:focus-visible, input:focus-visible, canvas:focus-visible { outline: 3px solid #ffd166; outline-offset: 3px; }
+        canvas:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
+        button:hover { border-color: var(--accent); }
+        button:disabled { opacity: .5; cursor: default; }
+        #btnDrop, #btnPlay { background: var(--accent); color: #071b19; border-color: var(--accent); }
+        #btnDrop { min-width: 104px; }
+        #toast { bottom: calc(68px + env(safe-area-inset-bottom)); background: #17263b; color: #f0f6ff; width: max-content; max-width: min(90vw, 500px); }
+        .card { max-height: 100%; overflow-y: auto; background: #101c30; width: min(100%, 520px); }
+        .card h1 { font-size: 26px; }
+        .card p { line-height: 1.5; }
+        #modal, #hs-modal { position: fixed; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+        #menuOptions { display: grid; gap: 12px; margin: 16px 0; }
+        .setting { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; font-size: 14px; }
+        .setting input[type=range] { width: 130px; min-height: 44px; accent-color: var(--accent); }
+        .setting input[type=checkbox] { width: 24px; height: 24px; accent-color: var(--accent); }
+        .setting:has(input[type=checkbox]) { cursor: pointer; }
+        #modeNote, #runSummary { color: #c2ccdb; font-size: 14px; line-height: 1.5; }
+        #runSummary:empty { display: none; }
+        .fruitTable { display: block; overflow-x: auto; }
+        @media (min-width: 900px), (min-width: 600px) and (max-height: 550px) {
+            #app { grid-template-columns: minmax(190px, 260px) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; gap: 12px; max-width: 1180px; margin: auto; }
+            .hud { grid-column: 1; grid-row: 1; align-self: center; gap: 18px; }
+            .topline { flex-wrap: wrap; }
+            .queue { align-items: start; flex-direction: column; gap: 12px; }
+            #arena { grid-column: 2; grid-row: 1 / 3; }
+            #controls { grid-column: 1; grid-row: 2; flex-wrap: wrap; }
+            #toast { left: 50%; bottom: 20px; }
+        }
+        @media (max-height: 400px) and (min-width: 600px) {
+            .hud { gap: 8px; }
+            .queue { gap: 4px; }
+            #controls { gap: 4px; }
+        }
     </style>
 </head>
 
 <body>
     <div id="app">
-        <canvas id="game"></canvas>
+        <div id="arena">
+            <canvas id="game" tabindex="0" aria-label="Fruit bowl. Left and right arrows aim. Space drops. S swaps. P pauses."></canvas>
+            <div id="danger" role="status"></div>
+        </div>
         <div id="bgOverlay"></div>
 
-        <div class="hud">
-            <div class="panel" style="grid-auto-flow: row; align-items: start; gap: 6px;">
-                <div><span class="label">Score</span> <span id="score" class="value">0</span></div>
-                <div><span class="label">Combo</span> <span id="combo" class="value">x1.00</span></div>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span class="label">Current</span>
-                    <span id="currentSwatch" aria-hidden="true"
-                        style="width:12px; height:12px; border-radius:999px; border:1px solid rgba(255,255,255,.22);"></span>
-                    <span id="currentName" class="value" style="font-weight:650;">—</span>
-                </div>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span class="label">Next</span>
-                    <span id="nextSwatch" aria-hidden="true"
-                        style="width:12px; height:12px; border-radius:999px; border:1px solid rgba(255,255,255,.22);"></span>
-                    <span id="nextName" class="value" style="font-weight:650;">—</span>
-                </div>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span class="label">Mode</span>
-                    <div class="modeToggle" role="group" aria-label="Game mode">
-                        <button id="btnModeExplode" type="button" aria-pressed="true"
-                            title="Fruit Explode">Explode</button>
-                        <button id="btnModeMerge" type="button" aria-pressed="false" title="Fruit Merge">Merge</button>
-                    </div>
-                </div>
-                <div id="diamondRow" style="display:none;"><span class="label">Diamonds</span> <span id="diamondCount"
-                        class="value">0/20</span></div>
+        <header class="hud">
+            <div class="topline"><span class="brand">FruitPile</span><div><span class="label">Score</span> <span id="score" class="value">0</span></div><button id="btnPause" aria-label="Pause and open menu">Menu</button></div>
+            <div class="queue">
+                <div><span class="label">Drop</span><canvas id="currentSwatch" width="28" height="28" aria-hidden="true"></canvas><span id="currentName" class="value">Cherry</span></div>
+                <div><span class="label">Next</span><canvas id="nextSwatch" width="28" height="28" aria-hidden="true"></canvas><span id="nextName" class="value">Cherry</span></div>
             </div>
+            <div class="statusline"><span id="goal">Explode: reach 1,500 points</span><span id="diamondRow" title="Diamonds created" aria-label="Diamonds created" hidden>&diams; <span id="diamondCount" class="value">0/1</span></span><span class="chain" title="Combo multiplier"><span id="combo" class="value">x1.00</span><progress id="comboProgress" max="3000" value="0" aria-label="Time left to chain"></progress></span></div>
+            <progress id="goalProgress" max="1500" value="0" aria-label="Next goal progress"></progress>
+        </header>
+        <nav id="controls" aria-label="Game controls">
+            <button id="btnLeft" aria-label="Aim left">Left</button>
+            <button id="btnDrop">Drop</button>
+            <button id="btnRight" aria-label="Aim right">Right</button>
+            <button id="btnSwap" title="Swap current and next, once per drop (S)">Swap</button>
+        </nav>
 
-            <div class="panel buttons">
-                    style="font-size:12px;font-weight:700;color:rgba(124,247,196,0.7);text-decoration:none;letter-spacing:0.3px;">←
-                <button id="btnNew" title="New game">New</button>
-                <label
-                    style="display:flex;align-items:center;gap:4px;font-size:11px;color:rgba(255,255,255,0.7);cursor:pointer;">
-                    🔊 <input id="volSlider" type="range" min="0" max="100" value="60"
-                        style="width:60px;accent-color:var(--accent);cursor:pointer;">
-                </label>
-                <button id="btnInfo" title="How To Play">How To Play</button>
-                <button id="btnScores" title="High Scores">🏆 Scores</button>
-            </div>
-        </div>
+        <div id="toast" role="status" aria-live="polite"></div>
 
-        <div id="toast">Tip: tap/click to drop fruit. Drag to aim. Same fruit touching = POP + points.</div>
-
-        <div id="modal" role="dialog" aria-modal="true" aria-label="Game over">
+        <div id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
             <div class="card">
                 <h1 id="modalTitle">FruitPile</h1>
                 <p id="modalBody"></p>
-                <div id="infoBody" class="infoGrid" style="display:none;"></div>
-                <p style="margin-top: 10px;">
-                    Controls: <span class="kbd">click/tap</span> drop, <span class="kbd">drag</span> aim.
-                    Keyboard: <span class="kbd">←</span>/<span class="kbd">→</span> aim, <span class="kbd">Space</span>
-                    drop.
-                </p>
                 <div class="row">
                     <button id="btnPlay">Play</button>
                     <button id="btnHow">How it works</button>
                 </div>
+                <div id="runSummary"></div>
+                <div id="menuOptions">
+                    <div class="modeToggle" role="group" aria-label="Game mode">
+                        <button id="btnModeExplode" type="button" aria-pressed="true">Explode</button>
+                        <button id="btnModeMerge" type="button" aria-pressed="false">Merge</button>
+                    </div>
+                    <div id="modeNote"></div>
+                    <label class="setting">Sound <input id="volSlider" type="range" aria-label="Sound volume" min="0" max="100" value="60"></label>
+                    <label class="setting">Reduced effects <input id="reducedEffects" type="checkbox"></label>
+                    <label class="setting">Chaos next run (wind + fruit decay) <input id="chaosMode" type="checkbox"></label>
+                </div>
+                <div id="infoBody" class="infoGrid" style="display:none;"></div>
+                <p style="margin-top: 10px;">
+                    Controls: <span class="kbd">click/tap</span> drop, <span class="kbd">drag</span> aim.
+                    Keyboard: <span class="kbd">←</span>/<span class="kbd">→</span> aim, <span class="kbd">Space</span>
+                    drop. <span class="kbd">S</span> swap, <span class="kbd">P / Esc</span> pause.
+                </p>
+                <div class="row"><button id="btnNew">New run</button><button id="btnScores">Local scores</button></div>
                 <div class="row" id="goHsRow" style="display:none;">
                     <button id="btnGoHs">🏆 High Scores</button>
-                </div>
-                <div class="row" style="margin-top:6px;">
-                        style="padding:8px 20px;font-size:14px;font-weight:700;color:rgba(124,247,196,0.8);text-decoration:none;border:1px solid rgba(124,247,196,0.25);border-radius:10px;">←
                 </div>
             </div>
         </div>
 
-        <div id="hs-modal"
+        <div id="hs-modal" role="dialog" aria-modal="true" aria-label="Local high scores"
             style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,0.7);z-index:5;">
             <div class="card" style="max-height:80vh;overflow-y:auto;">
                 <h1>🏆 High Scores</h1>
@@ -447,7 +471,7 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/matter-js@0.20.0/build/matter.min.js"></script>
+    <script src="vendor/matter-0.20.0.min.js"></script>
     <script>
         (() => {
             'use strict';
@@ -469,7 +493,6 @@
 
             const btnNew = $('#btnNew');
             const volSlider = $('#volSlider');
-            const btnInfo = $('#btnInfo');
             const btnPlay = $('#btnPlay');
             const btnHow = $('#btnHow');
             const btnModeExplode = $('#btnModeExplode');
@@ -485,40 +508,91 @@
 
             let gameMode = GAME_MODES.EXPLODE;
 
-            const DIAMOND_WIN_COUNT = 20;
+            const DIAMOND_WIN_COUNT = 1;
             let diamondsCreated = 0;
+            let storageWarningShown = false;
+            function storageRead(key, fallback) {
+                try {
+                    const value = localStorage.getItem(key);
+                    return value === null ? fallback : JSON.parse(value);
+                } catch (error) {
+                    storageWarning(error);
+                    return fallback;
+                }
+            }
+            function storageWrite(key, value) {
+                try {
+                    localStorage.setItem(key, JSON.stringify(value));
+                    return true;
+                } catch (error) {
+                    storageWarning(error);
+                    return false;
+                }
+            }
+            function storageWarning(error) {
+                console.warn('[FruitPile] Local storage unavailable or damaged:', error);
+                if (!storageWarningShown) {
+                    storageWarningShown = true;
+                    showToast('Local saves unavailable. You can still play this run.', 6000);
+                }
+            }
+            const savedSettings = storageRead('fruitpile.settings.v2', {}) || {};
+            const settings = {
+                volume: Number.isFinite(savedSettings.volume) ? Math.max(0, Math.min(100, savedSettings.volume)) : 60,
+                reduced: typeof savedSettings.reduced === 'boolean' ? savedSettings.reduced : matchMedia('(prefers-reduced-motion: reduce)').matches,
+                chaos: savedSettings.chaos === true
+            };
+            let runChaos = settings.chaos;
+            let paused = false;
+            let hasRun = false;
+            let winCelebrated = false;
+            let largestCreated = 0;
+            let bestCombo = 0;
+            let dropCount = 0;
+            let swapUsed = false;
+            let scoreGoal = 1500;
+            let simTime = 1;
+            let accumulator = 0;
+            const STEP_MS = 1000 / 60;
+            const COMBO_WINDOW_MS = 3000;
 
             function loadSavedMode() {
                 try {
                     const v = window.localStorage.getItem('fruitpile.mode');
                     if (v === GAME_MODES.EXPLODE || v === GAME_MODES.MERGE) return v;
-                } catch { /* ignore */ }
+                } catch (error) { storageWarning(error); }
                 return GAME_MODES.EXPLODE;
             }
 
             function saveMode(v) {
-                try { window.localStorage.setItem('fruitpile.mode', v); } catch { /* ignore */ }
+                try { window.localStorage.setItem('fruitpile.mode', v); } catch (error) { storageWarning(error); }
             }
 
             // ── High Score System ───────────────────────────────
-            const FP_HS_KEY = 'fruitpile.highscores';
+            const FP_HS_KEY = 'fruitpile.highscores.v2';
             const FP_HS_MAX = 5;
             let fpLastNewHsIdx = -1;
             let fpPendingScore = null;
 
-            function fpHsKey() { return gameMode; }
+            function fpHsKey() { return `${gameMode}.${runChaos ? 'chaos' : 'classic'}`; }
 
             function getFpAllHs() {
-                try { return JSON.parse(localStorage.getItem(FP_HS_KEY)) || {}; }
-                catch { return {}; }
+                const all = storageRead(FP_HS_KEY, {});
+                return all && typeof all === 'object' && !Array.isArray(all) ? all : {};
             }
 
-            function getFpHighScores() { return getFpAllHs()[fpHsKey()] || []; }
+            function getFpHighScores() {
+                const list = getFpAllHs()[fpHsKey()];
+                if (!Array.isArray(list)) return [];
+                return list.filter(e => e && Number.isFinite(e.score) && e.score >= 0 && typeof e.name === 'string')
+                    .map(e => ({ ...e, name: e.name.replace(/[^A-Z]/g, '').slice(0, 6) }))
+                    .sort((a, b) => b.score - a.score).slice(0, FP_HS_MAX);
+            }
 
             function addFpHighScore(scoreVal, nameVal) {
                 const all = getFpAllHs();
                 const key = fpHsKey();
-                const list = all[key] || [];
+                const list = getFpHighScores();
                 const entry = { score: scoreVal, name: (nameVal || '').toUpperCase(), mode: gameMode, date: new Date().toISOString() };
                 let inserted = false;
                 for (let i = 0; i < list.length; i++) {
@@ -528,15 +602,13 @@
                 else if (!inserted) { fpLastNewHsIdx = -1; return false; }
                 if (list.length > FP_HS_MAX) list.length = FP_HS_MAX;
                 all[key] = list;
-                localStorage.setItem(FP_HS_KEY, JSON.stringify(all));
-                if (window.GHScores) GHScores.save('fruitpile', FP_HS_KEY);
-                return true;
+                return storageWrite(FP_HS_KEY, all);
             }
 
             function renderFpHighScores() {
                 const list = getFpHighScores();
                 const wrap = document.getElementById('fp-hs-wrap');
-                document.getElementById('fp-hs-config').textContent = 'Mode: ' + (gameMode === 'merge' ? 'Merge' : 'Explode');
+                document.getElementById('fp-hs-config').textContent = `${gameMode === 'merge' ? 'Merge' : 'Explode'} / ${runChaos ? 'Chaos' : 'Classic'} - on this device only`;
                 if (list.length === 0) { wrap.innerHTML = '<p style="text-align:center;color:var(--ui-muted);">No scores yet.</p>'; return; }
                 const medals = ['hs-gold', 'hs-silver', 'hs-bronze'];
                 let html = '<table class="fruitTable"><thead><tr><th>#</th><th>Score</th><th>Name</th><th>Date</th></tr></thead><tbody>';
@@ -552,20 +624,28 @@
             }
 
             function showFpHighScores() {
+                pauseGame();
                 renderFpHighScores();
                 document.getElementById('hs-modal').style.display = 'flex';
+                modal.inert = true;
+                $('#fpHsClose').focus();
             }
 
             function hideFpHighScores() {
                 document.getElementById('hs-modal').style.display = 'none';
+                modal.inert = false;
                 fpLastNewHsIdx = -1;
+                $('#btnScores').focus();
             }
 
             function saveFpName() {
                 const inp = document.getElementById('fp-hs-name');
                 if (!inp || inp.disabled) return;
                 const name = inp.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase();
-                if (fpPendingScore !== null) { addFpHighScore(fpPendingScore, name); fpPendingScore = null; }
+                if (fpPendingScore !== null) {
+                    if (!addFpHighScore(fpPendingScore, name)) return;
+                    fpPendingScore = null;
+                }
                 inp.disabled = true;
                 inp.value = name || '------';
                 inp.style.borderColor = '#6ab04c';
@@ -579,7 +659,9 @@
 
             const Matter = window.Matter;
             if (!Matter) {
-                alert('Matter.js failed to load. Check your connection, or host the file locally.');
+                modal.classList.add('show');
+                modalTitle.textContent = 'Game engine missing';
+                modalBody.textContent = 'Keep the vendor folder beside this source file, or open the standalone release HTML.';
                 return;
             }
 
@@ -1016,8 +1098,7 @@
             function basePointsForFruit(fruitKey) {
                 const fruit = fruitByKey.get(fruitKey);
                 const idx = FRUITS.findIndex(f => f.key === fruit.key);
-                // Smaller => larger points.
-                return 25 * (FRUITS.length - idx);
+                return gameMode === GAME_MODES.MERGE ? 25 * (idx + 1) ** 2 : 25 * (FRUITS.length - idx);
             }
 
             // --- Tiny procedural textures (cached patterns) ---
@@ -1137,6 +1218,7 @@
             let engine;
             let world;
             let bounds;
+            let needsRender = true;
             let railProfile = null;
             let running = false;
             let rafId = 0;
@@ -1173,21 +1255,15 @@
             };
 
             function computePlayfield(w, h) {
-                // Wider playfield for a bowl-of-fruit feel.
-
-                // Width: use 85% of screen width for a roomier bowl.
-                const maxW = Math.min(900, Math.max(240, w - 20));
-                const minW = Math.min(300, maxW);
-                const target = Math.floor(w * 0.85);
-                const fieldW = Math.max(minW, Math.min(maxW, target));
-                const left = Math.floor((w - fieldW) / 2);
+                // Physics always uses the same world; only the rendered canvas scales.
+                const fieldW = w - 44;
+                const left = 22;
                 playfield.left = left;
                 playfield.width = fieldW;
                 playfield.right = left + fieldW;
                 playfield.centerX = left + fieldW / 2;
 
-                // Height: taller play area so the bowl has depth.
-                const fieldH = Math.max(240, Math.floor(h * 0.62));
+                const fieldH = h;
                 playfield.height = fieldH;
                 playfield.bottom = h;
                 playfield.top = Math.max(0, h - fieldH);
@@ -1205,7 +1281,8 @@
                 lastDropAt: 0,
                 downX: 0,
                 downClientX: 0,
-                downAt: 0
+                downAt: 0,
+                pointerId: null
             };
 
             // "Now" is the fruit you'll drop next; "Next" is the one after that.
@@ -1228,7 +1305,7 @@
                 peakAccel: 0.00012
             };
 
-            function nowMs() { return performance.now(); }
+            function nowMs() { return simTime; }
 
             function showToast(msg, ms = 1800) {
                 toastEl.textContent = msg;
@@ -1246,17 +1323,39 @@
 
                 if (currentFruit && currentNameEl && currentSwatchEl) {
                     currentNameEl.textContent = currentFruit.name;
-                    currentSwatchEl.style.background = `linear-gradient(180deg, ${currentFruit.accent}, ${currentFruit.color})`;
+                    if (currentSwatchEl.dataset.fruit !== currentFruit.key) {
+                        drawFruitIcon(currentSwatchEl, currentFruit);
+                        currentSwatchEl.dataset.fruit = currentFruit.key;
+                    }
                 }
 
                 if (nextFruit) {
                     nextNameEl.textContent = nextFruit.name;
-                    nextSwatchEl.style.background = `linear-gradient(180deg, ${nextFruit.accent}, ${nextFruit.color})`;
+                    if (nextSwatchEl.dataset.fruit !== nextFruit.key) {
+                        drawFruitIcon(nextSwatchEl, nextFruit);
+                        nextSwatchEl.dataset.fruit = nextFruit.key;
+                    }
                 }
 
                 if (diamondCountEl) {
                     diamondCountEl.textContent = `${Math.min(DIAMOND_WIN_COUNT, diamondsCreated)}/${DIAMOND_WIN_COUNT}`;
                 }
+                $('#comboProgress').value = Math.max(0, comboUntil - nowMs());
+                const progress = $('#goalProgress');
+                if (gameMode === GAME_MODES.MERGE) {
+                    const next = FRUITS[Math.min(8, largestCreated + 1)];
+                    $('#goal').textContent = diamondsCreated ? `${diamondsCreated} diamond${diamondsCreated === 1 ? '' : 's'} made - keep growing!` : `Merge: make a ${next.name}`;
+                    progress.max = 8;
+                    progress.value = largestCreated;
+                } else {
+                    $('#goal').textContent = `Explode: reach ${scoreGoal.toLocaleString()} points`;
+                    progress.max = scoreGoal;
+                    progress.value = score;
+                }
+                $('#btnSwap').disabled = !running || paused || swapUsed;
+                $('#btnDrop').disabled = !running || paused || dropGate.awaitingImpact;
+                $('#btnDrop').textContent = dropGate.awaitingImpact ? 'Landing...' : 'Drop';
+                if (runChaos) $('#goal').textContent += ' (Chaos)';
             }
 
             function comboMultiplier(count) {
@@ -1274,7 +1373,8 @@
 
             function beginComboWindow(t) {
                 comboCount += 1;
-                comboUntil = t + 1200;
+                bestCombo = Math.max(bestCombo, comboCount);
+                comboUntil = t + COMBO_WINDOW_MS;
             }
 
             function maybeAwardComboDiamond(cx, cy, fruitKey) {
@@ -1298,15 +1398,25 @@
                 modalBody.textContent = body;
                 if (infoBodyEl) infoBodyEl.style.display = 'none';
                 modal.classList.toggle('show', show);
+                $('.hud').inert = show;
+                $('#controls').inert = show;
+                $('#arena').inert = show;
+                if (show) {
+                    cancelAim();
+                    $('#btnPlay').textContent = running ? 'Resume' : 'Play';
+                    $('#btnPlay').focus();
+                }
             }
 
             function setInfoModal(title) {
+                pauseGame();
                 if (!infoBodyEl) return;
                 modalTitle.textContent = title || 'FruitPile';
                 modalBody.textContent = '';
                 infoBodyEl.innerHTML = '';
                 infoBodyEl.style.display = '';
                 modal.classList.add('show');
+                $('#menuOptions').hidden = true;
 
                 const rules = document.createElement('div');
                 rules.className = 'note';
@@ -1314,7 +1424,7 @@
                     <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
                         <span class="pill">Explode: POP matching fruit</span>
                         <span class="pill">Merge: MERGE matching fruit</span>
-                        <span class="pill">Fuse: 1.5s + 0.5s per extra fruit</span>
+                        <span class="pill">Fuse: 0.75s + 0.25s per extra fruit</span>
                     </div>
                     <div style="margin-bottom:8px;">
                         <b>Fruit Explode</b>: when 2+ of the same fruit touch, they pop after the fuse.
@@ -1322,7 +1432,7 @@
                     </div>
                     <div style="margin-bottom:8px;">
                         <b>Fruit Merge</b>: when 2+ of the same fruit touch, they merge after the fuse into the next fruit size.
-                        Make <b>${DIAMOND_WIN_COUNT} diamonds</b> to win. Two diamonds touching triggers a huge shockwave.
+                        Make your <b>first diamond</b>, then keep growing. Two diamonds touching triggers a huge shockwave.
                     </div>
                 `;
                 infoBodyEl.appendChild(rules);
@@ -1332,8 +1442,12 @@
                 bonus.innerHTML = `
                     <h2 style="margin:6px 0 6px;">Bonus / Combo</h2>
                     <div>
-                        Each successful pop/merge increases your combo multiplier. It ramps up and caps at <b>5x</b>.
-                        (Displayed as “Combo” in the HUD.)
+                        Match again within <b>3 seconds</b> to grow your combo, up to <b>5x</b>. The small timer beside the multiplier shows the window.
+                        Swap the current and next fruit once per drop to set up your next match.
+                        Small fruit earn more in Explode; larger fruit earn more in Merge.
+                        Keep settled fruit below the dashed line. A visible <b>3-second warning</b> gives you time to clear a match.
+                        Classic has no wind or decay. Optional Chaos brings back gusts and fruit that shrink after 12 idle seconds.
+                        Orange, Apple and Peach can drop after you match all three small types; Melon and Watermelon unlock after matching all three medium types.
                     </div>
                 `;
                 infoBodyEl.appendChild(bonus);
@@ -1454,26 +1568,26 @@
             }
 
             function resize() {
-                // Slightly higher cap helps high-DPI screens look less soft, without going overboard.
-                const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
-                const rect = app.getBoundingClientRect();
-                const w = Math.max(1, Math.floor(rect.width || window.innerWidth));
-                const h = Math.max(1, Math.floor(rect.height || window.innerHeight));
+                const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+                const rect = $('#arena').getBoundingClientRect();
+                const w = 520;
+                const h = 680;
+                const scale = Math.max(0.05, Math.min(rect.width / w, rect.height / h));
 
                 viewW = w;
                 viewH = h;
                 computePlayfield(w, h);
-                dangerLinePx = playfield.top + Math.max(80, Math.min(170, Math.floor(playfield.height * 0.18)));
+                dangerLinePx = 145;
 
-                canvas.width = Math.floor(w * dpr);
-                canvas.height = Math.floor(h * dpr);
-                canvas.style.width = `${w}px`;
-                canvas.style.height = `${h}px`;
+                canvas.width = Math.round(w * scale * dpr);
+                canvas.height = Math.round(h * scale * dpr);
+                canvas.style.width = `${w * scale}px`;
+                canvas.style.height = `${h * scale}px`;
 
                 const ctx = canvas.getContext('2d');
-                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-                if (engine) rebuildBounds(w, h);
+                ctx.setTransform(canvas.width / w, 0, 0, canvas.height / h, 0, 0);
+                needsRender = true;
+                cancelAim();
             }
 
             function rebuildBounds(w, h) {
@@ -1508,7 +1622,7 @@
                     const height = Math.max(120, bottomY - topY);
 
                     // Inset grows toward the bottom (so top is near-vertical at the edge, bottom curves inward).
-                    const insetMaxRaw = Math.max(70, Math.min(220, fieldW * 0.24));
+                    const insetMaxRaw = 65;
                     const insetMax = Math.min(insetMaxRaw, Math.max(40, fieldW * 0.5 - 90));
 
                     // Keep the curve definition so we can also hard-clamp fruit inside it.
@@ -1773,7 +1887,7 @@
             }
 
             function dropFruit(atX) {
-                if (!running) return;
+                if (!running || paused || document.hidden) return false;
 
                 // Allow two drops before we require an impact to "re-arm" drops.
                 // After credits are used, we block further drops until one of the dropped fruits
@@ -1783,6 +1897,10 @@
                 const t = nowMs();
                 if (t - input.lastDropAt < 240) return;
                 input.lastDropAt = t;
+                swapUsed = false;
+                dropCount += 1;
+                if (dropCount === 1) showToast('Now drop the second cherry in the same spot.', 2800);
+                else if (dropCount === 2) showToast('Watch the fuse. Use Next and Swap to plan your next match.', 2800);
 
                 const fruit = currentFruit;
                 const margin = Math.max(18, fruit.radius + 10);
@@ -1803,14 +1921,10 @@
                     dropGate.body = body;
                 }
 
-                // Give it a gentle sideways drift, so piles roll.
-                Body.applyForce(body, body.position, { x: (Math.random() - 0.5) * 0.0012, y: 0 });
+                return true;
             }
 
-            // Explosions are delayed slightly so a fresh impact has time to
-            // bump / contact additional same-fruit for easier chain reactions.
-            // User request: increase delay between matches from ~1s to 3s.
-            // This is the "match fuse" used once a same-fruit collision is detected.
+            // Short fuse leaves room to add to a group before it resolves.
             const EXPLODE_FUSE_MS = 750;
             // Global explosion knockback multiplier (applies to all fruits).
             // Keep conservative: physics has velocity caps + rail clamps, but too high still feels chaotic.
@@ -1818,8 +1932,7 @@
             // Mega diamond blast: briefly relax velocity caps so fruit can clear the rails.
             const DIAMOND_EJECT_WINDOW_MS = 1400;
             let diamondEjectUntilMs = 0;
-            // Fuse rule (both modes): base 1.5s for 2 touching; small extra time per additional fruit.
-            // Too much scaling makes 4-5 groups feel sluggish.
+            // Both modes: 0.75s for a pair, +0.25s per extra touching fruit.
             const EXTRA_MATCH_FUSE_PER_FRUIT_MS = 250;
             const explodeQueue = [];
             const explodedIds = new Set();
@@ -2287,6 +2400,11 @@
 
                 const dstFruit = nextFruitForKey(fruitKey);
                 if (!dstFruit) return;
+                const createdIndex = FRUITS.indexOf(dstFruit);
+                if (createdIndex > largestCreated) {
+                    largestCreated = createdIndex;
+                    showToast(`${dstFruit.name} created! Next: ${FRUITS[Math.min(8, createdIndex + 1)].name}`, 2200);
+                }
 
                 // Special: diamond + diamond => mega-explosion that throws everything.
                 if (srcFruit.key === 'diamond') {
@@ -2465,15 +2583,19 @@
             }
 
             function checkWinCondition(bodies) {
-                if (gameMode !== GAME_MODES.MERGE && gameMode !== GAME_MODES.EXPLODE) return false;
+                if (gameMode !== GAME_MODES.MERGE || winCelebrated || !running) return false;
                 if (diamondsCreated < DIAMOND_WIN_COUNT) return false;
 
-                running = false;
-                setModal(true, 'You win!', `You made ${diamondsCreated} diamonds. Final score: ${Math.floor(score)}.`);
+                winCelebrated = true;
+                pauseGame();
+                setModal(true, 'Your first diamond!', `You grew the whole fruit chain in ${dropCount} drops. Keep playing for a second diamond and a huge shockwave.`);
+                $('#btnPlay').textContent = 'Keep growing';
                 return true;
             }
 
             function spawnParticles(x, y, color, count, baseSpeed, sizeMul = 1) {
+                if (settings.reduced) return;
+                count = Math.min(count, 400 - particles.length);
                 for (let i = 0; i < count; i++) {
                     const a = Math.random() * Math.PI * 2;
                     const s = baseSpeed * (0.5 + Math.random());
@@ -2709,6 +2831,7 @@
             }
 
             function checkGameOver(bodies) {
+                let warning = 0;
                 const list = bodies || Composite.allBodies(world);
                 for (const b of list) {
                     if (!isFruitBody(b)) continue;
@@ -2726,7 +2849,8 @@
                     if (b.position.y - r < dangerLinePx) {
                         // Give it a little time; only end if it keeps being near top.
                         b.plugin._dangerAt = b.plugin._dangerAt || nowMs();
-                        if (nowMs() - b.plugin._dangerAt > 1200) {
+                        warning = Math.max(warning, nowMs() - b.plugin._dangerAt);
+                        if (nowMs() - b.plugin._dangerAt > 3000) {
                             endGame();
                             return;
                         }
@@ -2734,14 +2858,17 @@
                         if (b.plugin) b.plugin._dangerAt = 0;
                     }
                 }
+                $('#danger').textContent = warning > 0 ? `Clear the line! ${Math.max(1, Math.ceil((3000 - warning) / 1000))}s` : '';
             }
 
             function newGame() {
+                savePendingScore();
                 if (!engine) {
                     createEngine();
                 }
 
                 clearWorld();
+                Engine.clear(engine);
 
                 score = 0;
                 comboCount = 0;
@@ -2749,7 +2876,32 @@
                 explodedIds.clear();
                 explodeQueue.length = 0;
                 scheduledPairs.clear();
+                removedIds.clear();
+                stagedDetonations.length = 0;
+                stagedClusterSweeps.length = 0;
+                mergedClusterSweeps.length = 0;
                 diamondsCreated = 0;
+                diamondEjectUntilMs = 0;
+                simTime = 1;
+                timeMs = 1;
+                accumulator = 0;
+                paused = false;
+                hasRun = true;
+                winCelebrated = false;
+                largestCreated = 0;
+                bestCombo = 0;
+                dropCount = 0;
+                swapUsed = false;
+                scoreGoal = 1500;
+                runChaos = settings.chaos;
+                cancelAim();
+                input.x = 260;
+                $('#danger').textContent = '';
+                $('#runSummary').textContent = '';
+                $('#menuOptions').hidden = false;
+                $('#goHsRow').style.display = 'none';
+                const nameEntry = $('#fp-name-entry');
+                if (nameEntry) nameEntry.style.display = 'none';
 
                 resetMergeUnlock();
 
@@ -2758,13 +2910,13 @@
                 dropGate.credits = 2;
 
                 // Ensure the first click after starting/restarting isn't blocked by the drop cooldown.
-                input.lastDropAt = 0;
+                input.lastDropAt = -Infinity;
 
                 resize();
                 rebuildBounds(viewW || window.innerWidth, viewH || window.innerHeight);
 
-                currentFruit = randomFruitForCurrentMode();
-                nextFruit = randomFruitForCurrentMode();
+                currentFruit = fruitByKey.get('cherry');
+                nextFruit = fruitByKey.get('cherry');
 
                 // Restart wind schedule.
                 wind.active = false;
@@ -2773,10 +2925,12 @@
 
                 setModal(false, '', '');
                 running = true;
+                resumeAudio();
+                canvas.focus({ preventScroll: true });
 
                 showToast(gameMode === GAME_MODES.MERGE
-                    ? 'Tap/click to drop fruit. Same fruit touching = MERGE!'
-                    : 'Tap/click to drop fruit. Same fruit touching = POP!');
+                    ? 'Drop these two cherries together to grow a grape.'
+                    : 'Drop these two cherries together for your first pop.', 4000);
                 updateHud();
 
                 audio.playTune(gameMode);
@@ -2785,7 +2939,10 @@
             function updateModeButtons() {
                 if (btnModeExplode) btnModeExplode.setAttribute('aria-pressed', String(gameMode === GAME_MODES.EXPLODE));
                 if (btnModeMerge) btnModeMerge.setAttribute('aria-pressed', String(gameMode === GAME_MODES.MERGE));
-                if (diamondRowEl) diamondRowEl.style.display = (gameMode === GAME_MODES.MERGE) ? '' : 'none';
+                if (diamondRowEl) diamondRowEl.hidden = gameMode !== GAME_MODES.MERGE;
+                $('#modeNote').textContent = gameMode === GAME_MODES.MERGE
+                    ? 'Grow matching fruit into bigger fruit. Your first diamond is the goal.'
+                    : 'Pop matching fruit. Set up groups and chain matches to beat your best.';
             }
 
             function setMode(v) {
@@ -2794,12 +2951,21 @@
                     updateModeButtons();
                     return;
                 }
+                savePendingScore();
+                if (running) {
+                    endGame();
+                    savePendingScore();
+                }
                 gameMode = next;
                 saveMode(gameMode);
                 updateModeButtons();
                 showToast(gameMode === GAME_MODES.MERGE ? 'Mode: Fruit Merge' : 'Mode: Fruit Explosion');
-                // Restart so queued explosions/flags don't bleed across modes.
-                newGame();
+                runChaos = settings.chaos;
+                hasRun = false;
+                $('#fp-name-entry')?.remove();
+                $('#runSummary').textContent = '';
+                $('#goHsRow').style.display = 'none';
+                setModal(true, 'Choose your next run', $('#modeNote').textContent);
             }
 
             // Mode switching (Explosion vs Merge)
@@ -2810,10 +2976,13 @@
 
             function endGame() {
                 running = false;
+                paused = false;
+                cancelAim();
+                suspendAudio();
                 const finalScore = Math.floor(score);
                 const list = getFpHighScores();
-                const makesLb = finalScore > 0 && (list.length < 10 || finalScore > list[list.length - 1].score);
-                fpPendingScore = finalScore;
+                const makesLb = finalScore > 0 && (list.length < FP_HS_MAX || finalScore > list[list.length - 1].score);
+                fpPendingScore = makesLb ? finalScore : null;
 
                 let bodyHtml = `Final score: ${finalScore}.`;
                 if (makesLb) {
@@ -2821,8 +2990,11 @@
                     bodyHtml += isNewBest ? ' \ud83c\udfc6 New High Score!' : ' \ud83d\udccb You made the leaderboard!';
                 }
 
-                modalTitle.textContent = 'Game over';
+                setModal(true, 'Bowl full', 'Settled fruit stayed above the line for 3 seconds.');
                 modalBody.innerHTML = bodyHtml;
+                $('#runSummary').textContent = `The pile stayed above the line. ${dropCount} drops | Best chain: ${bestCombo} | ${gameMode === GAME_MODES.MERGE ? `Largest made: ${FRUITS[largestCreated].name}` : `Next target: ${scoreGoal.toLocaleString()}`}. Try leaving space for your next fruit.`;
+                $('#menuOptions').hidden = false;
+                $('#btnPlay').textContent = 'Play again';
                 if (infoBodyEl) infoBodyEl.style.display = 'none';
 
                 // Name entry
@@ -2837,7 +3009,7 @@
                     nameDiv.style.display = 'block';
                     nameDiv.innerHTML = `<div style="font-size:13px;color:var(--accent);margin-bottom:6px;">Enter your name:</div>
                         <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
-                            <input id="fp-hs-name" type="text" maxlength="6" autocomplete="off" spellcheck="false" style="width:120px;padding:6px 10px;font-size:18px;font-weight:bold;text-align:center;
+                            <input id="fp-hs-name" aria-label="High score name" type="text" maxlength="6" autocomplete="off" spellcheck="false" style="width:120px;padding:6px 10px;font-size:18px;font-weight:bold;text-align:center;
                                 background:rgba(255,255,255,0.08);color:#fff;border:2px solid var(--accent);border-radius:8px;outline:none;
                                 text-transform:uppercase;letter-spacing:2px;font-family:inherit;" placeholder="______">
                             <button id="fp-save-name" style="padding:6px 14px;font-size:14px;font-weight:700;
@@ -2849,10 +3021,8 @@
                     document.getElementById('fp-hs-name').addEventListener('keydown', e => {
                         if (e.key === 'Enter') { e.preventDefault(); saveFpName(); }
                     });
-                    setTimeout(() => document.getElementById('fp-hs-name').focus(), 100);
                 } else {
                     nameDiv.style.display = 'none';
-                    addFpHighScore(finalScore, '');
                 }
 
                 document.getElementById('goHsRow').style.display = 'flex';
@@ -3007,8 +3177,8 @@
 
                 // Danger line.
                 ctx.save();
-                ctx.globalAlpha = 0.65;
-                ctx.strokeStyle = 'rgba(255, 107, 122, 0.35)';
+                ctx.globalAlpha = 0.85;
+                ctx.strokeStyle = '#ff8a98';
                 ctx.setLineDash([10, 10]);
                 ctx.lineWidth = 2;
                 ctx.beginPath();
@@ -3019,42 +3189,24 @@
             }
 
             function drawBowlRails() {
-                if (!bounds || !bounds.bowl || !bounds.bowl.length) return;
-
+                if (!railProfile) return;
                 ctx.save();
                 ctx.lineJoin = 'round';
                 ctx.lineCap = 'round';
-
-                // Outer colored stroke.
-                ctx.globalAlpha = 0.45;
-                ctx.strokeStyle = 'rgba(90, 220, 255, 0.55)';
-                ctx.lineWidth = 4;
-
-                for (const seg of bounds.bowl) {
-                    if (!seg || !seg.vertices || !seg.plugin?.isBowlRail) continue;
-                    const v = seg.vertices;
-                    ctx.beginPath();
-                    ctx.moveTo(v[0].x, v[0].y);
-                    for (let i = 1; i < v.length; i++) ctx.lineTo(v[i].x, v[i].y);
-                    ctx.closePath();
-                    ctx.stroke();
+                ctx.strokeStyle = 'rgba(124, 247, 196, 0.4)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                for (let side = 0; side < 2; side++) {
+                    for (let i = 0; i <= 40; i++) {
+                        const p = side ? 1 - i / 40 : i / 40;
+                        const inset = railProfile.insetMax * Math.pow(p, railProfile.easePow) + 17;
+                        const x = side ? playfield.right - inset : playfield.left + inset;
+                        const y = railProfile.topY + railProfile.height * p;
+                        if (side === 0 && i === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    }
                 }
-
-                // Inner crisp edge.
-                ctx.globalAlpha = 0.75;
-                ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-                ctx.lineWidth = 1.5;
-
-                for (const seg of bounds.bowl) {
-                    if (!seg || !seg.vertices || !seg.plugin?.isBowlRail) continue;
-                    const v = seg.vertices;
-                    ctx.beginPath();
-                    ctx.moveTo(v[0].x, v[0].y);
-                    for (let i = 1; i < v.length; i++) ctx.lineTo(v[i].x, v[i].y);
-                    ctx.closePath();
-                    ctx.stroke();
-                }
-
+                ctx.stroke();
                 ctx.restore();
             }
 
@@ -3302,7 +3454,17 @@
                 // Show the next-to-drop fruit at the last chosen X (or center initially).
                 const xRaw = Number.isFinite(input.x) ? input.x : (playfield.centerX || (viewW || window.innerWidth) * 0.5);
                 const x = clampToPlayfield(xRaw, fruit.radius + 10);
-                const y = 42;
+                const y = playfield.top + Math.max(54, Math.min(110, playfield.height * 0.10));
+
+                ctx.save();
+                ctx.setLineDash([4, 8]);
+                ctx.strokeStyle = '#7cf7c4';
+                ctx.globalAlpha = .35;
+                ctx.beginPath();
+                ctx.moveTo(x, y + fruit.radius);
+                ctx.lineTo(x, viewH - 20);
+                ctx.stroke();
+                ctx.restore();
 
                 ctx.save();
                 ctx.globalAlpha = 0.58;
@@ -3443,8 +3605,8 @@
                 const h = viewH || window.innerHeight;
 
                 // Screen shake.
-                const sx = (Math.random() - 0.5) * shake;
-                const sy = (Math.random() - 0.5) * shake;
+                const sx = settings.reduced || paused ? 0 : (Math.random() - 0.5) * shake;
+                const sy = settings.reduced || paused ? 0 : (Math.random() - 0.5) * shake;
                 shake *= 0.86;
                 if (shake < 0.06) shake = 0;
 
@@ -3551,10 +3713,30 @@
             function tick(t) {
                 rafId = requestAnimationFrame(tick);
                 if (!lastT) lastT = t;
-                const dt = Math.min(33, t - lastT);
+                const dt = Math.max(0, Math.min(100, t - lastT));
                 lastT = t;
-                timeMs = t;
+                if (document.hidden) return;
+                if (running && !paused) {
+                    accumulator += dt;
+                    let steps = 0;
+                    while (accumulator >= STEP_MS && steps < 6 && running && !paused) {
+                        accumulator -= STEP_MS;
+                        simTime += STEP_MS;
+                        timeMs = simTime;
+                        simulateStep(simTime);
+                        steps++;
+                    }
+                } else {
+                    accumulator = 0;
+                }
+                if ((running && !paused) || needsRender) {
+                    renderFrame(running && !paused ? dt : 0);
+                    needsRender = false;
+                }
+                updateHud();
+            }
 
+            function simulateStep(t) {
                 if (running) {
                     // Process staged detonations (Explosion mode sequencing).
                     if (stagedDetonations.length) {
@@ -3702,13 +3884,7 @@
                         }
                     }
 
-                    // Sub-step physics to reduce tunneling through angled rail segments on high-velocity frames.
-                    const STEP_MS = 1000 / 60;
-                    const steps = Math.max(1, Math.min(4, Math.ceil(dt / STEP_MS)));
-                    const subDt = dt / steps;
-                    for (let s = 0; s < steps; s++) {
-                        Engine.update(engine, subDt);
-                    }
+                    Engine.update(engine, STEP_MS);
 
                     // Snapshot bodies once per tick; avoids repeated deep traversals.
                     const bodies = Composite.allBodies(world);
@@ -3727,10 +3903,11 @@
                     }
 
                     // Fruit fly decay: idle fruit shrinks over time.
-                    processFruitDecay(bodies);
-
-                    maybeStartWind(t);
-                    applyWindForces(t, bodies);
+                    if (runChaos) {
+                        processFruitDecay(bodies);
+                        maybeStartWind(t);
+                        applyWindForces(t, bodies);
+                    }
 
                     applyCenterBias(bodies);
                     keepFruitInPlayfield(bodies);
@@ -3920,13 +4097,13 @@
                         }
                     }
 
-                    checkGameOver(bodies);
-                    checkWinCondition(bodies);
-                    renderFrame(dt, bodies);
-                } else {
-                    renderFrame(dt);
+                    resetComboIfExpired(t);
+                    if (gameMode === GAME_MODES.EXPLODE && score >= scoreGoal) {
+                        showToast(`${scoreGoal.toLocaleString()} reached! Keep the chain going.`, 2200);
+                        scoreGoal = Math.ceil(score / 1500 + 1) * 1500;
+                    }
+                    if (!checkWinCondition()) checkGameOver(Composite.allBodies(world));
                 }
-                updateHud();
             }
 
             // --- Collisions ---
@@ -4027,14 +4204,84 @@
 
             // --- Input ---
             function tryDropAtX(x) {
-                // If the player dismissed the intro modal without starting,
-                // or if the game is over, let a click/tap immediately restart.
-                if (!running) {
-                    newGame();
-                    // Allow an immediate first drop on the same click.
-                    input.lastDropAt = 0;
+                if (!running || paused || modal.classList.contains('show')) return;
+                resumeAudio();
+                return dropFruit(x);
+            }
+
+            function cancelAim() {
+                const id = input.pointerId;
+                input.pointerId = null;
+                input.active = false;
+                input.downAt = 0;
+                if (id !== null && canvas.hasPointerCapture(id)) canvas.releasePointerCapture(id);
+            }
+
+            function resumeAudio() {
+                if (!audio.enabled) return;
+                try {
+                    audio.ensure();
+                    if (audio.ctx.state === 'suspended') audio.ctx.resume().catch(error => console.warn('[FruitPile] Audio resume:', error));
+                } catch (error) {
+                    console.warn('[FruitPile] Audio unavailable:', error);
+                    showToast('Audio unavailable. Gameplay is unaffected.');
                 }
-                dropFruit(x);
+            }
+
+            function suspendAudio() {
+                if (audio.ctx && audio.ctx.state === 'running') {
+                    audio.ctx.suspend().catch(error => console.warn('[FruitPile] Audio suspend:', error));
+                }
+            }
+
+            function pauseGame() {
+                cancelAim();
+                if (running) paused = true;
+                accumulator = 0;
+                suspendAudio();
+            }
+
+            function showMenu() {
+                pauseGame();
+                btnNew.textContent = 'New run';
+                $('#menuOptions').hidden = false;
+                setModal(true, running ? 'Take a breather' : 'FruitPile', running
+                    ? 'Your bowl is safe. Resume when you are ready. Switching modes ends this run.'
+                    : 'Aim, drop, match. Same fruit touching starts a short fuse. Keep the pile below the line.');
+            }
+
+            function resumeGame() {
+                if (!running) { newGame(); return; }
+                paused = false;
+                btnNew.textContent = 'New run';
+                accumulator = 0;
+                lastT = 0;
+                setModal(false, '', '');
+                $('#menuOptions').hidden = false;
+                resumeAudio();
+                canvas.focus({ preventScroll: true });
+                updateHud();
+            }
+
+            function savePendingScore() {
+                if (fpPendingScore === null) return;
+                const inp = $('#fp-hs-name');
+                const name = inp ? inp.value.replace(/[^a-zA-Z]/g, '').slice(0, 6).toUpperCase() : '';
+                addFpHighScore(fpPendingScore, name);
+                fpPendingScore = null;
+            }
+
+            function swapFruit() {
+                if (!running || paused || swapUsed) return;
+                [currentFruit, nextFruit] = [nextFruit, currentFruit];
+                swapUsed = true;
+                updateHud();
+                showToast('Swapped. Drop to earn your next swap.', 1200);
+            }
+
+            function aimBy(delta) {
+                if (!running || paused) return;
+                input.x = clampToPlayfield(input.x + delta, currentFruit.radius + 10);
             }
 
             // Surface unexpected runtime errors so "freezes" are diagnosable.
@@ -4053,192 +4300,116 @@
             });
 
             function setInputX(clientX) {
-                const rect = canvas.getBoundingClientRect();
-                const x = Math.max(0, Math.min(rect.width, clientX - rect.left));
-                input.x = clampToPlayfield(x, 8);
+                input.x = clientXToDropX(clientX);
             }
 
             function clientXToDropX(clientX) {
                 const rect = canvas.getBoundingClientRect();
-                const x = Math.max(0, Math.min(rect.width, clientX - rect.left));
+                const x = Math.max(0, Math.min(viewW, (clientX - rect.left) * viewW / rect.width));
                 return clampToPlayfield(x, 8);
             }
 
-            const supportsPointer = ('PointerEvent' in window);
-            const AIM_DRAG_THRESHOLD_PX = 10;
-
-            if (supportsPointer) {
-                canvas.addEventListener('pointerdown', (e) => {
-                    try { canvas.setPointerCapture(e.pointerId); } catch { /* ignore */ }
-                    // Don't immediately snap the preview to the pointer.
-                    // Only enter aim-mode if the user actually drags.
-                    input.active = false;
-                    input.downClientX = e.clientX;
-                    input.downX = clientXToDropX(e.clientX);
-                    input.downAt = nowMs();
-                    // Make sure audio is allowed.
-                    if (audio.enabled) {
-                        audio.ensure();
-                        if (audio.ctx && audio.ctx.state === 'suspended') audio.ctx.resume();
-                    }
-                });
-
-                canvas.addEventListener('pointermove', (e) => {
-                    const dx = Math.abs((e.clientX || 0) - (input.downClientX || 0));
-                    if (!input.active && dx < AIM_DRAG_THRESHOLD_PX) return;
-                    input.active = true;
-                    setInputX(e.clientX);
-                });
-
-                canvas.addEventListener('pointerup', (e) => {
-                    // Drop at the pointer X. If the user dragged, use the aimed X.
-                    const heldMs = nowMs() - (input.downAt || 0);
-                    const clickX = clientXToDropX(e.clientX);
-                    const x = input.active ? input.x : clickX;
-                    if (heldMs >= 0) {
-                        tryDropAtX(x);
-                        // Keep preview aligned to where the user actually dropped.
-                        input.x = x;
-                    }
-                    input.active = false;
-                    input.downAt = 0;
-                });
-
-                canvas.addEventListener('pointercancel', () => {
-                    input.active = false;
-                    input.downAt = 0;
-                });
-            } else {
-                // Fallback for older browsers / unusual environments.
-                canvas.addEventListener('mousedown', (e) => {
-                    input.active = false;
-                    input.downClientX = e.clientX;
-                    input.downX = clientXToDropX(e.clientX);
-                    input.downAt = nowMs();
-                });
-
-                window.addEventListener('mousemove', (e) => {
-                    const dx = Math.abs((e.clientX || 0) - (input.downClientX || 0));
-                    if (!input.active && dx < AIM_DRAG_THRESHOLD_PX) return;
-                    input.active = true;
-                    setInputX(e.clientX);
-                });
-
-                window.addEventListener('mouseup', (e) => {
-                    const clickX = clientXToDropX(e.clientX);
-                    const x = input.active ? input.x : clickX;
-                    tryDropAtX(x);
-                    input.x = x;
-                    input.active = false;
-                    input.downAt = 0;
-                });
-
-                canvas.addEventListener('touchstart', (e) => {
-                    const t = e.changedTouches && e.changedTouches[0];
-                    if (!t) return;
-                    input.active = false;
-                    input.downClientX = t.clientX;
-                    input.downX = clientXToDropX(t.clientX);
-                    input.downAt = nowMs();
-                }, { passive: true });
-
-                canvas.addEventListener('touchmove', (e) => {
-                    const t = e.changedTouches && e.changedTouches[0];
-                    if (!t) return;
-                    const dx = Math.abs((t.clientX || 0) - (input.downClientX || 0));
-                    if (!input.active && dx < AIM_DRAG_THRESHOLD_PX) return;
-                    input.active = true;
-                    setInputX(t.clientX);
-                }, { passive: true });
-
-                canvas.addEventListener('touchend', (e) => {
-                    const t = e.changedTouches && e.changedTouches[0];
-                    const clickX = t ? clientXToDropX(t.clientX) : (playfield.centerX || (viewW || window.innerWidth) * 0.5);
-                    const x = input.active ? input.x : clickX;
-                    tryDropAtX(x);
-                    input.x = x;
-                    input.active = false;
-                    input.downAt = 0;
-                }, { passive: true });
-            }
+            canvas.addEventListener('pointerdown', e => {
+                if (!running || paused || !e.isPrimary || e.button !== 0 || input.pointerId !== null) return;
+                input.pointerId = e.pointerId;
+                input.active = true;
+                setInputX(e.clientX);
+                canvas.setPointerCapture(e.pointerId);
+                resumeAudio();
+            });
+            canvas.addEventListener('pointermove', e => {
+                if (paused || !running) return;
+                if (e.pointerId === input.pointerId || (input.pointerId === null && e.pointerType === 'mouse')) setInputX(e.clientX);
+            });
+            canvas.addEventListener('pointerup', e => {
+                if (e.pointerId !== input.pointerId) return;
+                const rect = canvas.getBoundingClientRect();
+                const inside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
+                setInputX(e.clientX);
+                cancelAim();
+                if (inside) tryDropAtX(input.x);
+            });
+            canvas.addEventListener('pointercancel', cancelAim);
+            canvas.addEventListener('lostpointercapture', cancelAim);
+            canvas.addEventListener('contextmenu', e => e.preventDefault());
 
             window.addEventListener('keydown', (e) => {
-                const w = viewW || window.innerWidth;
-                const l = playfield.left || 0;
-                const r = playfield.right || w;
-                if (e.key === 'ArrowLeft') {
-                    const startX = Number.isFinite(input.x) ? input.x : (playfield.centerX || w * 0.5);
-                    input.x = Math.max(l, startX - 28);
-                    input.active = true;
-                } else if (e.key === 'ArrowRight') {
-                    const startX = Number.isFinite(input.x) ? input.x : (playfield.centerX || w * 0.5);
-                    input.x = Math.min(r, startX + 28);
-                    input.active = true;
-                } else if (e.key === ' ' || e.key === 'Enter') {
-                    dropFruit(input.active ? input.x : (playfield.centerX || w * 0.5));
-                    e.preventDefault();
+                const scoresOpen = $('#hs-modal').style.display === 'flex';
+                const dialog = scoresOpen ? $('#hs-modal') : modal.classList.contains('show') ? modal : null;
+                if (dialog && e.key === 'Tab') {
+                    const focusable = [...dialog.querySelectorAll('button, input')].filter(el => !el.disabled && el.getClientRects().length);
+                    const first = focusable[0], last = focusable[focusable.length - 1];
+                    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+                    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+                    return;
                 }
+                if (e.target instanceof HTMLElement && e.target.matches('input, textarea, select, [contenteditable=true]')) return;
+                if ((e.key === 'Escape' || e.key.toLowerCase() === 'p') && !e.repeat) {
+                    e.preventDefault();
+                    if (scoresOpen) hideFpHighScores();
+                    else if (paused && running) resumeGame();
+                    else showMenu();
+                    return;
+                }
+                if (dialog || e.target instanceof HTMLButtonElement || e.ctrlKey || e.altKey || e.metaKey) return;
+                if (e.key === 'ArrowLeft') aimBy(-24);
+                else if (e.key === 'ArrowRight') aimBy(24);
+                else if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) tryDropAtX(input.x);
+                else if (e.key.toLowerCase() === 's' && !e.repeat) swapFruit();
+                else return;
+                e.preventDefault();
             }, { passive: false });
 
             // --- Buttons ---
             btnNew.addEventListener('click', () => {
-                if (running && !confirm('Start a new game?')) return;
+                if (running && btnNew.textContent !== 'Confirm new run') {
+                    btnNew.textContent = 'Confirm new run';
+                    showToast('This ends your current run. Tap Confirm new run, or Resume to keep it.', 4000);
+                    return;
+                }
+                if (running) endGame();
+                btnNew.textContent = 'New run';
                 newGame();
             });
 
-            volSlider.addEventListener('input', async () => {
-                const v = Number(volSlider.value);
-                audio.setVolume(v);
-                if (v > 0) {
-                    audio.ensure();
-                    try { await audio.ctx.resume(); } catch { /* ignore */ }
-                }
+            volSlider.value = String(settings.volume);
+            audio.setVolume(settings.volume);
+            $('#reducedEffects').checked = settings.reduced;
+            $('#chaosMode').checked = settings.chaos;
+            volSlider.addEventListener('input', () => {
+                settings.volume = Number(volSlider.value);
+                audio.setVolume(settings.volume);
+                storageWrite('fruitpile.settings.v2', settings);
             });
-
-            btnPlay.addEventListener('click', () => {
-                modalIsInfo = false;
-                // Auto-save pending score
-                if (fpPendingScore !== null) {
-                    const inp = document.getElementById('fp-hs-name');
-                    const name = inp && !inp.disabled ? inp.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase() : '';
-                    addFpHighScore(fpPendingScore, name);
-                    fpPendingScore = null;
-                }
-                fpLastNewHsIdx = -1;
-                document.getElementById('goHsRow').style.display = 'none';
-                newGame();
+            $('#reducedEffects').addEventListener('change', e => {
+                settings.reduced = e.target.checked;
+                storageWrite('fruitpile.settings.v2', settings);
             });
-
+            $('#chaosMode').addEventListener('change', e => {
+                settings.chaos = e.target.checked;
+                storageWrite('fruitpile.settings.v2', settings);
+                if (!hasRun) runChaos = settings.chaos;
+            });
+            $('#btnPause').addEventListener('click', showMenu);
+            $('#btnDrop').addEventListener('click', () => tryDropAtX(input.x));
+            $('#btnLeft').addEventListener('click', () => aimBy(-24));
+            $('#btnRight').addEventListener('click', () => aimBy(24));
+            $('#btnSwap').addEventListener('click', swapFruit);
+            btnPlay.addEventListener('click', resumeGame);
             document.getElementById('btnScores').addEventListener('click', showFpHighScores);
             document.getElementById('fpHsClose').addEventListener('click', hideFpHighScores);
             document.getElementById('btnGoHs').addEventListener('click', showFpHighScores);
-
-            let modalIsInfo = false; // true when showing How to Play / info content
-
-            if (btnInfo) {
-                btnInfo.addEventListener('click', () => {
-                    modalIsInfo = true;
-                    setInfoModal('How To Play');
-                });
-            }
-
-            btnHow.addEventListener('click', () => {
-                modalIsInfo = true;
-                const help = (gameMode === GAME_MODES.MERGE)
-                    ? 'Fruit Merge: start with only Cherries dropping. Once you create a Grape by merging, Grapes unlock and can drop too (and so on as you merge up the chain). If 2+ of the SAME fruit touch, they merge into the next bigger fruit after a fuse (1.5s base, +0.5s per extra fruit in the touching group). Watermelon merges into Diamonds. Make 20 Diamonds to win. If two Diamonds touch, they trigger a massive shockwave. If the pile creeps above the dashed line for too long, it’s game over.'
-                    : 'Fruit Explode: drop fruit into the pile. If 2+ of the SAME fruit touch, they pop after a fuse (1.5s base, +0.5s per extra fruit in the touching group) and you score points. Smaller fruit = more points. Chain pops/merges to build a combo multiplier (caps at 5x). If the pile creeps above the dashed line for too long, it’s game over.';
-                setModal(true, 'How it works', help);
-            });
-
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    setModal(false, '', '');
-                    // Only start a new game if this was the initial/game-over modal, not How to Play.
-                    if (!modalIsInfo) {
-                        newGame();
-                    }
-                    modalIsInfo = false;
+            btnHow.addEventListener('click', () => setInfoModal('How to play'));
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    if (running) showMenu();
+                    suspendAudio();
+                    lastT = 0;
                 }
+            });
+            window.addEventListener('pagehide', () => { if (running) showMenu(); suspendAudio(); });
+            window.addEventListener('blur', () => {
+                if (running && !paused) showMenu();
             });
 
             // --- Bootstrap ---
@@ -4258,33 +4429,13 @@
                 nextFruit = weightedRandomFruit();
                 wind.nextAt = nowMs() + 3000 + Math.random() * 3000;
 
-                setModal(true, 'FruitPile', 'Choose a mode, then hit Play:\n\n• Fruit Explosion\n• Fruit Merge');
+                showMenu();
+                updateHud();
 
                 rafId = requestAnimationFrame(tick);
             }
 
             start();
-        })();
-    </script>
-    <script src="../scripts/github-scores.js"></script>
-    <script>
-        if (window.GHScores) GHScores.load('fruitpile', 'fruitpile.highscores', 5).catch(() => { });
-    </script>
-    <script>
-        // Sound toggle button
-        (() => {
-            const btn = document.createElement('button');
-            btn.id = 'fp-sound-btn';
-            btn.setAttribute('aria-label', 'Toggle sound');
-            btn.textContent = '🔊';
-            btn.style.cssText = 'position:fixed;top:10px;right:80px;z-index:99999;all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;font-size:22px;background:rgba(0,0,0,.45);color:#fff;border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(6px);';
-            let muted = false;
-            btn.addEventListener('click', () => {
-                muted = !muted;
-                btn.textContent = muted ? '🔇' : '🔊';
-                if (window._fpAudio) window._fpAudio.setVolume(muted ? 0 : 70);
-            });
-            document.body.appendChild(btn);
         })();
     </script>
 </body>

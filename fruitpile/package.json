@@ -1,0 +1,14 @@
+{
+  "name": "fruitpile",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Offline fruit physics game for desktop and mobile",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node tests\\game.test.mjs"
+  },
+  "devDependencies": {
+    "matter-js": "0.20.0",
+    "playwright": "1.58.2"
+  }
+}
