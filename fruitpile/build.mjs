@@ -14,7 +14,7 @@ if (/<(?:script|link|img)\b[^>]*(?:src|href)=["'](?!data:)/i.test(html)) {
     throw new Error('Standalone release contains an external asset');
 }
 fs.mkdirSync(output, { recursive: true });
-const target = path.join(output, 'FruitPile-2.0.0.html');
+const target = path.join(output, 'FruitPile-2.0.1.html');
 fs.writeFileSync(target, html);
 fs.writeFileSync(path.join(output, 'HTML-SHA256.txt'), `${crypto.createHash('sha256').update(html).digest('hex')}  ${path.basename(target)}\n`);
 console.log(`${target} (${Buffer.byteLength(html)} bytes)`);

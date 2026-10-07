@@ -8,7 +8,7 @@ const output = path.resolve(process.argv[2] || String.raw`D:\AI_Output\Fruitpile
 process.env.PLAYWRIGHT_BROWSERS_PATH ||= path.join(output, 'browsers');
 const require = createRequire(path.join(output, 'tools', 'package.json'));
 const { chromium } = require('playwright');
-const htmlPath = path.join(output, 'FruitPile-2.0.0.html');
+const htmlPath = path.join(output, 'FruitPile-2.0.1.html');
 const html = fs.readFileSync(htmlPath, 'utf8');
 const artifacts = path.join(output, 'tests');
 fs.mkdirSync(artifacts, { recursive: true });
@@ -25,9 +25,32 @@ window.testGame = {
   begin: mode => { gameMode=mode; updateModeButtons(); newGame(); audio.setVolume(0); cancelAnimationFrame(rafId); lastT=100; },
   stopRaf: () => cancelAnimationFrame(rafId),
   frames: (count, dt=1000/60) => { for(let i=0;i<count;i++){tick(lastT+dt); cancelAnimationFrame(rafId);} },
-  pair: (key='cherry') => {
-    const f=fruitByKey.get(key), a=fruitBodyAt(260-f.radius,500,f), b=fruitBodyAt(260+f.radius-1,500,f);
+  pair: (key='cherry', separation) => {
+    const f=fruitByKey.get(key);
+    const apart = separation == null ? f.radius * 2 - 1 : separation;
+    const a=fruitBodyAt(260-apart/2,500,f), b=fruitBodyAt(260+apart/2,500,f);
     World.add(world,[a,b]); return [a.id,b.id];
+  },
+  hold: (ids) => {
+    const saved = ids.map(id => { const b = Composite.get(world, id, 'body'); return { id, x: b.position.x, y: b.position.y }; });
+    const original = Engine.update.bind(Engine);
+    Engine.update = (engine, delta) => {
+      const result = original(engine, delta);
+      for (const s of saved) {
+        const b = Composite.get(world, s.id, 'body');
+        if (!b || removedIds.has(b.id)) continue;
+        Body.setPosition(b, { x: s.x, y: s.y });
+        Body.setVelocity(b, { x: 0, y: 0 });
+        Body.setAngularVelocity(b, 0);
+      }
+      return result;
+    };
+    return () => { Engine.update = original; };
+  },
+  separate: (id, x) => {
+    const b = Composite.get(world, id, 'body');
+    Body.setPosition(b, { x, y: 500 });
+    Body.setVelocity(b, { x: 0, y: 0 });
   },
   mergePair: key => {
     const f=fruitByKey.get(key), a=fruitBodyAt(260-f.radius,500,f), b=fruitBodyAt(260+f.radius,500,f);
@@ -78,7 +101,12 @@ try {
     await test('Both modes resolve touching fruit, score, and use the documented fuse', async () => {
         const { page, context, errors } = await setup();
         for (const mode of ['explode', 'merge']) {
-            await page.evaluate(mode => { testGame.begin(mode); testGame.pair(); testGame.frames(150); }, mode);
+            await page.evaluate(mode => {
+                testGame.begin(mode);
+                const ids = testGame.pair();
+                const release = mode === 'explode' ? testGame.hold(ids) : null;
+                try { testGame.frames(150); } finally { if (release) release(); }
+            }, mode);
             const s = await state(page);
             assert(s.score > 0);
             assert.equal(s.bodies.length, mode === 'merge' ? 1 : 0);
@@ -204,6 +232,51 @@ try {
         assert.deepEqual(errors, []);
         await context.close();
     });
+    await test('Explosion fuse cancels when fruit separate and watermelon blasts create one diamond', async () => {
+        const { page, context, errors } = await setup();
+        const result = await page.evaluate(() => {
+            testGame.begin('explode');
+            const bounced = testGame.pair('cherry');
+            const releaseBounce = testGame.hold(bounced);
+            try { testGame.frames(20); } finally { releaseBounce(); }
+            testGame.separate(bounced[1], 70);
+            const before = testGame.state();
+            testGame.frames(120);
+            const separated = testGame.state();
+            const held = testGame.pair('grape');
+            const releaseHeld = testGame.hold(held);
+            try { testGame.frames(80); } finally { releaseHeld(); }
+            const popped = testGame.state();
+            testGame.begin('explode');
+            const melons = testGame.pair('watermelon', 40);
+            const releaseMelons = testGame.hold(melons);
+            try { testGame.frames(90); } finally { releaseMelons(); }
+            const blasted = testGame.state();
+            testGame.frames(45);
+            const later = testGame.state();
+            return {
+                separatedScore: separated.score,
+                separatedBodies: separated.bodies.map(b => b.key).sort(),
+                armedCancelled: before.pending >= 0,
+                grapeScore: popped.score,
+                grapesLeft: popped.bodies.filter(b => b.key === 'grape').length,
+                blastScore: blasted.score,
+                diamonds: blasted.bodies.filter(b => b.key === 'diamond').length,
+                melonsLeft: blasted.bodies.filter(b => b.key === 'watermelon').length,
+                diamondsLater: later.bodies.filter(b => b.key === 'diamond').length
+            };
+        });
+        assert.equal(result.separatedScore, 0);
+        assert.deepEqual(result.separatedBodies, ['cherry', 'cherry']);
+        assert(result.grapeScore > 0);
+        assert.equal(result.grapesLeft, 0);
+        assert.equal(result.diamonds, 1, JSON.stringify(result));
+        assert.equal(result.melonsLeft, 0);
+        assert.equal(result.diamondsLater, 1);
+        assert(result.blastScore < 1000, 'one blast must not be followed by a diamond detonation');
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
     await test('Diamond milestone preserves the run and overflow has a visible grace period', async () => {
         const { page, context, errors } = await setup();
         await page.evaluate(() => { testGame.begin('merge'); testGame.mergePair('watermelon'); });
@@ -272,10 +345,11 @@ try {
         page.on('request', r => requests.push(r.url()));
         await page.goto(pathToFileURL(htmlPath).href);
         await page.locator('#btnPlay').click();
-        await page.locator('#btnDrop').click();
-        await page.waitForTimeout(1100);
-        await page.locator('#btnDrop').click();
-        await page.waitForTimeout(2400);
+        for (let i = 0; i < 6; i++) {
+            await page.locator('#btnDrop').click();
+            await page.waitForTimeout(400);
+        }
+        await page.waitForTimeout(2500);
         assert(Number(await page.locator('#score').innerText()) > 0);
         assert.deepEqual(errors, []);
         assert(requests.every(url => url.startsWith('file:') || url.startsWith('data:')));

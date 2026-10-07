@@ -7,7 +7,7 @@ extra room. Resizing or rotating scales the view without moving the pile.
 ## Play
 
 Open `fruitpile.html` with the `vendor` folder beside it, or open the single-file
-`FruitPile-2.0.0.html` release directly. No server, account or network is needed.
+`FruitPile-2.0.1.html` release directly. No server, account or network is needed.
 The first two fruit are cherries: drop them in the same place for a quick first
 match. The drop preview, upcoming fruit and current objective stay visible on
 phones, including narrow 320px screens and landscape.
@@ -18,6 +18,10 @@ phones, including narrow 320px screens and landscape.
 | Merge | Touch matching fruit together to create the next larger fruit. A group creates one next-size fruit; extra fruit increase the score. | Grow Cherry > Grape > Strawberry > Orange > Apple > Peach > Melon > Watermelon > Diamond. Celebrate the first diamond, then continue the same run. Larger fruit have higher base values. |
 
 Matches have a **0.75-second fuse, plus 0.25 seconds per extra touching fruit**.
+In Explode mode the fruit must still be touching when the fuse ends. Bouncing apart
+cancels that fuse; it does not pop later. A watermelon blast creates **one**
+diamond. Two diamonds are created only by two separate blasts, so one blast cannot
+immediately detonate its own reward.
 Match again within **3 seconds** to extend the combo (maximum 5x); its small
 timer shows how much time is left. In Merge, the progress bar tracks the largest
 fruit you have created. In Explode, it tracks the next score target.
@@ -113,7 +117,7 @@ node .\build.mjs 'D:\AI_Output\Fruitpile_PC_and_mobile'
 ```
 
 The build refuses external script/link/image dependencies and creates
-`FruitPile-2.0.0.html` plus its SHA-256 digest. The repository source also works
+`FruitPile-2.0.1.html` plus its SHA-256 digest. The repository source also works
 offline, but needs its sibling `vendor` folder.
 
 ### Browser tests
@@ -143,8 +147,8 @@ desktop/mobile gameplay after real animation frames.
 ### Android test APK
 
 The maintained `android` folder is a minimal native WebView shell. It preserves
-package ID **com.matziq.fruitpile**, increases versionCode to **2**, uses
-versionName **2.0.0**, minimum API **24**, and target API **36**. It embeds exactly
+package ID **com.matziq.fruitpile**, increases versionCode to **3**, uses
+versionName **2.0.1**, minimum API **24**, and target API **36**. It embeds exactly
 the standalone HTML, requests no Internet permission, blocks external WebView
 requests and has no JavaScript/native bridge or third-party runtime dependency.
 It supports rotation and handles system-bar/cutout/keyboard insets.
@@ -174,7 +178,7 @@ The script compiles Java/resources, creates DEX, aligns and signs the APK, check
 the signature and manifest, compares the embedded HTML with the release, and
 writes `SHA256SUMS.txt`. No Gradle/OneDrive build cache is involved.
 
-**`FruitPile-2.0.0-test.apk` is test-signed, not a Play Store production release.**
+**`FruitPile-2.0.1-test.apk` is test-signed, not a Play Store production release.**
 The disposable signing identity stays in `private\fruitpile-test.jks` under the
 output root and is never committed or published. Share the HTML/APK/checksum
 files, not the entire build folder. A differently signed existing installation

@@ -1377,10 +1377,16 @@
                 comboUntil = t + COMBO_WINDOW_MS;
             }
 
-            function maybeAwardComboDiamond(cx, cy, fruitKey) {
+            const awardedDiamondEvents = new Set();
+
+            function maybeAwardComboDiamond(cx, cy, fruitKey, cluster) {
                 if (gameMode !== GAME_MODES.EXPLODE) return;
-                // Diamonds only appear when watermelons are exploded.
+                // One watermelon blast creates one diamond. A second diamond at the
+                // same blast would touch it and detonate immediately.
                 if (fruitKey !== 'watermelon') return;
+                const eventKey = (cluster || []).map(b => b && b.id).filter(id => id != null).sort((a, b) => a - b).join('|');
+                if (!eventKey || awardedDiamondEvents.has(eventKey)) return;
+                awardedDiamondEvents.add(eventKey);
 
                 const diamond = fruitByKey.get('diamond');
                 if (!diamond) return;
@@ -1427,8 +1433,8 @@
                         <span class="pill">Fuse: 0.75s + 0.25s per extra fruit</span>
                     </div>
                     <div style="margin-bottom:8px;">
-                        <b>Fruit Explode</b>: when 2+ of the same fruit touch, they pop after the fuse.
-                        Bigger groups are worth more.
+                        <b>Fruit Explode</b>: when 2+ of the same fruit stay touching through the fuse, they pop.
+                        If they bounce apart first, the fuse cancels. Bigger groups are worth more.
                     </div>
                     <div style="margin-bottom:8px;">
                         <b>Fruit Merge</b>: when 2+ of the same fruit touch, they merge after the fuse into the next fruit size.
@@ -1982,7 +1988,8 @@
             }
 
             function stageExplosionCluster(cluster, bodies, fruitKey) {
-                if (!cluster || cluster.length < 2) return;
+                cluster = (cluster || []).filter(b => b && isFruitBody(b) && !removedIds.has(b.id) && !explodedIds.has(b.id));
+                if (cluster.length < 2) return;
 
                 // Use the same scoring + shockwave rules as explodeCluster(), but do removals sequentially.
                 const t = nowMs();
@@ -2012,7 +2019,7 @@
                 cx /= cluster.length;
                 cy /= cluster.length;
 
-                maybeAwardComboDiamond(cx, cy, fruitKey);
+                maybeAwardComboDiamond(cx, cy, fruitKey, cluster);
 
                 // Track the exploded fruit for tier-based spawning unlock.
                 maybeAdvanceMergeUnlockForFruitKey(fruitKey);
@@ -2237,10 +2244,8 @@
                             clearArmed(b);
                             removeBodyFromWorld(b);
                         } else {
-                            // Explosion mode: remove immediately and clear state.
+                            // A separated explosion fuse must not delete or detonate the fruit.
                             clearArmed(b);
-                            removedIds.add(b.id);
-                            removeBodyFromWorld(b);
                         }
                         resolved++;
                         continue;
@@ -2265,6 +2270,11 @@
 
                     const other = findAnyTouchingSameFruit(b, fk, list);
                     if (!other) {
+                        if (gameMode === GAME_MODES.EXPLODE) {
+                            clearArmed(b);
+                            b.plugin._overdueSince = 0;
+                            continue;
+                        }
                         // Still armed, but currently not touching.
                         // Keep trying briefly; if it remains overdue too long, force resolve.
                         if (overdueAge > OVERDUE_GRACE_MS) {
@@ -2287,6 +2297,11 @@
 
                     const cluster = findTouchingCluster(b, other, fk, list);
                     if (!cluster || cluster.length < 2) {
+                        if (gameMode === GAME_MODES.EXPLODE) {
+                            clearArmed(b);
+                            b.plugin._overdueSince = 0;
+                            continue;
+                        }
                         // Rare: a touching partner was found but cluster resolve failed.
                         // Don't let this leave a permanently flashing fruit.
                         if (overdueAge > OVERDUE_GRACE_MS) {
@@ -2342,6 +2357,29 @@
                         stageExplosionCluster(cluster, list, fk);
                     }
                     resolved++;
+                }
+            }
+
+            function releaseSeparatedExplosionFuses(bodies) {
+                if (gameMode !== GAME_MODES.EXPLODE) return;
+                const list = bodies || Composite.allBodies(world);
+                for (const b of list) {
+                    if (!isFruitBody(b) || removedIds.has(b.id) || explodedIds.has(b.id)) continue;
+                    if (!((b.plugin?.armedUntil || 0) > 0)) continue;
+                    if (findTouchingCluster(b, b, b.plugin.fruitKey, list).length >= 2) continue;
+                    clearArmed(b);
+                    b.plugin._overdueSince = 0;
+                }
+                for (let i = explodeQueue.length - 1; i >= 0; i--) {
+                    const item = explodeQueue[i];
+                    if (explodedIds.has(item.aId) || explodedIds.has(item.bId)) continue;
+                    const stillArmed = (id) => {
+                        const body = Composite.get(world, id, 'body');
+                        return body && !removedIds.has(body.id) && !explodedIds.has(body.id) && (body.plugin?.armedUntil || 0) > nowMs();
+                    };
+                    if (stillArmed(item.aId) || stillArmed(item.bId)) continue;
+                    scheduledPairs.delete(pairKey(item.aId, item.bId));
+                    explodeQueue.splice(i, 1);
                 }
             }
 
@@ -2690,7 +2728,8 @@
             }
 
             function explodeCluster(cluster, bodies) {
-                if (!cluster || cluster.length < 2) return;
+                cluster = (cluster || []).filter(b => b && isFruitBody(b) && !removedIds.has(b.id) && !explodedIds.has(b.id));
+                if (cluster.length < 2) return;
 
                 const t = nowMs();
                 resetComboIfExpired(t);
@@ -2710,8 +2749,8 @@
                 cx /= cluster.length;
                 cy /= cluster.length;
 
-                // Reward: in Explosion mode, exploding watermelons spawns a diamond.
-                maybeAwardComboDiamond(cx, cy, fruitKey);
+                // Reward: one diamond for the whole watermelon blast, never one per melon.
+                maybeAwardComboDiamond(cx, cy, fruitKey, cluster);
 
                 const minFruitR = FRUITS[0]?.radius ?? 14;
                 const maxFruitR = FRUITS[FRUITS.length - 1]?.radius ?? 58;
@@ -2881,6 +2920,7 @@
                 stagedClusterSweeps.length = 0;
                 mergedClusterSweeps.length = 0;
                 diamondsCreated = 0;
+                awardedDiamondEvents.clear();
                 diamondEjectUntilMs = 0;
                 simTime = 1;
                 timeMs = 1;
@@ -3889,6 +3929,9 @@
                     // Snapshot bodies once per tick; avoids repeated deep traversals.
                     const bodies = Composite.allBodies(world);
 
+                    // Explosion fuses survive only while matching fruit keep touching.
+                    releaseSeparatedExplosionFuses(bodies);
+
                     // Enforce flashing contract: overdue armed fruit must resolve.
                     resolveOverdueArmedBodies(bodies);
 
@@ -3981,7 +4024,14 @@
                                 continue;
                             }
 
-                            const cluster = findTouchingCluster(aInWorld, bInWorld, item.fruitKey, bodies);
+                            let cluster = findTouchingCluster(aInWorld, bInWorld, item.fruitKey, bodies);
+                            if (gameMode === GAME_MODES.EXPLODE) {
+                                // Seeds are included even after they bounce apart. Use only the
+                                // fruit that are still physically connected to one another.
+                                const fromA = findTouchingCluster(aInWorld, aInWorld, item.fruitKey, bodies);
+                                const fromB = findTouchingCluster(bInWorld, bInWorld, item.fruitKey, bodies);
+                                cluster = fromA.length >= fromB.length ? fromA : fromB;
+                            }
                             if (cluster.length >= 2) {
                                 // Dynamic fuse: base 3s + 1s per extra fruit.
                                 // If the cluster has grown since the event was queued,
@@ -4088,11 +4138,9 @@
                                         explodeQueue.pop();
                                     }
                                 }
-                            } else {
-                                // No longer touching / not enough for a match.
-                                // Contract: once a fruit is armed/flashing, it should not revert
-                                // to not flashing. We *do not* clear armed here; instead the
-                                // overdue-armed resolver will handle it once the fuse expires.
+                            } else if (gameMode === GAME_MODES.EXPLODE) {
+                                clearArmed(aInWorld);
+                                clearArmed(bInWorld);
                             }
                         }
                     }
