@@ -5,7 +5,8 @@
     <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
     <link rel="apple-touch-icon" href="../favicon.svg" />
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <title>2048</title>
     <style>
         :root {
@@ -487,8 +488,7 @@
             background: rgba(255, 214, 0, 0.1);
         }
 
-        /* === Mobile: maximize board, hide clutter === */
-        @media (max-width: 600px) {
+        /* === Start maximized: fill the window on first paint, no click required === */
             body {
                 padding: 6px 8px;
                 align-items: flex-start;
@@ -505,6 +505,8 @@
             .app {
                 display: flex;
                 flex-direction: column;
+                width: 100%;
+                max-width: none;
                 height: 100%;
             }
 
@@ -552,9 +554,8 @@
 
             .board {
                 max-height: 100%;
-                width: min(100%, calc(100dvh - 150px));
+                width: min(100%, calc(100dvh - 120px), calc(100vh - 120px));
             }
-        }
     </style>
 </head>
 
@@ -1769,6 +1770,7 @@
     <script>
         if (window.GHScores) GHScores.load('2048', 'singlehtml2048_highscores', 5).catch(() => { });
     </script>
+    <script>window.__mcNoAutoFullscreen = true;</script>
     <script src="../scripts/mobile-controls.js"></script>
 </body>
 

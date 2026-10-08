@@ -216,9 +216,12 @@
         document.removeEventListener('pointerdown', tryAutoFullscreen);
         document.removeEventListener('keydown', tryAutoFullscreen);
     }
-    // Attach to first user gesture — pointerdown fires on any press (click, drag, tap)
-    document.addEventListener('pointerdown', tryAutoFullscreen, { once: true });
-    document.addEventListener('keydown', tryAutoFullscreen, { once: true });
+    // Games that already start maximized set this before the script loads.
+    // Do not wait for a click to call requestFullscreen in that case.
+    if (!window.__mcNoAutoFullscreen) {
+        document.addEventListener('pointerdown', tryAutoFullscreen, { once: true });
+        document.addEventListener('keydown', tryAutoFullscreen, { once: true });
+    }
 
     /* ------------------------------------------------------------------ */
     /*  Wire everything up once DOM ready                                  */
