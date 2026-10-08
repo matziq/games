@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { playFootstep, playJump, playGem, playKill, playLadder, playDeath, playExplosion, startAmbient, stopAmbient } from '../SoundManager';
+import { clampFrameDelta, roomForY } from '../gameplay';
 // Vertical world: climb UP through rooms to escape rising water
 const WORLD_W=640;  // 40 tiles wide
 const WORLD_H=2400; // 150 tiles tall
@@ -17,8 +18,6 @@ export class RuinsScene extends Phaser.Scene{
   private enemies!:Phaser.Physics.Arcade.Group;
   private exitZone!:Phaser.Physics.Arcade.StaticGroup;
   private player!:Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
-  private cursors!:Phaser.Types.Input.Keyboard.CursorKeys;
-  private keys!:Record<string,Phaser.Input.Keyboard.Key>;
   private facingRight=true;
   private waterTiles:Phaser.GameObjects.TileSprite[]=[];
   private waterY=WORLD_H+40;
@@ -49,13 +48,22 @@ export class RuinsScene extends Phaser.Scene{
   private ropes:{anchorX:number;anchorY:number;len:number;angle:number;speed:number;maxAngle:number;graphic:Phaser.GameObjects.Graphics}[]=[];
   private onRope=false;
   private currentRope:{anchorX:number;anchorY:number;len:number;angle:number;speed:number;maxAngle:number;graphic:Phaser.GameObjects.Graphics}|null=null;
+  private coyoteMs=0;
+  private jumpBufferMs=0;
+  private jumpHeldLastFrame=false;
   constructor(){super('ruins');}
   create(){
     this.escaped=false;this.treasureCount=0;this.oxygen=100;this.onLadder=false;
+    this.ladderGrace=0;
     this.hasTorch=false;this.swingTimer=0;this.torchPickupTime=0;this.torchFlashing=false;
     this.playerTorch=null;this.playerTorchGlow=null;
     this.dying=false;this.footstepTimer=0;this.ladderSoundTimer=0;
     this.onRope=false;this.currentRope=null;this.ropes=[];
+    this.waterTiles=[];this.glowSprites=[];this.enemyData.clear();
+    this.coyoteMs=0;this.jumpBufferMs=0;this.jumpHeldLastFrame=false;this.stuckFrames=0;
+    window.__aztecInput?.releaseAll();
+    window.__aztecSetRestartVisible?.(false);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN,this.cleanupScene,this);
     this.cameras.main.setBackgroundColor('#070a10');
     this.physics.world.setBounds(0,0,WORLD_W,WORLD_H);
     this.bgDeep=this.add.tileSprite(0,0,320,180,'bgWallDeep').setOrigin(0,0).setScrollFactor(0,0).setDepth(-20);
@@ -79,16 +87,12 @@ export class RuinsScene extends Phaser.Scene{
     this.physics.add.collider(this.enemies,this.platforms);
     this.physics.add.overlap(this.player,this.spikes,this.hitSpike,undefined,this);
     this.physics.add.overlap(this.player,this.gems,this.collectGem,undefined,this);
-    this.physics.add.overlap(this.player,this.bonePiles,this.nearBones,undefined,this);
     this.physics.add.overlap(this.player,this.enemies,this.hitEnemy,undefined,this);
     this.physics.add.overlap(this.player,this.exitZone,this.reachExit,undefined,this);
     // Ladder overlap — checked each frame to set onLadder flag
     this.physics.add.overlap(this.player,this.ladders);
     this.cameras.main.setBounds(0,0,WORLD_W,WORLD_H);
     this.cameras.main.startFollow(this.player,true,0.08,0.08);
-    this.cursors=this.input.keyboard!.createCursorKeys();
-    this.keys={W:this.input.keyboard!.addKey('W'),A:this.input.keyboard!.addKey('A'),
-      S:this.input.keyboard!.addKey('S'),D:this.input.keyboard!.addKey('D'),E:this.input.keyboard!.addKey('E')};
     this.waterY=WORLD_H+40;
     for(let i=0;i<3;i++){
       const wt=this.add.tileSprite(0,0,WORLD_W,TILE,'water').setOrigin(0,0).setDepth(6).setAlpha(0.7+i*0.1).setVisible(false);
@@ -380,6 +384,7 @@ export class RuinsScene extends Phaser.Scene{
   // --- Game loop ---
   update(_time:number,delta:number){
     if(this.escaped||this.dying)return;
+    delta=clampFrameDelta(delta);
     const dt=delta/1000;
     // Check ladder overlap each frame — use grace frames so the player
     // can pass through platforms that have ladders going through them.
@@ -391,17 +396,23 @@ export class RuinsScene extends Phaser.Scene{
       this.onLadder=false;
     }
     this.updateRopes(dt);
-    this.movePlayer();this.moveEnemies();this.moveWater(dt);
+    this.movePlayer(delta);this.moveEnemies();this.moveWater(dt);
     this.handleTorch(delta);
     this.unstickPlayer();
     this.updateParallax();this.updateGlows();this.updateHUD();
   }
-  private movePlayer(){
+  private movePlayer(delta:number){
     const speed=100,jumpV=-320,climbSpeed=80;
     const onGround=this.player.body.blocked.down;
-    const wantUp=this.cursors.up.isDown||this.keys.W.isDown;
-    const wantDown=this.cursors.down.isDown||this.keys.S.isDown;
-    const justJumped=Phaser.Input.Keyboard.JustDown(this.cursors.space);
+    const input=window.__aztecInput;
+    const wantLeft=input.isDown('left');
+    const wantRight=input.isDown('right');
+    const wantUp=input.isDown('up');
+    const wantDown=input.isDown('down');
+    const justJumped=input.consumePressed('jump')||(!this.onLadder&&input.consumePressed('up'));
+    const jumpHeld=input.isDown('jump')||(!this.onLadder&&wantUp);
+    if(justJumped)this.jumpBufferMs=120;else this.jumpBufferMs=Math.max(0,this.jumpBufferMs-delta);
+    if(onGround)this.coyoteMs=100;else this.coyoteMs=Math.max(0,this.coyoteMs-delta);
     // If on rope, handle rope controls
     if(this.onRope&&this.currentRope){
       this.player.body.allowGravity=false;
@@ -412,8 +423,8 @@ export class RuinsScene extends Phaser.Scene{
       const by=r.anchorY+Math.cos(r.angle)*r.len;
       this.player.setPosition(bx,by);
       // Update facing based on left/right input
-      if(this.cursors.left.isDown||this.keys.A.isDown){if(this.facingRight){this.player.setFlipX(true);this.facingRight=false;}}
-      else if(this.cursors.right.isDown||this.keys.D.isDown){if(!this.facingRight){this.player.setFlipX(false);this.facingRight=true;}}
+      if(wantLeft){if(this.facingRight){this.player.setFlipX(true);this.facingRight=false;}}
+      else if(wantRight){if(!this.facingRight){this.player.setFlipX(false);this.facingRight=true;}}
       // Jump off rope
       if(justJumped){
         this.onRope=false;this.currentRope=null;
@@ -430,10 +441,10 @@ export class RuinsScene extends Phaser.Scene{
       return;
     }
     let vx=0;
-    if(this.cursors.left.isDown||this.keys.A.isDown){vx=-speed;if(this.facingRight){this.player.setFlipX(true);this.facingRight=false;}}
-    else if(this.cursors.right.isDown||this.keys.D.isDown){vx=speed;if(!this.facingRight){this.player.setFlipX(false);this.facingRight=true;}}
+    if(wantLeft){vx=-speed;if(this.facingRight){this.player.setFlipX(true);this.facingRight=false;}}
+    else if(wantRight){vx=speed;if(!this.facingRight){this.player.setFlipX(false);this.facingRight=true;}}
     this.player.setVelocityX(vx);
-    if(this.onLadder&&!this.hasTorch){
+    if(this.onLadder){
       // On ladder: disable gravity, allow climb up/down
       this.player.body.allowGravity=false;
       if(wantUp)this.player.setVelocityY(-climbSpeed);
@@ -456,11 +467,12 @@ export class RuinsScene extends Phaser.Scene{
         playJump();
       }
     }else{
-      // Off ladder (or carrying torch): restore gravity, normal jump
+      // Off ladder: restore gravity, normal jump
       this.player.body.allowGravity=true;
-      if(this.onLadder&&this.hasTorch)this.onLadder=false; // can't climb with torch
-      if(!this.hasTorch&&(wantUp||justJumped)&&onGround){this.player.setVelocityY(jumpV);playJump();}
+      if((wantUp||this.jumpBufferMs>0)&&this.coyoteMs>0){this.player.setVelocityY(jumpV);this.jumpBufferMs=0;this.coyoteMs=0;playJump();}
     }
+    if(!jumpHeld&&this.jumpHeldLastFrame&&this.player.body.velocity.y<-120)this.player.setVelocityY(-120);
+    this.jumpHeldLastFrame=jumpHeld;
     // Walking sound
     if(onGround&&vx!==0&&!this.onLadder){
       this.footstepTimer-=this.game.loop.delta;
@@ -506,7 +518,7 @@ export class RuinsScene extends Phaser.Scene{
   private updateHUD(){
     this.hudTreasure.setText('Gems: '+this.treasureCount);
     this.hudAir.setText('Air: '+Math.ceil(this.oxygen)+'%');
-    const roomNum=Math.max(1,9-Math.floor(this.player.y/(12*TILE)));
+    const roomNum=roomForY(this.player.y);
     this.hudDepth.setText('Room '+roomNum+'/9');
     this.hudAir.setColor(this.oxygen<30?'#ff4444':this.oxygen<60?'#ffaa44':'#c4a060');
   }
@@ -531,9 +543,6 @@ export class RuinsScene extends Phaser.Scene{
   private detachRope(){this.onRope=false;this.currentRope=null;this.player.body.allowGravity=true;}
   private hitSpike(){this.detachRope();this.playerDied();}
   private collectGem(_p:any,gem:any){gem.disableBody(true,true);this.treasureCount++;this.cameras.main.flash(100,255,200,50);playGem();}
-  private nearBones(_p:any,bones:any){
-    if(!this.hasTorch&&Phaser.Input.Keyboard.JustDown(this.keys.E)){bones.disableBody(true,true);this.treasureCount+=3;this.cameras.main.flash(100,200,180,100);}
-  }
   private hitEnemy(_p:any,enemy:any){
     if(this.player.body.velocity.y>0&&this.player.y<enemy.y-4){
       enemy.disableBody(true,true);this.enemyData.delete(enemy);
@@ -555,13 +564,13 @@ export class RuinsScene extends Phaser.Scene{
     const t1=this.add.text(160,70,'ESCAPED!',hs).setScrollFactor(0).setDepth(21).setOrigin(0.5).setAlpha(0);
     const hs2={fontFamily:'monospace',fontSize:'8px',color:'#c4a060',stroke:'#1a0a00',strokeThickness:1};
     const t2=this.add.text(160,95,'Gems collected: '+this.treasureCount,hs2).setScrollFactor(0).setDepth(21).setOrigin(0.5).setAlpha(0);
-    const t3=this.add.text(160,110,'Press SPACE to play again',hs2).setScrollFactor(0).setDepth(21).setOrigin(0.5).setAlpha(0);
+    const t3=this.add.text(160,110,'Press R / SPACE or tap RESTART',hs2).setScrollFactor(0).setDepth(21).setOrigin(0.5).setAlpha(0);
     this.tweens.add({targets:t1,alpha:1,duration:800,delay:500});
     this.tweens.add({targets:t2,alpha:1,duration:800,delay:1000});
     this.tweens.add({targets:t3,alpha:1,duration:800,delay:1500,onComplete:()=>{
       // Notify global high score system
       if((window as any).__aztecGameEnd) (window as any).__aztecGameEnd(this.treasureCount, true);
-      this.input.keyboard!.once('keydown-SPACE',()=>{this.scene.restart();});
+      this.awaitRestart();
     }});
   }
   // --- Torch weapon system ---
@@ -588,11 +597,11 @@ export class RuinsScene extends Phaser.Scene{
       this.hudTorch.setText('');
     }
     // E key: pickup or swing (simple tap)
-    if(Phaser.Input.Keyboard.JustDown(this.keys.E)){
+    if(window.__aztecInput.consumePressed('interact')){
       if(this.hasTorch&&this.swingTimer<=0){
         this.swingTorch();
       }else if(!this.hasTorch){
-        this.tryPickupTorch();
+        if(!this.tryPickupTorch())this.tryLootBones();
       }
     }
     // Update held torch position
@@ -605,7 +614,7 @@ export class RuinsScene extends Phaser.Scene{
       }
     }
   }
-  private tryPickupTorch(){
+  private tryPickupTorch():boolean{
     let closest:Phaser.Physics.Arcade.Sprite|null=null;
     let closestDist=30; // pickup range in pixels
     for(const c of this.torchPickups.getChildren()){
@@ -636,7 +645,24 @@ export class RuinsScene extends Phaser.Scene{
         scaleX:{from:1.8,to:2.2},scaleY:{from:1.8,to:2.2},
         duration:250,yoyo:true,repeat:-1,ease:'Sine.easeInOut'});
       this.cameras.main.flash(60,255,200,50);
+      return true;
     }
+    return false;
+  }
+  private tryLootBones():boolean{
+    let closest:Phaser.Physics.Arcade.Sprite|null=null;
+    let closestDist=30;
+    for(const child of this.bonePiles.getChildren()){
+      const bones=child as Phaser.Physics.Arcade.Sprite;
+      if(!bones.active)continue;
+      const distance=Phaser.Math.Distance.Between(this.player.x,this.player.y,bones.x,bones.y);
+      if(distance<closestDist){closest=bones;closestDist=distance;}
+    }
+    if(!closest)return false;
+    closest.disableBody(true,true);
+    this.treasureCount+=3;
+    this.cameras.main.flash(100,200,180,100);
+    return true;
   }
   private swingTorch(){
     this.swingTimer=400; // cooldown ms
@@ -702,7 +728,43 @@ export class RuinsScene extends Phaser.Scene{
       });
       emitter.setDepth(10);
       emitter.explode(20);
-      this.time.delayedCall(800,()=>{this.scene.restart();});
+      this.time.delayedCall(800,()=>{
+        if((window as any).__aztecGameEnd)(window as any).__aztecGameEnd(this.treasureCount,false);
+        this.add.text(160,108,'Press R / SPACE or tap RESTART',{fontFamily:'monospace',fontSize:'8px',color:'#c4a060',stroke:'#1a0a00',strokeThickness:1}).setScrollFactor(0).setDepth(21).setOrigin(0.5);
+        this.awaitRestart();
+      });
     }});
+  }
+
+  private awaitRestart(){
+    window.__aztecSetRestartVisible?.(true,'RESTART');
+    let restarted=false;
+    const restart=()=>{
+      if(restarted)return;
+      restarted=true;
+      window.__aztecSetRestartVisible?.(false);
+      this.scene.restart();
+    };
+    const poll=()=>{
+      const input=window.__aztecInput;
+      if(input.consumePressed('restart')||input.consumePressed('jump'))restart();
+      else if(this.scene.isActive())this.time.delayedCall(50,poll);
+    };
+    poll();
+  }
+
+  private cleanupScene(){
+    stopAmbient();
+    window.__aztecInput?.releaseAll();
+    window.__aztecSetRestartVisible?.(false);
+    this.tweens?.killAll();
+    this.time?.removeAllEvents();
+    this.waterTiles.forEach((tile)=>tile.destroy());
+    this.glowSprites.forEach((glow)=>glow.destroy());
+    this.ropes.forEach((rope)=>rope.graphic.destroy());
+    this.enemies?.clear(true,true);
+    this.enemyData.clear();
+    this.waterTiles=[];this.glowSprites=[];this.ropes=[];
+    this.onRope=false;this.currentRope=null;
   }
 }

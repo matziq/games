@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BootScene } from './scenes/BootScene';
 import { RuinsScene } from './scenes/RuinsScene.ts';
+import { resumeAudio, suspendAudio } from './SoundManager';
 
 declare global {
   interface Window {
@@ -33,6 +34,26 @@ const config: Phaser.Types.Core.GameConfig = {
   scene: [BootScene, RuinsScene]
 };
 
-new Phaser.Game(config);
+const game = new Phaser.Game(config);
+
+const pauseForLifecycle = () => {
+  window.__aztecInput?.releaseAll();
+  if (game.loop.running) game.loop.sleep();
+  void suspendAudio();
+};
+
+const resumeForLifecycle = () => {
+  if (document.hidden) return;
+  game.loop.wake();
+  game.loop.resetDelta();
+  void resumeAudio().catch((error) => console.warn('Audio resume was blocked', error));
+};
+
+window.addEventListener('blur', pauseForLifecycle);
+window.addEventListener('focus', resumeForLifecycle);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) pauseForLifecycle();
+  else resumeForLifecycle();
+});
 
 window.__aztecDebug?.append('Phaser started');

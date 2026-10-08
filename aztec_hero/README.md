@@ -1,39 +1,62 @@
-# Aztec Hero (prototype)
+# Aztec Hero
 
-A browser-first 2D side-scrolling prototype inspired by classic 8-bit platformers: underground ruins, traps, rising water, and loot.
-
-This is a small vertical-slice scaffold using **Phaser 3 + TypeScript + Vite** so you can iterate quickly and share with a link.
-
-## What’s in the prototype
-
-- Side-scrolling room with platforms (tile placeholders)
-- Player movement + jump
-- Camera follow
-- Spike hazards (simple knockback)
-- Rising water + oxygen (drowning restarts the scene)
-- Bone piles you can loot with **E** (placeholder treasure counter)
+A vertical 8-bit-style Phaser platformer: climb nine underground ruin rooms, outrun rising water, collect gems, fight creatures, and reach the exit.
 
 ## Controls
 
-- Move: **A/D** or **Left/Right**
-- Jump: **Space**
-- Interact: **E** (loot bone piles)
+| Action | PC | Mobile / touch |
+| --- | --- | --- |
+| Move | `A` / `D` or Left / Right | Direction pad |
+| Climb ladder | `W` / `S` or Up / Down | Up / Down |
+| Jump / release early for a shorter jump | `Space` | Jump button |
+| Loot / pick up / swing torch | `E` | E button |
+| Restart after escape or death | `R` or `Space` | Restart button |
 
-## Run it locally
+Keyboard controls remain active on desktop and touch-capable laptops. Touch controls appear only in coarse-pointer or touch contexts, support multiple simultaneous pointers, and respect device safe areas.
 
-From the `aztec_hero` folder:
+## Development
 
-```pwsh
+Requires Node.js 20 or later.
+
+```powershell
 npm install
 npm run dev
 ```
 
-Vite is configured to use port **8010**.
+Vite serves the game on port 8010. The production build is self-contained under `dist` and uses relative URLs (`base: './'`) so it works in Capacitor and from subdirectories.
 
-## Next steps (easy upgrades)
+```powershell
+npm test
+npm run typecheck
+npm run build
+```
 
-- Replace runtime-generated placeholder sprites with your pixel art
-- Convert platforms to a proper tilemap
-- Add enemies (spiders/scorpions) with simple patrol AI
-- Add traps: fire jets, dart shooters, collapsing floors
-- Add an inventory/weapon system
+## Android
+
+The Capacitor app ID is `com.matziq.aztechero` and the app name is **Aztec Hero**.
+
+```powershell
+# Build web assets and copy them into the native project
+npm run android:sync
+
+# Build a debug APK
+npm run android:debug
+```
+
+The debug APK is written to:
+
+```text
+android\app\build\outputs\apk\debug\app-debug.apk
+```
+
+`android:debug` requires a working JDK and Android SDK accepted by Gradle. Set `JAVA_HOME` and `ANDROID_HOME` (or create `android\local.properties` with `sdk.dir=...`) when they are not already configured. Use `npm run android:open` to open the native project in Android Studio.
+
+The Android project is checked in. If it ever needs to be regenerated, remove only the `android` directory and run `npm run android:add`, then `npm run android:sync`.
+
+## Gameplay behavior
+
+- Room progress is bottom-up: Room 1 at the starting chamber and Room 9 at the exit.
+- Coyote time, jump buffering, and variable jump height make jumps more forgiving without changing the level.
+- Ladders remain usable while carrying a torch.
+- Switching apps, hiding the page, or losing focus pauses simulation and ambient audio. Returning resets Phaser's frame clock and clamps the first frame so water and oxygen cannot jump.
+- Escape and death both stop simulation and expose explicit keyboard and touch restart controls.

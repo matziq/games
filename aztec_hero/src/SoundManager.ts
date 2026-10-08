@@ -180,6 +180,7 @@ async function genExplosion(): Promise<AudioBuffer> {
 
 // --- Ambient drip system ---
 let ambientInterval: number | null = null;
+let ambientEnabled = false;
 
 function playDrip() {
   if (!ctx || ctx.state === 'suspended') return;
@@ -257,13 +258,29 @@ export function playDeath() { playBuffer('death', 0.20); }
 export function playExplosion() { playBuffer('explosion', 0.22); }
 
 export function startAmbient() {
-  stopAmbient();
+  clearAmbientTimer();
+  ambientEnabled = true;
   scheduleDrip();
 }
 
-export function stopAmbient() {
+function clearAmbientTimer() {
   if (ambientInterval !== null) {
     clearTimeout(ambientInterval);
     ambientInterval = null;
   }
+}
+
+export function stopAmbient() {
+  ambientEnabled = false;
+  clearAmbientTimer();
+}
+
+export async function suspendAudio(): Promise<void> {
+  clearAmbientTimer();
+  if (ctx?.state === 'running') await ctx.suspend();
+}
+
+export async function resumeAudio(): Promise<void> {
+  if (ctx?.state === 'suspended') await ctx.resume();
+  if (soundsReady && ambientEnabled) scheduleDrip();
 }

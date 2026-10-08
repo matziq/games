@@ -255,7 +255,6 @@
         outline-offset: 3px;
       }
     </style>
-    <script type="module" crossorigin src="./assets/index-COnuyGI1.js"></script>
   </head>
   <body>
     <div id="app"></div>
@@ -299,6 +298,238 @@
     <button id="aztecScoresBtn" aria-label="Open high scores">🏆 Scores</button>
     <button type="button" id="restart-control" data-input="restart">RESTART</button>
 
+    <script type="module">
+      import './src/githubScores.ts';
+      import { InputState } from './src/input/InputState.ts';
 
+      const inputState = new InputState();
+      window.__aztecInput = inputState;
+
+      const touchControls = document.getElementById('touch-controls');
+      const restartControl = document.getElementById('restart-control');
+      inputState.bindControls(document.body);
+      window.__aztecSetRestartVisible = (visible, label = 'RESTART') => {
+        if (!restartControl) return;
+        restartControl.textContent = label;
+        restartControl.style.display = visible ? 'block' : 'none';
+      };
+
+      const prefersCoarse = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+      if (!prefersCoarse) {
+        touchControls?.setAttribute('style', 'display: none !important');
+      }
+
+      const debug = document.getElementById('debug');
+      const log = (msg) => {
+        if (debug) debug.textContent = String(msg);
+      };
+      window.__aztecDebug = {
+        log,
+        append: (msg) => {
+          if (debug) debug.textContent += `\n${msg}`;
+        }
+      };
+
+      window.addEventListener('error', (event) => {
+        log(`JS error: ${event.message}\n${event.filename}:${event.lineno}:${event.colno}`);
+      });
+      window.addEventListener('unhandledrejection', (event) => {
+        log(`Unhandled promise rejection:\n${event.reason}`);
+      });
+
+      const AZ_HS_KEY = 'aztecHero-highscores';
+      let azLastIdx = -1;
+      let azPending = null;
+
+      function getAzHs() {
+        try {
+          const scores = JSON.parse(localStorage.getItem(AZ_HS_KEY) || '[]');
+          return Array.isArray(scores) ? scores : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function addAzHs(gems, name, escaped) {
+        const list = getAzHs();
+        const entry = { score: gems, name: (name || '').toUpperCase(), escaped, date: new Date().toISOString() };
+        let inserted = false;
+        for (let i = 0; i < list.length; i += 1) {
+          if (gems > list[i].score) {
+            list.splice(i, 0, entry);
+            inserted = true;
+            azLastIdx = i;
+            break;
+          }
+        }
+        if (!inserted && list.length < 5) {
+          azLastIdx = list.length;
+          list.push(entry);
+          inserted = true;
+        } else if (!inserted) {
+          azLastIdx = -1;
+          return false;
+        }
+        if (list.length > 5) list.length = 5;
+        localStorage.setItem(AZ_HS_KEY, JSON.stringify(list));
+        if (window.GHScores) {
+          window.GHScores.save('aztec_hero', AZ_HS_KEY).catch((error) => console.error('High score sync failed', error));
+        }
+        return true;
+      }
+
+      function renderAzHs() {
+        const list = getAzHs();
+        const wrap = document.getElementById('aztec-hs-wrap');
+        if (!wrap) return;
+        wrap.replaceChildren();
+        if (!list.length) {
+          const empty = document.createElement('p');
+          empty.style.cssText = 'text-align:center;color:#90a0b7;padding:30px 0;';
+          empty.textContent = 'No scores yet.';
+          wrap.append(empty);
+          return;
+        }
+
+        const medalColors = ['#edc53f', '#c0c0c0', '#cd7f32'];
+        const table = document.createElement('table');
+        table.style.cssText = 'width:100%;border-collapse:collapse;';
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        ['#', 'Gems', 'Name', 'Result', 'Date'].forEach((label, index) => {
+          const th = document.createElement('th');
+          th.style.cssText = `font-size:11px;text-transform:uppercase;color:#90a0b7;padding:6px 8px;text-align:${index === 0 ? 'center' : 'left'};border-bottom:1px solid #333;`;
+          th.textContent = label;
+          headerRow.append(th);
+        });
+        thead.append(headerRow);
+        const tbody = document.createElement('tbody');
+        list.forEach((entry, index) => {
+          const date = new Date(entry.date);
+          const ds = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: '2-digit' });
+          const result = entry.escaped ? '✅ Escaped' : '❌ Died';
+          const row = document.createElement('tr');
+          if (index === azLastIdx) row.style.background = 'rgba(196,160,96,0.06)';
+          const values = [String(index + 1), String(entry.score), entry.name || '---', result, ds];
+          values.forEach((value, cellIndex) => {
+            const td = document.createElement('td');
+            td.style.cssText = 'padding:10px 8px;border-bottom:1px solid #222;';
+            if (cellIndex === 0) {
+              td.style.textAlign = 'center';
+              td.style.fontWeight = '700';
+              if (index < 3) td.style.color = medalColors[index];
+            } else if (cellIndex === 1) {
+              td.style.fontWeight = '900';
+              td.style.color = '#c4a060';
+            } else if (cellIndex === 2) {
+              td.style.fontWeight = '700';
+            } else if (cellIndex === 4) {
+              td.style.fontSize = '11px';
+              td.style.color = '#90a0b7';
+            }
+            td.textContent = value;
+            row.append(td);
+          });
+          tbody.append(row);
+        });
+        table.append(thead, tbody);
+        wrap.append(table);
+      }
+
+      function showAzHs() {
+        renderAzHs();
+        const entry = document.getElementById('aztec-name-entry');
+        if (entry) entry.style.display = 'none';
+        const modal = document.getElementById('aztec-hs-modal');
+        if (modal) modal.style.display = 'flex';
+      }
+
+      function hideAzHs() {
+        const modal = document.getElementById('aztec-hs-modal');
+        if (modal) modal.style.display = 'none';
+        azLastIdx = -1;
+      }
+
+      function saveAzName() {
+        const inp = document.getElementById('aztec-hs-name');
+        if (!inp || inp.disabled) return;
+        const name = inp.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase();
+        if (azPending) {
+          addAzHs(azPending.gems, name, azPending.escaped);
+          azPending = null;
+        }
+        inp.disabled = true;
+        inp.value = name || '------';
+        inp.style.borderColor = '#35dd8a';
+        const btn = document.getElementById('aztec-save-name');
+        if (btn) {
+          btn.textContent = '✓';
+          btn.style.background = '#35dd8a';
+          btn.disabled = true;
+        }
+        const saved = document.getElementById('aztec-name-saved');
+        if (saved) saved.style.display = 'block';
+        const hint = document.getElementById('aztec-name-hint');
+        if (hint) hint.style.display = 'none';
+        renderAzHs();
+      }
+
+      window.__aztecGameEnd = function (gems, escaped) {
+        const list = getAzHs();
+        const makesLeaderboard = gems > 0 && (list.length < 5 || gems > list[list.length - 1].score);
+        if (makesLeaderboard) {
+          azPending = { gems, escaped };
+          const entry = document.getElementById('aztec-name-entry');
+          if (entry) entry.style.display = 'block';
+          const inp = document.getElementById('aztec-hs-name');
+          if (inp) {
+            inp.value = '';
+            inp.disabled = false;
+            inp.style.borderColor = '#c4a060';
+          }
+          const btn = document.getElementById('aztec-save-name');
+          if (btn) {
+            btn.textContent = 'Save';
+            btn.style.background = '#c4a060';
+            btn.disabled = false;
+          }
+          const saved = document.getElementById('aztec-name-saved');
+          if (saved) saved.style.display = 'none';
+          const hint = document.getElementById('aztec-name-hint');
+          if (hint) hint.style.display = '';
+          renderAzHs();
+          const modal = document.getElementById('aztec-hs-modal');
+          if (modal) modal.style.display = 'flex';
+          setTimeout(() => document.getElementById('aztec-hs-name')?.focus(), 100);
+        } else {
+          addAzHs(gems, '', escaped);
+        }
+      };
+
+      document.getElementById('aztecScoresBtn')?.addEventListener('click', showAzHs);
+      document.getElementById('aztecHsClose')?.addEventListener('click', () => {
+        if (azPending) {
+          const inp = document.getElementById('aztec-hs-name');
+          const name = inp && !inp.disabled ? inp.value.replace(/[^a-zA-Z]/g, '').substring(0, 6).toUpperCase() : '';
+          addAzHs(azPending.gems, name, azPending.escaped);
+          azPending = null;
+        }
+        hideAzHs();
+      });
+      document.getElementById('aztec-save-name')?.addEventListener('click', saveAzName);
+      document.getElementById('aztec-hs-name')?.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          saveAzName();
+        }
+      });
+
+      if (window.GHScores) {
+        window.GHScores.load('aztec_hero', 'aztecHero-highscores', 5)
+          .catch((error) => console.warn('High score load failed; using local scores', error));
+      }
+    </script>
+
+    <script type="module" src="./src/main.ts"></script>
   </body>
 </html>
