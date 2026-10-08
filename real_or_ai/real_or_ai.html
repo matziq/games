@@ -279,6 +279,7 @@
 		// Dynamic image loading - will be populated by scanning folders
 		let aiImages = [];
 		let realImages = [];
+		let signImages = [];
 		let totalRounds = 0;
 
 		function setScanStatus(text) {
@@ -309,26 +310,30 @@
 					// Use manifest for file:// compatibility (no fetch required).
 					aiImages = unique(manifest.ai || []);
 					realImages = unique(manifest.real || []);
+					signImages = unique(manifest.sign || []);
 				} else {
 					// Fallback: try to scrape a directory listing (works only when served by a web server that
 					// exposes directory indexes). This usually won't work under file://.
 					setScanStatus('Scanning folders for images...');
-					const [aiResponse, realResponse] = await Promise.all([
+					const [aiResponse, realResponse, signResponse] = await Promise.all([
 						fetch('ai/'),
 						fetch('real/'),
+						fetch('ai_sign/').catch(() => null),
 					]);
 					const [aiText, realText] = await Promise.all([
 						aiResponse.text(),
 						realResponse.text(),
 					]);
+					const signText = signResponse && signResponse.ok ? await signResponse.text() : '';
 					aiImages = unique(extractImageFilenames(aiText, 'ai/'));
 					realImages = unique(extractImageFilenames(realText, 'real/'));
+					signImages = unique(extractImageFilenames(signText, 'ai_sign/'));
 				}
 
 				// Fixed 10 rounds per game
 				totalRounds = 20;
 
-				console.log('Loaded image lists:', { ai: aiImages.length, real: realImages.length });
+				console.log('Loaded image lists:', { ai: aiImages.length, real: realImages.length, sign: signImages.length });
 				console.log(`Game will have ${totalRounds} rounds`);
 			} catch (error) {
 				console.error('Could not load images.');
@@ -337,6 +342,7 @@
 				);
 				aiImages = [];
 				realImages = [];
+				signImages = [];
 				totalRounds = 0;
 			}
 		}
@@ -473,12 +479,20 @@
 			return map;
 		}
 
+		function signPathForId(id) {
+			return `ai_sign/ai_sign_${String(id).padStart(4, '0')}.jpg`;
+		}
+
 		function pickPairs() {
 			const aiById = indexImagesById(aiImages, 'ai');
 			const realById = indexImagesById(realImages, 'real');
+			const signById = indexImagesById(signImages, 'ai_sign');
+			const requireSign = signById.size > 0;
 			const ids = [];
 			for (const id of aiById.keys()) {
-				if (realById.has(id)) ids.push(id);
+				if (!realById.has(id)) continue;
+				if (requireSign && !signById.has(id)) continue;
+				ids.push(id);
 			}
 			shuffle(ids);
 			const count = Math.min(totalRounds || 20, ids.length);
@@ -489,6 +503,7 @@
 					id,
 					ai: aiById.get(id),
 					real: realById.get(id),
+					sign: signById.get(id) || signPathForId(id),
 					// Independent cryptographic coin flip. Not based on id or round number.
 					aiOnLeft: randomBit()
 				});
@@ -538,11 +553,12 @@
 				zoomBtn.className = 'img-zoom-btn';
 				zoomBtn.textContent = '⛶';
 				zoomBtn.title = 'View fullscreen';
-				zoomBtn.onclick = (e) => { e.stopPropagation(); toggleFullscreenImg(src); };
+				zoomBtn.onclick = (e) => { e.stopPropagation(); toggleFullscreenImg(img.src); };
 				const chooseBtn = document.createElement('button');
 				chooseBtn.className = 'btn choose-btn';
 				chooseBtn.textContent = '👆 This is AI';
 				chooseBtn.onclick = () => handleChoice(choiceType, wrap);
+				wrap.dataset.kind = choiceType;
 				wrap.appendChild(img);
 				wrap.appendChild(zoomBtn);
 				wrap.appendChild(chooseBtn);
@@ -551,6 +567,10 @@
 			}
 			const leftWrap = makeImgWrap(leftImg, 'Left Image', leftIsAI ? 'ai' : 'real');
 			const rightWrap = makeImgWrap(rightImg, 'Right Image', leftIsAI ? 'real' : 'ai');
+			if (pair.sign) {
+				const preload = new Image();
+				preload.src = pair.sign;
+			}
 			// Insert into DOM (hidden) so the browser starts loading
 			imagesDiv.innerHTML = '';
 			imagesDiv.appendChild(leftWrap);
@@ -575,10 +595,19 @@
 			document.getElementById('img-fullscreen').classList.remove('show');
 		});
 
+		function revealAiSign(pair) {
+			if (!pair || !pair.sign) return;
+			const aiWrap = document.querySelector('#images .img-wrap[data-kind="ai"]');
+			const img = aiWrap ? aiWrap.querySelector('img') : null;
+			if (!img || img.dataset.signShown === '1') return;
+			img.dataset.signShown = '1';
+			img.alt = 'Revealed AI image';
+			img.src = pair.sign;
+		}
+
 		function handleChoice(selected, wrapElem) {
 			// Disable all choose buttons
 			document.querySelectorAll('.choose-btn').forEach(btn => btn.disabled = true);
-			const img = wrapElem.querySelector('img');
 			if (selected === 'ai') {
 				score++;
 				wrapElem.classList.add('right');
@@ -587,6 +616,8 @@
 				wrapElem.classList.add('wrong');
 				document.getElementById('feedback').textContent = 'Wrong! That is a real image.';
 			}
+			// Swap the AI box only, after the choice, whichever side it is on.
+			revealAiSign(pairs[currentRound]);
 			const pctNow = pairs.length > 0 ? Math.round((score / pairs.length) * 100) : 0;
 			document.getElementById('score').textContent = `Score: ${pctNow}% (${score}/${pairs.length})`;
 			document.getElementById('nextBtn').style.display = 'inline-block';
@@ -685,7 +716,7 @@
 			pickPairs();
 			if (pairs.length === 0) {
 				document.getElementById('round-info').textContent = 'Error: No matching pairs found!';
-				document.getElementById('images').innerHTML = '<p>Each round needs real_#### and ai_#### images with the same number.</p>';
+				document.getElementById('images').innerHTML = '<p>Each round needs real_####, ai_####, and ai_sign/ai_sign_#### with the same number.</p>';
 				return;
 			}
 			currentRound = 0;
