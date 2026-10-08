@@ -1450,6 +1450,7 @@
                         Match again within <b>3 seconds</b> to grow your combo, up to <b>5x</b>. The small timer beside the multiplier shows the window.
                         Swap the current and next fruit once per drop to set up your next match.
                         Small fruit earn more in Explode; larger fruit earn more in Merge.
+                        Bigger fruit are heavier, so the same fall shoves the pile harder.
                         Keep settled fruit below the dashed line. A visible <b>3-second warning</b> gives you time to clear a match.
                         Classic has no wind or decay. Optional Chaos brings back gusts. A fruit fly arrives after <b>20 idle seconds</b> and shrinks the fruit 4 seconds later.
                         If another fruit hits the one a fly is attacking, the fly jumps to a different fruit and its timer starts over.
@@ -1864,13 +1865,14 @@
             }
 
             function fruitBodyAt(x, y, fruit) {
-                // Physics: larger fruit should be heavier.
-                // Matter.js mass = density * area, so scaling density by radius keeps
-                // big fruit noticeably heavier (without becoming ridiculous).
+                // Matter.js mass = density * area. Area already grows with radius squared;
+                // scaling density with radius makes mass follow volume. Gravity and air
+                // drag then accelerate every fruit the same, while a larger fruit carries
+                // more momentum into Matter's collision response.
                 const BASE_DENSITY = 0.00105;
                 const REF_RADIUS = 22; // around strawberry
-                const densityScale = Math.pow((fruit?.radius || REF_RADIUS) / REF_RADIUS, 0.7);
-                const density = BASE_DENSITY * densityScale;
+                const radius = Math.max(1, fruit?.radius || REF_RADIUS);
+                const density = BASE_DENSITY * (radius / REF_RADIUS);
 
                 const seed = Math.random() * 1e9;
                 const body = Bodies.circle(x, y, fruit.radius, {
