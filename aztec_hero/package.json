@@ -6,12 +6,23 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.json && vite build",
-    "preview": "vite preview"
+    "test": "tsx --test tests/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "preview": "vite preview",
+    "android:add": "cap add android",
+    "android:sync": "npm run build && cap sync android",
+    "android:open": "cap open android",
+    "android:build": "npm run android:sync && cd android && .\\gradlew.bat assembleRelease",
+    "android:debug": "npm run android:sync && cd android && .\\gradlew.bat assembleDebug"
   },
   "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
     "phaser": "^3.80.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^7.0.0",
+    "tsx": "^4.19.2",
     "typescript": "^5.3.3",
     "vite": "^5.0.10"
   }
