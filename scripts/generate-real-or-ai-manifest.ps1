@@ -47,7 +47,11 @@ function Get-ImageList([string]$folderName, [string]$prefix) {
 
 $aiById = Get-ImageList 'ai' 'ai'
 $realById = Get-ImageList 'real' 'real'
+$signById = Get-ImageList 'ai_sign' 'ai_sign'
 $pairIds = @($aiById.Keys | Where-Object { $realById.ContainsKey($_) } | Sort-Object)
+if ($signById.Count -gt 0) {
+    $pairIds = @($pairIds | Where-Object { $signById.ContainsKey($_) })
+}
 # MaxPerFolder caps complete pairs. 0 means every matched number.
 if ($MaxPerFolder -gt 0 -and $pairIds.Count -gt $MaxPerFolder) {
     $pairIds = @($pairIds | Select-Object -First $MaxPerFolder)
@@ -55,10 +59,15 @@ if ($MaxPerFolder -gt 0 -and $pairIds.Count -gt $MaxPerFolder) {
 
 $ai = @($pairIds | ForEach-Object { "ai/$($aiById[$_].Name)" })
 $real = @($pairIds | ForEach-Object { "real/$($realById[$_].Name)" })
+$sign = @()
+if ($signById.Count -gt 0) {
+    $sign = @($pairIds | ForEach-Object { "ai_sign/$($signById[$_].Name)" })
+}
 
 # -InputObject keeps a 0- or 1-item list as a JSON array.
 $aiJson = ConvertTo-Json -InputObject @($ai) -Depth 2
 $realJson = ConvertTo-Json -InputObject @($real) -Depth 2
+$signJson = ConvertTo-Json -InputObject @($sign) -Depth 2
 
 $content = @(
     "// Auto-generated image manifest for real_or_ai.",
@@ -67,7 +76,8 @@ $content = @(
     "",
     "window.__REAL_OR_AI_MANIFEST__ = {",
     "  ai: $aiJson,",
-    "  real: $realJson",
+    "  real: $realJson,",
+    "  sign: $signJson",
     "};",
     ""
 ) -join "`n"
@@ -76,3 +86,4 @@ Set-Content -LiteralPath $manifestPath -Value $content -Encoding UTF8
 Write-Host "Wrote manifest: $manifestPath" -ForegroundColor Green
 Write-Host "AI:   $($ai.Count)" -ForegroundColor Gray
 Write-Host "Real: $($real.Count)" -ForegroundColor Gray
+Write-Host "Sign: $($sign.Count)" -ForegroundColor Gray
