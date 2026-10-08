@@ -85,7 +85,7 @@
 		.images {
 			display: flex;
 			justify-content: center;
-			align-items: center;
+			align-items: stretch;
 			gap: 32px;
 			margin: 8px 0;
 			width: 100%;
@@ -96,12 +96,11 @@
 		}
 
 		.images img {
-			display: block;
-			width: auto;
-			height: auto;
+			width: 100%;
+			height: 0;
+			flex: 1 1 auto;
+			min-height: 0;
 			max-width: 100%;
-			max-height: 100%;
-			flex: 0 0 auto;
 			object-fit: contain;
 			background: #111;
 			cursor: zoom-in;
@@ -162,13 +161,12 @@
 			position: relative;
 			display: flex;
 			flex-direction: column;
-			width: max-content;
-			max-width: calc(50% - 16px);
-			align-self: center;
-			height: auto;
+			width: calc(50% - 16px);
+			max-width: 860px;
+			align-self: stretch;
+			height: 100%;
 			max-height: 100%;
 			min-height: 0;
-			flex: 0 1 auto;
 			border: 4px solid #444;
 			border-radius: 8px;
 			overflow: hidden;
@@ -176,9 +174,7 @@
 		}
 
 		.img-wrap img {
-			width: auto;
-			height: auto;
-			max-width: 100%;
+			width: 100%;
 		}
 
 		.img-zoom-btn {
@@ -288,7 +284,7 @@
 			}
 
 			.img-wrap {
-				max-width: calc(50% - 4px);
+				width: calc(50% - 4px);
 			}
 
 			.choose-btn {
@@ -616,48 +612,6 @@
 			window.scrollTo(0, 0);
 		}
 
-		function fitBoxesToImages() {
-			const row = document.getElementById('images');
-			if (!row) return;
-			const wraps = [...row.querySelectorAll('.img-wrap')];
-			if (!wraps.length || row.clientHeight < 40) return;
-			const styles = getComputedStyle(row);
-			const gap = parseFloat(styles.columnGap || styles.gap) || 0;
-			const border = 8;
-			const maxW = Math.max(64, (row.clientWidth - gap * (wraps.length - 1)) / wraps.length - border);
-			wraps.forEach((wrap) => {
-				const img = wrap.querySelector('img');
-				const btn = wrap.querySelector('.choose-btn');
-				if (!img || !img.naturalWidth) return;
-				const buttonH = btn ? btn.offsetHeight + 8 : 0;
-				const maxH = Math.max(64, row.clientHeight - buttonH);
-				const scale = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight);
-				const w = Math.max(1, Math.floor(img.naturalWidth * scale));
-				const h = Math.max(1, Math.floor(img.naturalHeight * scale));
-				img.style.width = w + 'px';
-				img.style.height = h + 'px';
-				img.style.maxWidth = 'none';
-				img.style.maxHeight = 'none';
-				img.style.flex = '0 0 auto';
-				wrap.style.width = w + 'px';
-				wrap.style.height = 'auto';
-				wrap.style.maxWidth = 'none';
-				wrap.style.flex = '0 0 auto';
-				const buttonH2 = btn ? btn.offsetHeight + 8 : 0;
-				if (buttonH2 > buttonH + 1) {
-					const maxH2 = Math.max(64, row.clientHeight - buttonH2);
-					const scale2 = Math.min(maxW / img.naturalWidth, maxH2 / img.naturalHeight);
-					const w2 = Math.max(1, Math.floor(img.naturalWidth * scale2));
-					const h2 = Math.max(1, Math.floor(img.naturalHeight * scale2));
-					img.style.width = w2 + 'px';
-					img.style.height = h2 + 'px';
-					wrap.style.width = w2 + 'px';
-				}
-			});
-		}
-
-		window.addEventListener('resize', () => fitBoxesToImages());
-
 		function waitForImgLoad(img) {
 			return new Promise((resolve) => {
 				const finish = () => resolve(img.naturalWidth > 0);
@@ -744,7 +698,6 @@
 				return;
 			}
 			brokenSkips = 0;
-			fitBoxesToImages();
 			leftWrap.style.visibility = '';
 			rightWrap.style.visibility = '';
 		}
@@ -905,7 +858,6 @@
 			img.addEventListener('error', () => {
 				if (pair.ai) img.src = pair.ai;
 			}, { once: true });
-			img.addEventListener('load', () => fitBoxesToImages(), { once: true });
 			img.src = pair.sign;
 		}
 

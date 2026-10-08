@@ -20,6 +20,7 @@ export class BootScene extends Phaser.Scene{
   private done(key:string){this.textures.get(key).getSourceImage();(this.textures.get(key) as Phaser.Textures.CanvasTexture).refresh();}
   create(){
     window.__aztecDebug?.log('BootScene: generating textures');
+    try{
     this.genStone('tileStone','#222230',['#4a4a54','#525260','#5a5a66'],'#686874','#3e3e48','#1a1a24',false);
     this.genStone('tileStoneMoss','#222230',['#4a4a54','#525260','#5a5a66'],'#686874','#3e3e48','#1a1a24',true);
     this.genStone('bgWall','#1c1c26',['#2e2e38','#343440','#3a3a46'],'#3a3a46','#2e2e38','#1c1c26',false);
@@ -48,6 +49,11 @@ export class BootScene extends Phaser.Scene{
     initSounds();
     const t=this.add.text(160,90,'AZTEC HERO',{fontFamily:'monospace',fontSize:'12px',color:'#c4a060',stroke:'#2a1a0a',strokeThickness:2}).setOrigin(0.5);
     this.time.delayedCall(600,()=>{t.destroy();this.scene.start('ruins');});
+    }catch(error){
+      const message=error instanceof Error?(error.stack||error.message):String(error);
+      window.__aztecDebug?.log(`Boot failed:\n${message}`);
+      throw error;
+    }
   }
   genStone(key:string,mortar:string,base:string[],hi:string,lo:string,crack:string,moss:boolean){
     const ctx=this.tex(key,16,16);
