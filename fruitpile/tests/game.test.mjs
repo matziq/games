@@ -8,7 +8,7 @@ const output = path.resolve(process.argv[2] || String.raw`D:\AI_Output\Fruitpile
 process.env.PLAYWRIGHT_BROWSERS_PATH ||= path.join(output, 'browsers');
 const require = createRequire(path.join(output, 'tools', 'package.json'));
 const { chromium } = require('playwright');
-const htmlPath = path.join(output, 'FruitPile-2.0.3.html');
+const htmlPath = path.join(output, 'FruitPile-2.0.4.html');
 const html = fs.readFileSync(htmlPath, 'utf8');
 const artifacts = path.join(output, 'tests');
 fs.mkdirSync(artifacts, { recursive: true });
@@ -81,6 +81,37 @@ window.testGame = {
     return { apple: apple.id, grape: grape.id };
   },
   scare: (hostId, hitterId) => scareFly(Composite.get(world, hostId, 'body'), Composite.get(world, hitterId, 'body')),
+  masses: () => FRUITS.map(f => ({ key: f.key, radius: f.radius, mass: fruitBodyAt(0, 0, f).mass })),
+  fall: (key) => {
+    const b = fruitBodyAt(260, 200, fruitByKey.get(key));
+    Body.setVelocity(b, { x: 0, y: 0 });
+    Body.setAngularVelocity(b, 0);
+    World.add(world, b);
+    for (let i = 0; i < 20; i++) Engine.update(engine, 1000 / 60);
+    return { y: b.position.y, vy: b.velocity.y };
+  },
+  strike: (key) => {
+    const savedGravity = world.gravity.y;
+    world.gravity.y = 0;
+    const targetFruit = fruitByKey.get('cherry');
+    const strikerFruit = fruitByKey.get(key);
+    const target = fruitBodyAt(260, 350, targetFruit);
+    const striker = fruitBodyAt(260, 350 - targetFruit.radius - strikerFruit.radius - 6, strikerFruit);
+    for (const b of [target, striker]) {
+      Body.setVelocity(b, { x: 0, y: 0 });
+      Body.setAngularVelocity(b, 0);
+    }
+    Body.setVelocity(striker, { x: 0, y: 6 });
+    World.add(world, [target, striker]);
+    const start = { x: target.position.x, y: target.position.y };
+    let peak = 0;
+    for (let i = 0; i < 35; i++) {
+      Engine.update(engine, 1000 / 60);
+      peak = Math.max(peak, Math.hypot(target.velocity.x, target.velocity.y));
+    }
+    world.gravity.y = savedGravity;
+    return { strikerMass: striker.mass, targetMove: Math.hypot(target.position.x - start.x, target.position.y - start.y), peak };
+  },
   freezeFruit: () => { for (const b of Composite.allBodies(world)) if (isFruitBody(b)) Body.setStatic(b, true); },
   setChaos: (on) => { settings.chaos = !!on; }
 };
@@ -331,6 +362,34 @@ try {
         assert.equal(result.moved.find(b => b.key === 'grape').fly, false);
         assert(result.beforeOldDeadline.some(b => b.key === 'peach'), JSON.stringify(result.beforeOldDeadline));
         assert(!result.later.some(b => b.key === 'peach'), JSON.stringify(result.later));
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    await test('Larger fruit have more mass and move the same target farther', async () => {
+        const { page, context, errors } = await setup();
+        const result = await page.evaluate(() => {
+            testGame.begin('explode');
+            const masses = testGame.masses();
+            const cherryFall = testGame.fall('cherry');
+            testGame.begin('explode');
+            const melonFall = testGame.fall('watermelon');
+            testGame.begin('explode');
+            const cherryHit = testGame.strike('cherry');
+            testGame.begin('explode');
+            const melonHit = testGame.strike('watermelon');
+            return { masses, cherryFall, melonFall, cherryHit, melonHit };
+        });
+        for (let i = 1; i < result.masses.length; i++) {
+            assert(result.masses[i].mass > result.masses[i - 1].mass, JSON.stringify(result.masses));
+        }
+        const cherry = result.masses.find(f => f.key === 'cherry');
+        const melon = result.masses.find(f => f.key === 'watermelon');
+        const radiusRatio = melon.radius / cherry.radius;
+        const massRatio = melon.mass / cherry.mass;
+        assert(massRatio > radiusRatio ** 2.5 && massRatio < radiusRatio ** 3.5, JSON.stringify({ massRatio, radiusRatio }));
+        assert(Math.abs(result.cherryFall.y - result.melonFall.y) < 1, JSON.stringify(result));
+        assert(result.melonHit.targetMove > result.cherryHit.targetMove * 1.6, JSON.stringify(result));
+        assert(result.melonHit.peak > result.cherryHit.peak * 1.6, JSON.stringify(result));
         assert.deepEqual(errors, []);
         await context.close();
     });
