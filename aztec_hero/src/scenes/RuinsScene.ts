@@ -53,6 +53,7 @@ export class RuinsScene extends Phaser.Scene{
   private jumpHeldLastFrame=false;
   constructor(){super('ruins');}
   create(){
+    window.__aztecDebug?.hide();
     this.escaped=false;this.treasureCount=0;this.oxygen=100;this.onLadder=false;
     this.ladderGrace=0;
     this.hasTorch=false;this.swingTimer=0;this.torchPickupTime=0;this.torchFlashing=false;

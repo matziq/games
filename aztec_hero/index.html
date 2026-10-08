@@ -327,6 +327,9 @@
         log,
         append: (msg) => {
           if (debug) debug.textContent += `\n${msg}`;
+        },
+        hide: () => {
+          if (debug) debug.hidden = true;
         }
       };
 

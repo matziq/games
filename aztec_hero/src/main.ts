@@ -8,6 +8,7 @@ declare global {
     __aztecDebug?: {
       log: (msg: string) => void;
       append: (msg: string) => void;
+      hide: () => void;
     };
   }
 }
@@ -49,8 +50,8 @@ const resumeForLifecycle = () => {
   void resumeAudio().catch((error) => console.warn('Audio resume was blocked', error));
 };
 
-window.addEventListener('blur', pauseForLifecycle);
-window.addEventListener('focus', resumeForLifecycle);
+window.addEventListener('pagehide', pauseForLifecycle);
+window.addEventListener('pageshow', resumeForLifecycle);
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) pauseForLifecycle();
   else resumeForLifecycle();
