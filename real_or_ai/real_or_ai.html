@@ -48,32 +48,58 @@
 		.game-container {
 			margin: 0;
 			width: 100%;
-			height: 100%;
-			min-height: 100dvh;
+			height: 100dvh;
+			max-height: 100dvh;
+			min-height: 0;
 			max-width: none;
 			background: #222;
 			border-radius: 0;
-			padding: 8px 16px 16px;
+			padding: 8px 16px 72px;
 			box-sizing: border-box;
 			box-shadow: none;
 			display: flex;
 			flex-direction: column;
 			align-items: center;
+			overflow: hidden;
+		}
+
+		.game-container h1 {
+			margin: 2px 0;
+			font-size: clamp(1.15rem, 3vh, 1.7rem);
+			flex: 0 0 auto;
+		}
+
+		#round-info,
+		#instructions,
+		#feedback,
+		.score {
+			flex: 0 0 auto;
+			margin: 2px 0;
+		}
+
+		#feedback {
+			max-height: 22vh;
 			overflow: auto;
 		}
 
 		.images {
 			display: flex;
 			justify-content: center;
+			align-items: stretch;
 			gap: 32px;
-			margin: 32px 0;
+			margin: 8px 0;
 			width: 100%;
+			flex: 1 1 auto;
+			min-height: 0;
+			overflow: hidden;
 			flex-wrap: nowrap;
 		}
 
 		.images img {
 			width: 100%;
-			height: min(62vh, 820px);
+			height: 0;
+			flex: 1 1 auto;
+			min-height: 0;
 			max-width: 100%;
 			object-fit: contain;
 			background: #111;
@@ -83,29 +109,26 @@
 
 		@media (max-width: 720px) {
 			.images {
-				gap: 16px;
-			}
-
-			.images img {
-				height: min(60vh, 360px);
+				gap: 8px;
 			}
 		}
 
 
 		.score {
-			font-size: 1.3em;
-			margin: 24px 0;
+			font-size: 1.1em;
+			margin: 4px 0;
 		}
 
 		.btn {
 			background: #09f;
 			color: #fff;
 			border: none;
-			padding: 12px 32px;
+			padding: 8px 22px;
 			border-radius: 6px;
 			font-size: 1em;
 			cursor: pointer;
-			margin-top: 24px;
+			margin-top: 6px;
+			flex: 0 0 auto;
 		}
 
 		.btn:disabled {
@@ -114,9 +137,10 @@
 		}
 
 		#instructions {
-			font-size: 1.2em;
-			margin: 18px 0;
+			font-size: 1.05em;
+			margin: 2px 0;
 			color: #ffd700;
+			flex: 0 0 auto;
 		}
 
 		#instructions .ai-emphasis {
@@ -135,10 +159,14 @@
 		/* Image wrapper for fullscreen toggle */
 		.img-wrap {
 			position: relative;
-			display: inline-flex;
+			display: flex;
 			flex-direction: column;
 			width: calc(50% - 16px);
 			max-width: 860px;
+			align-self: stretch;
+			height: 100%;
+			max-height: 100%;
+			min-height: 0;
 			border: 4px solid #444;
 			border-radius: 8px;
 			overflow: hidden;
@@ -268,9 +296,10 @@
 		.choose-btn {
 			display: block;
 			width: 100%;
-			margin-top: 8px;
-			padding: 10px 0;
-			font-size: 1.1em;
+			margin-top: 6px;
+			padding: 8px 0;
+			flex: 0 0 auto;
+			font-size: 1.05em;
 			font-weight: 700;
 			border-radius: 8px;
 			background: #09f;
@@ -320,7 +349,7 @@
 		<div class="score" id="score"></div>
 		<button class="btn" id="nextBtn" style="display:none;">Next</button>
 		<button class="btn" id="restartBtn" style="display:none;">Restart</button>
-		<button class="btn" id="roaiScoresBtn" style="background:#ffd700;color:#222;margin-top:12px;">🏆 High
+		<button class="btn" id="roaiScoresBtn" style="background:#ffd700;color:#222;margin-top:6px;">🏆 High
 			Scores</button>
 	</div>
 
@@ -577,21 +606,25 @@
 			}
 		}
 
+		function fitPlayfield() {
+			const box = document.querySelector('.game-container');
+			if (box) box.scrollTop = 0;
+			window.scrollTo(0, 0);
+		}
+
 		function waitForImgLoad(img) {
 			return new Promise((resolve) => {
-				if (img.complete && img.naturalWidth > 0) { resolve(); return; }
-				img.addEventListener('load', () => resolve(), { once: true });
-				img.addEventListener('error', () => {
-					// Retry once by re-setting src with a cache-buster
-					const retrySrc = img.src + (img.src.includes('?') ? '&' : '?') + 'r=' + Date.now();
-					img.addEventListener('load', () => resolve(), { once: true });
-					img.addEventListener('error', () => resolve(), { once: true });
-					img.src = retrySrc;
-				}, { once: true });
+				const finish = () => resolve(img.naturalWidth > 0);
+				if (img.complete) { finish(); return; }
+				img.addEventListener('load', finish, { once: true });
+				img.addEventListener('error', () => resolve(false), { once: true });
 			});
 		}
 
+		let brokenSkips = 0;
+
 		async function showRound() {
+			fitPlayfield();
 			document.getElementById('feedback').textContent = '';
 			document.getElementById('nextBtn').style.display = 'none';
 			document.getElementById('restartBtn').style.display = 'none';
@@ -647,8 +680,24 @@
 			imagesDiv.innerHTML = '';
 			imagesDiv.appendChild(leftWrap);
 			imagesDiv.appendChild(rightWrap);
-			// Wait for both images to load, then reveal
-			await Promise.all(imgElements.map(waitForImgLoad));
+			// Wait for both images to load, then reveal. Skip a pair if either file is missing.
+			const loaded = await Promise.all(imgElements.map(waitForImgLoad));
+			if (loaded.some(ok => !ok)) {
+				pairs.splice(currentRound, 1);
+				brokenSkips++;
+				if (brokenSkips > 40 || pairs.length === 0) {
+					document.getElementById('round-info').textContent = 'Error: Images failed to load!';
+					document.getElementById('images').innerHTML = '<p>A matched pair was listed, but the files could not be opened. Refresh after checking ai/ and real/.</p>';
+					return;
+				}
+				if (currentRound >= pairs.length) {
+					showResults();
+					return;
+				}
+				await showRound();
+				return;
+			}
+			brokenSkips = 0;
 			leftWrap.style.visibility = '';
 			rightWrap.style.visibility = '';
 		}
@@ -806,6 +855,9 @@
 			if (!img || img.dataset.signShown === '1') return;
 			img.dataset.signShown = '1';
 			img.alt = 'Revealed AI image';
+			img.addEventListener('error', () => {
+				if (pair.ai) img.src = pair.ai;
+			}, { once: true });
 			img.src = pair.sign;
 		}
 
@@ -842,6 +894,7 @@
 		};
 
 		function showResults() {
+			fitPlayfield();
 			document.getElementById('images').innerHTML = '';
 			document.getElementById('round-info').textContent = 'Game Over!';
 			document.getElementById('score').textContent = '';
@@ -902,6 +955,12 @@
 		};
 
 		async function startGame() {
+			fitPlayfield();
+			brokenSkips = 0;
+			document.getElementById('feedback').textContent = '';
+			document.getElementById('nextBtn').style.display = 'none';
+			document.getElementById('restartBtn').style.display = 'none';
+			document.getElementById('score').textContent = '';
 			// Show loading message
 			document.getElementById('round-info').textContent = 'Loading images...';
 			document.getElementById('images').innerHTML = '<p>Scanning folders for images...</p>';
