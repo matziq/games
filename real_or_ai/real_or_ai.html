@@ -8,9 +8,18 @@
 		content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 	<title>Real or AI</title>
 	<style>
+		html,
+		body {
+			margin: 0;
+			width: 100%;
+			height: 100%;
+			height: 100dvh;
+			overflow: hidden;
+			background: #111;
+		}
+
 		body {
 			font-family: Arial, sans-serif;
-			background: #222;
 			color: #fff;
 			text-align: center;
 		}
@@ -37,15 +46,20 @@
 		}
 
 		.game-container {
-			margin: 40px auto;
-			max-width: 740px;
-			background: #333;
-			border-radius: 12px;
-			padding: 32px;
-			box-shadow: 0 4px 24px #0006;
+			margin: 0;
+			width: 100%;
+			height: 100%;
+			min-height: 100dvh;
+			max-width: none;
+			background: #222;
+			border-radius: 0;
+			padding: 8px 16px 16px;
+			box-sizing: border-box;
+			box-shadow: none;
 			display: flex;
 			flex-direction: column;
 			align-items: center;
+			overflow: auto;
 		}
 
 		.images {
@@ -59,10 +73,11 @@
 
 		.images img {
 			width: 100%;
-			height: 320px;
+			height: min(62vh, 820px);
 			max-width: 100%;
 			object-fit: contain;
 			background: #111;
+			cursor: zoom-in;
 			-webkit-user-drag: none;
 		}
 
@@ -122,7 +137,8 @@
 			position: relative;
 			display: inline-flex;
 			flex-direction: column;
-			width: min(320px, calc(50% - 16px));
+			width: calc(50% - 16px);
+			max-width: 860px;
 			border: 4px solid #444;
 			border-radius: 8px;
 			overflow: hidden;
@@ -157,34 +173,81 @@
 			opacity: 1;
 		}
 
-		/* Fullscreen overlay for zoomed image */
+		/* Full-size image viewer */
 		#img-fullscreen {
 			display: none;
 			position: fixed;
 			inset: 0;
-			z-index: 100;
-			background: rgba(0, 0, 0, 0.92);
-			align-items: center;
-			justify-content: center;
-			cursor: pointer;
+			z-index: 100000;
+			background: rgba(0, 0, 0, 0.94);
+			overflow: hidden;
 			touch-action: none;
+			cursor: zoom-out;
 			-webkit-user-select: none;
 			user-select: none;
 		}
 
 		#img-fullscreen.show {
+			display: block;
+		}
+
+		#fs-stage {
+			position: absolute;
+			inset: 0;
 			display: flex;
+			align-items: center;
+			justify-content: center;
+			overflow: hidden;
 		}
 
 		#img-fullscreen img {
-			max-width: 95vw;
-			max-height: 95vh;
+			max-width: 96vw;
+			max-height: 96vh;
 			object-fit: contain;
 			border-radius: 8px;
-			pointer-events: none;
+			transform-origin: center center;
+			pointer-events: auto;
+			cursor: zoom-in;
 			touch-action: none;
 			-webkit-user-drag: none;
 			user-select: none;
+		}
+
+		#img-fullscreen.zoomed img {
+			cursor: grab;
+		}
+
+		#img-fullscreen.dragging img {
+			cursor: grabbing;
+		}
+
+		#fs-close {
+			position: absolute;
+			top: 12px;
+			right: 12px;
+			z-index: 2;
+			margin: 0;
+			padding: 8px 16px;
+			background: rgba(0, 0, 0, 0.7);
+			color: #fff;
+			border: 1px solid rgba(255, 255, 255, 0.35);
+			border-radius: 8px;
+			cursor: pointer;
+		}
+
+		#fs-hint {
+			position: absolute;
+			left: 50%;
+			bottom: 14px;
+			transform: translateX(-50%);
+			z-index: 2;
+			margin: 0;
+			padding: 6px 10px;
+			border-radius: 8px;
+			background: rgba(0, 0, 0, 0.55);
+			color: #ddd;
+			font-size: 13px;
+			pointer-events: none;
 		}
 
 		@media (max-width: 720px) {
@@ -262,7 +325,11 @@
 	</div>
 
 	<div id="img-fullscreen" oncontextmenu="return false">
-		<img id="fs-img" src="" alt="Fullscreen image">
+		<div id="fs-stage">
+			<img id="fs-img" src="" alt="Fullscreen image">
+		</div>
+		<button type="button" id="fs-close">Close</button>
+		<p id="fs-hint">Scroll to zoom. Drag when zoomed.</p>
 	</div>
 
 	<div id="roai-hs-modal"
@@ -549,6 +616,11 @@
 				img.draggable = false;
 				img.oncontextmenu = (e) => e.preventDefault();
 				img.addEventListener('touchstart', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+				img.addEventListener('click', (e) => {
+					e.stopPropagation();
+					e.preventDefault();
+					openImageViewer(img.src);
+				});
 				const zoomBtn = document.createElement('button');
 				zoomBtn.className = 'img-zoom-btn';
 				zoomBtn.textContent = '⛶';
@@ -581,19 +653,151 @@
 			rightWrap.style.visibility = '';
 		}
 
+		const imageViewer = {
+			scale: 1,
+			tx: 0,
+			ty: 0,
+			dragging: false,
+			dragMoved: false,
+			pointerId: null,
+			startX: 0,
+			startY: 0,
+			originTx: 0,
+			originTy: 0
+		};
+
+		function computeViewerZoom(state, clientX, clientY, width, height, factor) {
+			const next = Math.min(8, Math.max(1, state.scale * factor));
+			const ratio = state.scale === 0 ? 1 : next / state.scale;
+			let tx = state.tx * ratio + (clientX - width / 2) * (1 - ratio);
+			let ty = state.ty * ratio + (clientY - height / 2) * (1 - ratio);
+			if (next <= 1.001) return { scale: 1, tx: 0, ty: 0 };
+			return { scale: next, tx, ty };
+		}
+
+		function applyViewerTransform() {
+			const img = document.getElementById('fs-img');
+			const overlay = document.getElementById('img-fullscreen');
+			img.style.transform = `translate(${imageViewer.tx}px, ${imageViewer.ty}px) scale(${imageViewer.scale})`;
+			overlay.classList.toggle('zoomed', imageViewer.scale > 1.001);
+			overlay.classList.toggle('dragging', imageViewer.dragging);
+		}
+
+		function resetViewerTransform() {
+			imageViewer.scale = 1;
+			imageViewer.tx = 0;
+			imageViewer.ty = 0;
+			imageViewer.dragging = false;
+			imageViewer.dragMoved = false;
+			imageViewer.pointerId = null;
+			applyViewerTransform();
+		}
+
+		function openImageViewer(src) {
+			const overlay = document.getElementById('img-fullscreen');
+			const img = document.getElementById('fs-img');
+			resetViewerTransform();
+			img.src = src;
+			overlay.classList.add('show');
+		}
+
+		function closeImageViewer() {
+			document.getElementById('img-fullscreen').classList.remove('show');
+			resetViewerTransform();
+		}
+
+		function zoomViewerAt(clientX, clientY, factor) {
+			const next = computeViewerZoom(
+				imageViewer,
+				clientX,
+				clientY,
+				window.innerWidth,
+				window.innerHeight,
+				factor
+			);
+			imageViewer.scale = next.scale;
+			imageViewer.tx = next.tx;
+			imageViewer.ty = next.ty;
+			applyViewerTransform();
+		}
+
 		function toggleFullscreenImg(src) {
 			const overlay = document.getElementById('img-fullscreen');
 			const fsImg = document.getElementById('fs-img');
-			if (overlay.classList.contains('show') && fsImg.src.endsWith(src)) {
-				overlay.classList.remove('show');
+			if (overlay.classList.contains('show') && fsImg.src.endsWith(src) && imageViewer.scale <= 1.001) {
+				closeImageViewer();
 			} else {
-				fsImg.src = src;
-				overlay.classList.add('show');
+				openImageViewer(src);
 			}
 		}
-		document.getElementById('img-fullscreen').addEventListener('click', () => {
-			document.getElementById('img-fullscreen').classList.remove('show');
-		});
+
+		(function initImageViewer() {
+			const overlay = document.getElementById('img-fullscreen');
+			const img = document.getElementById('fs-img');
+			overlay.addEventListener('wheel', (e) => {
+				if (!overlay.classList.contains('show')) return;
+				e.preventDefault();
+				e.stopPropagation();
+				let dy = e.deltaY;
+				if (e.deltaMode === 1) dy *= 16;
+				else if (e.deltaMode === 2) dy *= window.innerHeight;
+				zoomViewerAt(e.clientX, e.clientY, Math.exp(-dy * 0.0016));
+			}, { passive: false });
+
+			overlay.addEventListener('pointerdown', (e) => {
+				if (!overlay.classList.contains('show') || e.button !== 0) return;
+				if (e.target.closest && e.target.closest('#fs-close')) return;
+				if (e.target === img && imageViewer.scale > 1.001) {
+					imageViewer.dragging = true;
+					imageViewer.dragMoved = false;
+					imageViewer.pointerId = e.pointerId;
+					imageViewer.startX = e.clientX;
+					imageViewer.startY = e.clientY;
+					imageViewer.originTx = imageViewer.tx;
+					imageViewer.originTy = imageViewer.ty;
+					overlay.setPointerCapture(e.pointerId);
+					applyViewerTransform();
+					e.preventDefault();
+				}
+			});
+
+			overlay.addEventListener('pointermove', (e) => {
+				if (!imageViewer.dragging || e.pointerId !== imageViewer.pointerId) return;
+				const dx = e.clientX - imageViewer.startX;
+				const dy = e.clientY - imageViewer.startY;
+				if (Math.hypot(dx, dy) > 3) imageViewer.dragMoved = true;
+				imageViewer.tx = imageViewer.originTx + dx;
+				imageViewer.ty = imageViewer.originTy + dy;
+				applyViewerTransform();
+			});
+
+			function endDrag(e) {
+				if (!imageViewer.dragging || (e && e.pointerId !== imageViewer.pointerId)) return;
+				imageViewer.dragging = false;
+				imageViewer.pointerId = null;
+				applyViewerTransform();
+			}
+
+			overlay.addEventListener('pointerup', (e) => {
+				const wasDrag = imageViewer.dragging && imageViewer.dragMoved;
+				endDrag(e);
+				if (wasDrag) return;
+				if (e.target.closest && e.target.closest('#fs-close')) return;
+				if (e.target === img && imageViewer.scale > 1.001) return;
+				closeImageViewer();
+			});
+			overlay.addEventListener('pointercancel', endDrag);
+			document.getElementById('fs-close').addEventListener('click', (e) => {
+				e.stopPropagation();
+				closeImageViewer();
+			});
+			document.addEventListener('keydown', (e) => {
+				if (e.key === 'Escape' && overlay.classList.contains('show')) {
+					e.preventDefault();
+					closeImageViewer();
+				}
+			});
+		})();
 
 		function revealAiSign(pair) {
 			if (!pair || !pair.sign) return;
@@ -724,6 +928,21 @@
 			await showRound();
 		}
 
+		function enterBrowserFullscreen() {
+			if (document.fullscreenElement || document.webkitFullscreenElement) return;
+			const el = document.documentElement;
+			const request = el.requestFullscreen || el.webkitRequestFullscreen;
+			if (!request) return;
+			try {
+				const pending = request.call(el);
+				if (pending && typeof pending.catch === 'function') pending.catch(() => { });
+			} catch (err) { }
+		}
+
+		// Fill the window immediately. Browser chrome can only hide when the
+		// environment allows fullscreen without a click; do not wait for one.
+		enterBrowserFullscreen();
+
 		// Start the game on load
 		startGame();
 	</script>
@@ -731,6 +950,7 @@
 	<script>
 		if (window.GHScores) GHScores.load('real_or_ai', 'realOrAi-highscores', 5).catch(() => { });
 	</script>
+	<script>window.__mcNoAutoFullscreen = true;</script>
 	<script src="../scripts/mobile-controls.js"></script>
 </body>
 

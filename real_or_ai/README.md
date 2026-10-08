@@ -4,6 +4,8 @@ Each round shows one matched pair at the same time: `real_0023.jpg` and `ai_0023
 
 After a choice, the AI box swaps to `ai_sign/ai_sign_0023.jpg`. That sign is not shown before the choice. The real image stays put.
 
+The game fills the window when it opens. Click a photo to view it full size, scroll to zoom, and drag while zoomed.
+
 ## Run
 
 - Open `real_or_ai.html` in your browser.
