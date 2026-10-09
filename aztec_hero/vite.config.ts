@@ -12,6 +12,12 @@ export default defineConfig({
     strictPort: true
   },
   build: {
-    target: 'es2022'
+    target: 'es2022',
+    rollupOptions: {
+      output: {
+        format: 'iife',
+        inlineDynamicImports: true
+      }
+    }
   }
 });

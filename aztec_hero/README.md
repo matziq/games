@@ -25,6 +25,11 @@ npm run dev
 
 Vite serves the game on port 8010. The production build is self-contained under `dist` and uses relative URLs (`base: './'`) so it works in Capacitor and from subdirectories.
 
+On a PC, open `dist\index.html` directly or launch it through the games menu.
+The production build uses a classic bundled script so `file://` launches do
+not require a local server. The root `index.html` is the TypeScript development
+entry for `npm run dev`; opening it directly redirects to the built game.
+
 ```powershell
 npm test
 npm run typecheck
