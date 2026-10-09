@@ -321,12 +321,18 @@
 
       const debug = document.getElementById('debug');
       const log = (msg) => {
-        if (debug) debug.textContent = String(msg);
+        if (debug) {
+          debug.textContent = String(msg);
+          debug.hidden = false;
+        }
       };
       window.__aztecDebug = {
         log,
         append: (msg) => {
-          if (debug) debug.textContent += `\n${msg}`;
+          if (debug) {
+            debug.textContent += `\n${msg}`;
+            debug.hidden = false;
+          }
         },
         hide: () => {
           if (debug) debug.hidden = true;
@@ -334,10 +340,10 @@
       };
 
       window.addEventListener('error', (event) => {
-        log(`JS error: ${event.message}\n${event.filename}:${event.lineno}:${event.colno}`);
+        log(`JS error: ${event.message}\n${event.filename}:${event.lineno}:${event.colno}\n${event.error?.stack || ''}`);
       });
       window.addEventListener('unhandledrejection', (event) => {
-        log(`Unhandled promise rejection:\n${event.reason}`);
+        log(`Unhandled promise rejection:\n${event.reason?.stack || event.reason}`);
       });
 
       const AZ_HS_KEY = 'aztecHero-highscores';

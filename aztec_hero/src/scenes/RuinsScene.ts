@@ -53,7 +53,7 @@ export class RuinsScene extends Phaser.Scene{
   private jumpHeldLastFrame=false;
   constructor(){super('ruins');}
   create(){
-    window.__aztecDebug?.hide();
+    window.__aztecDebug?.log('Starting RuinsScene…');
     this.escaped=false;this.treasureCount=0;this.oxygen=100;this.onLadder=false;
     this.ladderGrace=0;
     this.hasTorch=false;this.swingTimer=0;this.torchPickupTime=0;this.torchFlashing=false;
@@ -117,6 +117,7 @@ export class RuinsScene extends Phaser.Scene{
     this.hudDepth=this.add.text(230,4,'',hs).setScrollFactor(0).setDepth(10);
     this.hudTorch=this.add.text(4,24,'',hs).setScrollFactor(0).setDepth(10);
     startAmbient();
+    window.__aztecDebug?.hide();
   }
   private buildLevel(){
     // --- WALLS: left and right boundaries for the entire world ---
