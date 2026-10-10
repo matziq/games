@@ -115,6 +115,16 @@
       color: var(--bad);
     }
 
+    #laserHeatBar {
+      width: 56px;
+      height: 8px;
+      accent-color: var(--accent);
+    }
+
+    .laser-heat.overheated #laserHeatBar {
+      accent-color: var(--bad);
+    }
+
     .key {
       color: var(--muted);
       font-weight: 500;
@@ -438,7 +448,7 @@
       <div class="dot"></div><span class="key">Next missile</span><span class="val" id="missileProg">0/10</span>
     </div>
     <div class="chip laser-heat" id="laserHeatChip">
-      <div class="dot"></div><span class="key">Laser</span><span class="val" id="laserHeat">0%</span>
+      <div class="dot"></div><span class="key">Laser</span><progress id="laserHeatBar" max="100" value="0" aria-label="Laser heat"></progress><span class="val" id="laserHeat">0%</span>
     </div>
     <button id="rocketBtn" class="hud-btn" type="button" title="Arm a missile, then tap a target">Arm</button>
     <button id="menuBtn" class="hud-btn" type="button" title="Menu">Menu</button>
@@ -480,6 +490,7 @@
           diamonds!</div>
         <div class="pill">🚀 <strong>Missiles</strong> — Crack 10 geodes and a pod slides out of the gun. Right-click, long-press, or tap Arm, then tap the target. The pod retracts when you are empty.</div>
         <div class="pill"><strong>Laser heat</strong> — Rapid shots build heat. At 100%, a warning sounds and the laser locks for two seconds. Pace your shots to cool it down. Missiles still work while the laser is hot.</div>
+        <div class="pill"><strong>Meteors</strong> — Large fiery rocks dive toward the gun from the sky. Hit one with three laser shots or one missile to release five gems. A klaxon warns of an imminent geode impact.</div>
       </div>
 
       <div class="row">
@@ -516,6 +527,7 @@
         const scoreEl = document.getElementById('score');
         const missileProgEl = document.getElementById('missileProg');
         const laserHeatEl = document.getElementById('laserHeat');
+        const laserHeatBar = document.getElementById('laserHeatBar');
         const laserHeatChip = document.getElementById('laserHeatChip');
 
         const overlay = document.getElementById('overlay');
@@ -560,6 +572,9 @@
         const gems = [];
         const particles = [];
         const fireballs = []; // New collection for fireballs
+        const meteors = [];
+        let meteorTimer = 0;
+        let meteorInterval = 24 + Math.random() * 12;
         const laserBeams = []; // Active laser beam animations
         const rockets = []; // Active rocket projectiles
         const tractorBeams = []; // Gems being pulled to gun
@@ -637,6 +652,7 @@
           laserHeatChip.classList.toggle('overheated', overheated);
           const label = overheated ? 'HOT' : `${Math.round(laserHeat)}%`;
           if (laserHeatEl.textContent !== label) laserHeatEl.textContent = label;
+          laserHeatBar.value = laserHeat;
           laserHeatChip.title = overheated ? 'Laser overheated: wait two seconds' : 'Laser heat: pace shots to cool down';
         }
 
@@ -811,6 +827,114 @@
           return dx * dx + dy * dy < reach * reach;
         }
 
+        function imminentGeodeImpact(g) {
+          if (g.phase !== 'down') return false;
+          const dx = g.x - gun.x, dy = g.y - gun.y;
+          const vx = g.vx, vy = g.fallSpeed;
+          const reach = 34 + g.r * 0.4;
+          const speed2 = vx * vx + vy * vy;
+          if (speed2 <= 0) return false;
+          const dot = dx * vx + dy * vy;
+          const c = dx * dx + dy * dy - reach * reach;
+          const discriminant = dot * dot - speed2 * c;
+          if (dot >= 0 || discriminant < 0) return false;
+          const entryTime = (-dot - Math.sqrt(discriminant)) / speed2;
+          return entryTime >= 0 && entryTime <= 1.2;
+        }
+
+        function warnOfGeodeImpact() {
+          for (const g of geodes) {
+            if (!g.impactWarned && imminentGeodeImpact(g)) {
+              g.impactWarned = true;
+              if (window.sfxCollisionAlarm) window.sfxCollisionAlarm();
+            }
+          }
+        }
+
+        function spawnMeteor() {
+          const w = canvas.clientWidth, h = canvas.clientHeight;
+          const r = (coarsePointer ? 31 * 0.82 : 27 * 0.74) * 2;
+          meteors.push({
+            x: Math.random() < 0.5 ? r : w - r, y: -r,
+            r, hp: 3, rot: rand(Math.PI * 2), trailTimer: 0,
+            color: '#624235', seed: (Math.random() * 20) | 0
+          });
+          if (window.setMeteorFlightSound) window.setMeteorFlightSound(true);
+        }
+
+        function updateMeteors(dt) {
+          for (const m of meteors) {
+            const dx = gun.x - m.x, dy = gun.y - m.y;
+            const distance = Math.hypot(dx, dy);
+            const speed = canvas.clientHeight * 0.09 * (pace() / 0.34) * 1.35;
+            const step = speed * dt;
+            const reach = 34 + m.r * 0.4;
+            if (distance <= reach + step) {
+              endGame('A meteor hit the gun.');
+              return;
+            }
+            m.vx = dx / distance * speed;
+            m.vy = dy / distance * speed;
+            m.x += m.vx * dt;
+            m.y += m.vy * dt;
+            m.rot += dt * 0.6;
+            m.trailTimer += dt;
+            if (m.trailTimer >= 0.06) {
+              m.trailTimer %= 0.06;
+              for (let i = 0; i < (lite ? 2 : 4); i++) {
+                const smoke = i % 2 === 0;
+                const life = smoke ? 1.2 : 0.45;
+                particles.push({
+                  x: m.x - dx / distance * m.r + rand(8, -8),
+                  y: m.y - dy / distance * m.r + rand(8, -8),
+                  vx: -m.vx * 0.15 + rand(12, -12), vy: -m.vy * 0.15,
+                  life, ttl: life, size: smoke ? m.r * 0.4 : m.r * 0.2,
+                  color: smoke ? '#605958' : (i % 3 ? '#ff6a00' : '#ffcf5a')
+                });
+              }
+            }
+          }
+        }
+
+        function drawMeteor(m) {
+          ctx.save();
+          ctx.shadowColor = '#ff6a00';
+          ctx.shadowBlur = 18;
+          drawRock(m);
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = '#ffcf5a';
+          for (let i = 0; i < m.hp; i++) {
+            ctx.beginPath();
+            ctx.arc(m.x + (i - (m.hp - 1) / 2) * 10, m.y, 3, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+
+        function destroyMeteor(m, playExplosion = true) {
+          const index = meteors.indexOf(m);
+          if (index < 0) return;
+          meteors.splice(index, 1);
+          if (window.setMeteorFlightSound) window.setMeteorFlightSound(running && meteors.length > 0);
+          if (playExplosion && window.sfxExplosion) window.sfxExplosion();
+          makeShards(m.x, m.y, m.color, { x: 0, y: -1 });
+          makeSparkles(m.x, m.y, '#ff6a00');
+          const offset = rand(Math.PI * 2);
+          for (let i = 0; i < 5; i++) {
+            createGem(m.x, m.y, offset + i * Math.PI * 2 / 5);
+          }
+        }
+
+        function hitMeteor(m, rocket = false) {
+          if (!meteors.includes(m)) return;
+          m.hp -= rocket ? 3 : 1;
+          if (m.hp <= 0) destroyMeteor(m, !rocket);
+          else {
+            makeSparkles(m.x, m.y, '#ffcf5a');
+            if (window.sfxRockCrumble) window.sfxRockCrumble();
+          }
+        }
+
         // Geode creation
         function spawnGeode() {
           const radius = coarsePointer ? rand(26, 36) : rand(22, 32);
@@ -924,16 +1048,23 @@
         // Gem creation
         function maybeSpawnGem(x, y) {
           if (Math.random() < 0.85) {
-            const t = chooseGemType();
-            // gentle upward drift
-            const drift = rand(12, -12);
-            gems.push({
-              type: t.name, color: t.color, points: t.points,
-              x, y, r: coarsePointer ? 18 : 14, rot: rand(Math.PI * 2), vrot: rand(1.2, -1.2),
-              vx: drift, vy: rand(-10, -30),
-              life: 8.0, ttl: 8.0, alpha: 1
-            });
+            createGem(x, y);
           }
+        }
+
+        function createGem(x, y, angle) {
+          const t = chooseGemType();
+          let vx = rand(12, -12), vy = rand(-10, -30);
+          if (angle !== undefined) {
+            const speed = Math.hypot(vx, vy);
+            vx = Math.cos(angle) * speed;
+            vy = Math.sin(angle) * speed;
+          }
+          gems.push({
+            type: t.name, color: t.color, points: t.points,
+            x, y, r: coarsePointer ? 18 : 14, rot: rand(Math.PI * 2), vrot: rand(1.2, -1.2),
+            vx, vy, life: 8.0, ttl: 8.0, alpha: 1
+          });
         }
 
         // Special function to always spawn diamonds (for fireball explosions)
@@ -1427,6 +1558,14 @@
             fireballTimer = 0;
             if (!gameOver) spawnFireball();
           }
+          meteorTimer += dt;
+          if (meteorTimer >= meteorInterval && meteors.length === 0) {
+            meteorTimer = 0;
+            meteorInterval = 24 + Math.random() * 12;
+            spawnMeteor();
+          }
+          updateMeteors(dt);
+          if (gameOver) { requestAnimationFrame(loop); return; }
 
           // Update & draw shards
           for (let i = shards.length - 1; i >= 0; i--) {
@@ -1460,6 +1599,7 @@
           if (gameOver) { requestAnimationFrame(loop); return; }
           stepList(fireballs, 'fireball');
           stepList(rocks, 'rock');
+          warnOfGeodeImpact();
           threatClose = geodes.some(g => g.phase === 'down' && g.y > gun.y - 170 && Math.abs(g.x - gun.x) < 110);
           const podTarget = rocketCount > 0 ? 1 : 0;
           podExtend += (podTarget - podExtend) * Math.min(1, dt * 4.5);
@@ -1468,10 +1608,12 @@
           for (const g of geodes) flyers.push({ o: g, kind: 'geode' });
           for (const r of rocks) flyers.push({ o: r, kind: 'rock' });
           for (const f of fireballs) flyers.push({ o: f, kind: 'fireball' });
+          for (const m of meteors) flyers.push({ o: m, kind: 'meteor' });
           flyers.sort((a, b) => a.o.y - b.o.y);
           function paintFlyer(item) {
             if (item.kind === 'geode') drawGeode(item.o);
             else if (item.kind === 'rock') drawRock(item.o);
+            else if (item.kind === 'meteor') drawMeteor(item.o);
             else drawFireball(item.o);
           }
           for (const item of flyers) if (item.o.y < gun.y - 8) paintFlyer(item);
@@ -1532,6 +1674,17 @@
             const tb = tractorBeams[i];
             const dx = gunTipX - tb.x, dy = gunTipY - tb.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
+            const travel = Math.min(dist, rk.speed * dt);
+            const nextX = dist ? rk.x + dx / dist * travel : rk.x;
+            const nextY = dist ? rk.y + dy / dist * travel : rk.y;
+            const meteor = firstMeteorOnSegment(rk.x, rk.y, nextX, nextY);
+            if (meteor) {
+              const impact = meteorImpactPoint(rk.x, rk.y, nextX, nextY, meteor);
+              rocketExplode(impact.x, impact.y);
+              rockets.splice(i, 1);
+              if (window.setRocketFlightSound) window.setRocketFlightSound(running && rockets.length > 0);
+              continue;
+            }
             if (dist < 10) {
               // Arrived at gun — award gem points only
               score += tb.points;
@@ -1731,6 +1884,7 @@
           };
           for (let i = gems.length - 1; i >= 0; i--) consider(gems[i], 'gem', HIT_PAD + 12, -12);
           for (let i = fireballs.length - 1; i >= 0; i--) consider(fireballs[i], 'fireball', HIT_PAD + 8, -6);
+          for (let i = meteors.length - 1; i >= 0; i--) consider(meteors[i], 'meteor', HIT_PAD + 6, -4);
           for (let i = geodes.length - 1; i >= 0; i--) consider(geodes[i], 'geode', HIT_PAD + 6, -2);
           for (let i = rocks.length - 1; i >= 0; i--) consider(rocks[i], 'rock', Math.max(6, HIT_PAD - 8), 8);
           return best;
@@ -1779,6 +1933,12 @@
           const obj = hit.obj;
           if (hit.kind === 'gem') {
             collectGem(obj);
+            return;
+          }
+          if (hit.kind === 'meteor') {
+            if (!fireLaser(obj.x, obj.y)) return;
+            hitMeteor(obj);
+            buzz(16);
             return;
           }
           if (hit.kind === 'fireball') {
@@ -1879,6 +2039,24 @@
         canvas.addEventListener('touchmove', (ev) => { ev.preventDefault(); }, { passive: false });
 
         // Rocket explosion — destroys everything in blast radius
+        function meteorImpactPoint(x1, y1, x2, y2, m) {
+          const dx = x2 - x1, dy = y2 - y1;
+          const length2 = dx * dx + dy * dy;
+          const t = length2 ? clamp(((m.x - x1) * dx + (m.y - y1) * dy) / length2, 0, 1) : 0;
+          return { x: x1 + dx * t, y: y1 + dy * t };
+        }
+
+        function firstMeteorOnSegment(x1, y1, x2, y2) {
+          let first = null, nearest = Infinity;
+          for (const m of meteors) {
+            const p = meteorImpactPoint(x1, y1, x2, y2, m);
+            if (dist2(p.x, p.y, m.x, m.y) > (m.r + 4) ** 2) continue;
+            const distance = dist2(x1, y1, p.x, p.y);
+            if (distance < nearest) { nearest = distance; first = m; }
+          }
+          return first;
+        }
+
         function rocketExplode(rx, ry) {
           const blastR = 60; // about double a large geode (30px radius)
           if (typeof sfxExplosion === 'function') sfxExplosion();
@@ -1928,6 +2106,10 @@
               gems.splice(i, 1);
             }
           }
+          // Release meteor gems after collecting preexisting gems in the blast.
+          for (const m of [...meteors]) {
+            if (dist2(rx, ry, m.x, m.y) <= (blastR + m.r) ** 2) hitMeteor(m, true);
+          }
           updateHUD();
           // Draw blast circle briefly
           laserBeams.push({ x1: rx - blastR, y1: ry, x2: rx + blastR, y2: ry, life: 0.2, ttl: 0.2 });
@@ -1949,6 +2131,7 @@
           pauseVeil.classList.add('hidden');
           toolsEl.classList.add('hidden');
           if (window.setRocketFlightSound) window.setRocketFlightSound(rockets.length > 0);
+          if (window.setMeteorFlightSound) window.setMeteorFlightSound(meteors.length > 0);
         }
         function pauseGame() {
           if (!running && !paused) return;
@@ -1959,13 +2142,20 @@
           running = false;
           paused = true;
           if (window.setRocketFlightSound) window.setRocketFlightSound(false);
+          if (window.setMeteorFlightSound) window.setMeteorFlightSound(false);
+          if (window.stopCollisionAlarm) window.stopCollisionAlarm();
           pauseVeil.classList.remove('hidden');
         }
         function resetGame() {
           running = false; paused = false; gameOver = false;
           if (window.setRocketFlightSound) window.setRocketFlightSound(false);
+          if (window.setMeteorFlightSound) window.setMeteorFlightSound(false);
+          if (window.stopCollisionAlarm) window.stopCollisionAlarm();
           score = 0; missed = 0;
           geodes.length = 0; rocks.length = 0; shards.length = 0; gems.length = 0; particles.length = 0; fireballs.length = 0; laserBeams.length = 0; rockets.length = 0; tractorBeams.length = 0;
+          meteors.length = 0;
+          meteorTimer = 0;
+          meteorInterval = 24 + Math.random() * 12;
           spawnTimer = 0; rockTimer = 0; fireballTimer = 0; runTime = 0;
           laserHeat = 0;
           laserHeatUpdatedAt = 0;
@@ -1987,6 +2177,8 @@
         function endGame(reason) {
           gameOver = true;
           if (window.setRocketFlightSound) window.setRocketFlightSound(false);
+          if (window.setMeteorFlightSound) window.setMeteorFlightSound(false);
+          if (window.stopCollisionAlarm) window.stopCollisionAlarm();
           running = false;
           paused = false;
           rocketArmed = false;
@@ -2280,21 +2472,42 @@
         }
         window.sfxRocket = sfxRocket;
 
+        function startFlightLoop(frequency, q, volume, attack) {
+          const source = ctx.createBufferSource();
+          source.buffer = noiseBuf;
+          source.loop = true;
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.value = frequency;
+          filter.Q.value = q;
+          const gain = ctx.createGain();
+          gain.gain.setValueAtTime(0, ctx.currentTime);
+          gain.gain.setTargetAtTime(volume, ctx.currentTime, attack);
+          source.connect(filter);
+          filter.connect(gain);
+          gain.connect(master);
+          source.onended = () => {
+            source.disconnect();
+            filter.disconnect();
+            gain.disconnect();
+          };
+          source.start();
+          return { source, filter, gain };
+        }
+
+        function stopFlightLoop(engine) {
+          engine.gain.gain.cancelScheduledValues(ctx.currentTime);
+          engine.gain.gain.setTargetAtTime(0, ctx.currentTime, 0.01);
+          engine.source.stop(ctx.currentTime + 0.05);
+        }
+
         let rocketFlightActive = false;
         let rocketEngine = null;
         function setRocketFlightSound(active) {
           rocketFlightActive = active;
           if (!active) {
             if (rocketEngine) {
-              const { source, filter, gain } = rocketEngine;
-              gain.gain.cancelScheduledValues(ctx.currentTime);
-              gain.gain.setTargetAtTime(0, ctx.currentTime, 0.01);
-              source.onended = () => {
-                source.disconnect();
-                filter.disconnect();
-                gain.disconnect();
-              };
-              source.stop(ctx.currentTime + 0.05);
+              stopFlightLoop(rocketEngine);
               rocketEngine = null;
             }
             return;
@@ -2306,23 +2519,74 @@
             });
           }
           if (rocketEngine) return;
-          const source = ctx.createBufferSource();
-          source.buffer = noiseBuf;
-          source.loop = true;
-          const filter = ctx.createBiquadFilter();
-          filter.type = 'lowpass';
-          filter.frequency.value = 1400;
-          filter.Q.value = 0.7;
-          const gain = ctx.createGain();
-          gain.gain.setValueAtTime(0, ctx.currentTime);
-          gain.gain.setTargetAtTime(0.23, ctx.currentTime, 0.04);
-          source.connect(filter);
-          filter.connect(gain);
-          gain.connect(master);
-          rocketEngine = { source, filter, gain };
-          source.start();
+          rocketEngine = startFlightLoop(1400, 0.7, 0.23, 0.04);
         }
         window.setRocketFlightSound = setRocketFlightSound;
+
+        let meteorFlightActive = false;
+        let meteorEngine = null;
+        function setMeteorFlightSound(active) {
+          meteorFlightActive = active;
+          if (!active) {
+            if (meteorEngine) {
+              stopFlightLoop(meteorEngine);
+              meteorEngine = null;
+            }
+            return;
+          }
+          ensureCtx();
+          if (ctx.state !== 'running') {
+            return resumeCtx().then(() => {
+              if (meteorFlightActive && ctx.state === 'running') setMeteorFlightSound(true);
+            });
+          }
+          if (meteorEngine) return;
+          meteorEngine = startFlightLoop(650, 1.2, 0.42, 0.08);
+        }
+        window.setMeteorFlightSound = setMeteorFlightSound;
+
+        let collisionAlarmUntil = 0;
+        let collisionAlarmVoices = [];
+        let collisionAlarmGeneration = 0;
+        function stopCollisionAlarm() {
+          collisionAlarmGeneration++;
+          if (!ctx) return;
+          for (const voice of collisionAlarmVoices) {
+            voice.g.gain.cancelScheduledValues(ctx.currentTime);
+            voice.g.gain.setTargetAtTime(0, ctx.currentTime, 0.005);
+            voice.o.stop(ctx.currentTime + 0.025);
+          }
+          collisionAlarmVoices = [];
+          collisionAlarmUntil = 0;
+        }
+        function sfxCollisionAlarm() {
+          if (window.audioMuted) return;
+          ensureCtx();
+          if (ctx.state !== 'running') {
+            const generation = collisionAlarmGeneration;
+            return resumeCtx().then(() => {
+              if (generation === collisionAlarmGeneration && ctx.state === 'running') sfxCollisionAlarm();
+            });
+          }
+          const t = now();
+          if (t < collisionAlarmUntil) return;
+          collisionAlarmUntil = t + 1;
+          collisionAlarmVoices = [];
+          for (let i = 0; i < 4; i++) {
+            const voice = osc('sawtooth', 420);
+            const start = t + i * 0.25;
+            env(voice.g, start, 0.006, 0.22, 0.22);
+            voice.o.frequency.setValueAtTime(420, start);
+            voice.o.frequency.linearRampToValueAtTime(760, start + 0.1);
+            voice.o.frequency.linearRampToValueAtTime(420, start + 0.22);
+            voice.o.onended = () => { voice.o.disconnect(); voice.g.disconnect(); };
+            voice.o.start(start);
+            voice.o.stop(start + 0.25);
+            collisionAlarmVoices.push(voice);
+          }
+        }
+        window.sfxCollisionAlarm = sfxCollisionAlarm;
+        window.stopCollisionAlarm = stopCollisionAlarm;
         function sfxStart() {
           if (window.audioMuted) return;
           resumeCtx();
