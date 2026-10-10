@@ -19,8 +19,17 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
   let ws;
   try {
     const portFile = path.join(profile, 'DevToolsActivePort');
-    for (let i = 0; i < 100 && !fs.existsSync(portFile); i++) await wait(100);
-    const port = fs.readFileSync(portFile, 'utf8').split('\n')[0];
+    let port;
+    for (let i = 0; i < 100; i++) {
+      try {
+        const candidate = fs.readFileSync(portFile, 'utf8').split('\n')[0];
+        if (/^\d+$/.test(candidate)) { port = candidate; break; }
+      } catch (error) {
+        if (!['ENOENT', 'EBUSY'].includes(error.code)) throw error;
+      }
+      await wait(100);
+    }
+    assert.ok(port, 'Chrome debugging port did not become ready within ten seconds');
     const pages = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
     ws = new WebSocket(pages.find(page => page.type === 'page').webSocketDebuggerUrl);
     await new Promise((resolve, reject) => { ws.onopen = resolve; ws.onerror = reject; });
