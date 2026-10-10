@@ -28,3 +28,5 @@ Every 24-36 seconds of active play, a meteor can enter from either upper corner,
 Run the audio regression checks with `node --test geodes/audio.test.cjs` from the repository root.
 
 For isolated browser integration checks on Windows, run `node --test geodes/browser-integration.test.cjs`. This uses installed Chrome and removes its temporary browser profile afterward. Set `GEODES_TEST_BROWSER` to another installed Chromium executable if needed.
+
+The browser regression shoots a crystal, verifies its tractor-beam collection awards points, and advances subsequent frames to ensure the game loop keeps running. Set `GEODES_TEST_URL` to the deployed game URL to run the same checks against published HTML.
