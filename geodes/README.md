@@ -17,4 +17,6 @@ Every laser shot has a short zap, including shots that miss. Audio unlocks on a 
 
 Rockets have a launch cue, a continuous flight whoosh, and an explosion at detonation. The whoosh stops when the last rocket detonates, the game pauses, resets, or ends, and resumes with any remaining rockets when play resumes.
 
+Rockets travel at 560 pixels per second on desktop and 680 on touch devices, without changing ammo limits. The laser fires at most once every 150 milliseconds. Each shot adds 25% heat, which cools at 20% per second during play. Reaching 100% triggers a distinct warning and locks the laser for two seconds of active play before clearing the heat. Rejected shots do not damage targets or collect gems. Missiles remain available while the laser is overheated.
+
 Run the audio regression checks with `node --test geodes/audio.test.cjs` from the repository root.
