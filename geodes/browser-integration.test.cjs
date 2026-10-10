@@ -7,7 +7,7 @@ const { test } = require('node:test');
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-test('meteor gameplay, rendering, drops, klaxon, and flight sound cleanup in Chrome', { timeout: 30000 }, async () => {
+test('crystal collection continues the game loop and preserves meteor/audio behavior in Chrome', { timeout: 30000 }, async () => {
   const executable = process.env.GEODES_TEST_BROWSER || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
   assert.ok(fs.existsSync(executable), 'Set GEODES_TEST_BROWSER to an installed Chromium browser executable');
   const profile = fs.mkdtempSync('D:\\AI_Output\\geodes-meteor-browser-');
@@ -49,12 +49,16 @@ test('meteor gameplay, rendering, drops, klaxon, and flight sound cleanup in Chr
     await call('Page.enable');
     await call('Page.navigate', { url: pathToFileURL(path.join(__dirname, 'geodes.html')).href });
     await wait(400);
-    let html = fs.readFileSync(path.join(__dirname, 'geodes.html'), 'utf8').replace(/\r\n/g, '\n');
+    let html = (process.env.GEODES_TEST_URL
+      ? await (await fetch(process.env.GEODES_TEST_URL)).text()
+      : fs.readFileSync(path.join(__dirname, 'geodes.html'), 'utf8')).replace(/\r\n/g, '\n');
     const marker = 'requestAnimationFrame(loop);\n        updateHUD();';
     assert.ok(html.includes(marker));
     html = html.replace(marker, `window.__game = {
       spawnMeteor, strike, rocketExplode, launchRocket, startGame, pauseGame,
-      resetGame, endGame, loop, meteors, gems, geodes, rockets, gun, updateLaserHeat,
+      resetGame, endGame, loop: () => loop(lastTime + 33),
+      meteors, gems, geodes, rockets, gun, updateLaserHeat, tractorBeams,
+      get score() { return score; },
       get time() { return runTime; }, set time(v) { runTime = v; },
       get heat() { return laserHeat; }, get overheat() { return laserOverheatedUntil; },
       set ammo(v) { rocketCount = v; }
@@ -101,6 +105,19 @@ test('meteor gameplay, rendering, drops, klaxon, and flight sound cleanup in Chr
     assert.equal(flight.hp, 3);
     assert.equal(flight.loop, true);
     assert.deepEqual(flight.errors, []);
+    await evaluate(`__game.resetGame(); __game.startGame(); __game.gems.push({
+      type: 'ruby', color: '#ff1744', points: 80, x: 200, y: 250,
+      r: 14, rot: 0, vrot: 0, vx: 0, vy: -20, life: 8, ttl: 8, alpha: 1
+    }); __game.strike(200, 250)`);
+    assert.equal(await evaluate('__game.gems.length'), 0);
+    assert.equal(await evaluate('__game.tractorBeams.length'), 1);
+    await evaluate('__game.loop(66)');
+    const beforeCollection = await evaluate('__game.time');
+    await evaluate('for (let i = 0; i < 120; i++) __game.loop(99 + i * 33)');
+    assert.equal(await evaluate('__game.tractorBeams.length'), 0);
+    assert.equal(await evaluate('__game.score'), 80);
+    assert.ok(await evaluate('__game.time') > beforeCollection);
+    await evaluate('__game.resetGame(); __game.startGame(); __game.spawnMeteor()');
     await evaluate(`__game.meteors[0].x = 200; __game.meteors[0].y = 250;
       __game.strike(200, 250); __game.time += 0.2; __game.strike(200, 250)`);
     assert.equal(await evaluate('__game.meteors[0].hp'), 1);
