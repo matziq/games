@@ -67,6 +67,8 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
       spawnMeteor, strike, rocketExplode, launchRocket, startGame, pauseGame,
       resetGame, endGame, loop: () => loop(lastTime + 33),
       meteors, gems, geodes, rockets, gun, updateLaserHeat, tractorBeams,
+      level, pace, awardGeode, get destroyed() { return geodesCracked; },
+      set destroyed(v) { geodesCracked = v; },
       get score() { return score; },
       get time() { return runTime; }, set time(v) { runTime = v; },
       get heat() { return laserHeat; }, get overheat() { return laserOverheatedUntil; },
@@ -114,6 +116,25 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
     assert.equal(flight.hp, 3);
     assert.equal(flight.loop, true);
     assert.deepEqual(flight.errors, []);
+    for (const [destroyed, expectedLevel] of [[99, 1], [100, 2], [200, 3]]) {
+      assert.equal(await evaluate(`__game.destroyed = ${destroyed}; __game.level()`), expectedLevel);
+    }
+    await evaluate('__game.destroyed = 0');
+    for (const [width, height] of [[390, 844], [360, 640], [1280, 720], [740, 360]]) {
+      await call('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
+      await evaluate("window.dispatchEvent(new Event('resize'))");
+      const gauge = await evaluate(`(() => {
+        const r = document.getElementById('laserHeatChip').getBoundingClientRect();
+        const c = document.getElementById('game').getBoundingClientRect();
+        return { top: r.top, bottom: r.bottom, left: r.left, right: r.right,
+          gunY: c.top + __game.gun.y, parent: document.getElementById('laserHeatChip').parentElement.id };
+      })()`);
+      assert.ok(gauge.top > gauge.gunY, JSON.stringify(gauge));
+      assert.ok(gauge.bottom <= height && gauge.left >= 0 && gauge.right <= width, JSON.stringify(gauge));
+      assert.notEqual(gauge.parent, 'hud');
+    }
+    await call('Emulation.clearDeviceMetricsOverride');
+    await evaluate("window.dispatchEvent(new Event('resize'))");
     await evaluate(`__game.resetGame(); __game.startGame(); __game.gems.push({
       type: 'ruby', color: '#ff1744', points: 80, x: 200, y: 250,
       r: 14, rot: 0, vrot: 0, vx: 0, vy: -20, life: 8, ttl: 8, alpha: 1
@@ -156,7 +177,7 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
     await wait(600);
     await evaluate(`__game.resetGame(); __game.startGame(); __game.geodes.push({
       x: __game.gun.x, y: __game.gun.y - 100, r: 20, vx: 0, fallSpeed: 100,
-      phase: 'down', age: 2, rot: 0, color: '#222222'
+      phase: 'down', age: 2, rot: 0, color: '#222222', vy: 100, gravity: 1, climb: 100
     }); __game.loop(1000)`);
     await wait(100);
     assert.ok(await evaluate(rms) > 0.005);

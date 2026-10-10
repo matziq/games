@@ -11,7 +11,9 @@ A single-file browser game.
 
 This folder contains a standalone HTML game. `geodes.html` is the browser build. `geodes.apk` is the portrait Android build.
 
-On a phone, tap geodes to crack them, then tap the gem. The volcano sits in the bottom third and throws rocks and geodes upward. They start very slow, arc over, and fall at a steady speed. Later eruptions get faster, but a falling rock does not speed up on the way down. A geode that lands on the gun ends the run. Every 10 cracked geodes extends a missile pod; the icons beside it are the ammo, and the pod retracts when it is empty. Pause and volume live in the top menu so they do not cover the gun.
+On a phone, tap geodes to crack them, then tap the gem. The volcano sits in the bottom third and throws rocks and geodes into slow randomized arcs. They slow naturally at the apex and accelerate gently downward, with descent capped at their initial ascent speed. Most trajectories miss the gun naturally; there is no gun-targeting bias or side-wall ricochet. Crystals eject with random sideways/upward velocities and arc under gentle gravity. A geode or meteor hitting the gun ends the run. Every 10 cracked geodes extends a missile pod; the icons beside it are the ammo, and the pod retracts when it is empty. Pause and volume live in the top menu, while the laser heat gauge sits below the gun and stays within the viewport.
+
+Start at level 1 and advance every 100 destroyed geodes: 99 remains level 1, 100 begins level 2, and 200 begins level 3. Each level adds 8% to the level-1 movement speed of existing and newly spawned geodes, rocks, fireballs, meteors, and crystals. Collected points, destroyed rocks, and meteors do not advance levels. Rocket speed and ammo rules remain unchanged. Level-1 geode/rock initial ascent and maximum descent are 5.5% of playfield height per second; meteors travel at that same initial speed.
 
 Every laser shot has a short zap, including shots that miss. Audio unlocks on a click, tap, or key press and retries after device suspension. Muting silences the mix; unmuting restores the previous volume.
 
@@ -23,7 +25,7 @@ The heat bar jumps on each actual shot and cools between shots. Spacing shots at
 
 A one-second klaxon warns when a descending geode's trajectory predicts a gun collision within 1.2 seconds. Each geode warns once, and simultaneous warnings do not stack.
 
-Every 24-36 seconds of active play, a meteor can enter from either upper corner, roughly twice the displayed size of a geode. Only one meteor is active at a time. It heads at the gun 35% faster than the current falling-geode speed, with a fire/smoke trail and continuous roar. Three accepted laser hits or one missile impact/blast destroy it; a gun impact ends the run. Exactly five randomly chosen gems eject evenly in all directions at the same sampled speed as geode gems, retaining their normal gravity, eight-second lifetime, and collection behavior. Meteor roar and klaxon stop on pause, reset, or game over; roar resumes with a surviving meteor.
+Every 24-36 seconds of active play, a meteor can enter from either upper corner, roughly twice the displayed size of a geode. Only one meteor is active at a time. It heads at the gun at the geode/rock initial ascent speed, with a fire/smoke trail and continuous roar. Three accepted laser hits or one missile impact/blast destroy it; a gun impact ends the run. Exactly five randomly chosen gems eject evenly in all directions at the same sampled speed as geode gems, retaining their normal gravity, eight-second lifetime, and collection behavior. Meteor roar and klaxon stop on pause, reset, or game over; roar resumes with a surviving meteor.
 
 Run the audio regression checks with `node --test geodes/audio.test.cjs` from the repository root.
 
