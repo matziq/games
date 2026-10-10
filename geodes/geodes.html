@@ -107,6 +107,14 @@
       background: var(--accent);
     }
 
+    .laser-heat.overheated .dot {
+      background: var(--bad);
+    }
+
+    .laser-heat.overheated .val {
+      color: var(--bad);
+    }
+
     .key {
       color: var(--muted);
       font-weight: 500;
@@ -429,6 +437,9 @@
     <div class="chip speed">
       <div class="dot"></div><span class="key">Next missile</span><span class="val" id="missileProg">0/10</span>
     </div>
+    <div class="chip laser-heat" id="laserHeatChip">
+      <div class="dot"></div><span class="key">Laser</span><span class="val" id="laserHeat">0%</span>
+    </div>
     <button id="rocketBtn" class="hud-btn" type="button" title="Arm a missile, then tap a target">Arm</button>
     <button id="menuBtn" class="hud-btn" type="button" title="Menu">Menu</button>
   </div>
@@ -468,6 +479,7 @@
         <div class="pill">🔥 <strong>Fireballs</strong> — Rare glowing orbs. Tap to explode and turn all geodes into
           diamonds!</div>
         <div class="pill">🚀 <strong>Missiles</strong> — Crack 10 geodes and a pod slides out of the gun. Right-click, long-press, or tap Arm, then tap the target. The pod retracts when you are empty.</div>
+        <div class="pill"><strong>Laser heat</strong> — Rapid shots build heat. At 100%, a warning sounds and the laser locks for two seconds. Pace your shots to cool it down. Missiles still work while the laser is hot.</div>
       </div>
 
       <div class="row">
@@ -503,6 +515,8 @@
         // HUD
         const scoreEl = document.getElementById('score');
         const missileProgEl = document.getElementById('missileProg');
+        const laserHeatEl = document.getElementById('laserHeat');
+        const laserHeatChip = document.getElementById('laserHeatChip');
 
         const overlay = document.getElementById('overlay');
         const playBtn = document.getElementById('playBtn');
@@ -557,6 +571,14 @@
 
         // Configurations
         const MISSILE_EVERY = 10;
+        const LASER_SHOT_INTERVAL = 0.15;
+        const LASER_HEAT_PER_SHOT = 25;
+        const LASER_COOLING_RATE = 20;
+        const LASER_OVERHEAT_SECONDS = 2;
+        let laserHeat = 0;
+        let laserHeatUpdatedAt = 0;
+        let lastLaserShotAt = -Infinity;
+        let laserOverheatedUntil = 0;
 
         // Gem rarities and points (descending rarity & value per specification)
         const GEM_TYPES = [
@@ -592,12 +614,30 @@
 
         function updateHUD() {
           scoreEl.textContent = score.toString();
+          updateLaserHeat();
           if (missileProgEl) missileProgEl.textContent = `${geodesCracked % MISSILE_EVERY}/${MISSILE_EVERY}`;
           if (rocketBtn) {
             rocketBtn.classList.toggle('armed', rocketArmed && rocketCount > 0);
             rocketBtn.disabled = rocketCount <= 0;
             rocketBtn.textContent = rocketArmed ? 'Armed' : 'Arm';
           }
+        }
+
+        function updateLaserHeat() {
+          if (laserOverheatedUntil > 0) {
+            if (runTime >= laserOverheatedUntil) {
+              laserHeat = 0;
+              laserOverheatedUntil = 0;
+            }
+          } else {
+            laserHeat = Math.max(0, laserHeat - Math.max(0, runTime - laserHeatUpdatedAt) * LASER_COOLING_RATE);
+          }
+          laserHeatUpdatedAt = runTime;
+          const overheated = laserOverheatedUntil > runTime;
+          laserHeatChip.classList.toggle('overheated', overheated);
+          const label = overheated ? 'HOT' : `${Math.round(laserHeat)}%`;
+          if (laserHeatEl.textContent !== label) laserHeatEl.textContent = label;
+          laserHeatChip.title = overheated ? 'Laser overheated: wait two seconds' : 'Laser heat: pace shots to cool down';
         }
 
         function awardGeode() {
@@ -1364,6 +1404,7 @@
           drawVolcano();
           aimGun();
           runTime += dt;
+          updateLaserHeat();
           const spawnPace = Math.max(0.48, Math.min(1.35, pace()));
 
           // Spawn geodes
@@ -1530,8 +1571,10 @@
             const rk = rockets[i];
             const dx = rk.tx - rk.x, dy = rk.ty - rk.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < 8) {
+            if (dist <= Math.max(8, rk.speed * dt)) {
               // Explode at target
+              rk.x = rk.tx;
+              rk.y = rk.ty;
               rocketExplode(rk.x, rk.y);
               rockets.splice(i, 1);
               if (window.setRocketFlightSound) window.setRocketFlightSound(running && rockets.length > 0);
@@ -1634,6 +1677,16 @@
 
         // Fire laser beam from gun to target
         function fireLaser(tx, ty) {
+          if (gameOver || !running) return false;
+          updateLaserHeat();
+          if (runTime < laserOverheatedUntil || runTime - lastLaserShotAt + 1e-9 < LASER_SHOT_INTERVAL) return false;
+          lastLaserShotAt = runTime;
+          laserHeat = Math.min(100, laserHeat + LASER_HEAT_PER_SHOT);
+          if (laserHeat >= 100) {
+            laserOverheatedUntil = runTime + LASER_OVERHEAT_SECONDS;
+            if (window.sfxLaserOverheat) window.sfxLaserOverheat();
+          }
+          updateLaserHeat();
           const tip = barrelTip();
           laserBeams.push({ x1: tip.x, y1: tip.y, x2: tx, y2: ty, life: 0.15, ttl: 0.15 });
           if (typeof sfxLaser === 'function') sfxLaser();
@@ -1648,6 +1701,7 @@
               color: ['#00e5ff', '#ffffff', '#80ffff'][Math.floor(Math.random() * 3)]
             });
           }
+          return true;
         }
 
         function canvasPoint(ev) {
@@ -1683,7 +1737,7 @@
         }
 
         function collectGem(gm) {
-          fireLaser(gm.x, gm.y);
+          if (!fireLaser(gm.x, gm.y)) return;
           tractorBeams.push({ x: gm.x, y: gm.y, color: gm.color, points: gm.points });
           const idx = gems.indexOf(gm);
           if (idx >= 0) gems.splice(idx, 1);
@@ -1696,7 +1750,7 @@
           rocketArmed = false;
           updateHUD();
           const tip = barrelTip();
-          rockets.push({ x: tip.x, y: tip.y, tx, ty, speed: coarsePointer ? 340 : 280 });
+          rockets.push({ x: tip.x, y: tip.y, tx, ty, speed: coarsePointer ? 680 : 560 });
           if (typeof sfxRocket === 'function') sfxRocket();
           if (window.setRocketFlightSound) window.setRocketFlightSound(true);
           buzz(18);
@@ -1728,16 +1782,16 @@
             return;
           }
           if (hit.kind === 'fireball') {
+            if (!fireLaser(obj.x, obj.y)) return;
             obj.clicked = true;
-            fireLaser(obj.x, obj.y);
             fireballs.splice(fireballs.indexOf(obj), 1);
             explodeFireball(obj);
             buzz(20);
             return;
           }
           if (hit.kind === 'rock') {
+            if (!fireLaser(obj.x, obj.y)) return;
             obj.clicked = true;
-            fireLaser(obj.x, obj.y);
             rocks.splice(rocks.indexOf(obj), 1);
             makeShards(obj.x, obj.y, obj.color, { x: 0, y: 1 });
             score += 5;
@@ -1746,8 +1800,8 @@
             buzz(8);
             return;
           }
+          if (!fireLaser(obj.x, obj.y)) return;
           obj.clicked = true;
-          fireLaser(obj.x, obj.y);
           geodes.splice(geodes.indexOf(obj), 1);
           makeShards(obj.x, obj.y, obj.color, { x: 0, y: -1 });
           maybeSpawnGem(obj.x, obj.y - 4);
@@ -1913,6 +1967,10 @@
           score = 0; missed = 0;
           geodes.length = 0; rocks.length = 0; shards.length = 0; gems.length = 0; particles.length = 0; fireballs.length = 0; laserBeams.length = 0; rockets.length = 0; tractorBeams.length = 0;
           spawnTimer = 0; rockTimer = 0; fireballTimer = 0; runTime = 0;
+          laserHeat = 0;
+          laserHeatUpdatedAt = 0;
+          lastLaserShotAt = -Infinity;
+          laserOverheatedUntil = 0;
           rocketCount = 0;
           geodesCracked = 0;
           podExtend = 0;
@@ -2167,6 +2225,26 @@
         }
         // Gameplay and audio live in separate scripts.
         window.sfxLaser = sfxLaser;
+        function sfxLaserOverheat() {
+          if (window.audioMuted) return;
+          ensureCtx();
+          if (ctx.state !== 'running') {
+            return resumeCtx().then(() => {
+              if (ctx.state === 'running') sfxLaserOverheat();
+            });
+          }
+          const t = now() + 0.03;
+          [320, 220].forEach((frequency, i) => {
+            const alarm = osc('square', frequency);
+            const start = t + i * 0.14;
+            env(alarm.g, start, 0.006, 0.09, 0.2);
+            alarm.o.frequency.exponentialRampToValueAtTime(frequency * 0.75, start + 0.09);
+            alarm.o.start(start);
+            alarm.o.stop(start + 0.105);
+          });
+          noiseBurst({ freq: 900, q: 0.8, a: 0.01, r: 0.22, gain: 0.12 });
+        }
+        window.sfxLaserOverheat = sfxLaserOverheat;
         function sfxRockCrumble() {
           if (window.audioMuted) return;
           resumeCtx();

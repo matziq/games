@@ -82,23 +82,36 @@ function setup() {
   return { context, window, sources, gains, contexts, elements, gestures, errors };
 }
 
+function setupLaserGameplay(audio) {
+  Object.assign(audio.context, {
+    sfxLaser: audio.window.sfxLaser, barrelTip: () => ({ x: 1, y: 2 }),
+    laserBeams: [], particles: [], rand: () => 1,
+    running: true, gameOver: false, runTime: 0, laserHeat: 0, laserHeatUpdatedAt: 0,
+    lastLaserShotAt: -Infinity, laserOverheatedUntil: 0,
+    laserHeatChip: { classList: { toggle() {} } }, laserHeatEl: { textContent: '0%' }
+  });
+  for (const declaration of html.matchAll(/const LASER_[A-Z_]+ = [^;]+;/g)) {
+    vm.runInContext(declaration[0], audio.context);
+  }
+  for (const name of ['updateLaserHeat', 'fireLaser']) {
+    const code = html.match(new RegExp(`function ${name}\\([^)]*\\) \\{[\\s\\S]*?\\n        \\}`))[0];
+    vm.runInContext(code, audio.context);
+  }
+}
+
 test('all inline scripts parse', () => {
   for (const script of scripts) new vm.Script(script);
 });
 
 test('gameplay laser calls the exported cue for every shot', async () => {
   const audio = setup();
-  const fireLaser = html.match(/function fireLaser\(tx, ty\) \{[\s\S]*?\n        \}/)[0];
-  Object.assign(audio.context, {
-    sfxLaser: audio.window.sfxLaser, barrelTip: () => ({ x: 1, y: 2 }),
-    laserBeams: [], particles: [], rand: () => 1
-  });
-  vm.runInContext(`${fireLaser}; fireLaser(100, 100);`, audio.context);
+  setupLaserGameplay(audio);
+  vm.runInContext('fireLaser(100, 100)', audio.context);
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(audio.sources.length, 2);
   assert.equal(audio.contexts[0].state, 'running');
   assert.equal(audio.gains[0].gain.value, 0.6);
-  for (let shot = 0; shot < 10; shot++) vm.runInContext('fireLaser(100, 100)', audio.context);
+  for (let shot = 0; shot < 10; shot++) vm.runInContext('runTime += 1.3; fireLaser(100, 100)', audio.context);
   assert.equal(audio.sources.length, 22);
   assert.deepEqual(audio.errors, []);
 });
@@ -209,8 +222,8 @@ test('gameplay launches rockets and stops flight audio on detonation and state c
   vm.runInContext('startGame()', audio.context);
   assert.equal(audio.sources[4].node.loop, true);
 
-  const detonation = html.match(/if \(dist < 8\) \{([\s\S]*?)\n              continue;/)[1];
-  vm.runInContext(`let i = 0; let rk = rockets[0]; ${detonation}`, audio.context);
+  const arrival = html.match(/if \(dist <= Math\.max\(8, rk\.speed \* dt\)\) \{([\s\S]*?)\n              continue;/);
+  vm.runInContext(`let i = 0; let rk = rockets[0]; ${arrival[1]}`, audio.context);
   assert.equal(audio.sources[4].node.stopTime, 1.05);
   assert.equal(audio.context.rockets.length, 0);
   assert.equal(audio.sources.length, 10);
@@ -222,4 +235,78 @@ test('gameplay launches rockets and stops flight audio on detonation and state c
     assert.equal(engine.stopTime, 1.05);
   }
   assert.deepEqual(audio.errors, []);
+});
+
+test('laser rate limit and two-second overheat cannot be bypassed by sustained firing', async () => {
+  const audio = setup();
+  setupLaserGameplay(audio);
+  await audio.gestures.pointerdown();
+  assert.equal(vm.runInContext('fireLaser(100, 100)', audio.context), true);
+  for (let i = 0; i < 100; i++) assert.equal(vm.runInContext('fireLaser(100, 100)', audio.context), false);
+  audio.context.runTime = 0.149;
+  assert.equal(vm.runInContext('fireLaser(100, 100)', audio.context), false);
+  for (let shot = 1; shot <= 4; shot++) {
+    audio.context.runTime = shot * 0.15;
+    assert.equal(vm.runInContext('fireLaser(100, 100)', audio.context), true);
+  }
+  assert.equal(audio.context.laserOverheatedUntil, 2.6);
+  assert.equal(audio.context.laserHeatEl.textContent, 'HOT');
+  assert.equal(audio.sources.length, 13);
+  for (let i = 0; i < 100; i++) {
+    audio.context.runTime = 0.61 + i * 0.019;
+    assert.equal(vm.runInContext('fireLaser(100, 100)', audio.context), false);
+  }
+  assert.equal(audio.sources.length, 13);
+  audio.context.runTime = 2.6;
+  assert.equal(vm.runInContext('fireLaser(100, 100)', audio.context), true);
+  assert.equal(audio.context.laserHeat, 25);
+  assert.equal(audio.sources.length, 15);
+});
+
+test('laser lockout prevents target damage and gem collection', () => {
+  const audio = setup();
+  setupLaserGameplay(audio);
+  Object.assign(audio.context, {
+    gun: { x: 0, y: 0 }, gems: [], rocks: [], geodes: [], fireballs: [],
+    tractorBeams: [], dist2: () => 10000, buzz() {},
+    makeShards() { throw Error('A rejected shot must not break a target'); },
+    explodeFireball() { throw Error('A rejected shot must not explode a fireball'); },
+    score: 0, laserOverheatedUntil: 2
+  });
+  for (const name of ['collectGem', 'strike']) {
+    vm.runInContext(html.match(new RegExp(`function ${name}\\([^)]*\\) \\{[\\s\\S]*?\\n        \\}`))[0], audio.context);
+  }
+  for (const kind of ['rock', 'geode', 'fireball', 'gem']) {
+    const obj = { x: 100, y: 100, points: 10 };
+    audio.context.pickTarget = () => ({ kind, obj });
+    const list = kind === 'gem' ? audio.context.gems : kind === 'rock' ? audio.context.rocks : kind === 'geode' ? audio.context.geodes : audio.context.fireballs;
+    list.push(obj);
+    vm.runInContext('strike(100, 100)', audio.context);
+    assert.equal(list.includes(obj), true);
+    assert.equal(obj.clicked, undefined);
+  }
+  assert.equal(audio.context.score, 0);
+  assert.equal(audio.context.tractorBeams.length, 0);
+  assert.equal(audio.sources.length, 0);
+});
+
+test('faster rockets retain ammo limits and can detonate within a full movement step', () => {
+  const audio = setup();
+  Object.assign(audio.context, {
+    running: true, gameOver: false, rocketCount: 1, rockets: [],
+    updateHUD() {}, barrelTip: () => ({ x: 0, y: 0 }), buzz() {},
+    coarsePointer: false
+  });
+  audio.window.setRocketFlightSound = () => {};
+  vm.runInContext(html.match(/function launchRocket\([^)]*\) \{[\s\S]*?\n        \}/)[0], audio.context);
+  assert.equal(vm.runInContext('launchRocket(100, 100)', audio.context), true);
+  assert.equal(audio.context.rockets[0].speed, 560);
+  assert.equal(vm.runInContext('launchRocket(100, 100)', audio.context), false);
+  audio.context.coarsePointer = true;
+  audio.context.rocketCount = 1;
+  vm.runInContext('launchRocket(100, 100)', audio.context);
+  assert.equal(audio.context.rockets[1].speed, 680);
+  const condition = html.match(/if \((dist <= Math\.max\(8, rk\.speed \* dt\))\)/)[1];
+  Object.assign(audio.context, { dist: 20, dt: 0.033, rk: audio.context.rockets[1] });
+  assert.equal(vm.runInContext(condition, audio.context), true);
 });
