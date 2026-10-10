@@ -2094,7 +2094,7 @@
         let AC = window.AudioContext || window.webkitAudioContext;
         if (!AC) return; // No WebAudio support
 
-        let ctx = null, master = null, noiseBuf = null;
+        let ctx = null, master = null, compressor = null, noiseBuf = null;
         const vol = 0.60;
 
         // Global mute state accessible to sound functions
@@ -2105,7 +2105,14 @@
           ctx = new AC();
           master = ctx.createGain();
           master.gain.value = vol;
-          master.connect(ctx.destination);
+          compressor = ctx.createDynamicsCompressor();
+          compressor.threshold.value = -18;
+          compressor.knee.value = 12;
+          compressor.ratio.value = 4;
+          compressor.attack.value = 0.003;
+          compressor.release.value = 0.18;
+          master.connect(compressor);
+          compressor.connect(ctx.destination);
           noiseBuf = makeNoiseBuffer();
         }
         function resumeCtx() {
@@ -2152,25 +2159,23 @@
           if (window.audioMuted) return;
           resumeCtx();
           const t = now();
-          // High-pitched zap
-          const zap = osc('sawtooth', 1800);
-          env(zap.g, t, 0.001, 0.08, 0.35);
-          zap.o.frequency.exponentialRampToValueAtTime(400, t + 0.08);
-          zap.o.start(t); zap.o.stop(t + 0.1);
-          // Electric sizzle
-          noiseBurst({ freq: 5000, q: 6, a: 0.001, r: 0.04, gain: 0.25 });
+          const startFreq = 1450 + Math.random() * 450;
+          const zap = osc('triangle', startFreq);
+          env(zap.g, t, 0.001, 0.065, 0.24);
+          zap.o.frequency.exponentialRampToValueAtTime(260 + Math.random() * 100, t + 0.07);
+          zap.o.start(t); zap.o.stop(t + 0.08);
+          noiseBurst({ freq: 3600 + Math.random() * 900, q: 3, a: 0.001, r: 0.025, gain: 0.12, hp: 1 });
         }
         function sfxRockCrumble() {
           if (window.audioMuted) return;
           resumeCtx();
           const t = now();
-          // Low rumbling crumble
-          noiseBurst({ freq: 280, q: 0.7, a: 0.002, r: 0.16, gain: 0.45 });
-          noiseBurst({ freq: 140, q: 0.6, a: 0.004, r: 0.2, gain: 0.4 });
-          const thud = osc('sine', 60);
-          env(thud.g, t, 0.001, 0.06, 0.4);
-          thud.o.frequency.exponentialRampToValueAtTime(30, t + 0.06);
-          thud.o.start(t); thud.o.stop(t + 0.08);
+          noiseBurst({ freq: 900 + Math.random() * 350, q: 1.1, a: 0.001, r: 0.045, gain: 0.32 });
+          noiseBurst({ freq: 220 + Math.random() * 90, q: 0.65, a: 0.008, r: 0.18, gain: 0.3 });
+          const thud = osc('sine', 82 + Math.random() * 20);
+          env(thud.g, t, 0.001, 0.075, 0.32);
+          thud.o.frequency.exponentialRampToValueAtTime(38, t + 0.07);
+          thud.o.start(t); thud.o.stop(t + 0.09);
         }
         function sfxRocket() {
           if (window.audioMuted) return;
@@ -2210,27 +2215,35 @@
         function sfxGem(points = 10) {
           if (window.audioMuted) return;
           resumeCtx();
-          const base = 700 + Math.min(100, points) * 1.8;
+          const tier = points >= 100 ? 4 : points >= 80 ? 3 : points >= 60 ? 2 : points >= 40 ? 1 : 0;
+          const base = [784, 988, 1175, 1319, 1568][tier];
           const t = now();
-          [0, 0.06, 0.12].forEach((off, i) => {
-            const o = osc('square', base * (1 + i * 0.12));
-            env(o.g, t + off, 0.004, 0.08, 0.5 + i * 0.1);
-            o.o.start(t + off); o.o.stop(t + off + 0.12);
+          const notes = [base, base * 1.25, base * 1.5];
+          notes.forEach((freq, i) => {
+            const start = t + i * 0.045;
+            const o = osc(i === 0 ? 'triangle' : 'sine', freq * (0.99 + Math.random() * 0.02));
+            env(o.g, start, 0.006, 0.12 + i * 0.025, i === 0 ? 0.26 : 0.16);
+            o.o.start(start); o.o.stop(start + 0.15 + i * 0.025);
           });
-          noiseBurst({ freq: 3000, q: 2.5, a: 0.002, r: 0.06, gain: 0.18 });
+          noiseBurst({ freq: 4200, q: 2.8, a: 0.001, r: 0.035, gain: 0.07, hp: 1 });
         }
         function sfxGeode() {
           if (window.audioMuted) return;
           resumeCtx();
           const t = now();
 
-          noiseBurst({ freq: 420, q: 0.6, a: 0.001, r: 0.09, gain: 0.55 });
-          noiseBurst({ freq: 180, q: 0.5, a: 0.002, r: 0.14, gain: 0.4 });
-          const thud = osc('sine', 70);
-          env(thud.g, t, 0.001, 0.08, 0.45);
-          thud.o.frequency.exponentialRampToValueAtTime(32, t + 0.08);
+          noiseBurst({ freq: 1250 + Math.random() * 300, q: 1.3, a: 0.001, r: 0.055, gain: 0.36 });
+          noiseBurst({ freq: 380, q: 0.7, a: 0.003, r: 0.13, gain: 0.28 });
+          const thud = osc('sine', 92);
+          env(thud.g, t, 0.001, 0.09, 0.34);
+          thud.o.frequency.exponentialRampToValueAtTime(42, t + 0.085);
           thud.o.start(t);
-          thud.o.stop(t + 0.1);
+          thud.o.stop(t + 0.095);
+          const ring = osc('triangle', 520 + Math.random() * 100);
+          env(ring.g, t + 0.015, 0.002, 0.085, 0.11);
+          ring.o.frequency.exponentialRampToValueAtTime(240, t + 0.1);
+          ring.o.start(t + 0.015);
+          ring.o.stop(t + 0.11);
         }
 
         function sfxExplosion() {
