@@ -121,6 +121,16 @@
       accent-color: var(--accent);
     }
 
+    #laserHeatChip {
+      position: fixed;
+      z-index: 5;
+      transform: translateX(-50%);
+      pointer-events: none;
+      font-size: 12px;
+      padding: 3px 8px;
+      max-width: calc(100vw - 16px);
+    }
+
     .laser-heat.overheated #laserHeatBar {
       accent-color: var(--bad);
     }
@@ -447,11 +457,12 @@
     <div class="chip speed">
       <div class="dot"></div><span class="key">Next missile</span><span class="val" id="missileProg">0/10</span>
     </div>
-    <div class="chip laser-heat" id="laserHeatChip">
-      <div class="dot"></div><span class="key">Laser</span><progress id="laserHeatBar" max="100" value="0" aria-label="Laser heat"></progress><span class="val" id="laserHeat">0%</span>
-    </div>
+    <div class="chip"><span class="key">Level</span><span class="val" id="level">1</span></div>
     <button id="rocketBtn" class="hud-btn" type="button" title="Arm a missile, then tap a target">Arm</button>
     <button id="menuBtn" class="hud-btn" type="button" title="Menu">Menu</button>
+  </div>
+  <div class="chip laser-heat" id="laserHeatChip">
+    <div class="dot"></div><span class="key">Laser</span><progress id="laserHeatBar" max="100" value="0" aria-label="Laser heat"></progress><span class="val" id="laserHeat">0%</span>
   </div>
   <div id="tools" class="hidden">
     <button id="startBtn" type="button" title="Start / Resume">Start</button>
@@ -475,21 +486,22 @@
   <div id="overlay">
     <div class="panel">
       <h1>GEODES</h1>
-      <p class="big">The volcano sits in the bottom third. Geodes arc out of it, then fall. <strong>One geode hitting the gun ends the run.</strong></p>
-      <p class="mobile-hints">Tap to shoot · they rise slowly, arc, then fall at a steady speed · later eruptions get faster</p>
+      <p class="big">Geodes and rocks arc out of the volcano in random directions. <strong>One geode or meteor hitting the gun ends the run.</strong></p>
+      <p class="mobile-hints">Tap to shoot · slow, natural arcs · every 100 destroyed geodes advances a level</p>
       <button class="cta" id="playBtn" type="button">Play</button>
 
       <details class="help">
         <summary>How to play</summary>
       <div class="row">
-        <div class="pill">🌋 <strong>Geodes</strong> — Dark spheres launched from the volcano. They creep out, arc up, then fall at a steady speed. Tap to crack them and release
+        <div class="pill">🌋 <strong>Geodes</strong> — Dark spheres launched from the volcano in random arcs. They slow at the peak and fall as gently as they rise. Tap to crack them and release
           gems.</div>
         <div class="pill">🪨 <strong>Rocks</strong> — Jagged gray stones. Tap to break them (no gems, no penalty for
           missing).</div>
         <div class="pill">🔥 <strong>Fireballs</strong> — Rare glowing orbs. Tap to explode and turn all geodes into
           diamonds!</div>
         <div class="pill">🚀 <strong>Missiles</strong> — Crack 10 geodes and a pod slides out of the gun. Right-click, long-press, or tap Arm, then tap the target. The pod retracts when you are empty.</div>
-        <div class="pill"><strong>Laser heat</strong> — Rapid shots build heat. At 100%, a warning sounds and the laser locks for two seconds. Pace your shots to cool it down. Missiles still work while the laser is hot.</div>
+        <div class="pill"><strong>Laser heat</strong> — Watch the bar below the gun. Rapid shots build heat. At 100%, a warning sounds and the laser locks for two seconds. Pace your shots to cool it down. Missiles still work while the laser is hot.</div>
+        <div class="pill"><strong>Levels</strong> — Every 100 destroyed geodes advances a level. Hazards and crystals move 8% faster per level; points alone do not advance levels.</div>
         <div class="pill"><strong>Meteors</strong> — Large fiery rocks dive toward the gun from the sky. Hit one with three laser shots or one missile to release five gems. A klaxon warns of an imminent geode impact.</div>
       </div>
 
@@ -526,6 +538,7 @@
         // HUD
         const scoreEl = document.getElementById('score');
         const missileProgEl = document.getElementById('missileProg');
+        const levelEl = document.getElementById('level');
         const laserHeatEl = document.getElementById('laserHeat');
         const laserHeatBar = document.getElementById('laserHeatBar');
         const laserHeatChip = document.getElementById('laserHeatChip');
@@ -616,12 +629,12 @@
           '#1a1a1a', '#0f0f0f', '#2a2a2a', '#1f1f1f', '#252525', '#1c1c1c'
         ];
 
-        // Eruptions start slow, then new ones get faster as the run goes on.
         let runTime = 0;
+        function level() {
+          return 1 + Math.floor(geodesCracked / 100);
+        }
         function pace() {
-          const time = Math.min(1, runTime / 90);
-          const scored = Math.min(0.65, score / 4500);
-          return 0.34 + 0.9 * time + scored;
+          return 1 + (level() - 1) * 0.08;
         }
         function globalSpeedMult() {
           return pace();
@@ -629,6 +642,7 @@
 
         function updateHUD() {
           scoreEl.textContent = score.toString();
+          levelEl.textContent = String(level());
           updateLaserHeat();
           if (missileProgEl) missileProgEl.textContent = `${geodesCracked % MISSILE_EVERY}/${MISSILE_EVERY}`;
           if (rocketBtn) {
@@ -707,6 +721,9 @@
           volcano.mouthY = shape.mouthY;
           gun.x = shape.x;
           gun.y = Math.min(ch - Math.max(54, safeBottom + 24), shape.mouthY + shape.height * 0.62);
+          const heatGauge = document.getElementById('laserHeatChip');
+          heatGauge.style.left = `${left + gun.x}px`;
+          heatGauge.style.top = `${Math.min(gun.y + 30, ch - safeBottom - 28)}px`;
           spriteCache.clear();
         }
         window.addEventListener('resize', resize, { passive: true });
@@ -765,27 +782,19 @@
           const mouth = volcanoMouth();
           const h = canvas.clientHeight || 700;
           const w = canvas.clientWidth || 400;
-          const p = pace();
-          const toward = Math.random() < 0.68;
-          const rise = h * rand(toward ? 0.32 : 0.22, toward ? 0.48 : 0.38);
-          const speed = p / 0.34;
-          const climb = h * 0.055 * speed;
-          const fallSpeed = h * 0.09 * speed;
-          const side = toward ? rand(-0.12, 0.12) : (Math.random() < 0.5 ? -1 : 1) * rand(0.38, 0.86);
-          const apexY = mouth.y - rise;
-          const fallDist = Math.max(90, h + 24 - apexY);
-          const flight = rise / climb + fallDist / fallSpeed;
-          const landX = clamp(mouth.x + side * w * 0.46, 28, w - 28);
+          const rise = h * rand(0.24, 0.4);
+          const climb = h * 0.055;
           eruptionPuff(mouth.x, mouth.y);
           return {
-            threat: toward,
             phase: 'up',
             age: 0,
             startY: mouth.y + 2,
             rise,
             climb,
-            fallSpeed,
-            vx: (landX - mouth.x) / Math.max(1.6, flight),
+            fallSpeed: 0,
+            gravity: climb * climb / (2 * rise),
+            vy: -climb,
+            vx: rand(-w * 0.045, w * 0.045),
             x: mouth.x + rand(-5, 5),
             y: mouth.y + 2,
             r: baseR * (coarsePointer ? 0.82 : 0.74),
@@ -795,28 +804,15 @@
         }
 
         function stepFlyer(o, dt) {
-          o.age += dt;
-          const emerge = Math.min(1, o.age / 0.85);
-          const scale = 0.18 + 0.82 * emerge;
-          if (o.phase === 'up') {
-            const climbed = o.startY - o.y;
-            const remain = o.rise - climbed;
-            const apexEase = remain < o.rise * 0.3 ? Math.max(0.16, remain / (o.rise * 0.3)) : 1;
-            const step = o.climb * scale * apexEase * dt;
-            if (step >= remain) {
-              o.y = o.startY - o.rise;
-              o.phase = 'down';
-            } else {
-              o.y -= step;
-            }
-          } else {
-            o.y += o.fallSpeed * dt;
-          }
-          o.x += o.vx * (o.phase === 'up' ? scale : 1) * dt;
-          if (o.spin) o.rot += o.spin * dt;
-          const cw = canvas.clientWidth || 400;
-          if (o.x < o.r) { o.x = o.r; o.vx = Math.abs(o.vx) * 0.82; }
-          if (o.x > cw - o.r) { o.x = cw - o.r; o.vx = -Math.abs(o.vx) * 0.82; }
+          const stepTime = dt * pace();
+          o.age += stepTime;
+          const nextVy = Math.min(o.climb, o.vy + o.gravity * stepTime);
+          o.y += (o.vy + nextVy) * 0.5 * stepTime;
+          o.vy = nextVy;
+          o.phase = o.vy < 0 ? 'up' : 'down';
+          o.fallSpeed = Math.max(0, o.vy) * pace();
+          o.x += o.vx * stepTime;
+          if (o.spin) o.rot += o.spin * stepTime;
         }
 
         function hitsGun(o) {
@@ -830,7 +826,7 @@
         function imminentGeodeImpact(g) {
           if (g.phase !== 'down') return false;
           const dx = g.x - gun.x, dy = g.y - gun.y;
-          const vx = g.vx, vy = g.fallSpeed;
+          const vx = g.vx * pace(), vy = g.fallSpeed;
           const reach = 34 + g.r * 0.4;
           const speed2 = vx * vx + vy * vy;
           if (speed2 <= 0) return false;
@@ -866,7 +862,7 @@
           for (const m of meteors) {
             const dx = gun.x - m.x, dy = gun.y - m.y;
             const distance = Math.hypot(dx, dy);
-            const speed = canvas.clientHeight * 0.09 * (pace() / 0.34) * 1.35;
+            const speed = canvas.clientHeight * 0.055 * pace();
             const step = speed * dt;
             const reach = 34 + m.r * 0.4;
             if (distance <= reach + step) {
@@ -1054,7 +1050,7 @@
 
         function createGem(x, y, angle) {
           const t = chooseGemType();
-          let vx = rand(12, -12), vy = rand(-10, -30);
+          let vx = rand(20, -20), vy = rand(-10, -30);
           if (angle !== undefined) {
             const speed = Math.hypot(vx, vy);
             vx = Math.cos(angle) * speed;
@@ -1536,7 +1532,7 @@
           aimGun();
           runTime += dt;
           updateLaserHeat();
-          const spawnPace = Math.max(0.48, Math.min(1.35, pace()));
+          const spawnPace = 0.48;
 
           // Spawn geodes
           spawnTimer += dt * 1000;
@@ -1589,7 +1585,7 @@
                 endGame('A geode hit the gun. One hit ends the run.');
                 return;
               }
-              if (o.y > floor) {
+              if (o.y > floor || o.x < -o.r * 2 || o.x > canvas.clientWidth + o.r * 2) {
                 if (kind === 'rock') makeShards(o.x, canvas.clientHeight - 8, o.color, { x: 0, y: 1 });
                 list.splice(i, 1);
               }
@@ -1624,9 +1620,9 @@
           for (let i = gems.length - 1; i >= 0; i--) {
             const gm = gems[i];
             gm.ttl -= dt;
-            gm.x += gm.vx * dt;
-            gm.y += gm.vy * dt;
-            gm.vy += 6 * dt; // subtle gravity counter to initial upward drift
+            gm.x += gm.vx * dt * pace();
+            gm.y += gm.vy * dt * pace();
+            gm.vy += 6 * dt * pace(); // subtle gravity counter to initial upward drift
             gm.rot += gm.vrot * dt;
             gm.alpha = clamp(gm.ttl / gm.life, 0, 1);
 
