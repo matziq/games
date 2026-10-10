@@ -1534,6 +1534,7 @@
               // Explode at target
               rocketExplode(rk.x, rk.y);
               rockets.splice(i, 1);
+              if (window.setRocketFlightSound) window.setRocketFlightSound(running && rockets.length > 0);
               continue;
             }
             // Move toward target position
@@ -1697,6 +1698,7 @@
           const tip = barrelTip();
           rockets.push({ x: tip.x, y: tip.y, tx, ty, speed: coarsePointer ? 340 : 280 });
           if (typeof sfxRocket === 'function') sfxRocket();
+          if (window.setRocketFlightSound) window.setRocketFlightSound(true);
           buzz(18);
           return true;
         }
@@ -1892,6 +1894,7 @@
           overlay.classList.add('hidden');
           pauseVeil.classList.add('hidden');
           toolsEl.classList.add('hidden');
+          if (window.setRocketFlightSound) window.setRocketFlightSound(rockets.length > 0);
         }
         function pauseGame() {
           if (!running && !paused) return;
@@ -1901,10 +1904,12 @@
           }
           running = false;
           paused = true;
+          if (window.setRocketFlightSound) window.setRocketFlightSound(false);
           pauseVeil.classList.remove('hidden');
         }
         function resetGame() {
           running = false; paused = false; gameOver = false;
+          if (window.setRocketFlightSound) window.setRocketFlightSound(false);
           score = 0; missed = 0;
           geodes.length = 0; rocks.length = 0; shards.length = 0; gems.length = 0; particles.length = 0; fireballs.length = 0; laserBeams.length = 0; rockets.length = 0; tractorBeams.length = 0;
           spawnTimer = 0; rockTimer = 0; fireballTimer = 0; runTime = 0;
@@ -1923,6 +1928,7 @@
         }
         function endGame(reason) {
           gameOver = true;
+          if (window.setRocketFlightSound) window.setRocketFlightSound(false);
           running = false;
           paused = false;
           rocketArmed = false;
@@ -2048,23 +2054,6 @@
           buzz(8);
         });
 
-        muteBtn.addEventListener('click', function () {
-          window.audioMuted = !window.audioMuted;
-          muteBtn.textContent = window.audioMuted ? '🔇' : '🔊';
-          muteBtn.classList.toggle('muted', window.audioMuted);
-          muteBtn.title = window.audioMuted ? 'Unmute Audio' : 'Mute Audio';
-          const slider = document.getElementById('geoVolSlider');
-          if (window.audioMuted) { slider.value = '0'; if (master) master.gain.value = 0; }
-          else { slider.value = '60'; if (master) master.gain.value = 0.6; }
-        });
-        document.getElementById('geoVolSlider').addEventListener('input', function () {
-          const v = Number(this.value);
-          window.audioMuted = v === 0;
-          muteBtn.textContent = v === 0 ? '🔇' : '🔊';
-          muteBtn.classList.toggle('muted', v === 0);
-          if (master) master.gain.value = v / 100;
-        });
-
         document.getElementById('scoresBtn').addEventListener('click', showGeoHighScores);
         document.getElementById('geoHsClose').addEventListener('click', hideGeoHighScores);
 
@@ -2104,7 +2093,7 @@
           if (ctx) return;
           ctx = new AC();
           master = ctx.createGain();
-          master.gain.value = vol;
+          master.gain.value = Number(document.getElementById('geoVolSlider').value) / 100;
           compressor = ctx.createDynamicsCompressor();
           compressor.threshold.value = -18;
           compressor.knee.value = 12;
@@ -2117,7 +2106,11 @@
         }
         function resumeCtx() {
           ensureCtx();
-          if (ctx.state === 'suspended') ctx.resume();
+          if (ctx.state !== 'running') {
+            return ctx.resume().catch(error => {
+              console.error('Geodes audio could not resume:', error);
+            });
+          }
         }
         function makeNoiseBuffer() {
           const len = Math.floor(ctx.sampleRate * 1.0);
@@ -2157,6 +2150,12 @@
         // SFX
         function sfxLaser() {
           if (window.audioMuted) return;
+          ensureCtx();
+          if (ctx.state !== 'running') {
+            return resumeCtx().then(() => {
+              if (ctx.state === 'running') sfxLaser();
+            });
+          }
           resumeCtx();
           const t = now();
           const startFreq = 1450 + Math.random() * 450;
@@ -2166,6 +2165,8 @@
           zap.o.start(t); zap.o.stop(t + 0.08);
           noiseBurst({ freq: 3600 + Math.random() * 900, q: 3, a: 0.001, r: 0.025, gain: 0.12, hp: 1 });
         }
+        // Gameplay and audio live in separate scripts.
+        window.sfxLaser = sfxLaser;
         function sfxRockCrumble() {
           if (window.audioMuted) return;
           resumeCtx();
@@ -2179,6 +2180,12 @@
         }
         function sfxRocket() {
           if (window.audioMuted) return;
+          ensureCtx();
+          if (ctx.state !== 'running') {
+            return resumeCtx().then(() => {
+              if (ctx.state === 'running') sfxRocket();
+            });
+          }
           resumeCtx();
           const t = now();
           // Whoosh launch
@@ -2193,6 +2200,51 @@
           env(pop.g, t, 0.001, 0.03, 0.35);
           pop.o.start(t); pop.o.stop(t + 0.04);
         }
+        window.sfxRocket = sfxRocket;
+
+        let rocketFlightActive = false;
+        let rocketEngine = null;
+        function setRocketFlightSound(active) {
+          rocketFlightActive = active;
+          if (!active) {
+            if (rocketEngine) {
+              const { source, filter, gain } = rocketEngine;
+              gain.gain.cancelScheduledValues(ctx.currentTime);
+              gain.gain.setTargetAtTime(0, ctx.currentTime, 0.01);
+              source.onended = () => {
+                source.disconnect();
+                filter.disconnect();
+                gain.disconnect();
+              };
+              source.stop(ctx.currentTime + 0.05);
+              rocketEngine = null;
+            }
+            return;
+          }
+          ensureCtx();
+          if (ctx.state !== 'running') {
+            return resumeCtx().then(() => {
+              if (rocketFlightActive && ctx.state === 'running') setRocketFlightSound(true);
+            });
+          }
+          if (rocketEngine) return;
+          const source = ctx.createBufferSource();
+          source.buffer = noiseBuf;
+          source.loop = true;
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.value = 1400;
+          filter.Q.value = 0.7;
+          const gain = ctx.createGain();
+          gain.gain.setValueAtTime(0, ctx.currentTime);
+          gain.gain.setTargetAtTime(0.23, ctx.currentTime, 0.04);
+          source.connect(filter);
+          filter.connect(gain);
+          gain.connect(master);
+          rocketEngine = { source, filter, gain };
+          source.start();
+        }
+        window.setRocketFlightSound = setRocketFlightSound;
         function sfxStart() {
           if (window.audioMuted) return;
           resumeCtx();
@@ -2248,6 +2300,12 @@
 
         function sfxExplosion() {
           if (window.audioMuted) return;
+          ensureCtx();
+          if (ctx.state !== 'running') {
+            return resumeCtx().then(() => {
+              if (ctx.state === 'running') sfxExplosion();
+            });
+          }
           resumeCtx();
           const t = now();
 
@@ -2280,6 +2338,7 @@
             echo.o.start(echoT); echo.o.stop(echoT + 0.15);
           }, 80);
         }
+        window.sfxExplosion = sfxExplosion;
 
         function sfxMilestone() {
           if (window.audioMuted) return;
@@ -2355,11 +2414,32 @@
           const startBtn = document.getElementById('startBtn');
           const canvas = document.getElementById('game');
           const scoreEl = document.getElementById('score');
+          const muteBtn = document.getElementById('muteBtn');
+          const slider = document.getElementById('geoVolSlider');
+          let previousVolume = vol * 100;
+          function applyVolume() {
+            const volume = Number(slider.value);
+            window.audioMuted = volume === 0;
+            muteBtn.textContent = window.audioMuted ? '🔇' : '🔊';
+            muteBtn.classList.toggle('muted', window.audioMuted);
+            muteBtn.title = window.audioMuted ? 'Unmute Audio' : 'Mute Audio';
+            muteBtn.setAttribute('aria-pressed', String(window.audioMuted));
+            if (volume > 0) previousVolume = volume;
+            if (master) {
+              master.gain.cancelScheduledValues(ctx.currentTime);
+              master.gain.setTargetAtTime(volume / 100, ctx.currentTime, 0.005);
+            }
+          }
+          muteBtn.addEventListener('click', () => {
+            slider.value = window.audioMuted ? String(previousVolume) : '0';
+            applyVolume();
+          });
+          slider.addEventListener('input', applyVolume);
+          applyVolume();
 
-          // Unlock audio on first gesture
-          const unlock = () => { resumeCtx(); window.removeEventListener('pointerdown', unlock); window.removeEventListener('keydown', unlock); };
-          window.addEventListener('pointerdown', unlock, { once: true });
-          window.addEventListener('keydown', unlock, { once: true });
+          // Retry on gestures after a browser/device suspends audio.
+          window.addEventListener('pointerdown', resumeCtx, { capture: true });
+          window.addEventListener('keydown', resumeCtx, { capture: true });
 
           // Start sound on Play/Start clicks
           playBtn?.addEventListener('click', () => sfxStart());
