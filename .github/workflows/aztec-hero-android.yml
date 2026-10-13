@@ -2,6 +2,10 @@ name: Build Aztec Hero Android APK
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - "aztec_hero/**"
+      - ".github/workflows/aztec-hero-android.yml"
   push:
     paths:
       - "aztec_hero/**"
