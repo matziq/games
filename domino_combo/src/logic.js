@@ -74,12 +74,11 @@ export function spawnTypeForDifficulty(difficulty, canFitDouble, maxSpawnVal, ro
   }
 }
 
-// Key used to store per-config high scores. `mode` defaults to the
-// original 'classic' format and `difficulty` to 'regular' so
-// previously-saved scores keep working.
+// Key used to store per-config high scores. `mode` defaults to
+// 'classic' and `difficulty` to 'regular' so previously-saved scores keep working.
 export function hsKey(gridSize, matchCount, mode = 'classic', difficulty = DEFAULT_DIFFICULTY) {
   const base =
-    mode === 'classic'
+    !mode || mode === 'classic'
       ? `${gridSize}_${matchCount}`
       : `${gridSize}_${matchCount}_${mode}`;
   return normalizeDifficulty(difficulty) === DEFAULT_DIFFICULTY
@@ -87,13 +86,59 @@ export function hsKey(gridSize, matchCount, mode = 'classic', difficulty = DEFAU
     : `${base}_${normalizeDifficulty(difficulty)}`;
 }
 
-// Chaos mode: a matched group of this size or larger triggers a full-board
-// gravity collapse, which can cascade into further combos.
+// Ultimate Chaos mode:
+// Any match of 4 or higher collapses dominoes in a random direction.
+// During a collapse cascade, any match of 3 or higher collapses again.
+// Matching 5 or more earns a remix token to scramble the board.
 export const CHAOS_MATCH_THRESHOLD = 4;
+export const COLLAPSE_MATCH_THRESHOLD = 4;
+export const CASCADE_COLLAPSE_MATCH_THRESHOLD = 3;
+export const SIX_MATCH_THRESHOLD = 3;
 export const SIX_EXPLOSION_THRESHOLD = 4;
+export const REMIX_TOKEN_THRESHOLD = 5;
+export const COLLAPSE_DIRECTIONS = ['up', 'down', 'left', 'right'];
 
-// Ultimate Chaos picks one of these at random for every collapse.
-export const COLLAPSE_DIRECTIONS = ['down', 'up', 'left', 'right'];
+// Pick a random collapse direction from up, down, left, right.
+export function randomCollapseDirection(rng = Math.random) {
+  const idx = Math.floor(rng() * COLLAPSE_DIRECTIONS.length);
+  return COLLAPSE_DIRECTIONS[idx];
+}
+
+// Check if matches trigger a collapse. Any match 4+ triggers a collapse;
+// during a collapse cascade, any match of 3+ triggers another collapse.
+export function shouldCollapse(groups, isCascadeFromCollapse = false, matchCount = 3) {
+  const threshold = isCascadeFromCollapse
+    ? CASCADE_COLLAPSE_MATCH_THRESHOLD
+    : COLLAPSE_MATCH_THRESHOLD;
+  return groups.some((group) => group.cells.length >= Math.max(threshold, matchCount));
+}
+
+// Count how many remix tokens are earned (1 per group of 5+).
+export function earnsRemixToken(groups, threshold = REMIX_TOKEN_THRESHOLD) {
+  return groups.filter((g) => g.cells.length >= threshold).length;
+}
+
+// Scramble all pieces on the board randomly.
+export function scrambleBoard(board, gridSize, rng = Math.random) {
+  const flat = [];
+  for (let r = 0; r < gridSize; r++) {
+    for (let c = 0; c < gridSize; c++) {
+      flat.push(board[r][c]);
+    }
+  }
+  for (let i = flat.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [flat[i], flat[j]] = [flat[j], flat[i]];
+  }
+  const newBoard = createBoard(gridSize);
+  let idx = 0;
+  for (let r = 0; r < gridSize; r++) {
+    for (let c = 0; c < gridSize; c++) {
+      newBoard[r][c] = flat[idx++];
+    }
+  }
+  return newBoard;
+}
 
 // Board cells a piece would occupy if anchored at (r, c).
 export function cellsFor(r, c, piece) {
@@ -240,54 +285,23 @@ export function pickMergeTarget(group, lastPlacedCells) {
   return best;
 }
 
-// True if any matched group is large enough to trigger a Chaos collapse.
-export function triggersCollapse(groups, threshold = CHAOS_MATCH_THRESHOLD) {
+// True if any matched group is large enough to trigger a collapse.
+export function triggersCollapse(groups, threshold = COLLAPSE_MATCH_THRESHOLD) {
   return groups.some((g) => g.cells.length >= threshold);
 }
 
-// Chaos modes need at least four matching tiles before the board moves. A
-// stricter match requirement (Hard) raises the bar instead of lowering it.
-export function collapseThreshold(matchCount = CHAOS_MATCH_THRESHOLD) {
-  return Math.max(CHAOS_MATCH_THRESHOLD, matchCount);
+// Any match of 4+ triggers a collapse; during a collapse cascade, 3+ triggers a collapse.
+export function triggersChaosCollapse(groups, matchCount = 3, isCascadeFromCollapse = false) {
+  return shouldCollapse(groups, isCascadeFromCollapse, matchCount);
 }
 
-// Four or more sixes detonate instead of merging, destroying every tile in the
-// single-cell ring around the matched group.
-export function isExplodingSixGroup(group) {
-  return group.val === 6 && group.cells.length >= SIX_EXPLOSION_THRESHOLD;
+export function shouldCollapseForMode(gameMode, groups, matchCount = 3, isCascadeFromCollapse = false) {
+  return shouldCollapse(groups, isCascadeFromCollapse, matchCount);
 }
 
-// Groups big enough to drag the whole board. In Chaos an exploding six clears
-// its blast radius in place, so it never causes a collapse; in Ultimate Chaos
-// every qualifying match — sixes included — throws the board.
-export function triggersChaosCollapse(
-  groups,
-  matchCount = CHAOS_MATCH_THRESHOLD,
-  gameMode = 'chaos',
-) {
-  const threshold = collapseThreshold(matchCount);
-  return groups.some(
-    (group) =>
-      group.cells.length >= threshold &&
-      !(gameMode === 'chaos' && isExplodingSixGroup(group)),
-  );
-}
-
-export function shouldCollapseForMode(gameMode, groups, matchCount) {
-  return (
-    (gameMode === 'chaos' || gameMode === 'ultra') &&
-    triggersChaosCollapse(groups, matchCount, gameMode)
-  );
-}
-
-// Chaos always pulls straight down. Ultimate Chaos picks one of the four
-// directions at random every time the board collapses.
-export function collapseDirectionForMode(gameMode, rng = Math.random) {
-  if (gameMode !== 'ultra') return 'down';
-  const index = Math.floor(rng() * COLLAPSE_DIRECTIONS.length);
-  return COLLAPSE_DIRECTIONS[
-    Math.min(Math.max(index, 0), COLLAPSE_DIRECTIONS.length - 1)
-  ];
+// Collapses in a random direction (up, down, left, right).
+export function collapseDirectionForMode(_gameMode, _groups, rng = Math.random) {
+  return randomCollapseDirection(rng);
 }
 
 // Find every occupied cell touching an exploding group, including diagonals.
@@ -320,36 +334,45 @@ export function explosionTargets(board, gridSize, sourceCells, excludedCells = s
   return [...targets.values()];
 }
 
-// Apply gravity to the whole board in any of the four directions. Returns a
-// fresh board plus the list of tiles that moved, leaving the input untouched.
-export function collapseBoard(board, gridSize, direction = 'down') {
+// Apply gravity across rows or columns in any of the four directions ('up', 'down', 'left', 'right').
+// Returns a fresh board plus the list of tiles that moved, leaving the input board untouched.
+export function collapseColumns(board, gridSize, direction = 'down') {
   const newBoard = createBoard(gridSize);
   const moved = [];
-  const horizontal = direction === 'left' || direction === 'right';
-  const towardStart = direction === 'up' || direction === 'left';
 
-  for (let line = 0; line < gridSize; line++) {
-    const vals = [];
-    for (let i = 0; i < gridSize; i++) {
-      const r = horizontal ? line : i;
-      const c = horizontal ? i : line;
-      if (board[r][c] !== null) vals.push({ i, val: board[r][c] });
-    }
-    vals.forEach((entry, k) => {
-      const target = towardStart ? k : gridSize - vals.length + k;
-      const r0 = horizontal ? line : entry.i;
-      const c0 = horizontal ? entry.i : line;
-      const r1 = horizontal ? line : target;
-      const c1 = horizontal ? target : line;
-      newBoard[r1][c1] = entry.val;
-      if (r1 !== r0 || c1 !== c0) {
-        moved.push({ r0, c0, r1, c1, val: entry.val });
+  if (direction === 'up' || direction === 'down') {
+    for (let c = 0; c < gridSize; c++) {
+      const vals = [];
+      for (let r = 0; r < gridSize; r++) {
+        if (board[r][c] !== null) vals.push({ r, val: board[r][c] });
       }
-    });
+      vals.forEach((entry, i) => {
+        const newR = direction === 'up' ? i : gridSize - vals.length + i;
+        newBoard[newR][c] = entry.val;
+        if (newR !== entry.r) {
+          moved.push({ r0: entry.r, c0: c, r1: newR, c1: c, val: entry.val });
+        }
+      });
+    }
+  } else if (direction === 'left' || direction === 'right') {
+    for (let r = 0; r < gridSize; r++) {
+      const vals = [];
+      for (let c = 0; c < gridSize; c++) {
+        if (board[r][c] !== null) vals.push({ c, val: board[r][c] });
+      }
+      vals.forEach((entry, i) => {
+        const newC = direction === 'left' ? i : gridSize - vals.length + i;
+        newBoard[r][newC] = entry.val;
+        if (newC !== entry.c) {
+          moved.push({ r0: r, c0: entry.c, r1: r, c1: newC, val: entry.val });
+        }
+      });
+    }
   }
 
   return { board: newBoard, moved };
 }
+export const collapseBoard = collapseColumns;
 
 // Score a set of cleared groups. `chainDepth` starts at 1 for the first
 // clear of a placement and increases for each chained reaction.

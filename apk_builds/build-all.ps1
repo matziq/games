@@ -236,6 +236,9 @@ foreach ($game in $games) {
             throw "Missing source file for $($game.id): $srcPath"
         }
         Copy-Item $srcPath (Join-Path $wwwDir 'index.html') -Force
+        if ($game.id -eq 'domino_combo') {
+            Copy-Item (Join-Path $root 'domino_combo\dist\*') $wwwDir -Recurse -Force
+        }
     }
 
     Copy-SharedAssets $wwwDir
