@@ -3,17 +3,13 @@
 A match-3 dice placement game. Drag dominoes onto the board, match 3+ same tiles
 to merge them into the next value, and chain reactions for bonus points.
 
-Choose one of three game modes whenever the game launches:
+The game starts directly in **Ultimate Chaos**. Matching 4+ tiles collapses
+the board in a random direction. During a collapse cascade, a match of 3+
+causes another collapse (subject to the configured match count). Matching 5+
+earns a **Remix Token** that scrambles the board. Matching 4+ sixes also
+destroys neighboring tiles. High-score names can be submitted with Enter.
 
-- **Classic** — merges resolve in place; no board-wide reshuffling.
-- **Chaos** — matching 4+ tiles collapses the whole board downward. Matching 4+
-  sixes instead destroys and scores every tile in the one-cell ring around the
-  group, and nothing falls after that blast.
-- **Ultimate Chaos** — same 4+ thresholds and six explosions, but every collapse
-  throws the board up, down, left or right at random, and exploding sixes
-  trigger a collapse as well.
-
-Difficulty is separate from the game mode and is changed in **Settings**. It
+Difficulty is changed in **Settings**. It
 controls which pieces spawn, and each difficulty keeps its own high scores:
 
 - **Regular** — mostly two-value dominoes (the original behavior).
@@ -43,6 +39,7 @@ index.html        markup + styles; loads src/main.js as a module
 src/logic.js      pure, DOM-free game logic (single source of truth, unit-tested)
 src/main.js       DOM rendering, audio, drag/drop, and event wiring
 test/             Vitest suites (pure logic + jsdom bootstrap smoke tests)
+scripts/          APK asset equality and compiled-game behavior checks
 ```
 
 ## Tooling
@@ -71,7 +68,7 @@ npm ci
 npm run build
 Set-Location ..\apk_builds
 npm ci
-Copy-Item ..\domino_combo\dist\index.html domino_combo\www\index.html -Force
+Copy-Item ..\domino_combo\dist\* domino_combo\www\ -Recurse -Force
 Set-Location domino_combo
 npx cap sync android
 Set-Location android
@@ -83,7 +80,25 @@ The installable APK is written to
 
 Alternatively, run **Build Domino Combo APK** from GitHub Actions. It installs
 the current Android SDK packages without the obsolete `tools` package, builds
-the web app and debug APK, verifies its package metadata and signature, and
+the web app and debug APK, verifies its package metadata and signature, checks
+every packaged web asset against the production build, executes the bundled
+game to check its current UI and controls, and
 uploads the `domino-combo-apk` artifact. The published download is
 `domino_combo/domino_combo.apk`; a workflow run alone does not update that
 checked-in file.
+
+## Gameplay source of truth
+
+The canonical gameplay source is
+[`matziq/domino-combo`](https://github.com/matziq/domino-combo). This copy was
+synchronized from revision `0d338fb81be703773f8eb1f12f201ab61e5d4011` on
+October 14, 2026, including Ultimate Chaos only, remix tokens, directional
+cascades, and Enter-to-submit high scores. The previous APK was newly compiled
+but used this repository's older August source.
+
+When the canonical game changes, synchronize `index.html`, `src/`, `public/`,
+and its regression tests into this folder, run tests/lint/build, and publish
+both `dist/` and the APK. Keep this repository's shared Android packaging and
+package ID `com.matziq.dominocombo`. The APK workflow compares gameplay inputs
+with canonical `main` and fails on divergence instead of silently shipping an
+older copy. APK version 1.1 (code 2) identifies the synchronized game.

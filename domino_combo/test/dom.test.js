@@ -20,20 +20,11 @@ describe('game bootstrap (jsdom)', () => {
     vi.resetModules();
   });
 
-  async function start(mode = 'ultra') {
+  async function start() {
     await import('../src/main.js');
-    document.querySelector(`[data-mode="${mode}"]`).click();
   }
 
-  it('presents all three modes before starting the game', async () => {
-    await import('../src/main.js');
-
-    expect(document.getElementById('mode-select').classList.contains('show')).toBe(true);
-    expect(document.querySelectorAll('.mode-card')).toHaveLength(3);
-    expect(document.querySelectorAll('#board .cell')).toHaveLength(0);
-  });
-
-  it('starts Ultimate Chaos with a full 5x5 board', async () => {
+  it('starts directly in Ultimate Chaos with a full 5x5 board', async () => {
     await start();
     const cells = document.querySelectorAll('#board .cell');
     expect(cells).toHaveLength(25);
@@ -43,11 +34,20 @@ describe('game bootstrap (jsdom)', () => {
     expect(document.getElementById('game').getAttribute('aria-hidden')).toBe('false');
   });
 
-  it('returns to mode selection when New Game is clicked', async () => {
+  it('initializes Remix button in disabled state with 0 tokens', async () => {
     await start();
+    const remixBtn = document.getElementById('btn-remix');
+    expect(remixBtn).not.toBeNull();
+    expect(remixBtn.disabled).toBe(true);
+    expect(document.getElementById('remix-badge').textContent).toBe('0');
+  });
+
+  it('restarts the game when New Game is clicked', async () => {
+    await start();
+    document.getElementById('score-display').textContent = '100';
     document.getElementById('btn-new-game').click();
-    expect(document.getElementById('mode-select').classList.contains('show')).toBe(true);
-    expect(document.querySelectorAll('#board .cell')).toHaveLength(0);
+    expect(document.querySelectorAll('#board .cell')).toHaveLength(25);
+    expect(document.getElementById('score-display').textContent).toBe('0');
   });
 
   it('opens the help modal via its button', async () => {
@@ -65,9 +65,9 @@ describe('game bootstrap (jsdom)', () => {
     expect(document.querySelectorAll('#board .cell')).toHaveLength(49);
   });
 
-  it('starts the selected mode from the launch screen', async () => {
-    await start('classic');
-    expect(document.getElementById('mode-display').textContent).toContain('Classic');
+  it('displays Ultimate Chaos mode in the mode badge', async () => {
+    await start();
+    expect(document.getElementById('mode-display').textContent).toContain('Ultimate Chaos');
   });
 
   it('toggles sound from the board without restarting the game', async () => {
@@ -154,6 +154,21 @@ describe('game bootstrap (jsdom)', () => {
     document.getElementById('opt-difficulty').value = 'noob';
     document.getElementById('btn-apply-settings').click();
     expect(document.getElementById('high-score').textContent).toContain('0');
+  });
+
+  it('submits the high-score name when Enter is pressed', async () => {
+    await start();
+    const nameEntry = document.getElementById('name-entry');
+    const nameInput = document.getElementById('hs-name');
+    nameEntry.style.display = 'block';
+    nameInput.value = 'PLAYER';
+
+    const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+    nameInput.dispatchEvent(enter);
+
+    expect(enter.defaultPrevented).toBe(true);
+    expect(nameEntry.style.display).toBe('none');
+    expect(document.querySelectorAll('#board .cell')).toHaveLength(25);
   });
 
   it('requests full screen only from the dedicated button', async () => {

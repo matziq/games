@@ -374,6 +374,60 @@
             font-size: 24px;
         }
 
+        .remix-btn {
+            position: relative;
+        }
+
+        .remix-btn .btn-circle {
+            border: 2.5px solid #FF9800;
+            color: #FF9800;
+            font-size: 24px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .remix-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .remix-btn.active .btn-circle {
+            background: #FF9800;
+            color: #1a1a1a;
+            border-color: #FFB74D;
+            box-shadow: 0 0 12px rgba(255, 152, 0, 0.6);
+            animation: remixPulse 1.4s infinite alternate ease-in-out;
+        }
+
+        @keyframes remixPulse {
+            0% {
+                box-shadow: 0 0 6px rgba(255, 152, 0, 0.4);
+                transform: scale(1);
+            }
+            100% {
+                box-shadow: 0 0 16px rgba(255, 183, 77, 0.8);
+                transform: scale(1.06);
+            }
+        }
+
+        .remix-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #E91E63;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 800;
+            border-radius: 10px;
+            min-width: 18px;
+            height: 18px;
+            line-height: 18px;
+            text-align: center;
+            padding: 0 4px;
+            border: 1.5px solid #1a1a1a;
+        }
+
         /* === Animations === */
         @keyframes pieceIn {
             0% {
@@ -454,12 +508,19 @@
             }
         }
 
+        .gravity-down .die {
+            animation: gravityDown 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .gravity-up .die {
+            animation: gravityUp 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
         @keyframes gravityLeft {
             from {
                 transform: translateX(18px);
                 opacity: 0.7;
             }
-
             to {
                 transform: translateX(0);
                 opacity: 1;
@@ -471,19 +532,10 @@
                 transform: translateX(-18px);
                 opacity: 0.7;
             }
-
             to {
                 transform: translateX(0);
                 opacity: 1;
             }
-        }
-
-        .gravity-down .die {
-            animation: gravityDown 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-
-        .gravity-up .die {
-            animation: gravityUp 0.3s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         .gravity-left .die {
@@ -492,6 +544,25 @@
 
         .gravity-right .die {
             animation: gravityRight 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        @keyframes scrambleSpin {
+            0% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(0.6) rotate(180deg);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(1) rotate(360deg);
+                opacity: 1;
+            }
+        }
+
+        #board.scrambling .cell .die {
+            animation: scrambleSpin 0.35s ease-in-out;
         }
 
         @keyframes clearPulse {
@@ -1353,44 +1424,7 @@
         <div>Please rotate your device back to portrait to play.</div>
     </div>
 
-    <div id="mode-select" class="overlay launch-screen show" role="dialog" aria-modal="true"
-        aria-labelledby="launch-title">
-        <div class="launch-panel">
-            <div class="launch-kicker">A domino puzzle</div>
-            <h1 class="launch-title" id="launch-title">Domino<br>Combo</h1>
-            <p class="launch-intro">Choose your rules. Every mode starts with the same simple move and builds toward a
-                different kind of chain reaction.</p>
-            <div class="mode-list" aria-label="Choose a game mode">
-                <button class="mode-card" type="button" data-mode="classic">
-                    <span class="mode-number">01</span>
-                    <span class="mode-copy">
-                        <span class="mode-name">Classic</span>
-                        <span class="mode-description">Pure placement. Matches resolve exactly where you build them.</span>
-                    </span>
-                    <span class="mode-arrow" aria-hidden="true">&rarr;</span>
-                </button>
-                <button class="mode-card" type="button" data-mode="chaos">
-                    <span class="mode-number">02</span>
-                    <span class="mode-copy">
-                        <span class="mode-name">Chaos</span>
-                        <span class="mode-description">Match four to collapse the board downward. Four sixes blow up their neighbors in place.</span>
-                    </span>
-                    <span class="mode-arrow" aria-hidden="true">&rarr;</span>
-                </button>
-                <button class="mode-card" type="button" data-mode="ultra">
-                    <span class="mode-number">03</span>
-                    <span class="mode-copy">
-                        <span class="mode-name">Ultimate Chaos</span>
-                        <span class="mode-description">Every collapse hurls the board in a random direction &mdash; even after a six explodes.</span>
-                    </span>
-                    <span class="mode-arrow" aria-hidden="true">&rarr;</span>
-                </button>
-            </div>
-            <p class="launch-note">You can change board size and difficulty from Settings once the game starts.</p>
-        </div>
-    </div>
-
-    <div id="game" aria-hidden="true">
+    <div id="game" aria-hidden="false">
         <div class="game-wordmark"><span>Domino Combo</span></div>
         <div id="score-display">0</div>
         <div id="high-score">Best: 0</div>
@@ -1417,6 +1451,10 @@
             <button class="game-btn new-game-btn" id="btn-new-game">
                 <div class="btn-circle">+</div>
                 New Game
+            </button>
+            <button class="game-btn remix-btn" id="btn-remix" disabled aria-label="Remix board">
+                <div class="btn-circle">&#128256;<span id="remix-badge" class="remix-badge" style="display:none;">0</span></div>
+                Remix
             </button>
             <button class="game-btn settings-btn" id="btn-help">
                 <div class="btn-circle">?</div>
@@ -1453,13 +1491,10 @@
                 <p style="margin-bottom:10px;">Match <b style="color:#29B6F6;">3+</b> same tiles to merge them into the
                     next value.</p>
                 <p style="margin-bottom:10px;">Chain reactions earn <b style="color:#FF6D00;">bonus points</b>!</p>
-                <p style="margin-bottom:10px;">Red <b style="color:#EF5350;">6s</b> vanish when matched.</p>
-                <p style="margin-bottom:10px;"><b style="color:#FF8A65;">Chaos:</b> matching 4+ tiles collapses the
-                    board downward. Matching 4+ sixes instead destroys and scores every tile in the ring around them
-                    &mdash; nothing falls after that blast.</p>
-                <p style="margin-bottom:10px;"><b style="color:#FF3D00;">Ultimate Chaos:</b> same 4+ thresholds and
-                    six explosions, but every collapse throws the board up, down, left or right at random &mdash; and
-                    exploding sixes trigger a collapse too.</p>
+                <p style="margin-bottom:10px;">Match <b style="color:#FF8A65;">4+</b> tiles to collapse the board in a <b style="color:#FF8A65;">random direction</b>.</p>
+                <p style="margin-bottom:10px;">During a collapse, matching <b style="color:#FF8A65;">3+</b> tiles collapses the board again!</p>
+                <p style="margin-bottom:10px;">Match <b style="color:#FFD600;">5+</b> tiles to earn a <b style="color:#FF9800;">Remix Token</b>. Use it to scramble all board pieces.</p>
+                <p style="margin-bottom:10px;">Red <b style="color:#EF5350;">6s</b>: matching 4+ sixes charges and explodes neighboring tiles.</p>
                 <p style="margin-bottom:0;">Game ends when no moves remain.</p>
             </div>
             <button class="close-settings" id="btn-help-close" style="margin-top:14px;">Got It</button>

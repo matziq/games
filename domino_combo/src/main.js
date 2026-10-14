@@ -14,10 +14,12 @@ import {
   visualVals,
   findGroups,
   pickMergeTarget,
-  shouldCollapseForMode,
-  collapseDirectionForMode,
+  shouldCollapse,
+  randomCollapseDirection,
+  earnsRemixToken,
+  scrambleBoard,
   explosionTargets,
-  collapseBoard,
+  collapseColumns,
   SIX_EXPLOSION_THRESHOLD,
   computeScore,
   sanitizeName,
@@ -35,9 +37,10 @@ import {
 // ── State ──────────────────────────────────────────────────
 let gridSize = 5;
 let matchCount = 3;
-let gameMode = 'ultra'; // 'classic' | 'chaos' | 'ultra'
+const gameMode = 'ultra'; // Ultimate Chaos only
 let difficulty = DEFAULT_DIFFICULTY; // 'regular' | 'easy' | 'noob' | 'snakeeyes'
 let soundOn = true;
+let remixTokens = 0;
 
 let board = [];
 let score = 0;
@@ -192,13 +195,54 @@ function init() {
   score = 0;
   processing = false;
   maxSpawnVal = 3;
+  remixTokens = 0;
   highScore = getHighScore();
   board = createBoard(gridSize);
   updateScore();
   updateModeDisplay();
   updateSoundControl();
+  updateRemixButton();
   renderBoard();
   spawnPiece();
+}
+
+function updateRemixButton() {
+  const btn = document.getElementById('btn-remix');
+  if (!btn) return;
+  const canRemix = remixTokens > 0 && !processing;
+  btn.disabled = !canRemix;
+  btn.classList.toggle('active', canRemix);
+  const badge = document.getElementById('remix-badge');
+  if (badge) {
+    badge.textContent = String(remixTokens);
+    badge.style.display = remixTokens > 0 ? 'inline-block' : 'none';
+  }
+}
+
+function triggerRemix() {
+  if (remixTokens <= 0 || processing) return;
+  remixTokens--;
+  processing = true;
+  piece = null;
+  renderPiece();
+  updateRemixButton();
+  sfx('flip');
+  board = scrambleBoard(board, gridSize);
+  const boardEl = document.getElementById('board');
+  if (boardEl) {
+    boardEl.classList.add('scrambling');
+    setTimeout(() => boardEl.classList.remove('scrambling'), 350);
+  }
+  screenShake();
+  renderBoard();
+  lastPlacedCells = [];
+  chainDepth = 0;
+  const activeVer = gameVersion;
+  setTimeout(() => {
+    if (activeVer === gameVersion) {
+      processMatches(false);
+    }
+  }, 350);
 }
 
 // ── Rendering ──────────────────────────────────────────────
@@ -253,12 +297,7 @@ function updateScore() {
 function updateModeDisplay() {
   const el = document.getElementById('mode-display');
   if (!el) return;
-  const modeLabel =
-    gameMode === 'chaos'
-      ? 'Chaos'
-      : gameMode === 'ultra'
-        ? 'Ultimate Chaos'
-        : 'Classic';
+  const modeLabel = 'Ultimate Chaos';
   el.textContent =
     difficulty === DEFAULT_DIFFICULTY
       ? modeLabel
@@ -474,10 +513,11 @@ function ptrUp(e) {
     piece = null;
     renderPiece();
     processing = true;
+    updateRemixButton();
     chainDepth = 0;
     const placedGameVersion = gameVersion;
     setTimeout(() => {
-      if (placedGameVersion === gameVersion) processMatches();
+      if (placedGameVersion === gameVersion) processMatches(false);
     }, 120);
   } else {
     renderPiece(true);
@@ -547,14 +587,30 @@ function spawnParticles(el) {
   }
 }
 
-function processMatches() {
+function processMatches(isCascadeFromCollapse = false) {
   const activeGameVersion = gameVersion;
   const groups = findGroups(board, gridSize, matchCount);
 
   if (groups.length === 0) {
     processing = false;
-    spawnPiece();
+    updateRemixButton();
+    if (!piece) {
+      spawnPiece();
+    } else if (!canPlaceAnywhere(board, gridSize, piece)) {
+      gameOver();
+    }
     return;
+  }
+
+  processing = true;
+  updateRemixButton();
+
+  // If 5 or more get matched, earn a remix token
+  const earnedTokens = earnsRemixToken(groups);
+  if (earnedTokens > 0) {
+    remixTokens += earnedTokens;
+    updateRemixButton();
+    showPopup(0, 0, false, -35, `+${earnedTokens} REMIX`);
   }
 
   chainDepth++;
@@ -582,7 +638,6 @@ function processMatches() {
       }
     }
     if (
-      (gameMode === 'chaos' || gameMode === 'ultra') &&
       grp.val === 6 &&
       grp.cells.length >= SIX_EXPLOSION_THRESHOLD
     ) {
@@ -695,15 +750,15 @@ function processMatches() {
     // Update trigger cells for next chain reaction
     lastPlacedCells = newPlaced;
 
-    const shouldCollapse = shouldCollapseForMode(
-      gameMode,
+    const willCollapse = shouldCollapse(
       groups,
+      isCascadeFromCollapse,
       matchCount,
     );
 
-    if (shouldCollapse) {
-      const collapseDirection = collapseDirectionForMode(gameMode);
-      const { board: collapsed, moved } = collapseBoard(
+    if (willCollapse) {
+      const collapseDirection = randomCollapseDirection();
+      const { board: collapsed, moved } = collapseColumns(
         board,
         gridSize,
         collapseDirection,
@@ -717,13 +772,15 @@ function processMatches() {
         moved.map((m) => ({ r: m.r1, c: m.c1 })),
         collapseDirection,
       );
+      setTimeout(() => {
+        if (activeGameVersion === gameVersion) processMatches(true);
+      }, 250);
     } else {
       renderBoard(null, newPlaced);
+      setTimeout(() => {
+        if (activeGameVersion === gameVersion) processMatches(false);
+      }, 250);
     }
-
-    setTimeout(() => {
-      if (activeGameVersion === gameVersion) processMatches();
-    }, 250);
   }, resolutionDelay);
 }
 
@@ -793,34 +850,12 @@ function submitHighScore() {
 
 // ── Controls ───────────────────────────────────────────────
 function restartGame() {
-  document.getElementById('game-over').classList.remove('show');
-  document.getElementById('settings-modal').classList.remove('show');
-  document.getElementById('name-entry').style.display = 'none';
-  init();
-}
-
-function showModeSelect(options = {}) {
   gameVersion++;
-  processing = true;
   piece = null;
   document.getElementById('game-over').classList.remove('show');
   document.getElementById('settings-modal').classList.remove('show');
   document.getElementById('help-modal').classList.remove('show');
   document.getElementById('name-entry').style.display = 'none';
-  document.getElementById('board').innerHTML = '';
-  document.getElementById('piece-area').innerHTML = '';
-  document.getElementById('game').setAttribute('aria-hidden', 'true');
-  document.getElementById('mode-select').classList.add('show');
-  if (options.focus !== false) {
-    document.querySelector('.mode-card').focus();
-  }
-}
-
-function startMode(mode) {
-  if (!['classic', 'chaos', 'ultra'].includes(mode)) return;
-  gameMode = mode;
-  document.getElementById('mode-select').classList.remove('show');
-  document.getElementById('game').setAttribute('aria-hidden', 'false');
   init();
 }
 
@@ -925,18 +960,35 @@ function updateFullscreenControl() {
 
 // ── Event wiring (unobtrusive, replaces inline onclick) ────
 function wireControls() {
-  document
-    .querySelectorAll('.mode-card')
-    .forEach((button) => button.addEventListener('click', () => startMode(button.dataset.mode)));
-  document.getElementById('btn-new-game').addEventListener('click', showModeSelect);
-  document.getElementById('btn-sound').addEventListener('click', toggleSound);
-  document.getElementById('btn-fullscreen').addEventListener('click', toggleFullscreen);
-  document.getElementById('btn-help').addEventListener('click', toggleHelp);
-  document.getElementById('btn-settings').addEventListener('click', toggleSettings);
-  document.getElementById('btn-help-close').addEventListener('click', toggleHelp);
-  document.getElementById('btn-apply-settings').addEventListener('click', applySettings);
-  document.getElementById('opt-difficulty').addEventListener('change', onDifficultyChange);
-  document.getElementById('btn-play-again').addEventListener('click', submitHighScore);
+  const btnNewGame = document.getElementById('btn-new-game');
+  if (btnNewGame) btnNewGame.addEventListener('click', restartGame);
+  const btnRemix = document.getElementById('btn-remix');
+  if (btnRemix) btnRemix.addEventListener('click', triggerRemix);
+  const btnSound = document.getElementById('btn-sound');
+  if (btnSound) btnSound.addEventListener('click', toggleSound);
+  const btnFullscreen = document.getElementById('btn-fullscreen');
+  if (btnFullscreen) btnFullscreen.addEventListener('click', toggleFullscreen);
+  const btnHelp = document.getElementById('btn-help');
+  if (btnHelp) btnHelp.addEventListener('click', toggleHelp);
+  const btnSettings = document.getElementById('btn-settings');
+  if (btnSettings) btnSettings.addEventListener('click', toggleSettings);
+  const btnHelpClose = document.getElementById('btn-help-close');
+  if (btnHelpClose) btnHelpClose.addEventListener('click', toggleHelp);
+  const btnApplySettings = document.getElementById('btn-apply-settings');
+  if (btnApplySettings) btnApplySettings.addEventListener('click', applySettings);
+  const optDifficulty = document.getElementById('opt-difficulty');
+  if (optDifficulty) optDifficulty.addEventListener('change', onDifficultyChange);
+  const btnPlayAgain = document.getElementById('btn-play-again');
+  if (btnPlayAgain) btnPlayAgain.addEventListener('click', submitHighScore);
+  const nameInput = document.getElementById('hs-name');
+  if (nameInput) {
+    nameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        submitHighScore();
+      }
+    });
+  }
   document.addEventListener('fullscreenchange', updateFullscreenControl);
   updateFullscreenControl();
 
@@ -952,4 +1004,4 @@ function wireControls() {
 
 // ── Start ──────────────────────────────────────────────────
 wireControls();
-showModeSelect({ focus: false });
+init();
