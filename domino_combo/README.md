@@ -51,9 +51,6 @@ test/             Vitest suites (pure logic + jsdom bootstrap smoke tests)
 | ----------------- | ----------------------------------------------------- |
 | `npm run dev`     | Start the Vite dev server                             |
 | `npm run build`   | Build a single self-contained `dist/index.html`       |
-| `npm run android:sync` | Build the web app and copy it into the Android project |
-| `npm run android:build:debug` | Build an installable debug APK on Windows       |
-| `npm run android:open` | Open the native project in Android Studio            |
 | `npm run preview` | Preview the production build                          |
 | `npm test`        | Run the Vitest suite once                             |
 | `npm run test:watch` | Run Vitest in watch mode                            |
@@ -61,15 +58,32 @@ test/             Vitest suites (pure logic + jsdom bootstrap smoke tests)
 
 ## Android APK
 
-The Capacitor project in `android/` packages the same production web build used
-by GitHub Pages. On Windows, set `JAVA_HOME` to Android Studio's bundled JDK and
-`ANDROID_HOME` to the Android SDK, then run:
+The Capacitor project in `../apk_builds/domino_combo/android/` packages the
+production web build. From the repository root on Windows, set `JAVA_HOME` to
+Android Studio's bundled JDK and `ANDROID_HOME` to the Android SDK, then run:
 
 ```powershell
 $env:JAVA_HOME = 'C:\Program Files\Android\Android Studio\jbr'
 $env:ANDROID_HOME = 'D:\DevTools\android-sdk'
-npm run android:build:debug
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+Set-Location domino_combo
+npm ci
+npm run build
+Set-Location ..\apk_builds
+npm ci
+Copy-Item ..\domino_combo\dist\index.html domino_combo\www\index.html -Force
+Set-Location domino_combo
+npx cap sync android
+Set-Location android
+.\gradlew.bat assembleDebug
 ```
 
 The installable APK is written to
-`android/app/build/outputs/apk/debug/app-debug.apk`.
+`apk_builds/domino_combo/android/app/build/outputs/apk/debug/app-debug.apk`.
+
+Alternatively, run **Build Domino Combo APK** from GitHub Actions. It installs
+the current Android SDK packages without the obsolete `tools` package, builds
+the web app and debug APK, verifies its package metadata and signature, and
+uploads the `domino-combo-apk` artifact. The published download is
+`domino_combo/domino_combo.apk`; a workflow run alone does not update that
+checked-in file.
