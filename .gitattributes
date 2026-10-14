@@ -1,2 +1,4 @@
 domino_combo/index.html text eol=lf
-domino_combo/dist/index.html text eol=lf
+domino_combo/public/** text eol=lf
+domino_combo/dist/** text eol=lf
+apk_builds/domino_combo/www/** text eol=lf
