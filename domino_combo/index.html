@@ -969,12 +969,6 @@
             color: var(--cp-text-muted) !important;
         }
 
-        #mode-display {
-            color: var(--cp-accent) !important;
-            font-size: 12px !important;
-            letter-spacing: 0.04em;
-        }
-
         #quick-controls {
             min-height: 44px;
             margin: 0 0 8px;
@@ -1429,7 +1423,6 @@
         <div id="score-display">0</div>
         <div id="high-score">Best: 0</div>
         <div id="high-score-name" style="font-size:11px;color:#666;margin-bottom:4px;"></div>
-        <div id="mode-display" style="font-size:12px;color:#FF8A65;font-weight:bold;margin-bottom:4px;"></div>
         <div id="quick-controls">
             <button class="sound-toggle" id="btn-sound" type="button" role="switch" aria-checked="true"
                 aria-label="Turn sound off">
@@ -1505,23 +1498,6 @@
         <div class="settings-content">
             <h2>&#9881; Settings</h2>
             <div class="setting-row">
-                <span>Difficulty</span>
-                <select id="opt-difficulty">
-                    <option value="regular" selected>Regular</option>
-                    <option value="easy">Easy</option>
-                    <option value="noob">Noob</option>
-                    <option value="snakeeyes">Snake Eyes</option>
-                </select>
-            </div>
-            <div class="setting-row" id="row-size">
-                <span>Board Size</span>
-                <select id="opt-size">
-                    <option value="5" selected>5 &times; 5 (Normal)</option>
-                    <option value="6">6 &times; 6</option>
-                    <option value="7">7 &times; 7</option>
-                </select>
-            </div>
-            <div class="setting-row" id="row-match">
                 <span>Match Needed</span>
                 <select id="opt-match">
                     <option value="2">2 (Easy)</option>

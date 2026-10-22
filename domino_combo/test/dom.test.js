@@ -24,13 +24,14 @@ describe('game bootstrap (jsdom)', () => {
     await import('../src/main.js');
   }
 
-  it('starts directly in Ultimate Chaos with a full 5x5 board', async () => {
+  it('starts the sole game on a fixed 5x5 board', async () => {
     await start();
     const cells = document.querySelectorAll('#board .cell');
     expect(cells).toHaveLength(25);
     expect(document.getElementById('score-display').textContent).toBe('0');
     expect(document.getElementById('current-piece')).not.toBeNull();
-    expect(document.getElementById('mode-display').textContent).toContain('Ultimate Chaos');
+    expect(document.getElementById('mode-display')).toBeNull();
+    expect(document.body.textContent).not.toContain('Ultimate Chaos');
     expect(document.getElementById('game').getAttribute('aria-hidden')).toBe('false');
   });
 
@@ -58,16 +59,11 @@ describe('game bootstrap (jsdom)', () => {
     expect(help.classList.contains('show')).toBe(true);
   });
 
-  it('applies settings to resize the board', async () => {
+  it('does not expose difficulty or board-size controls', async () => {
     await start();
-    document.getElementById('opt-size').value = '7';
-    document.getElementById('btn-apply-settings').click();
-    expect(document.querySelectorAll('#board .cell')).toHaveLength(49);
-  });
-
-  it('displays Ultimate Chaos mode in the mode badge', async () => {
-    await start();
-    expect(document.getElementById('mode-display').textContent).toContain('Ultimate Chaos');
+    expect(document.getElementById('opt-difficulty')).toBeNull();
+    expect(document.getElementById('opt-size')).toBeNull();
+    expect(document.querySelectorAll('#board .cell')).toHaveLength(25);
   });
 
   it('toggles sound from the board without restarting the game', async () => {
@@ -92,54 +88,7 @@ describe('game bootstrap (jsdom)', () => {
     expect(document.getElementById('btn-sound').getAttribute('aria-checked')).toBe('false');
   });
 
-  it('locks the board options when Easy is selected', async () => {
-    await start();
-    document.getElementById('opt-size').value = '7';
-    document.getElementById('opt-match').value = '4';
-    const difficultySelect = document.getElementById('opt-difficulty');
-    difficultySelect.value = 'easy';
-    difficultySelect.dispatchEvent(new Event('change'));
-
-    expect(document.getElementById('opt-size').disabled).toBe(true);
-    expect(document.getElementById('opt-match').disabled).toBe(true);
-    expect(document.getElementById('opt-size').value).toBe('5');
-    expect(document.getElementById('opt-match').value).toBe('3');
-
-    document.getElementById('btn-apply-settings').click();
-    expect(document.querySelectorAll('#board .cell')).toHaveLength(25);
-  });
-
-  it('keeps the board options free on Noob', async () => {
-    await start();
-    const difficultySelect = document.getElementById('opt-difficulty');
-    difficultySelect.value = 'noob';
-    difficultySelect.dispatchEvent(new Event('change'));
-
-    expect(document.getElementById('opt-size').disabled).toBe(false);
-    expect(document.getElementById('opt-match').disabled).toBe(false);
-
-    document.getElementById('opt-size').value = '7';
-    document.getElementById('btn-apply-settings').click();
-    expect(document.querySelectorAll('#board .cell')).toHaveLength(49);
-    expect(document.getElementById('mode-display').textContent).toContain('Noob');
-  });
-
-  it('spawns single dice on Noob and twin doubles on Snake Eyes', async () => {
-    await start();
-
-    document.getElementById('opt-difficulty').value = 'noob';
-    document.getElementById('btn-apply-settings').click();
-    expect(document.querySelectorAll('#current-piece .piece-die')).toHaveLength(1);
-
-    document.getElementById('opt-difficulty').value = 'snakeeyes';
-    document.getElementById('btn-apply-settings').click();
-    const dice = document.querySelectorAll('#current-piece .piece-die');
-    expect(dice).toHaveLength(2);
-    expect(dice[0].style.background).toBe(dice[1].style.background);
-    expect(document.getElementById('mode-display').textContent).toContain('Snake Eyes');
-  });
-
-  it('keeps high scores separate per difficulty', async () => {
+  it('loads the existing score for the fixed game', async () => {
     await start();
     localStorage.setItem(
       'dcHighScores',
@@ -151,9 +100,7 @@ describe('game bootstrap (jsdom)', () => {
 
     expect(document.getElementById('high-score').textContent).toContain('900');
 
-    document.getElementById('opt-difficulty').value = 'noob';
-    document.getElementById('btn-apply-settings').click();
-    expect(document.getElementById('high-score').textContent).toContain('0');
+    expect(document.getElementById('high-score').textContent).toContain('900');
   });
 
   it('submits the high-score name when Enter is pressed', async () => {
