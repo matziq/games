@@ -18,20 +18,13 @@ try {
   const document = window.document;
   assert.equal(document.querySelectorAll('#board .cell').length, 25);
   assert.equal(document.getElementById('mode-select'), null, 'Old mode chooser must be absent');
-  assert.match(document.getElementById('mode-display').textContent, /Ultimate Chaos/);
+  assert.equal(document.getElementById('mode-display'), null, 'Mode label must be absent');
+  assert.equal(document.getElementById('opt-difficulty'), null, 'Difficulty control must be absent');
+  assert.equal(document.getElementById('opt-size'), null, 'Board-size control must be absent');
   assert.equal(document.getElementById('btn-remix').disabled, true);
   assert.equal(document.getElementById('remix-badge').textContent, '0');
   assert.match(document.getElementById('help-modal').textContent, /Remix Token/);
   assert.match(document.getElementById('help-modal').textContent, /random direction/);
-
-  const difficulty = document.getElementById('opt-difficulty');
-  assert.deepEqual([...difficulty.options].map((option) => option.value),
-    ['regular', 'easy', 'noob', 'snakeeyes']);
-  difficulty.value = 'noob';
-  difficulty.dispatchEvent(new window.Event('change'));
-  document.getElementById('opt-size').value = '7';
-  document.getElementById('btn-apply-settings').click();
-  assert.equal(document.querySelectorAll('#board .cell').length, 49);
 
   const entry = document.getElementById('name-entry');
   entry.style.display = 'block';
@@ -42,7 +35,7 @@ try {
   document.getElementById('hs-name').dispatchEvent(enter);
   assert.equal(enter.defaultPrevented, true, 'Enter must submit the high-score name');
   assert.equal(entry.style.display, 'none');
-  console.log('Bundled game verified: direct Ultimate Chaos, Remix, four difficulties, resizing, Enter submission.');
+  console.log('Bundled game verified: one unnamed game, fixed 5x5 board, Remix, Enter submission.');
 } finally {
   dom.window.close();
 }

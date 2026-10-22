@@ -23,15 +23,8 @@ import {
   sanitizeName,
   randVal,
   randValExcluding,
-  DIFFICULTIES,
-  DEFAULT_DIFFICULTY,
-  DIFFICULTY_LABELS,
-  EASY_GRID_SIZE,
-  EASY_MATCH_COUNT,
   DOUBLE_SPAWN_CHANCE,
-  normalizeDifficulty,
-  locksBoardOptions,
-  spawnTypeForDifficulty,
+  spawnType,
 } from '../src/logic.js';
 
 describe('constants', () => {
@@ -59,84 +52,21 @@ describe('createBoard', () => {
 });
 
 describe('hsKey', () => {
-  it('combines grid size and match count', () => {
-    expect(hsKey(5, 3)).toBe('5_3');
-    expect(hsKey(7, 2)).toBe('7_2');
-  });
-
-  it('uses the classic format when mode is omitted or "classic"', () => {
-    expect(hsKey(5, 3, 'classic')).toBe('5_3');
-  });
-
-  it('appends the mode suffix for non-classic modes', () => {
-    expect(hsKey(5, 3, 'chaos')).toBe('5_3_chaos');
-  });
-
-  it('keeps existing keys unchanged on the default difficulty', () => {
-    expect(hsKey(5, 3, 'classic', 'regular')).toBe('5_3');
-    expect(hsKey(5, 3, 'chaos', 'regular')).toBe('5_3_chaos');
-  });
-
-  it('appends a difficulty suffix for non-regular difficulties', () => {
-    expect(hsKey(5, 3, 'classic', 'easy')).toBe('5_3_easy');
-    expect(hsKey(6, 4, 'ultra', 'snakeeyes')).toBe('6_4_ultra_snakeeyes');
-    expect(hsKey(7, 2, 'chaos', 'noob')).toBe('7_2_chaos_noob');
-  });
-
-  it('falls back to the default difficulty for unknown values', () => {
-    expect(hsKey(5, 3, 'classic', 'bogus')).toBe('5_3');
+  it('keeps using the existing fixed-board score bucket', () => {
+    expect(hsKey(3)).toBe('5_3_ultra');
+    expect(hsKey(4)).toBe('5_4_ultra');
   });
 });
 
-describe('difficulty', () => {
-  it('exposes a label for every difficulty', () => {
-    expect(DIFFICULTIES).toContain(DEFAULT_DIFFICULTY);
-    for (const level of DIFFICULTIES) {
-      expect(typeof DIFFICULTY_LABELS[level]).toBe('string');
-    }
+describe('spawnType', () => {
+  it('spawns mostly doubles', () => {
+    expect(spawnType(true, 6, 0)).toBe('double');
+    expect(spawnType(true, 6, DOUBLE_SPAWN_CHANCE)).toBe('single');
   });
 
-  it('normalizes unknown difficulties to the default', () => {
-    expect(normalizeDifficulty('noob')).toBe('noob');
-    expect(normalizeDifficulty(undefined)).toBe(DEFAULT_DIFFICULTY);
-    expect(normalizeDifficulty('nope')).toBe(DEFAULT_DIFFICULTY);
-  });
-
-  it('locks the board options only on Easy', () => {
-    expect(locksBoardOptions('easy')).toBe(true);
-    expect(locksBoardOptions('noob')).toBe(false);
-    expect(locksBoardOptions('regular')).toBe(false);
-    expect(locksBoardOptions('snakeeyes')).toBe(false);
-    expect(EASY_GRID_SIZE).toBe(5);
-    expect(EASY_MATCH_COUNT).toBe(3);
-  });
-});
-
-describe('spawnTypeForDifficulty', () => {
-  it('always spawns single dice on Easy and Noob', () => {
-    for (const level of ['easy', 'noob']) {
-      expect(spawnTypeForDifficulty(level, true, 6, 0)).toBe('single');
-      expect(spawnTypeForDifficulty(level, false, 6, 0.99)).toBe('single');
-    }
-  });
-
-  it('spawns twin doubles on Snake Eyes whenever a double fits', () => {
-    expect(spawnTypeForDifficulty('snakeeyes', true, 6, 0.99)).toBe('twin');
-    expect(spawnTypeForDifficulty('snakeeyes', true, 1, 0.99)).toBe('twin');
-  });
-
-  it('falls back to a single on Snake Eyes when no double fits', () => {
-    expect(spawnTypeForDifficulty('snakeeyes', false, 6, 0)).toBe('single');
-  });
-
-  it('spawns mostly doubles on Regular', () => {
-    expect(spawnTypeForDifficulty('regular', true, 6, 0)).toBe('double');
-    expect(spawnTypeForDifficulty('regular', true, 6, DOUBLE_SPAWN_CHANCE)).toBe('single');
-  });
-
-  it('never spawns a double on Regular without room or distinct values', () => {
-    expect(spawnTypeForDifficulty('regular', false, 6, 0)).toBe('single');
-    expect(spawnTypeForDifficulty('regular', true, 1, 0)).toBe('single');
+  it('never spawns a double without room or distinct values', () => {
+    expect(spawnType(false, 6, 0)).toBe('single');
+    expect(spawnType(true, 1, 0)).toBe('single');
   });
 });
 

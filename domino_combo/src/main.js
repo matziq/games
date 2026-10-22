@@ -25,20 +25,12 @@ import {
   sanitizeName,
   randVal,
   randValExcluding,
-  DEFAULT_DIFFICULTY,
-  DIFFICULTY_LABELS,
-  EASY_GRID_SIZE,
-  EASY_MATCH_COUNT,
-  locksBoardOptions,
-  normalizeDifficulty,
-  spawnTypeForDifficulty,
+  spawnType,
 } from './logic.js';
 
 // ── State ──────────────────────────────────────────────────
-let gridSize = 5;
+const gridSize = 5;
 let matchCount = 3;
-const gameMode = 'ultra'; // Ultimate Chaos only
-let difficulty = DEFAULT_DIFFICULTY; // 'regular' | 'easy' | 'noob' | 'snakeeyes'
 let soundOn = true;
 let remixTokens = 0;
 
@@ -51,15 +43,15 @@ let allHighScores = JSON.parse(localStorage.getItem('dcHighScores') || '{}');
 localStorage.removeItem('dcHighScore');
 
 function getHighScore() {
-  const entry = allHighScores[hsKey(gridSize, matchCount, gameMode, difficulty)];
+  const entry = allHighScores[hsKey(matchCount)];
   return entry ? entry.score : 0;
 }
 function getHighScoreName() {
-  const entry = allHighScores[hsKey(gridSize, matchCount, gameMode, difficulty)];
+  const entry = allHighScores[hsKey(matchCount)];
   return entry ? entry.name : '';
 }
 function setHighScore(s, name) {
-  allHighScores[hsKey(gridSize, matchCount, gameMode, difficulty)] = {
+  allHighScores[hsKey(matchCount)] = {
     score: s,
     name: name || '',
   };
@@ -199,7 +191,6 @@ function init() {
   highScore = getHighScore();
   board = createBoard(gridSize);
   updateScore();
-  updateModeDisplay();
   updateSoundControl();
   updateRemixButton();
   renderBoard();
@@ -294,16 +285,6 @@ function updateScore() {
   document.getElementById('high-score-name').textContent = hsName || '';
 }
 
-function updateModeDisplay() {
-  const el = document.getElementById('mode-display');
-  if (!el) return;
-  const modeLabel = 'Ultimate Chaos';
-  el.textContent =
-    difficulty === DEFAULT_DIFFICULTY
-      ? modeLabel
-      : `${modeLabel} \u2022 ${DIFFICULTY_LABELS[difficulty]}`;
-}
-
 function updateSoundControl() {
   const button = document.getElementById('btn-sound');
   if (!button) return;
@@ -316,26 +297,18 @@ function updateSoundControl() {
 function spawnPiece() {
   // Check if any double (2-cell) placement is possible
   const canFitDouble = canPlaceDouble(board, gridSize);
-  const spawnType = spawnTypeForDifficulty(
-    difficulty,
-    canFitDouble,
-    maxSpawnVal,
-    Math.random(),
-  );
+  const nextPieceType = spawnType(canFitDouble, maxSpawnVal, Math.random());
   const firstVal = randVal(maxSpawnVal);
 
   let vals;
-  if (spawnType === 'twin') {
-    // Snake Eyes: both halves share the same value.
-    vals = [firstVal, firstVal];
-  } else if (spawnType === 'double') {
+  if (nextPieceType === 'double') {
     vals = [firstVal, randValExcluding(maxSpawnVal, firstVal)];
   } else {
     vals = [firstVal];
   }
 
   piece = {
-    type: spawnType === 'single' ? 'single' : 'double',
+    type: nextPieceType,
     vals,
     ori: 'h', // 'h' = horizontal, 'v' = vertical
     rot: 0, // rotation angle in degrees (increments of 90)
@@ -866,30 +839,8 @@ function toggleHelp() {
 function toggleSettings() {
   const m = document.getElementById('settings-modal');
   m.classList.toggle('show');
-  document.getElementById('opt-difficulty').value = difficulty;
-  document.getElementById('opt-size').value = String(gridSize);
   document.getElementById('opt-match').value = String(matchCount);
   document.getElementById('opt-sound').value = soundOn ? '1' : '0';
-  onDifficultyChange();
-}
-
-// Easy locks the board controls to the beginner preset; the other
-// difficulties leave board size and match count free.
-function onDifficultyChange() {
-  const selected = normalizeDifficulty(document.getElementById('opt-difficulty').value);
-  const locked = locksBoardOptions(selected);
-  const sizeSelect = document.getElementById('opt-size');
-  const matchSelect = document.getElementById('opt-match');
-
-  sizeSelect.disabled = locked;
-  matchSelect.disabled = locked;
-  document.getElementById('row-size').style.opacity = locked ? '0.4' : '1';
-  document.getElementById('row-match').style.opacity = locked ? '0.4' : '1';
-
-  if (locked) {
-    sizeSelect.value = String(EASY_GRID_SIZE);
-    matchSelect.value = String(EASY_MATCH_COUNT);
-  }
 }
 
 function toggleSound() {
@@ -900,28 +851,12 @@ function toggleSound() {
 }
 
 function applySettings() {
-  const nextDifficulty = normalizeDifficulty(
-    document.getElementById('opt-difficulty').value,
-  );
-  const locked = locksBoardOptions(nextDifficulty);
-  const nextGridSize = locked
-    ? EASY_GRID_SIZE
-    : parseInt(document.getElementById('opt-size').value, 10);
-  const nextMatchCount = locked
-    ? EASY_MATCH_COUNT
-    : parseInt(document.getElementById('opt-match').value, 10);
-  const gameRulesChanged =
-    nextGridSize !== gridSize ||
-    nextMatchCount !== matchCount ||
-    nextDifficulty !== difficulty;
-
-  gridSize = nextGridSize;
+  const nextMatchCount = parseInt(document.getElementById('opt-match').value, 10);
+  const gameRulesChanged = nextMatchCount !== matchCount;
   matchCount = nextMatchCount;
-  difficulty = nextDifficulty;
   soundOn = document.getElementById('opt-sound').value === '1';
   document.getElementById('settings-modal').classList.remove('show');
   updateSoundControl();
-  updateModeDisplay();
   if (gameRulesChanged) init();
 }
 
@@ -976,8 +911,6 @@ function wireControls() {
   if (btnHelpClose) btnHelpClose.addEventListener('click', toggleHelp);
   const btnApplySettings = document.getElementById('btn-apply-settings');
   if (btnApplySettings) btnApplySettings.addEventListener('click', applySettings);
-  const optDifficulty = document.getElementById('opt-difficulty');
-  if (optDifficulty) optDifficulty.addEventListener('change', onDifficultyChange);
   const btnPlayAgain = document.getElementById('btn-play-again');
   if (btnPlayAgain) btnPlayAgain.addEventListener('click', submitHighScore);
   const nameInput = document.getElementById('hs-name');

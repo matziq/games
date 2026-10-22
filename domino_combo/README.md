@@ -3,20 +3,15 @@
 A match-3 dice placement game. Drag dominoes onto the board, match 3+ same tiles
 to merge them into the next value, and chain reactions for bonus points.
 
-The game starts directly in **Ultimate Chaos**. Matching 4+ tiles collapses
-the board in a random direction. During a collapse cascade, a match of 3+
-causes another collapse (subject to the configured match count). Matching 5+
-earns a **Remix Token** that scrambles the board. Matching 4+ sixes also
-destroys neighboring tiles. High-score names can be submitted with Enter.
+The game uses one unnamed ruleset on a fixed 5×5 board with the original
+Regular-style piece mix. Matching 4+ tiles collapses the board in a random
+direction. During a collapse cascade, a match of 3+ causes another collapse
+(subject to the configured match count). Matching 5+ earns a **Remix Token**
+that scrambles the board. Matching 4+ sixes also destroys neighboring tiles.
+High-score names can be submitted with Enter.
 
-Difficulty is changed in **Settings**. It
-controls which pieces spawn, and each difficulty keeps its own high scores:
-
-- **Regular** — mostly two-value dominoes (the original behavior).
-- **Easy** — single dice only, locked to the 5×5 board with match 3.
-- **Noob** — single dice only, but board size and match count stay adjustable.
-- **Snake Eyes** — always twin doubles (the same value on both halves), falling
-  back to a single die when no double fits on the board.
+Settings retain the match-threshold and sound controls. Gameplay type,
+difficulty, and board size are fixed and have no selectors.
 
 ## Play
 
@@ -91,14 +86,14 @@ checked-in file.
 
 The canonical gameplay source is
 [`matziq/domino-combo`](https://github.com/matziq/domino-combo). This copy was
-synchronized from revision `0d338fb81be703773f8eb1f12f201ab61e5d4011` on
-October 14, 2026, including Ultimate Chaos only, remix tokens, directional
-cascades, and Enter-to-submit high scores. The previous APK was newly compiled
-but used this repository's older August source.
+synchronized through revision `57977cb6c2f7666bacc6f1ce4f47e62a22ca1c8a` on
+October 22, 2026. It uses one unnamed game, a fixed 5×5 board, the original
+Regular-style piece mix, remix tokens, directional cascades, and
+Enter-to-submit high scores.
 
 When the canonical game changes, synchronize `index.html`, `src/`, `public/`,
 and its regression tests into this folder, run tests/lint/build, and publish
 both `dist/` and the APK. Keep this repository's shared Android packaging and
 package ID `com.matziq.dominocombo`. The APK workflow compares gameplay inputs
 with canonical `main` and fails on divergence instead of silently shipping an
-older copy. APK version 1.1 (code 2) identifies the synchronized game.
+older copy. APK version 1.2 (code 3) identifies the simplified game.

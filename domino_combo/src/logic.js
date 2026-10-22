@@ -27,73 +27,27 @@ export function createBoard(gridSize) {
   return Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
 }
 
-// Difficulty controls which pieces spawn, independently of the game mode.
-//   regular   – mostly two-value dominoes (the original behavior)
-//   easy      – single dice only, locked to the 5×5 / match-3 beginner board
-//   noob      – single dice only, but board size and match count stay free
-//   snakeeyes – always twin doubles (the same value on both halves)
-export const DIFFICULTIES = ['regular', 'easy', 'noob', 'snakeeyes'];
-export const DEFAULT_DIFFICULTY = 'regular';
-
-export const DIFFICULTY_LABELS = {
-  regular: 'Regular',
-  easy: 'Easy',
-  noob: 'Noob',
-  snakeeyes: 'Snake Eyes',
-};
-
-// Easy pins the board to the beginner preset so its high scores stay comparable.
-export const EASY_GRID_SIZE = 5;
-export const EASY_MATCH_COUNT = 3;
-
-// Chance of spawning a two-value domino on Regular difficulty.
+// The game uses the original piece mix: mostly two-value dominoes, with an
+// occasional single die.
 export const DOUBLE_SPAWN_CHANCE = 6 / 7;
 
-export function normalizeDifficulty(difficulty) {
-  return DIFFICULTIES.includes(difficulty) ? difficulty : DEFAULT_DIFFICULTY;
+export function spawnType(canFitDouble, maxSpawnVal, roll) {
+  return canFitDouble && maxSpawnVal >= 2 && roll < DOUBLE_SPAWN_CHANCE
+    ? 'double'
+    : 'single';
 }
 
-// Easy is the only difficulty that locks the board controls.
-export function locksBoardOptions(difficulty) {
-  return normalizeDifficulty(difficulty) === 'easy';
+// Keep using the existing fixed-board score bucket so current scores survive
+// removal of the old mode and difficulty selectors.
+export function hsKey(matchCount) {
+  return `5_${matchCount}_ultra`;
 }
 
-// Which piece shape spawns next. 'twin' is a double whose halves share a
-// value; 'double' is a double with two different values.
-export function spawnTypeForDifficulty(difficulty, canFitDouble, maxSpawnVal, roll) {
-  switch (normalizeDifficulty(difficulty)) {
-    case 'snakeeyes':
-      return canFitDouble ? 'twin' : 'single';
-    case 'easy':
-    case 'noob':
-      return 'single';
-    default:
-      return canFitDouble && maxSpawnVal >= 2 && roll < DOUBLE_SPAWN_CHANCE
-        ? 'double'
-        : 'single';
-  }
-}
-
-// Key used to store per-config high scores. `mode` defaults to
-// 'classic' and `difficulty` to 'regular' so previously-saved scores keep working.
-export function hsKey(gridSize, matchCount, mode = 'classic', difficulty = DEFAULT_DIFFICULTY) {
-  const base =
-    !mode || mode === 'classic'
-      ? `${gridSize}_${matchCount}`
-      : `${gridSize}_${matchCount}_${mode}`;
-  return normalizeDifficulty(difficulty) === DEFAULT_DIFFICULTY
-    ? base
-    : `${base}_${normalizeDifficulty(difficulty)}`;
-}
-
-// Ultimate Chaos mode:
 // Any match of 4 or higher collapses dominoes in a random direction.
 // During a collapse cascade, any match of 3 or higher collapses again.
 // Matching 5 or more earns a remix token to scramble the board.
-export const CHAOS_MATCH_THRESHOLD = 4;
 export const COLLAPSE_MATCH_THRESHOLD = 4;
 export const CASCADE_COLLAPSE_MATCH_THRESHOLD = 3;
-export const SIX_MATCH_THRESHOLD = 3;
 export const SIX_EXPLOSION_THRESHOLD = 4;
 export const REMIX_TOKEN_THRESHOLD = 5;
 export const COLLAPSE_DIRECTIONS = ['up', 'down', 'left', 'right'];
@@ -293,15 +247,6 @@ export function triggersCollapse(groups, threshold = COLLAPSE_MATCH_THRESHOLD) {
 // Any match of 4+ triggers a collapse; during a collapse cascade, 3+ triggers a collapse.
 export function triggersChaosCollapse(groups, matchCount = 3, isCascadeFromCollapse = false) {
   return shouldCollapse(groups, isCascadeFromCollapse, matchCount);
-}
-
-export function shouldCollapseForMode(gameMode, groups, matchCount = 3, isCascadeFromCollapse = false) {
-  return shouldCollapse(groups, isCascadeFromCollapse, matchCount);
-}
-
-// Collapses in a random direction (up, down, left, right).
-export function collapseDirectionForMode(_gameMode, _groups, rng = Math.random) {
-  return randomCollapseDirection(rng);
 }
 
 // Find every occupied cell touching an exploding group, including diagonals.
