@@ -6,9 +6,12 @@ import { pathToFileURL } from 'node:url';
 
 const output = path.resolve(process.argv[2] || String.raw`D:\AI_Output\Fruitpile_PC_and_mobile`);
 process.env.PLAYWRIGHT_BROWSERS_PATH ||= path.join(output, 'browsers');
-const require = createRequire(path.join(output, 'tools', 'package.json'));
+// FRUITPILE_TOOLS optionally points at an existing Playwright install (a folder holding node_modules).
+const tools = path.resolve(process.env.FRUITPILE_TOOLS || path.join(output, 'tools'));
+const require = createRequire(path.join(tools, 'package.json'));
 const { chromium } = require('playwright');
-const htmlPath = path.join(output, 'FruitPile-2.0.4.html');
+const { version } = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+const htmlPath = path.join(output, `FruitPile-${version}.html`);
 const html = fs.readFileSync(htmlPath, 'utf8');
 const artifacts = path.join(output, 'tests');
 fs.mkdirSync(artifacts, { recursive: true });
@@ -113,22 +116,27 @@ window.testGame = {
     return { strikerMass: striker.mass, targetMove: Math.hypot(target.position.x - start.x, target.position.y - start.y), peak };
   },
   freezeFruit: () => { for (const b of Composite.allBodies(world)) if (isFruitBody(b)) Body.setStatic(b, true); },
-  setChaos: (on) => { settings.chaos = !!on; }
+  setChaos: (on) => { settings.chaos = !!on; },
+  aim: x => { input.x = x; }
 };
 `;
 assert.equal((html.match(/            start\(\);/g) || []).length, 1);
 const testHtml = html.replace('            start();', `${hook}\n            start();`);
 const browser = await chromium.launch({ headless: true });
 const results = [];
+// FRUITPILE_TEST_FILTER=<text>[|<text>...] runs only the tests whose name contains one of the texts.
+const testFilters = (process.env.FRUITPILE_TEST_FILTER || '').toLowerCase().split('|').filter(Boolean);
 async function test(name, fn) {
+    if (testFilters.length && !testFilters.some(f => name.toLowerCase().includes(f))) return;
     await fn();
     results.push({ name, passed: true });
     console.log(`PASS ${name}`);
 }
-async function setup(size = { width: 1280, height: 800 }, touch = false, instrument = true) {
+async function setup(size = { width: 1280, height: 800 }, touch = false, instrument = true, initScript = '') {
     const context = await browser.newContext({ viewport: size, hasTouch: touch, isMobile: touch, deviceScaleFactor: touch ? 2 : 1 });
     const errors = [];
     const requests = [];
+    if (initScript) await context.addInitScript({ content: initScript });
     await context.route('**/*', route => {
         const url = route.request().url();
         requests.push(url);
@@ -143,6 +151,36 @@ async function setup(size = { width: 1280, height: 800 }, touch = false, instrum
     return { page, context, errors, requests };
 }
 const state = page => page.evaluate(() => testGame.state());
+const rects = (page, ids) => page.evaluate(ids => Object.fromEntries(ids.map(id => {
+    const b = document.getElementById(id).getBoundingClientRect();
+    return [id, { left: b.left, top: b.top, right: b.right, bottom: b.bottom, width: b.width, height: b.height }];
+})), ids);
+const centerOf = async (page, selector) => {
+    const box = await page.locator(selector).boundingBox();
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+};
+// Single-finger touch driven through the DevTools protocol, so press, drag and release can be separated.
+async function touchPad(context, page) {
+    const cdp = await context.newCDPSession(page);
+    return (type, x = 0, y = 0) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y, id: 0 }] });
+}
+const settle = page => page.evaluate(() => new Promise(resolve => setTimeout(resolve, 40)));
+// Stands in for navigator.vibrate so the page's vibration calls can be read back.
+const vibrationProbe = `
+    window.__vibes = [];
+    Object.defineProperty(navigator, 'vibrate', { configurable: true, value: pattern => { window.__vibes.push(pattern); return true; } });
+`;
+// Stands in for the Android shell's FruitPileNative JavaScript interface.
+const nativeProbe = canVibrate => `
+    window.__native = [];
+    Object.defineProperty(navigator, 'vibrate', { configurable: true, value: () => { window.__native.push(['web-vibrate']); return true; } });
+    window.FruitPileNative = {
+        canVibrate: () => ${canVibrate},
+        vibrate: ms => window.__native.push(['vibrate', ms]),
+        vibratePattern: csv => window.__native.push(['pattern', csv]),
+        keepAwake: on => window.__native.push(['awake', on])
+    };
+`;
 try {
     await test('Both modes resolve touching fruit, score, and use the documented fuse', async () => {
         const { page, context, errors } = await setup();
@@ -539,6 +577,320 @@ try {
         assert.equal((await state(page)).running, true);
         assert.deepEqual(errors, []);
         await context.close();
+    });
+    await test('Touch aims and drops from anywhere on the board; releasing far off the board cancels the drop', async () => {
+        const { page, context, errors } = await setup({ width: 390, height: 844 }, true);
+        const touch = await touchPad(context, page);
+        await page.evaluate(() => { testGame.begin('explode'); testGame.queue('cherry', 'grape'); });
+        const { arena, game } = await rects(page, ['arena', 'game']);
+        assert(arena.top < game.top - 12, 'the arena needs spare room above the canvas to test the margin');
+        const marginY = (arena.top + game.top) / 2;
+        const toDropX = clientX => (clientX - game.left) * 520 / game.width;
+        const leftX = game.left + game.width * 0.25;
+        const rightX = game.left + game.width * 0.75;
+        await touch('touchStart', leftX, marginY);
+        const aimedLeft = (await state(page)).inputX;
+        assert(Math.abs(aimedLeft - toDropX(leftX)) < 1.5, `aim ${aimedLeft} vs ${toDropX(leftX)}`);
+        await touch('touchMove', rightX, marginY);
+        const aimedRight = (await state(page)).inputX;
+        assert(Math.abs(aimedRight - toDropX(rightX)) < 1.5, `aim ${aimedRight} vs ${toDropX(rightX)}`);
+        assert.equal((await state(page)).dropCount, 0, 'aiming alone must not drop');
+        await touch('touchEnd');
+        const dropped = await state(page);
+        assert.equal(dropped.dropCount, 1);
+        assert(Math.abs(dropped.bodies[0].x - aimedRight) < 12, `fruit fell at ${dropped.bodies[0].x}, aimed at ${aimedRight}`);
+        await page.evaluate(() => testGame.frames(240));
+        const farY = arena.bottom + 40;
+        assert(farY < 844, 'the off-board release point must stay on screen');
+        await touch('touchStart', leftX, marginY);
+        await touch('touchMove', leftX, farY);
+        await touch('touchEnd');
+        assert.equal((await state(page)).dropCount, 1, 'a release well off the board cancels the drop');
+        await touch('touchStart', leftX, marginY);
+        await touch('touchMove', leftX, arena.bottom + 12);
+        await touch('touchEnd');
+        assert.equal((await state(page)).dropCount, 2, 'a release just past the edge still drops');
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    await test('Holding an arrow button glides the aim, a tap nudges once, and opening the menu stops it', async () => {
+        const { page, context, errors } = await setup({ width: 390, height: 844 }, true);
+        const touch = await touchPad(context, page);
+        await page.evaluate(() => { testGame.begin('explode'); testGame.queue('cherry', 'grape'); testGame.aim(60); });
+        const aim = async () => (await state(page)).inputX;
+        const holding = selector => page.locator(selector).evaluate(el => el.classList.contains('holding'));
+        const right = await centerOf(page, '#btnRight');
+        const left = await centerOf(page, '#btnLeft');
+        await touch('touchStart', right.x, right.y);
+        const nudged = await aim();
+        assert(Math.abs(nudged - 84) < 1, `first nudge ${nudged}`);
+        assert.equal(await holding('#btnRight'), true);
+        await page.waitForTimeout(1000);
+        const glided = await aim();
+        assert(glided > nudged + 100, `glide ${nudged} -> ${glided}`);
+        await touch('touchEnd');
+        await page.waitForTimeout(60);
+        const stopped = await aim();
+        await page.waitForTimeout(300);
+        assert.equal(await aim(), stopped, 'aim keeps moving after release');
+        assert.equal(await holding('#btnRight'), false);
+        await page.evaluate(() => testGame.aim(300));
+        await touch('touchStart', left.x, left.y);
+        await touch('touchEnd');
+        await page.waitForTimeout(450);
+        assert(Math.abs(await aim() - 276) < 1, `a tap should move one nudge, got ${await aim()}`);
+        await page.evaluate(() => testGame.aim(60));
+        await touch('touchStart', right.x, right.y);
+        await page.waitForTimeout(600);
+        await page.evaluate(() => window.dispatchEvent(new Event('blur')));
+        const atBlur = await aim();
+        assert(atBlur > 120, `the glide should have started, got ${atBlur}`);
+        await page.waitForTimeout(300);
+        assert.equal(await aim(), atBlur, 'the glide must stop when the menu opens');
+        assert.equal((await state(page)).paused, true);
+        assert.equal(await holding('#btnRight'), false);
+        await touch('touchEnd');
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    await test('Vibration follows its setting, is hidden without touch, and the setting persists', async () => {
+        const touchCase = await setup({ width: 390, height: 844 }, true, true, vibrationProbe);
+        const { page } = touchCase;
+        const vibes = () => page.evaluate(() => window.__vibes);
+        const toggle = page.locator('#hapticsToggle');
+        assert(await toggle.isVisible());
+        assert(await toggle.isChecked());
+        await page.evaluate(() => testGame.begin('explode'));
+        await page.locator('#btnDrop').click();
+        assert.deepEqual(await vibes(), [12]);
+        await page.locator('#btnPause').click();
+        await toggle.uncheck();
+        assert.deepEqual(await vibes(), [12], 'switching vibration off is silent');
+        await page.locator('#btnPlay').click();
+        await page.evaluate(() => testGame.frames(240));
+        await page.locator('#btnDrop').click();
+        assert.equal((await state(page)).dropCount, 2);
+        assert.deepEqual(await vibes(), [12], 'no vibration while the setting is off');
+        await page.reload();
+        assert.equal(await page.locator('#hapticsToggle').isChecked(), false);
+        await page.locator('#hapticsToggle').check();
+        assert.deepEqual(await vibes(), [8], 'switching it on gives a confirming tick');
+        assert.deepEqual(touchCase.errors, []);
+        await touchCase.context.close();
+        const desktop = await setup({ width: 1280, height: 800 }, false, true, vibrationProbe);
+        assert.equal(await desktop.page.locator('#hapticsToggle').isVisible(), false);
+        await desktop.page.evaluate(() => testGame.begin('explode'));
+        await desktop.page.locator('#btnDrop').click();
+        assert.deepEqual(await desktop.page.evaluate(() => window.__vibes), []);
+        assert.deepEqual(desktop.errors, []);
+        await desktop.context.close();
+    });
+    await test('Android bridge: vibration patterns, capability check, and screen awake only while playing', async () => {
+        const { page, context, errors } = await setup({ width: 390, height: 844 }, true, true, nativeProbe(true));
+        const calls = () => page.evaluate(() => window.__native);
+        const awake = async () => (await calls()).filter(c => c[0] === 'awake').map(c => c[1]);
+        assert(await page.locator('#hapticsToggle').isVisible());
+        await settle(page);
+        assert.deepEqual(await awake(), [false], 'the screen may sleep on the menu');
+        await page.locator('#btnPlay').click();
+        await settle(page);
+        await page.locator('#btnPause').click();
+        await settle(page);
+        await page.locator('#btnPlay').click();
+        await settle(page);
+        await page.evaluate(() => window.dispatchEvent(new Event('blur')));
+        await settle(page);
+        await page.locator('#btnPlay').click();
+        await settle(page);
+        await page.evaluate(() => testGame.end());
+        await settle(page);
+        assert.deepEqual(await awake(), [false, true, false, true, false, true, false], 'play, pause, resume, focus loss, resume, game over');
+        await page.evaluate(() => testGame.begin('explode'));
+        await page.locator('#btnDrop').click();
+        await page.evaluate(() => { testGame.begin('explode'); testGame.danger(); testGame.frames(100); });
+        await page.evaluate(() => testGame.frames(100));
+        assert.deepEqual((await calls()).filter(c => c[0] !== 'awake'), [['vibrate', 12], ['pattern', '25,60,25'], ['pattern', '60,50,120']]);
+        assert.deepEqual(errors, []);
+        await context.close();
+        const off = await setup({ width: 390, height: 844 }, true, true, nativeProbe(false));
+        assert.equal(await off.page.locator('#hapticsToggle').isVisible(), false);
+        await off.page.evaluate(() => testGame.begin('explode'));
+        await off.page.locator('#btnDrop').click();
+        assert.deepEqual((await off.page.evaluate(() => window.__native)).filter(c => c[0] !== 'awake'), []);
+        assert.deepEqual(off.errors, []);
+        await off.context.close();
+    });
+    await test('Android Back closes panels, pauses and resumes a run, and exits only from the menu or game over', async () => {
+        const { page, context, errors } = await setup();
+        const back = () => page.evaluate(() => window.fruitpileBack());
+        assert.equal(await back(), false, 'the start menu lets Back leave the app');
+        await page.locator('#btnHow').click();
+        assert.equal(await page.locator('#btnHow').innerText(), 'Back to menu');
+        assert.equal(await back(), true);
+        assert.equal(await page.locator('#btnHow').innerText(), 'How it works');
+        assert.equal(await page.locator('#modalTitle').innerText(), 'FruitPile');
+        await page.locator('#btnScores').click();
+        assert.equal(await page.locator('#hs-modal').evaluate(el => el.style.display), 'flex');
+        assert.equal(await back(), true);
+        assert.notEqual(await page.locator('#hs-modal').evaluate(el => el.style.display), 'flex');
+        await page.evaluate(() => testGame.begin('explode'));
+        assert.equal(await back(), true, 'Back during a run pauses it');
+        assert.equal((await state(page)).paused, true);
+        assert.equal(await page.locator('#modalTitle').innerText(), 'Take a breather');
+        assert.equal(await back(), true, 'Back on the pause menu resumes');
+        assert.equal((await state(page)).paused, false);
+        await page.evaluate(() => testGame.end());
+        assert.equal(await page.locator('#modalTitle').innerText(), 'Bowl full');
+        assert.equal(await back(), false, 'game over lets Back leave the app');
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    await test('How it works toggles to Back to menu, restores the menu exactly, and sits beside the title in landscape', async () => {
+        for (const [size, touch] of [[{ width: 390, height: 844 }, true], [{ width: 667, height: 375 }, true], [{ width: 1280, height: 800 }, false]]) {
+            const { page, context, errors } = await setup(size, touch);
+            const label = `${size.width}x${size.height}`;
+            const title = await page.locator('#modalTitle').innerText();
+            const body = await page.locator('#modalBody').innerText();
+            await page.locator('#btnHow').click();
+            assert.equal(await page.locator('#btnHow').innerText(), 'Back to menu', label);
+            assert.equal(await page.locator('#modalTitle').innerText(), 'How to play', label);
+            assert.equal(await page.locator('#menuOptions').isVisible(), false, label);
+            const info = await page.locator('#infoBody').innerText();
+            assert.match(info, /Controls/, label);
+            assert.match(info, /Fruit values/, label);
+            assert.match(info, touch ? /Touch: drag anywhere on the board/ : /Keyboard:/, label);
+            if (touch) assert.doesNotMatch(info, /Keyboard:/, `${label}: touch screens should not be shown keyboard shortcuts`);
+            const r = await rects(page, ['modalTitle', 'infoBody', 'btnHow']);
+            const landscapePhone = size.width > size.height && size.width >= 560 && size.height <= 560;
+            if (landscapePhone) {
+                assert(r.infoBody.left >= r.modalTitle.right - 1, `${label}: the info should sit in its own column ${JSON.stringify(r)}`);
+            }
+            assert(r.btnHow.bottom <= size.height && r.btnHow.top >= 0, `${label}: Back to menu must stay on screen ${JSON.stringify(r)}`);
+            assert(r.infoBody.right <= size.width + 1 && r.infoBody.left >= -1, `${label}: info overflows horizontally`);
+            await page.screenshot({ path: path.join(artifacts, `info-${label}.png`) });
+            await page.locator('#btnHow').click();
+            assert.equal(await page.locator('#btnHow').innerText(), 'How it works', label);
+            assert.equal(await page.locator('#modalTitle').innerText(), title, label);
+            assert.equal(await page.locator('#modalBody').innerText(), body, label);
+            assert.equal(await page.locator('#menuOptions').isVisible(), true, label);
+            assert.equal(await page.locator('#infoBody').isVisible(), false, label);
+            assert.deepEqual(errors, [], label);
+            await context.close();
+        }
+    });
+    await test('Showing a toast never resizes the HUD or the board', async () => {
+        for (const [width, height] of [[320, 568], [390, 844], [667, 375], [1280, 800]]) {
+            const { page, context, errors } = await setup({ width, height }, width < 900);
+            await page.evaluate(() => testGame.begin('explode'));
+            const ids = ['game', 'arena', 'controls'];
+            const before = await rects(page, ids);
+            const hudBefore = await page.locator('.hud').boundingBox();
+            await page.evaluate(() => {
+                const tip = document.getElementById('toast');
+                tip.textContent = 'Drop these two cherries together for your first pop. Keep them touching until the fuse runs out.';
+                tip.classList.add('show');
+            });
+            assert.deepEqual(await rects(page, ids), before, `${width}x${height}: the toast moved the board or controls`);
+            assert.deepEqual(await page.locator('.hud').boundingBox(), hudBefore, `${width}x${height}: the toast resized the HUD`);
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+    await test('Touch screens get touch hints and gesture protection; mouse screens keep keyboard hints', async () => {
+        const displays = page => page.evaluate(() => ({
+            touch: [...document.querySelectorAll('.hintTouch')].map(el => getComputedStyle(el).display),
+            keys: [...document.querySelectorAll('.hintKeys')].map(el => getComputedStyle(el).display)
+        }));
+        const phone = await setup({ width: 390, height: 844 }, true);
+        assert.deepEqual(await displays(phone.page), { touch: ['block'], keys: ['none'] });
+        const doc = await phone.page.evaluate(() => {
+            const meta = name => document.querySelector(`meta[name="${name}"]`)?.content;
+            const style = id => getComputedStyle(document.getElementById(id));
+            const menuSuppressed = id => {
+                const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+                document.getElementById(id).dispatchEvent(event);
+                return event.defaultPrevented;
+            };
+            return {
+                viewport: meta('viewport'),
+                theme: meta('theme-color'),
+                overscroll: getComputedStyle(document.documentElement).overscrollBehaviorY,
+                arenaTouch: style('arena').touchAction,
+                dropTouch: style('btnDrop').touchAction,
+                arrowTouch: style('btnLeft').touchAction,
+                arenaMenu: menuSuppressed('arena'),
+                controlsMenu: menuSuppressed('controls')
+            };
+        });
+        assert.match(doc.viewport, /width=device-width/);
+        assert.match(doc.viewport, /viewport-fit=cover/);
+        assert.equal(doc.theme, '#0b1020');
+        assert.equal(doc.overscroll, 'none', 'pull-to-refresh must not trigger from the board');
+        assert.equal(doc.arenaTouch, 'none');
+        assert.equal(doc.dropTouch, 'manipulation', 'no double-tap zoom delay on buttons');
+        assert.equal(doc.arrowTouch, 'none');
+        assert.equal(doc.arenaMenu, true, 'a long press on the board must not open the context menu');
+        assert.equal(doc.controlsMenu, true, 'a long press on the arrows must not open the context menu');
+        assert.deepEqual(phone.errors, []);
+        await phone.context.close();
+        const desktop = await setup({ width: 1280, height: 800 }, false);
+        assert.deepEqual(await displays(desktop.page), { touch: ['none'], keys: ['block'] });
+        await desktop.context.close();
+    });
+    await test('The board follows its area when it changes without a window resize', async () => {
+        const { page, context, errors } = await setup({ width: 390, height: 844 }, true);
+        await page.evaluate(() => testGame.begin('explode'));
+        const width = () => page.evaluate(() => parseFloat(document.getElementById('game').style.width));
+        const before = await width();
+        const world = (await state(page)).world;
+        assert(before > 300, `board is ${before}px wide`);
+        await page.evaluate(() => { document.getElementById('arena').style.width = '200px'; });
+        await page.waitForFunction(() => parseFloat(document.getElementById('game').style.width) < 210);
+        assert.deepEqual((await state(page)).world, world, 'the play field is measured in board units, not pixels');
+        await page.evaluate(() => { document.getElementById('arena').style.width = ''; });
+        await page.waitForFunction(target => Math.abs(parseFloat(document.getElementById('game').style.width) - target) < 1, before);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    await test('Phone and tablet layouts keep a large board, a visible Play button and reachable controls', async () => {
+        for (const [width, height] of [[360, 800], [412, 915], [568, 320], [915, 412], [800, 1280]]) {
+            const label = `${width}x${height}`;
+            const { page, context, errors } = await setup({ width, height }, true);
+            const inView = r => r.left >= -0.5 && r.top >= -0.5 && r.right <= width + 0.5 && r.bottom <= height + 0.5;
+            const menu = await rects(page, ['btnPlay', 'btnHow']);
+            const card = await page.locator('#modal .card').boundingBox();
+            assert(inView(menu.btnPlay), `${label}: Play is off screen ${JSON.stringify(menu.btnPlay)}`);
+            assert(card.x >= -0.5 && card.x + card.width <= width + 0.5, `${label}: the menu card overflows horizontally`);
+            await page.screenshot({ path: path.join(artifacts, `menu-${label}.png`) });
+            await page.locator('#btnPlay').click();
+            await page.evaluate(() => { testGame.stopRaf(); testGame.queue('watermelon', 'watermelon'); });
+            const m = await rects(page, ['arena', 'game', 'btnDrop', 'btnLeft', 'btnRight', 'btnSwap', 'btnPause']);
+            assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `${label}: horizontal overflow`);
+            assert(Math.abs(m.game.width / m.game.height - 520 / 680) < .01, `${label}: board aspect`);
+            assert(m.game.width >= m.arena.width - 2 || m.game.height >= m.arena.height - 2, `${label}: the board leaves room unused ${JSON.stringify(m)}`);
+            if (height >= width) assert(m.game.width >= width * 0.9, `${label}: portrait board is only ${Math.round(m.game.width)}px wide`);
+            else assert(m.game.height >= height * 0.8, `${label}: landscape board is only ${Math.round(m.game.height)}px tall`);
+            for (const id of ['btnDrop', 'btnLeft', 'btnRight', 'btnSwap', 'btnPause']) {
+                assert(m[id].width >= 44 && m[id].height >= 44, `${label}: ${id} is ${m[id].width}x${m[id].height}`);
+                assert(inView(m[id]), `${label}: ${id} is off screen ${JSON.stringify(m[id])}`);
+            }
+            await page.screenshot({ path: path.join(artifacts, `game-${label}.png`) });
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+    await test('Android shell matches the package version and exposes every bridge method the game calls', async () => {
+        const manifest = fs.readFileSync(new URL('../android/AndroidManifest.xml', import.meta.url), 'utf8');
+        const java = fs.readFileSync(new URL('../android/MainActivity.java', import.meta.url), 'utf8');
+        assert(manifest.includes(`android:versionName="${version}"`), 'AndroidManifest versionName must equal package.json version');
+        assert.match(manifest, /android\.permission\.VIBRATE/);
+        assert.match(java, /addJavascriptInterface\(\s*new NativeBridge\(\),\s*"FruitPileNative"\s*\)/);
+        const called = [...new Set([...html.matchAll(/\bbridge\.(\w+)\(/g)].map(m => m[1]))].sort();
+        assert.deepEqual(called, ['canVibrate', 'keepAwake', 'vibrate', 'vibratePattern']);
+        for (const name of called) {
+            assert(new RegExp(`@JavascriptInterface\\s+public\\s+\\w+\\s+${name}\\(`).test(java), `MainActivity.java must expose ${name}() with @JavascriptInterface`);
+        }
+        assert.match(java, /window\.fruitpileBack/);
     });
     fs.writeFileSync(path.join(artifacts, 'results.json'), JSON.stringify({ passed: results.length, results }, null, 2));
 } finally {

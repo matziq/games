@@ -5,8 +5,14 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='36' r='24' fill='%23e63946'/%3E%3Cpath d='M32 14Q40 0 52 8' stroke='%237cf7c4' stroke-width='6' fill='none'/%3E%3C/svg%3E" />
     <meta charset="utf-8" />
     <meta name="viewport"
-        content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
     <meta name="theme-color" content="#0b1020" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="FruitPile" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="format-detection" content="telephone=no" />
     <title>FruitPile</title>
     <style>
         :root {
@@ -322,22 +328,28 @@
             }
         }
 
-        * { box-sizing: border-box; }
+        /* Touch-first layout. The stacked portrait layout is the default; wide and short viewports switch to column layouts below. */
+        :root { color-scheme: dark; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         [hidden] { display: none !important; }
+        html, body { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; touch-action: manipulation; }
+        body { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+        input { -webkit-user-select: text; user-select: text; }
         #app {
             display: grid;
             grid-template-columns: minmax(0, 1fr);
             grid-template-rows: auto minmax(0, 1fr) auto;
-            padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
-                max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
-            gap: 8px;
+            padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right))
+                max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+            gap: 6px;
         }
         .hud {
             position: relative;
             inset: auto;
             padding: 0;
             display: grid;
-            gap: 6px;
+            align-content: start;
+            gap: 4px;
             width: min(100%, 600px);
             justify-self: center;
             pointer-events: auto;
@@ -345,58 +357,158 @@
             min-width: 0;
             justify-content: stretch;
         }
-        .topline, .queue, .statusline { display: flex; align-items: center; gap: 10px; }
-        .topline { justify-content: space-between; }
-        .brand { font-weight: 850; color: var(--accent); font-size: 20px; }
-        .label { color: #c2ccdb; font-size: 12px; }
+        .topline, .statusline { display: flex; align-items: center; gap: 8px; min-width: 0; }
+        .topline { min-height: 46px; }
+        .brand { display: none; font-weight: 850; color: var(--accent); font-size: 20px; }
+        .label { color: #c2ccdb; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
         .value { font-weight: 750; font-variant-numeric: tabular-nums; }
-        #score { font-size: 22px; }
-        .queue { justify-content: space-between; font-size: 14px; gap: 5px; }
-        .queue > div { display: flex; gap: 5px; align-items: center; }
-        .queue canvas { width: 26px; height: 26px; }
-        .statusline { justify-content: space-between; font-size: 13px; }
-        .chain { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-        #goal { flex: 1; color: #e1e9f6; }
-        #goalProgress, #comboProgress { width: 100%; height: 5px; accent-color: var(--accent); display: block; }
-        #comboProgress { width: 42px; height: 4px; }
-        #arena { position: relative; grid-row: 2; min-height: 0; min-width: 0; display: grid; place-items: center; }
-        #game { position: relative; inset: auto; border-radius: 12px; background: #0b1324; }
+        .scoreBox { display: grid; line-height: 1.05; min-width: 0; margin-right: auto; }
+        #score { font-size: 26px; }
+        .nextBox { display: flex; align-items: center; gap: 7px; min-width: 0; padding: 3px 12px 3px 5px; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.06); }
+        .nextBox canvas { width: 30px; height: 30px; flex: none; }
+        .nextText { display: grid; line-height: 1.1; min-width: 0; }
+        #nextName { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #btnPause { flex: none; width: 46px; height: 46px; padding: 0; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 14px; }
+        .icon { width: 26px; height: 26px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+        .icon.solid { fill: currentColor; stroke: none; }
+        .btnText { display: none; }
+        .statusline { justify-content: space-between; font-size: 12px; min-height: 18px; }
+        #goal { flex: 1 1 auto; min-width: 0; color: #e1e9f6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #diamondRow { flex: none; }
+        .chain { display: flex; align-items: center; gap: 6px; flex: none; }
+        #goalProgress, #comboProgress { width: 100%; height: 4px; accent-color: var(--accent); display: block; }
+        #comboProgress { width: 36px; }
+        /* The toast floats over the bottom of the HUD so showing it never resizes the board. */
+        #toast {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 4;
+            padding: 0 9px;
+            border: 3px solid transparent;
+            border-radius: 12px;
+            max-height: calc(2.5em + 6px);
+            background: rgba(16, 28, 48, 0.97);
+            outline: 1px solid rgba(124, 247, 196, 0.4);
+            outline-offset: -1px;
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+            color: #eaf2ff;
+            font-size: 12px;
+            line-height: 1.25;
+            text-align: center;
+        }
+        #toast.show { -webkit-line-clamp: 2; line-clamp: 2; }
+        #arena { position: relative; grid-row: 2; min-height: 0; min-width: 0; display: grid; place-items: center; touch-action: none; }
+        #game { position: relative; inset: auto; border-radius: 14px; background: #0b1324; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 12px 32px rgba(0, 0, 0, 0.45); }
         #danger { position: absolute; top: 24%; color: #ffb4bb; background: #261522; padding: 6px 10px; border-radius: 8px; z-index: 2; pointer-events: none; font-weight: 700; }
         #danger:empty { display: none; }
-        #controls { grid-row: 3; display: flex; justify-content: center; gap: 8px; z-index: 3; }
-        #controls button { padding: 8px; }
-        button, .modeToggle button { min-width: 44px; min-height: 44px; font-size: 14px; touch-action: manipulation; }
+        #controls { grid-row: 3; display: flex; align-items: stretch; justify-content: center; gap: 8px; z-index: 3; width: min(100%, 600px); justify-self: center; }
+        button, .modeToggle button { min-width: 44px; min-height: 44px; font-size: 14px; touch-action: manipulation; transition: transform .08s ease, filter .1s ease, background-color .12s ease, border-color .12s ease; }
+        #controls button { min-height: 56px; padding: 0 8px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; }
+        #btnLeft, #btnRight { flex: 0 0 52px; touch-action: none; }
+        #btnLeft .icon, #btnRight .icon { width: 30px; height: 30px; stroke-width: 3; }
+        #btnSwap { flex: 0 0 64px; flex-direction: column; gap: 1px; }
+        #btnSwap .icon { width: 22px; height: 22px; stroke-width: 2.4; }
+        #btnDrop { flex: 1 1 0; min-width: 0; flex-direction: column; gap: 2px; }
+        .dropLabel { font-size: 18px; font-weight: 800; line-height: 1.1; }
+        .dropFruit { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; min-width: 0; font-size: 11px; line-height: 1.1; }
+        .dropFruit canvas { width: 20px; height: 20px; flex: none; border-radius: 50%; background: rgba(7, 27, 25, 0.22); }
+        #currentName { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
         button:focus-visible, input:focus-visible, canvas:focus-visible { outline: 3px solid #ffd166; outline-offset: 3px; }
         canvas:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
-        button:hover { border-color: var(--accent); }
         button:disabled { opacity: .5; cursor: default; }
+        button:active:not(:disabled) { transform: scale(.96); filter: brightness(1.15); }
+        #btnLeft.holding, #btnRight.holding { background: rgba(124, 247, 196, 0.24); border-color: var(--accent); }
+        /* Hover styling only where hover exists, so touch screens never keep a button "stuck" highlighted. */
+        @media (hover: hover) { button:hover:not(:disabled) { border-color: var(--accent); } }
         #btnDrop, #btnPlay { background: var(--accent); color: #071b19; border-color: var(--accent); }
-        #btnDrop { min-width: 104px; }
-        .card { max-height: 100%; overflow-y: auto; background: #101c30; width: min(100%, 520px); }
+        .card { max-height: 100%; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; background: #101c30; width: min(100%, 520px); }
         .card h1 { font-size: 26px; }
         .card p { line-height: 1.5; }
+        .card .row button { min-height: 50px; font-size: 16px; border-radius: 14px; }
+        #btnPlay { flex-basis: 100%; min-height: 56px; font-size: 18px; font-weight: 800; }
         #modal, #hs-modal { position: fixed; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
-        #menuOptions { display: grid; gap: 12px; margin: 16px 0; }
-        .setting { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; font-size: 14px; }
-        .setting input[type=range] { width: 130px; min-height: 44px; accent-color: var(--accent); }
-        .setting input[type=checkbox] { width: 24px; height: 24px; accent-color: var(--accent); }
+        #menuOptions { display: grid; gap: 4px; margin: 14px 0; }
+        .modeToggle { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 16px; }
+        .modeToggle button { min-height: 48px; border-radius: 12px; font-size: 16px; }
+        .setting { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; font-size: 15px; }
         .setting:has(input[type=checkbox]) { cursor: pointer; }
+        .setting input[type=range] { -webkit-appearance: none; appearance: none; width: min(190px, 50%); height: 44px; margin: 0; background: transparent; accent-color: var(--accent); }
+        .setting input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.22); }
+        .setting input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; margin-top: -10px; border-radius: 50%; background: var(--accent); border: 2px solid #071b19; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4); }
+        .setting input[type=range]::-moz-range-track { height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.22); }
+        .setting input[type=range]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); border: 2px solid #071b19; }
+        .setting input[type=checkbox] { -webkit-appearance: none; appearance: none; position: relative; flex: none; width: 52px; height: 30px; margin: 0; border-radius: 999px; background: rgba(255, 255, 255, 0.2); cursor: pointer; transition: background-color .15s ease; }
+        .setting input[type=checkbox]::after { content: ''; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .15s ease, background-color .15s ease; }
+        .setting input[type=checkbox]:checked { background: var(--accent); }
+        .setting input[type=checkbox]:checked::after { transform: translateX(22px); background: #071b19; }
         #modeNote, #runSummary { color: #c2ccdb; font-size: 14px; line-height: 1.5; }
         #runSummary:empty { display: none; }
+        .hint { margin: 10px 0 0; font-size: 13px; color: #c2ccdb; }
+        .hintTouch { display: none; }
+        @media (hover: none) and (pointer: coarse) {
+            .hintKeys { display: none; }
+            .hintTouch { display: block; }
+        }
         .fruitTable { display: block; overflow-x: auto; }
-        @media (min-width: 900px), (min-width: 600px) and (max-height: 550px) {
-            #app { grid-template-columns: minmax(190px, 260px) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; gap: 12px; max-width: 1180px; margin: auto; }
-            .hud { grid-column: 1; grid-row: 1; align-self: stretch; gap: 18px; overflow: auto; }
+        @media (min-width: 600px) {
+            .brand { display: block; }
+            #btnPause { width: auto; padding: 0 14px; }
+            #btnPause .btnText { display: inline; }
+        }
+        /* Column layouts: wide screens, and short landscape phones. */
+        @media (min-width: 900px) and (min-height: 561px), (orientation: landscape) and (max-height: 560px) and (min-width: 480px) {
+            .hud { width: auto; align-self: stretch; overflow: auto; overscroll-behavior: contain; }
             .topline { flex-wrap: wrap; }
-            .queue { align-items: start; flex-direction: column; gap: 12px; }
+            .nextBox { order: 3; flex: 1 0 100%; }
+            .statusline { flex-wrap: wrap; row-gap: 3px; }
+            #goal { flex: 1 0 100%; white-space: normal; }
+            #toast { position: static; max-height: calc(3.75em + 6px); }
+            #toast.show { -webkit-line-clamp: 3; line-clamp: 3; }
+        }
+        @media (min-width: 900px) and (min-height: 561px) {
+            #app { grid-template-columns: minmax(200px, 260px) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; gap: 12px; max-width: 1180px; margin: auto; }
+            .hud { grid-column: 1; grid-row: 1; gap: 14px; }
+            .brand { flex: 1 0 100%; }
             #arena { grid-column: 2; grid-row: 1 / 3; }
-            #controls { grid-column: 1; grid-row: 2; flex-wrap: wrap; }
+            #controls { grid-column: 1; grid-row: 2; flex-wrap: wrap; width: auto; }
+            #btnDrop { order: -1; flex: 1 0 100%; }
+            #btnSwap { flex: 1 1 64px; flex-direction: row; gap: 8px; }
         }
-        @media (max-height: 400px) and (min-width: 600px) {
-            .hud { gap: 8px; }
-            .queue { gap: 4px; }
-            #controls { gap: 4px; }
+        /* Landscape phones: stats and Left/Right on the left, the board in the middle, Drop and Swap under the right thumb. */
+        @media (orientation: landscape) and (max-height: 560px) and (min-width: 480px) {
+            #app {
+                grid-template-columns: clamp(64px, 12vw, 104px) clamp(64px, 12vw, 104px) minmax(0, 1fr) clamp(104px, 22vw, 200px);
+                grid-template-rows: minmax(0, 1fr) auto;
+                gap: 8px;
+            }
+            .hud { grid-column: 1 / 3; grid-row: 1; gap: 8px; }
+            .brand { display: none; }
+            #btnPause { width: 46px; padding: 0; }
+            #btnPause .btnText { display: none; }
+            #arena { grid-column: 3; grid-row: 1 / 3; }
+            #controls { display: contents; }
+            #btnLeft { grid-column: 1; grid-row: 2; }
+            #btnRight { grid-column: 2; grid-row: 2; }
+            #btnDrop { grid-column: 4; grid-row: 1; align-self: end; height: min(100%, 220px); }
+            #btnSwap { grid-column: 4; grid-row: 2; flex-direction: row; gap: 8px; font-size: 13px; }
         }
+        /* Landscape phones: lay the menu out in two columns so the settings never need scrolling past the Play button. */
+        @media (orientation: landscape) and (max-height: 560px) and (min-width: 560px) {
+            .card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto 1fr; grid-template-areas: "main side" "foot side"; column-gap: 18px; width: min(100%, 780px); padding: 14px 16px; }
+            .menuMain { grid-area: main; }
+            .menuSide { grid-area: side; }
+            .menuFoot { grid-area: foot; align-self: end; }
+            #infoBody { grid-column: 1 / -1; }
+            .card h1 { font-size: 22px; margin-bottom: 2px; }
+            .card p { margin: 4px 0; }
+            #menuOptions { margin: 0 0 4px; }
+            .menuFoot .row { margin-top: 8px; }
+            #modal.infoOpen .card { grid-template-areas: "main info" "foot info"; grid-template-rows: auto 1fr; height: 100%; }
+            #modal.infoOpen #infoBody { grid-area: info; min-height: 0; overflow-y: auto; align-content: start; overscroll-behavior: contain; }
+        }
+        #modal.infoOpen .menuSide { display: none; }
     </style>
 </head>
 
@@ -409,50 +521,62 @@
         <div id="bgOverlay"></div>
 
         <header class="hud">
-            <div class="topline"><span class="brand">FruitPile</span><div><span class="label">Score</span> <span id="score" class="value">0</span></div><button id="btnPause" aria-label="Pause and open menu">Menu</button></div>
-            <div class="queue">
-                <div><span class="label">Drop</span><canvas id="currentSwatch" width="28" height="28" aria-hidden="true"></canvas><span id="currentName" class="value">Cherry</span></div>
-                <div><span class="label">Next</span><canvas id="nextSwatch" width="28" height="28" aria-hidden="true"></canvas><span id="nextName" class="value">Cherry</span></div>
+            <div class="topline">
+                <span class="brand">FruitPile</span>
+                <div class="scoreBox"><span class="label">Score</span><span id="score" class="value">0</span></div>
+                <div class="nextBox" title="Next fruit"><canvas id="nextSwatch" width="40" height="40" aria-hidden="true"></canvas><div class="nextText"><span class="label">Next</span><span id="nextName" class="value">Cherry</span></div></div>
+                <button id="btnPause" type="button" aria-label="Pause and open menu"><svg class="icon solid" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.6"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.6"/></svg><span class="btnText">Menu</span></button>
             </div>
             <div class="statusline"><span id="goal">Explode: reach 1,500 points</span><span id="diamondRow" title="Diamonds created" aria-label="Diamonds created" hidden>&diams; <span id="diamondCount" class="value">0/1</span></span><span class="chain" title="Combo multiplier"><span id="combo" class="value">x1.00</span><progress id="comboProgress" max="3000" value="0" aria-label="Time left to chain"></progress></span></div>
             <progress id="goalProgress" max="1500" value="0" aria-label="Next goal progress"></progress>
             <div id="toast" role="status" aria-live="polite"></div>
         </header>
         <nav id="controls" aria-label="Game controls">
-            <button id="btnLeft" aria-label="Aim left">Left</button>
-            <button id="btnDrop">Drop</button>
-            <button id="btnRight" aria-label="Aim right">Right</button>
-            <button id="btnSwap" title="Swap current and next, once per drop (S)">Swap</button>
+            <button id="btnLeft" type="button" aria-label="Aim left (hold to keep moving)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+            <button id="btnDrop" type="button"><span id="btnDropLabel" class="dropLabel">Drop</span><span class="dropFruit"><canvas id="currentSwatch" width="40" height="40" aria-hidden="true"></canvas><span id="currentName" class="value">Cherry</span></span></button>
+            <button id="btnRight" type="button" aria-label="Aim right (hold to keep moving)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+            <button id="btnSwap" type="button" title="Swap current and next, once per drop (S)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7.5h13M14.5 4l3.5 3.5-3.5 3.5M19 16.5H6M9.5 13L6 16.5 9.5 20"/></svg><span>Swap</span></button>
         </nav>
 
         <div id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
             <div class="card">
-                <h1 id="modalTitle">FruitPile</h1>
-                <p id="modalBody"></p>
-                <div class="row">
-                    <button id="btnPlay">Play</button>
-                    <button id="btnHow">How it works</button>
-                </div>
-                <div id="runSummary"></div>
-                <div id="menuOptions">
-                    <div class="modeToggle" role="group" aria-label="Game mode">
-                        <button id="btnModeExplode" type="button" aria-pressed="true">Explode</button>
-                        <button id="btnModeMerge" type="button" aria-pressed="false">Merge</button>
+                <div class="menuMain">
+                    <h1 id="modalTitle">FruitPile</h1>
+                    <p id="modalBody"></p>
+                    <div class="row">
+                        <button id="btnPlay">Play</button>
+                        <button id="btnHow">How it works</button>
                     </div>
-                    <div id="modeNote"></div>
-                    <label class="setting">Sound <input id="volSlider" type="range" aria-label="Sound volume" min="0" max="100" value="60"></label>
-                    <label class="setting">Reduced effects <input id="reducedEffects" type="checkbox"></label>
-                    <label class="setting">Chaos next run (wind + fruit decay) <input id="chaosMode" type="checkbox"></label>
+                    <div id="runSummary"></div>
+                </div>
+                <div class="menuSide">
+                    <div id="menuOptions">
+                        <div class="modeToggle" role="group" aria-label="Game mode">
+                            <button id="btnModeExplode" type="button" aria-pressed="true">Explode</button>
+                            <button id="btnModeMerge" type="button" aria-pressed="false">Merge</button>
+                        </div>
+                        <div id="modeNote"></div>
+                        <label class="setting">Sound <input id="volSlider" type="range" aria-label="Sound volume" min="0" max="100" value="60"></label>
+                        <label class="setting">Vibration <input id="hapticsToggle" type="checkbox" checked></label>
+                        <label class="setting">Reduced effects <input id="reducedEffects" type="checkbox"></label>
+                        <label class="setting">Chaos next run (wind + fruit decay) <input id="chaosMode" type="checkbox"></label>
+                    </div>
+                    <p class="hint hintTouch">
+                        Touch: drag anywhere on the board to aim, then let go to drop.
+                        Hold <b>&lsaquo;</b> or <b>&rsaquo;</b> to glide. Tap <b>Swap</b> to trade fruit once per drop.
+                    </p>
+                    <p class="hint hintKeys">
+                        Controls: <span class="kbd">click/tap</span> drop, <span class="kbd">drag</span> aim.
+                        Keyboard: <span class="kbd">←</span>/<span class="kbd">→</span> aim, <span class="kbd">Space</span>
+                        drop. <span class="kbd">S</span> swap, <span class="kbd">P / Esc</span> pause.
+                    </p>
                 </div>
                 <div id="infoBody" class="infoGrid" style="display:none;"></div>
-                <p style="margin-top: 10px;">
-                    Controls: <span class="kbd">click/tap</span> drop, <span class="kbd">drag</span> aim.
-                    Keyboard: <span class="kbd">←</span>/<span class="kbd">→</span> aim, <span class="kbd">Space</span>
-                    drop. <span class="kbd">S</span> swap, <span class="kbd">P / Esc</span> pause.
-                </p>
-                <div class="row"><button id="btnNew">New run</button><button id="btnScores">Local scores</button></div>
-                <div class="row" id="goHsRow" style="display:none;">
-                    <button id="btnGoHs">🏆 High Scores</button>
+                <div class="menuFoot">
+                    <div class="row"><button id="btnNew">New run</button><button id="btnScores">Local scores</button></div>
+                    <div class="row" id="goHsRow" style="display:none;">
+                        <button id="btnGoHs">🏆 High Scores</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -499,6 +623,16 @@
             const diamondRowEl = $('#diamondRow');
             const diamondCountEl = $('#diamondCount');
             const infoBodyEl = $('#infoBody');
+            const arenaEl = $('#arena');
+            const goalEl = $('#goal');
+            const comboProgressEl = $('#comboProgress');
+            const goalProgressEl = $('#goalProgress');
+            const dangerEl = $('#danger');
+            const btnSwapEl = $('#btnSwap');
+            const btnDropEl = $('#btnDrop');
+            const btnDropLabelEl = $('#btnDropLabel');
+            const btnLeftEl = $('#btnLeft');
+            const btnRightEl = $('#btnRight');
 
             const GAME_MODES = {
                 EXPLODE: 'explode',
@@ -539,7 +673,8 @@
             const settings = {
                 volume: Number.isFinite(savedSettings.volume) ? Math.max(0, Math.min(100, savedSettings.volume)) : 60,
                 reduced: typeof savedSettings.reduced === 'boolean' ? savedSettings.reduced : matchMedia('(prefers-reduced-motion: reduce)').matches,
-                chaos: savedSettings.chaos === true
+                chaos: savedSettings.chaos === true,
+                haptics: typeof savedSettings.haptics === 'boolean' ? savedSettings.haptics : !matchMedia('(prefers-reduced-motion: reduce)').matches
             };
             let runChaos = settings.chaos;
             let paused = false;
@@ -1313,15 +1448,67 @@
                 showToast._t = window.setTimeout(() => toastEl.classList.remove('show'), ms);
             }
 
+            let lastHapticAt = 0;
+            const coarsePointer = matchMedia('(any-pointer: coarse)');
+            let nativeVibrate;
+            function canVibrate() {
+                const bridge = window.FruitPileNative;
+                if (bridge) {
+                    if (nativeVibrate === undefined) {
+                        try { nativeVibrate = typeof bridge.canVibrate === 'function' ? !!bridge.canVibrate() : true; } catch { nativeVibrate = false; }
+                    }
+                    return nativeVibrate;
+                }
+                return typeof navigator.vibrate === 'function' && coarsePointer.matches;
+            }
+            // Short vibration pulses for touch feedback. The Android app provides FruitPileNative; browsers use navigator.vibrate.
+            function haptic(kind, intensity = 0.5) {
+                if (!settings.haptics || !canVibrate()) return;
+                let pattern;
+                switch (kind) {
+                    case 'tick': pattern = 8; break;
+                    case 'drop': pattern = 12; break;
+                    case 'pop': pattern = Math.round(14 + Math.max(0, Math.min(1, intensity)) * 34); break;
+                    case 'big': pattern = [30, 40, 60]; break;
+                    case 'warn': pattern = [25, 60, 25]; break;
+                    case 'over': pattern = [60, 50, 120]; break;
+                    default: return;
+                }
+                const t = performance.now();
+                if (kind === 'pop' && t - lastHapticAt < 45) return;
+                lastHapticAt = t;
+                try {
+                    const bridge = window.FruitPileNative;
+                    if (bridge && typeof bridge.vibrate === 'function') {
+                        if (Array.isArray(pattern)) bridge.vibratePattern(pattern.join(','));
+                        else bridge.vibrate(pattern);
+                    } else if (typeof navigator.vibrate === 'function') {
+                        navigator.vibrate(pattern);
+                    }
+                } catch { /* vibration is optional */ }
+            }
+
+            // updateHud runs every frame, so only touch the DOM when a value actually changed.
+            const hudCache = Object.create(null);
+            function setHudText(el, key, text) {
+                if (hudCache[key] === text) return;
+                hudCache[key] = text;
+                el.textContent = text;
+            }
+
             function updateHud() {
-                scoreEl.textContent = String(Math.floor(score));
+                setHudText(scoreEl, 'score', String(Math.floor(score)));
 
                 const mult = comboMultiplier(comboCount);
-                comboEl.textContent = `x${mult.toFixed(2)}`;
-                comboEl.style.color = comboCount >= 4 ? 'var(--accent)' : 'var(--ui-text)';
+                setHudText(comboEl, 'combo', `x${mult.toFixed(2)}`);
+                const comboColor = comboCount >= 4 ? 'var(--accent)' : 'var(--ui-text)';
+                if (hudCache.comboColor !== comboColor) {
+                    hudCache.comboColor = comboColor;
+                    comboEl.style.color = comboColor;
+                }
 
                 if (currentFruit && currentNameEl && currentSwatchEl) {
-                    currentNameEl.textContent = currentFruit.name;
+                    setHudText(currentNameEl, 'currentName', currentFruit.name);
                     if (currentSwatchEl.dataset.fruit !== currentFruit.key) {
                         drawFruitIcon(currentSwatchEl, currentFruit);
                         currentSwatchEl.dataset.fruit = currentFruit.key;
@@ -1329,7 +1516,7 @@
                 }
 
                 if (nextFruit) {
-                    nextNameEl.textContent = nextFruit.name;
+                    setHudText(nextNameEl, 'nextName', nextFruit.name);
                     if (nextSwatchEl.dataset.fruit !== nextFruit.key) {
                         drawFruitIcon(nextSwatchEl, nextFruit);
                         nextSwatchEl.dataset.fruit = nextFruit.key;
@@ -1337,24 +1524,42 @@
                 }
 
                 if (diamondCountEl) {
-                    diamondCountEl.textContent = `${Math.min(DIAMOND_WIN_COUNT, diamondsCreated)}/${DIAMOND_WIN_COUNT}`;
+                    setHudText(diamondCountEl, 'diamonds', `${Math.min(DIAMOND_WIN_COUNT, diamondsCreated)}/${DIAMOND_WIN_COUNT}`);
                 }
-                $('#comboProgress').value = Math.max(0, comboUntil - nowMs());
-                const progress = $('#goalProgress');
+                const comboLeft = Math.max(0, comboUntil - nowMs());
+                if (hudCache.comboLeft !== comboLeft) {
+                    hudCache.comboLeft = comboLeft;
+                    comboProgressEl.value = comboLeft;
+                }
+                let goalText;
+                let goalMax;
+                let goalValue;
                 if (gameMode === GAME_MODES.MERGE) {
                     const next = FRUITS[Math.min(8, largestCreated + 1)];
-                    $('#goal').textContent = diamondsCreated ? `${diamondsCreated} diamond${diamondsCreated === 1 ? '' : 's'} made - keep growing!` : `Merge: make a ${next.name}`;
-                    progress.max = 8;
-                    progress.value = largestCreated;
+                    goalText = diamondsCreated ? `${diamondsCreated} diamond${diamondsCreated === 1 ? '' : 's'} made - keep growing!` : `Merge: make a ${next.name}`;
+                    goalMax = 8;
+                    goalValue = largestCreated;
                 } else {
-                    $('#goal').textContent = `Explode: reach ${scoreGoal.toLocaleString()} points`;
-                    progress.max = scoreGoal;
-                    progress.value = score;
+                    goalText = `Explode: reach ${scoreGoal.toLocaleString()} points`;
+                    goalMax = scoreGoal;
+                    goalValue = score;
                 }
-                $('#btnSwap').disabled = !running || paused || swapUsed;
-                $('#btnDrop').disabled = !running || paused || dropGate.awaitingImpact;
-                $('#btnDrop').textContent = dropGate.awaitingImpact ? 'Landing...' : 'Drop';
-                if (runChaos) $('#goal').textContent += ' (Chaos)';
+                if (runChaos) goalText += ' (Chaos)';
+                setHudText(goalEl, 'goal', goalText);
+                if (hudCache.goalMax !== goalMax) {
+                    hudCache.goalMax = goalMax;
+                    hudCache.goalValue = undefined;
+                    goalProgressEl.max = goalMax;
+                }
+                if (hudCache.goalValue !== goalValue) {
+                    hudCache.goalValue = goalValue;
+                    goalProgressEl.value = goalValue;
+                }
+                const swapOff = !running || paused || swapUsed;
+                if (btnSwapEl.disabled !== swapOff) btnSwapEl.disabled = swapOff;
+                const dropOff = !running || paused || dropGate.awaitingImpact;
+                if (btnDropEl.disabled !== dropOff) btnDropEl.disabled = dropOff;
+                setHudText(btnDropLabelEl, 'dropLabel', dropGate.awaitingImpact ? 'Landing...' : 'Drop');
             }
 
             function comboMultiplier(count) {
@@ -1398,30 +1603,60 @@
                 Body.setAngularVelocity(d, (Math.random() - 0.5) * 0.18);
             }
 
+            // The How-to-play panel remembers the menu text it replaced so "Back to menu" can restore it exactly.
+            let infoReturn = null;
+
+            function closeInfoModal() {
+                const back = infoReturn;
+                if (!back) { showMenu(); return; }
+                infoReturn = null;
+                infoBodyEl.style.display = 'none';
+                infoBodyEl.innerHTML = '';
+                modal.classList.remove('infoOpen');
+                modalTitle.textContent = back.title;
+                modalBody.innerHTML = back.body;
+                $('#menuOptions').hidden = false;
+                btnHow.textContent = 'How it works';
+                btnHow.focus();
+            }
+
             function setModal(show, title, body) {
                 modalTitle.textContent = title;
                 modalBody.textContent = body;
                 if (infoBodyEl) infoBodyEl.style.display = 'none';
+                infoReturn = null;
+                modal.classList.remove('infoOpen');
+                btnHow.textContent = 'How it works';
                 modal.classList.toggle('show', show);
                 $('.hud').inert = show;
                 $('#controls').inert = show;
                 $('#arena').inert = show;
                 if (show) {
                     cancelAim();
+                    stopHold();
                     $('#btnPlay').textContent = running ? 'Resume' : 'Play';
                     $('#btnPlay').focus();
                 }
+                syncWakeLockSoon();
             }
 
             function setInfoModal(title) {
                 pauseGame();
                 if (!infoBodyEl) return;
+                if (infoBodyEl.style.display !== 'none') { closeInfoModal(); return; }
+                infoReturn = { title: modalTitle.textContent, body: modalBody.innerHTML };
                 modalTitle.textContent = title || 'FruitPile';
                 modalBody.textContent = '';
                 infoBodyEl.innerHTML = '';
                 infoBodyEl.style.display = '';
-                modal.classList.add('show');
+                modal.classList.add('show', 'infoOpen');
                 $('#menuOptions').hidden = true;
+                btnHow.textContent = 'Back to menu';
+
+                const controls = document.createElement('div');
+                controls.className = 'note';
+                controls.innerHTML = `<h2>Controls</h2>${[...document.querySelectorAll('.menuSide .hint')].map(hint => hint.outerHTML).join('')}`;
+                infoBodyEl.appendChild(controls);
 
                 const rules = document.createElement('div');
                 rules.className = 'note';
@@ -1921,6 +2156,7 @@
 
                 const body = fruitBodyAt(clampedX, spawnY, fruit);
                 World.add(world, body);
+                haptic('drop');
 
                 dropGate.credits -= 1;
                 if (dropGate.credits <= 0) {
@@ -2047,6 +2283,7 @@
                 // Effects.
                 shake = Math.min(14, shake + 2.6 + intensity * 6.2);
                 audio.pop(intensity);
+                haptic('pop', intensity);
                 spawnBurst(cx, cy, fruit, intensity);
                 spawnScorePop(cx, cy, awarded, fruit, comboMult * groupMult);
 
@@ -2408,6 +2645,7 @@
                 // Effects.
                 shake = Math.min(14, shake + 1.6 + 0.9 * mergeMult);
                 audio.pop(0.30 + 0.12 * mergeMult);
+                haptic(dstFruit.key === 'diamond' ? 'big' : 'pop', 0.30 + 0.12 * mergeMult);
                 spawnBurst(cx, cy, dstFruit, 0.65 + 0.15 * mergeMult);
                 spawnScorePop(cx, cy, awarded, dstFruit, comboMult * mergeMult);
 
@@ -2466,6 +2704,7 @@
 
                 shake = Math.min(18, shake + 10.5);
                 audio.pop(1.0);
+                haptic('big');
                 spawnParticles(cx, cy, 'rgba(120, 245, 255, 0.95)', 70, 3.4, 1.35);
                 spawnParticles(cx, cy, 'rgba(255,255,255,0.92)', 42, 3.0, 1.25);
                 spawnScorePop(cx, cy, awarded, fruitByKey.get('diamond'), comboMult * 50);
@@ -2703,6 +2942,7 @@
                 // Effects.
                 shake = Math.min(14, shake + 2.6 + intensity * 6.2);
                 audio.pop(intensity);
+                haptic('pop', intensity);
 
                 spawnBurst(cx, cy, fruit, intensity);
                 spawnScorePop(cx, cy, awarded, fruit, comboMult * groupMult);
@@ -2819,6 +3059,7 @@
                         b.plugin._dangerAt = b.plugin._dangerAt || nowMs();
                         warning = Math.max(warning, nowMs() - b.plugin._dangerAt);
                         if (nowMs() - b.plugin._dangerAt > 3000) {
+                            haptic('over');
                             endGame();
                             return;
                         }
@@ -2826,7 +3067,15 @@
                         if (b.plugin) b.plugin._dangerAt = 0;
                     }
                 }
-                $('#danger').textContent = warning > 0 ? `Clear the line! ${Math.max(1, Math.ceil((3000 - warning) / 1000))}s` : '';
+                const dangerText = warning > 0 ? `Clear the line! ${Math.max(1, Math.ceil((3000 - warning) / 1000))}s` : '';
+                setDangerText(dangerText);
+                if (warning > 0 && !dangerWasActive) haptic('warn');
+                dangerWasActive = warning > 0;
+            }
+
+            let dangerWasActive = false;
+            function setDangerText(text) {
+                if (dangerEl.textContent !== text) dangerEl.textContent = text;
             }
 
             function newGame() {
@@ -2865,7 +3114,8 @@
                 runChaos = settings.chaos;
                 cancelAim();
                 input.x = 260;
-                $('#danger').textContent = '';
+                setDangerText('');
+                dangerWasActive = false;
                 $('#runSummary').textContent = '';
                 $('#menuOptions').hidden = false;
                 $('#goHsRow').style.display = 'none';
@@ -2948,6 +3198,8 @@
                 paused = false;
                 cancelAim();
                 suspendAudio();
+                setDangerText('');
+                dangerWasActive = false;
                 const finalScore = Math.floor(score);
                 const list = getFpHighScores();
                 const makesLb = finalScore > 0 && (list.length < FP_HS_MAX || finalScore > list[list.length - 1].score);
@@ -2978,10 +3230,10 @@
                     nameDiv.style.display = 'block';
                     nameDiv.innerHTML = `<div style="font-size:13px;color:var(--accent);margin-bottom:6px;">Enter your name:</div>
                         <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
-                            <input id="fp-hs-name" aria-label="High score name" type="text" maxlength="6" autocomplete="off" spellcheck="false" style="width:120px;padding:6px 10px;font-size:18px;font-weight:bold;text-align:center;
+                            <input id="fp-hs-name" aria-label="High score name" type="text" maxlength="6" autocomplete="off" autocapitalize="characters" autocorrect="off" enterkeyhint="done" spellcheck="false" style="width:130px;min-height:44px;box-sizing:border-box;padding:6px 10px;font-size:18px;font-weight:bold;text-align:center;
                                 background:rgba(255,255,255,0.08);color:#fff;border:2px solid var(--accent);border-radius:8px;outline:none;
                                 text-transform:uppercase;letter-spacing:2px;font-family:inherit;" placeholder="______">
-                            <button id="fp-save-name" style="padding:6px 14px;font-size:14px;font-weight:700;
+                            <button id="fp-save-name" style="min-height:44px;padding:6px 16px;font-size:15px;font-weight:700;
                                 background:var(--accent);color:#000;border:none;border-radius:8px;cursor:pointer;">Save</button>
                         </div>
                         <div id="fp-name-saved" style="font-size:11px;color:#6ab04c;margin-top:4px;display:none;">&#10003; Name saved!</div>
@@ -4209,7 +4461,7 @@
                 input.pointerId = null;
                 input.active = false;
                 input.downAt = 0;
-                if (id !== null && canvas.hasPointerCapture(id)) canvas.releasePointerCapture(id);
+                if (id !== null && arenaEl.hasPointerCapture(id)) arenaEl.releasePointerCapture(id);
             }
 
             function resumeAudio() {
@@ -4231,6 +4483,7 @@
 
             function pauseGame() {
                 cancelAim();
+                stopHold();
                 if (running) paused = true;
                 accumulator = 0;
                 suspendAudio();
@@ -4270,6 +4523,7 @@
                 if (!running || paused || swapUsed) return;
                 [currentFruit, nextFruit] = [nextFruit, currentFruit];
                 swapUsed = true;
+                haptic('tick');
                 updateHud();
                 showToast('Swapped. Drop to earn your next swap.', 1200);
             }
@@ -4277,6 +4531,63 @@
             function aimBy(delta) {
                 if (!running || paused) return;
                 input.x = clampToPlayfield(input.x + delta, currentFruit.radius + 10);
+            }
+
+            // Hold the arrow buttons to keep aiming: one nudge on press, then a glide that speeds up.
+            const HOLD_DELAY_MS = 300;
+            const HOLD_SPEED_MIN = 240;
+            const HOLD_SPEED_MAX = 900;
+            const HOLD_RAMP_MS = 1100;
+            let hold = null;
+
+            function stopHold() {
+                if (!hold) return;
+                const h = hold;
+                hold = null;
+                window.clearTimeout(h.timer);
+                cancelAnimationFrame(h.raf);
+                h.button.classList.remove('holding');
+                try {
+                    if (h.button.hasPointerCapture(h.pointerId)) h.button.releasePointerCapture(h.pointerId);
+                } catch { /* pointer already gone */ }
+            }
+
+            function holdStep(ts) {
+                const h = hold;
+                if (!h) return;
+                if (!running || paused) { stopHold(); return; }
+                const dt = Math.min(0.05, h.last ? (ts - h.last) / 1000 : 0);
+                h.last = ts;
+                const ramp = Math.min(1, (ts - h.glideFrom) / HOLD_RAMP_MS);
+                aimBy(h.dir * (HOLD_SPEED_MIN + (HOLD_SPEED_MAX - HOLD_SPEED_MIN) * ramp) * dt);
+                h.raf = requestAnimationFrame(holdStep);
+            }
+
+            function startHold(button, dir, e) {
+                stopHold();
+                if (!running || paused) return;
+                aimBy(dir * 24);
+                const h = { button, dir, pointerId: e.pointerId, timer: 0, raf: 0, last: 0, glideFrom: 0 };
+                hold = h;
+                button.classList.add('holding');
+                try { button.setPointerCapture(e.pointerId); } catch { /* synthetic or finished pointer */ }
+                h.timer = window.setTimeout(() => {
+                    if (hold !== h) return;
+                    h.glideFrom = performance.now();
+                    h.raf = requestAnimationFrame(holdStep);
+                }, HOLD_DELAY_MS);
+            }
+
+            function wireHoldButton(button, dir) {
+                button.addEventListener('pointerdown', e => {
+                    if (e.button === 0) startHold(button, dir, e);
+                });
+                const end = e => { if (hold && hold.button === button && hold.pointerId === e.pointerId) stopHold(); };
+                button.addEventListener('pointerup', end);
+                button.addEventListener('pointercancel', end);
+                button.addEventListener('lostpointercapture', end);
+                // Pointer presses are handled above; a click without a pointer (detail 0) is keyboard or assistive-tech activation.
+                button.addEventListener('click', e => { if (e.detail === 0) aimBy(dir * 24); });
             }
 
             // Surface unexpected runtime errors so "freezes" are diagnosable.
@@ -4304,29 +4615,37 @@
                 return clampToPlayfield(x, 8);
             }
 
-            canvas.addEventListener('pointerdown', e => {
+            // Pointer aiming works on the whole board area, not just the canvas, so thumbs can steer from the margins.
+            const DROP_RELEASE_SLOP_PX = 24;
+            function releasedOnBoard(e) {
+                const rect = arenaEl.getBoundingClientRect();
+                return e.clientX >= rect.left - DROP_RELEASE_SLOP_PX && e.clientX <= rect.right + DROP_RELEASE_SLOP_PX
+                    && e.clientY >= rect.top - DROP_RELEASE_SLOP_PX && e.clientY <= rect.bottom + DROP_RELEASE_SLOP_PX;
+            }
+
+            arenaEl.addEventListener('pointerdown', e => {
                 if (!running || paused || !e.isPrimary || e.button !== 0 || input.pointerId !== null) return;
                 input.pointerId = e.pointerId;
                 input.active = true;
                 setInputX(e.clientX);
-                canvas.setPointerCapture(e.pointerId);
+                arenaEl.setPointerCapture(e.pointerId);
                 resumeAudio();
             });
-            canvas.addEventListener('pointermove', e => {
+            arenaEl.addEventListener('pointermove', e => {
                 if (paused || !running) return;
                 if (e.pointerId === input.pointerId || (input.pointerId === null && e.pointerType === 'mouse')) setInputX(e.clientX);
             });
-            canvas.addEventListener('pointerup', e => {
+            arenaEl.addEventListener('pointerup', e => {
                 if (e.pointerId !== input.pointerId) return;
-                const rect = canvas.getBoundingClientRect();
-                const inside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
+                const inside = releasedOnBoard(e);
                 setInputX(e.clientX);
                 cancelAim();
                 if (inside) tryDropAtX(input.x);
             });
-            canvas.addEventListener('pointercancel', cancelAim);
-            canvas.addEventListener('lostpointercapture', cancelAim);
-            canvas.addEventListener('contextmenu', e => e.preventDefault());
+            arenaEl.addEventListener('pointercancel', cancelAim);
+            arenaEl.addEventListener('lostpointercapture', cancelAim);
+            arenaEl.addEventListener('contextmenu', e => e.preventDefault());
+            $('#controls').addEventListener('contextmenu', e => e.preventDefault());
 
             window.addEventListener('keydown', (e) => {
                 const scoresOpen = $('#hs-modal').style.display === 'flex';
@@ -4359,7 +4678,7 @@
             btnNew.addEventListener('click', () => {
                 if (running && btnNew.textContent !== 'Confirm new run') {
                     btnNew.textContent = 'Confirm new run';
-                    showToast('This ends your current run. Tap Confirm new run, or Resume to keep it.', 4000);
+                    modalBody.textContent = 'This ends your current run. Tap Confirm new run, or Resume to keep it.';
                     return;
                 }
                 if (running) endGame();
@@ -4385,11 +4704,19 @@
                 storageWrite('fruitpile.settings.v2', settings);
                 if (!hasRun) runChaos = settings.chaos;
             });
+            const hapticsToggle = $('#hapticsToggle');
+            hapticsToggle.checked = settings.haptics;
+            hapticsToggle.closest('label').hidden = !canVibrate();
+            hapticsToggle.addEventListener('change', e => {
+                settings.haptics = e.target.checked;
+                storageWrite('fruitpile.settings.v2', settings);
+                haptic('tick');
+            });
             $('#btnPause').addEventListener('click', showMenu);
             $('#btnDrop').addEventListener('click', () => tryDropAtX(input.x));
-            $('#btnLeft').addEventListener('click', () => aimBy(-24));
-            $('#btnRight').addEventListener('click', () => aimBy(24));
-            $('#btnSwap').addEventListener('click', swapFruit);
+            wireHoldButton(btnLeftEl, -1);
+            wireHoldButton(btnRightEl, 1);
+            btnSwapEl.addEventListener('click', swapFruit);
             btnPlay.addEventListener('click', resumeGame);
             document.getElementById('btnScores').addEventListener('click', showFpHighScores);
             document.getElementById('fpHsClose').addEventListener('click', hideFpHighScores);
@@ -4401,15 +4728,85 @@
                     suspendAudio();
                     lastT = 0;
                 }
+                syncWakeLockSoon();
             });
             window.addEventListener('pagehide', () => { if (running) showMenu(); suspendAudio(); });
             window.addEventListener('blur', () => {
                 if (running && !paused) showMenu();
             });
 
+            // Android's Back gesture calls this first. It returns true when the game used the gesture (closing a panel or pausing).
+            window.fruitpileBack = () => {
+                try {
+                    if ($('#hs-modal').style.display === 'flex') { hideFpHighScores(); return true; }
+                    if (modal.classList.contains('show')) {
+                        if (infoBodyEl.style.display !== 'none') { closeInfoModal(); return true; }
+                        if (running) { resumeGame(); return true; }
+                        savePendingScore();
+                        return false;
+                    }
+                    if (running) { showMenu(); return true; }
+                } catch (error) {
+                    console.warn('[FruitPile] Back handler:', error);
+                }
+                return false;
+            };
+
+            // Keep the screen awake during an active run only. The Android app mirrors this through FruitPileNative.keepAwake.
+            let wakeLock = null;
+            let wakeLockBusy = false;
+            let nativeAwake = null;
+            const shouldHoldWakeLock = () => running && !paused && !document.hidden && !modal.classList.contains('show');
+            function syncWakeLockSoon() { window.setTimeout(syncWakeLock, 0); }
+            function syncNativeAwake(hold) {
+                const bridge = window.FruitPileNative;
+                if (!bridge || typeof bridge.keepAwake !== 'function' || nativeAwake === hold) return;
+                nativeAwake = hold;
+                try { bridge.keepAwake(hold); } catch { /* optional */ }
+            }
+            async function syncWakeLock() {
+                syncNativeAwake(shouldHoldWakeLock());
+                if (!navigator.wakeLock || wakeLockBusy) return;
+                if (!shouldHoldWakeLock()) {
+                    if (wakeLock) {
+                        const lock = wakeLock;
+                        wakeLock = null;
+                        lock.release().catch(() => { /* already released */ });
+                    }
+                    return;
+                }
+                if (wakeLock) return;
+                wakeLockBusy = true;
+                try {
+                    const lock = await navigator.wakeLock.request('screen');
+                    lock.addEventListener('release', () => { if (wakeLock === lock) wakeLock = null; });
+                    wakeLock = lock;
+                } catch { /* unsupported or denied: the screen may dim as usual */ }
+                wakeLockBusy = false;
+                if (wakeLock && !shouldHoldWakeLock()) syncWakeLock();
+            }
+
             // --- Bootstrap ---
             window.addEventListener('resize', resize);
             window.addEventListener('orientationchange', () => setTimeout(resize, 50));
+            // The board can change size without a window resize (HUD wrapping, on-screen keyboard, browser toolbars).
+            if (typeof ResizeObserver === 'function') {
+                let seenW = 0;
+                let seenH = 0;
+                let pendingFrame = 0;
+                new ResizeObserver(() => {
+                    const w = Math.round(arenaEl.clientWidth);
+                    const h = Math.round(arenaEl.clientHeight);
+                    if (w === seenW && h === seenH) return;
+                    seenW = w;
+                    seenH = h;
+                    if (pendingFrame) return;
+                    pendingFrame = requestAnimationFrame(() => {
+                        pendingFrame = 0;
+                        resize();
+                    });
+                }).observe(arenaEl);
+            }
 
             function start() {
                 pickFallbackBackground();
