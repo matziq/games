@@ -5,6 +5,14 @@ param(
     [string]$BuildTools = ''
 )
 $ErrorActionPreference = 'Stop'
+# package.json is the single source of truth for the version; the manifest must agree with it.
+$version = (Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'package.json') | ConvertFrom-Json).version
+if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "package.json has an invalid version: $version" }
+[xml]$manifest = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'android\AndroidManifest.xml')
+$manifestVersion = $manifest.manifest.GetAttribute('versionName', 'http://schemas.android.com/apk/res/android')
+if ($manifestVersion -ne $version) { throw "AndroidManifest.xml versionName ($manifestVersion) does not match package.json ($version)" }
+$htmlName = "FruitPile-$version.html"
+$apkName = "FruitPile-$version-test.apk"
 if (!$JavaHome) { $JavaHome = Join-Path $OutputRoot 'toolchain\jdk-21.0.12.1+1' }
 if (!$PlatformJar) { $PlatformJar = Join-Path $OutputRoot 'toolchain\android-36\android.jar' }
 if (!$BuildTools) { $BuildTools = Join-Path $OutputRoot 'toolchain\android-16' }
@@ -24,7 +32,7 @@ function Invoke-Checked([string]$Exe, [string[]]$Arguments) {
     if ($LASTEXITCODE -ne 0) { throw "$Exe failed with exit code $LASTEXITCODE" }
 }
 Invoke-Checked 'node' @((Join-Path $PSScriptRoot 'build.mjs'), $OutputRoot)
-Copy-Item (Join-Path $OutputRoot 'FruitPile-2.0.4.html') (Join-Path $assets 'index.html') -Force
+Copy-Item (Join-Path $OutputRoot $htmlName) (Join-Path $assets 'index.html') -Force
 Invoke-Checked "$BuildTools\aapt2.exe" @('compile', '--dir', "$PSScriptRoot\android\res", '-o', "$stage\resources.zip")
 Invoke-Checked "$BuildTools\aapt2.exe" @('link', '-o', "$stage\unsigned.apk", '-I', $PlatformJar,
     '--manifest', "$PSScriptRoot\android\AndroidManifest.xml", '-A', $assets, "$stage\resources.zip")
@@ -43,12 +51,15 @@ if (!(Test-Path -LiteralPath $key)) {
         '-alias', 'androiddebugkey', '-keypass', 'android', '-keyalg', 'RSA', '-keysize', '2048',
         '-validity', '10000', '-dname', 'CN=Android Debug,O=Android,C=US')
 }
-$apk = Join-Path $OutputRoot 'FruitPile-2.0.4-test.apk'
+$apk = Join-Path $OutputRoot $apkName
 Invoke-Checked "$JavaHome\bin\java.exe" @('-jar', "$BuildTools\lib\apksigner.jar", 'sign', '--ks', $key,
     '--ks-pass', 'pass:android', '--key-pass', 'pass:android', '--out', $apk, "$stage\aligned.apk")
 Invoke-Checked "$JavaHome\bin\java.exe" @('-jar', "$BuildTools\lib\apksigner.jar", 'verify', '--verbose', '--print-certs', $apk)
 Invoke-Checked "$BuildTools\zipalign.exe" @('-c', '4', $apk)
-Invoke-Checked "$BuildTools\aapt2.exe" @('dump', 'badging', $apk)
+$badging = & "$BuildTools\aapt2.exe" dump badging $apk
+if ($LASTEXITCODE -ne 0) { throw "aapt2 dump badging failed with exit code $LASTEXITCODE" }
+$badging
+if (!($badging | Select-String -SimpleMatch "versionName='$version'" -Quiet)) { throw "APK versionName is not $version" }
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $zip = [System.IO.Compression.ZipFile]::OpenRead($apk)
 try {
@@ -56,10 +67,10 @@ try {
     if (!$asset -or !$zip.GetEntry('classes.dex') -or !$zip.GetEntry('AndroidManifest.xml')) { throw 'APK is incomplete' }
     $reader = [System.IO.StreamReader]::new($asset.Open())
     try { $packed = $reader.ReadToEnd() } finally { $reader.Dispose() }
-    $release = [System.IO.File]::ReadAllText((Join-Path $OutputRoot 'FruitPile-2.0.4.html'))
+    $release = [System.IO.File]::ReadAllText((Join-Path $OutputRoot $htmlName))
     if ($packed -cne $release) { throw 'APK contains stale HTML' }
 } finally { $zip.Dispose() }
-$hashes = @('FruitPile-2.0.4.html', 'FruitPile-2.0.4-test.apk') | ForEach-Object {
+$hashes = @($htmlName, $apkName) | ForEach-Object {
     "$((Get-FileHash (Join-Path $OutputRoot $_) -Algorithm SHA256).Hash.ToLowerInvariant())  $_"
 }
 [System.IO.File]::WriteAllLines((Join-Path $OutputRoot 'SHA256SUMS.txt'), $hashes)
