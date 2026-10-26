@@ -73,14 +73,16 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
       spawnMeteor, strike, drawGun, rocketExplode, launchRocket, startGame, pauseGame,
       resetGame, endGame, loop: () => loop(lastTime + 33),
       meteors, gems, geodes, rocks, fireballs, rockets, gun, shockwaves, pointPopups, updateLaserHeat, tractorBeams,
-      level, pace, gravity, awardGeode, get destroyed() { return geodesCracked; },
+      level, pace, gravity, awardGeode, awardPoints, refreshPlayfield, stepGem, stepFlyer,
+      get destroyed() { return geodesCracked; },
       set destroyed(v) { geodesCracked = v; },
       get score() { return score; },
       set score(v) { score = v; },
       get time() { return runTime; }, set time(v) { runTime = v; },
       get heat() { return laserHeat; }, set heat(v) { laserHeat = v; }, get overheat() { return laserOverheatedUntil; },
       fireLaser, laserHeatWarning,
-      set ammo(v) { rocketCount = v; }
+      get ammo() { return rocketCount; }, set ammo(v) { rocketCount = v; },
+      get running() { return running; }, coarsePointer
     };
     for (const name of ['drawRock', 'drawGun', 'drawGem', 'drawGeode', 'drawMeteor', 'drawFireball']) {
       const original = eval(name);
@@ -299,11 +301,12 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
     await wait(700);
     assert.ok(await evaluate(rms) < 0.001);
 
-    // Earning a missile plays the fanfare once.
-    await evaluate('__game.resetGame(); __game.startGame(); __game.destroyed = 9');
+    // Crossing a score threshold earns a missile and plays the fanfare once.
+    await evaluate('__game.resetGame(); __game.startGame(); __game.score = 475');
     const beforeFanfare = await evaluate('__metrics.sources.length');
-    await evaluate('__game.awardGeode()');
-    assert.equal(await evaluate('__metrics.sources.length') - beforeFanfare, 10);
+    await evaluate('__game.awardGeode({ x: 200, y: 200 })');
+    assert.equal(await evaluate('__game.ammo'), 1);
+    assert.equal(await evaluate('__metrics.sources.length') - beforeFanfare, 14, 'ten fanfare voices plus the existing score cue');
     await wait(250);
     assert.ok(await evaluate(rms) > 0.005, 'fanfare is audible');
     await wait(900);
@@ -330,9 +333,9 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
       __game.rocks.push({ x: 120, y: 200, r: 18, vx: 0, vy: -1, climb: 40, gravity: 0, age: 1, rot: 0, spin: 0,
         phase: 'up', fallSpeed: 0, color: '#555555', seed: 1 });
       __game.strike(120, 200); __game.loop(66)`);
-    assert.equal(await evaluate('__game.score'), 5);
-    assert.deepEqual(await evaluate('__game.pointPopups.map(p => p.text)'), ['+5']);
-    assert.ok((await evaluate('__metrics.drawnText')).includes('+5'));
+    assert.equal(await evaluate('__game.score'), 100);
+    assert.deepEqual(await evaluate('__game.pointPopups.map(p => p.text)'), ['+100']);
+    assert.ok((await evaluate('__metrics.drawnText')).includes('+100'));
     await evaluate('for (let i = 0; i < 40; i++) __game.loop(99 + i * 33)');
     assert.equal(await evaluate('__game.pointPopups.length'), 0);
 
@@ -411,6 +414,126 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
       __game.meteors.length = 0; __game.fireballs.length = 0;
       __game.gems[0].y = innerHeight + 20; __game.loop()`);
     assert.equal(await evaluate('__game.gems.length'), 0, 'offscreen gem is removed');
+
+    // Exact awards, threshold crossings, and inheritance use the real browser game functions.
+    for (const weapon of ['strike', 'rocketExplode']) {
+      for (const [list, points] of [['geodes', 25], ['rocks', 100], ['meteors', 100], ['fireballs', 50]]) {
+        await evaluate(`__game.resetGame(); __game.startGame();
+          __game.${list}.push({ x: 150, y: 250, r: 20, baseR: 20, hp: 1,
+            vx: -12, vy: 35, age: 0, rot: 0, spin: 0, color: '#555555' });
+          __game.${weapon}(150, 250)`);
+        assert.equal(await evaluate('__game.score'), points, `${weapon}: ${list}`);
+        assert.deepEqual(await evaluate('__game.pointPopups.map(p => p.text)'), [`+${points}`]);
+      }
+    }
+    await evaluate(`__game.resetGame(); __game.startGame();
+      __game.awardPoints(150, 250, 499)`);
+    assert.equal(await evaluate('__game.ammo'), 0);
+    await evaluate('__game.awardPoints(150, 250, 1)');
+    assert.equal(await evaluate('__game.ammo'), 1);
+    await evaluate('__game.awardPoints(150, 250, 1500)');
+    assert.equal(await evaluate('__game.ammo'), 4);
+    assert.equal(await evaluate("document.getElementById('missileProg').textContent"), '0/500');
+    await evaluate(`__game.resetGame(); __game.startGame();
+      for (let i = 0; i < 10; i++) __game.awardGeode({ x: 150, y: 250 })`);
+    assert.equal(await evaluate('__game.ammo'), 0, 'no old ten-geode reward');
+    await evaluate(`__game.score = 490;
+      __game.gems.push({ x: 150, y: 250, r: 14, type: 'ruby', points: 80,
+        color: '#ff1744', vx: 0, vy: 0, rot: 0, vrot: 0, alpha: 1 });
+      __game.strike(150, 250);
+      for (let i = 0; i < 100; i++) __game.loop()`);
+    assert.equal(await evaluate('__game.score'), 570);
+    assert.equal(await evaluate('__game.ammo'), 1, 'crystal points count toward the score threshold');
+    await evaluate(`__game.resetGame(); __game.startGame();
+      const random = Math.random; Math.random = () => 0;
+      __game.destroyed = 99;
+      __game.geodes.push({ x: 150, y: 250, r: 20, vx: -12, vy: -35,
+        kvx: 4, kvy: -5, color: '#222222' });
+      try { __game.strike(150, 250); } finally { Math.random = random; }`);
+    const inherited = await evaluate(`({ vx: __game.gems[0].vx * __game.pace(),
+      vy: __game.gems[0].vy * __game.pace(), y: __game.gems[0].y })`);
+    assert.ok(Math.abs(inherited.vx + 8) < 1e-10 && Math.abs(inherited.vy + 40) < 1e-10);
+    await evaluate('__game.stepGem(__game.gems[0], 0.1)');
+    assert.ok(await evaluate('__game.gems[0].y') < inherited.y, 'upward parent motion continues');
+    const inheritedAfter = await evaluate('__game.gems[0].vy * __game.pace()');
+    assert.ok(inheritedAfter > inherited.vy, 'normal gravity continues');
+    await evaluate(`__game.resetGame(); __game.startGame(); __game.destroyed = 200;
+      __game.spawnMeteor(); __game.meteors[0].x = 150; __game.meteors[0].y = 250;
+      __game.meteors[0].vx = 24; __game.meteors[0].vy = 45;
+      __game.rocketExplode(150, 250)`);
+    assert.equal(await evaluate('__game.gems.length'), 5);
+    assert.ok(await evaluate(`__game.gems.every(g => Math.abs(g.vx * __game.pace() - 24) < 1e-10 &&
+      Math.abs(g.vy * __game.pace() - 45) < 1e-10)`));
+
+    // Browser geometry and real pointer input cover wrapped HUDs, menus, and resizing.
+    const clickElement = async (id, touch) => {
+      const p = await evaluate(`(() => {
+        const r = document.getElementById('${id}').getBoundingClientRect();
+        return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+      })()`);
+      if (touch) {
+        await call('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [p] });
+        await call('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      } else {
+        await call('Input.dispatchMouseEvent', { type: 'mousePressed', ...p, button: 'left', clickCount: 1 });
+        await call('Input.dispatchMouseEvent', { type: 'mouseReleased', ...p, button: 'left', clickCount: 1 });
+      }
+    };
+    const assertTargetsClear = async () => {
+      const overlaps = await evaluate(`(() => {
+        const c = document.getElementById('game').getBoundingClientRect();
+        const regions = ['hud', 'laserHeatChip', 'tools'].map(id => document.getElementById(id))
+          .filter(el => !el.classList.contains('hidden')).map(el => el.getBoundingClientRect());
+        const failures = [];
+        for (const [kind, list] of Object.entries({ geodes: __game.geodes, rocks: __game.rocks,
+          fireballs: __game.fireballs, gems: __game.gems, meteors: __game.meteors })) {
+          for (const o of list) {
+            const r = o.r + (kind === 'meteors' ? 18 : 0), x = c.left + o.x, y = c.top + o.y;
+            if (x - r < c.left || x + r > c.right || y - r < c.top || y + r > c.bottom ||
+                regions.some(b => x + r > b.left && x - r < b.right && y + r > b.top && y - r < b.bottom)) {
+              failures.push({ kind, x, y, r });
+            }
+          }
+        }
+        return failures;
+      })()`);
+      assert.deepEqual(overlaps, [], 'physical target overlaps a HUD region');
+    };
+    for (const touch of [false, true]) {
+      if (touch) {
+        await call('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
+        await call('Page.setDocumentContent', { frameId: frame, html });
+        await wait(100);
+      }
+      assert.equal(await evaluate('__game.coarsePointer'), touch);
+      for (const [width, height, mobile] of [[390, 844, true], [360, 640, true], [1280, 720, false], [740, 360, true]]) {
+        await call('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile });
+        await evaluate(`window.dispatchEvent(new Event('resize')); __game.resetGame(); __game.startGame();
+          for (const list of [__game.geodes, __game.rocks, __game.fireballs, __game.gems]) {
+            list.push({ x: 100, y: 15, r: 20, vx: 0, vy: -100, age: 0, rot: 0, spin: 0, vrot: 0,
+              type: 'ruby', points: 80, color: '#ff1744', alpha: 1 });
+          }
+          __game.spawnMeteor(); __game.refreshPlayfield();`);
+        await assertTargetsClear();
+        await clickElement('menuBtn', touch);
+        assert.equal(await evaluate("document.getElementById('tools').classList.contains('hidden')"), false);
+        await assertTargetsClear();
+        await evaluate(`__game.score = 123456789; __game.awardPoints(150, 250, 0)`);
+        await wait(50);
+        await assertTargetsClear();
+        await call('Emulation.setDeviceMetricsOverride', { width: width - 20, height: height - 30, deviceScaleFactor: 1, mobile });
+        await evaluate(`window.dispatchEvent(new Event('resize')); __game.loop()`);
+        await assertTargetsClear();
+        await clickElement('menuBtn', touch);
+        assert.equal(await evaluate("document.getElementById('tools').classList.contains('hidden')"), true);
+        await clickElement('pauseBtn', touch);
+        assert.equal(await evaluate('__game.running'), false, 'Pause still receives pointer clicks');
+        await evaluate('__game.startGame(); __game.ammo = 1; __game.awardPoints(150, 250, 0)');
+        await clickElement('rocketBtn', touch);
+        assert.equal(await evaluate("document.getElementById('rocketBtn').textContent"), 'Armed');
+      }
+    }
+    await call('Emulation.clearDeviceMetricsOverride');
     assert.deepEqual(await evaluate('__metrics.errors'), []);
   } finally {
     if (ws) ws.close();
