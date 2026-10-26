@@ -265,7 +265,7 @@ test('gameplay launches rockets and stops flight audio on detonation and state c
     running: true, paused: false, gameOver: false, rocketCount: 1,
     rockets: [], geodes: [], rocks: [], shards: [], gems: [], particles: [], meteors: [],
     fireballs: [], laserBeams: [], tractorBeams: [], shockwaves: [], pointPopups: [], score: 0, missed: 0,
-    showPoints() {},
+    showPoints() {}, refreshPlayfield() {},
     overlay: panel, pauseVeil: panel, toolsEl: panel, introHtml: '',
     coarsePointer: false, barrelTip: () => ({ x: 10, y: 10 }),
     updateHUD() {}, buzz() {}, rand: () => 1, dist2: () => 0,
@@ -466,6 +466,8 @@ function setupMeteors(audio) {
   Object.assign(audio.context, {
     meteors: [], gems: [], particles: [], geodes: [], rocks: [], fireballs: [],
     tractorBeams: [], laserBeams: [], running: true, coarsePointer: false, score: 0,
+    playfieldTop: 0, heatBounds: null, menuBounds: null,
+    MISSILE_EVERY: 500, rocketCount: 0, geodesCracked: 0, buzz() {},
     gun: { x: 200, y: 600 }, canvas: { clientWidth: 400, clientHeight: 700 },
     chooseGemType: () => types[selected++ % types.length],
     rand: (a, b = 0) => (a + b) / 2, pace: () => 1, lite: false,
@@ -477,14 +479,14 @@ function setupMeteors(audio) {
   });
   loadFunctions(audio, [
     'baseGravity', 'gravity', 'stepFallingBody', 'stepGem',
-    'emitShockwave', 'showPoints', 'stepFlyer',
+    'emitShockwave', 'showPoints', 'stepFlyer', 'avoidHUD', 'parentVelocity', 'awardPoints', 'awardGeode',
     'createGem', 'spawnMeteor', 'hitMeteor', 'destroyMeteor', 'updateMeteors',
     'meteorImpactPoint', 'firstMeteorOnSegment', 'rocketExplode',
     'imminentGeodeImpact', 'warnOfGeodeImpact'
   ]);
 }
 
-test('meteor needs exactly three laser hits and drops exactly five radial gems', async () => {
+test('meteor needs exactly three laser hits and drops five gems inheriting its velocity', async () => {
   const audio = setup();
   setupMeteors(audio);
   await audio.gestures.pointerdown();
@@ -504,20 +506,18 @@ test('meteor needs exactly three laser hits and drops exactly five radial gems',
   vm.runInContext('hitMeteor(targetMeteor)', audio.context);
   assert.equal(audio.context.meteors.length, 0);
   assert.equal(audio.context.gems.length, 5);
-  const angles = audio.context.gems.map(g => Math.atan2(g.vy, g.vx));
   for (let i = 0; i < 5; i++) {
     const g = audio.context.gems[i];
     assert.equal(g.ttl, undefined, 'gems no longer expire on a timer');
     assert.equal(g.alpha, 1);
-    assert.ok(Math.abs(Math.hypot(g.vx, g.vy) - 20) < 1e-10);
-    if (i > 0) {
-      const difference = (angles[i] - angles[i - 1] + Math.PI * 2) % (Math.PI * 2);
-      assert.ok(Math.abs(difference - Math.PI * 2 / 5) < 1e-10);
-    }
+    assert.equal(g.vx, m.vx);
+    assert.equal(g.vy, m.vy);
   }
   assert.equal(new Set(audio.context.gems.map(g => g.type)).size, 2);
   vm.runInContext('hitMeteor(targetMeteor)', audio.context);
   assert.equal(audio.context.gems.length, 5);
+  assert.equal(audio.context.score, 100, 'destruction is awarded exactly once');
+  assert.deepEqual(audio.context.pointPopups.map(p => p.text), ['+100']);
 });
 
 test('one rocket destroys a meteor and leaves all five gems free to collect', async () => {
@@ -680,7 +680,8 @@ test('laser glows red with one klaxon at 80% heat and vents steam once when the 
 
 test('levels advance every 100 destroyed geodes and apply eight-percent speed steps', () => {
   const audio = setup();
-  Object.assign(audio.context, { geodesCracked: 0, score: 0, runTime: 0 });
+  setupMeteors(audio);
+  audio.context.runTime = 0;
   loadFunctions(audio, ['level', 'pace']);
   for (const [destroyed, expectedLevel, speed] of [[0, 1, 1], [99, 1, 1], [100, 2, 1.08], [200, 3, 1.16]]) {
     audio.context.geodesCracked = destroyed;
@@ -690,10 +691,9 @@ test('levels advance every 100 destroyed geodes and apply eight-percent speed st
   audio.context.score = 100000;
   audio.context.runTime = 10000;
   assert.equal(vm.runInContext('level()', audio.context), 3);
-  Object.assign(audio.context, { rocketCount: 0, MISSILE_EVERY: 10, updateHUD() {}, buzz() {} });
-  loadFunctions(audio, ['awardGeode']);
+  audio.context.score = 475;
   audio.context.geodesCracked = 99;
-  vm.runInContext('awardGeode()', audio.context);
+  vm.runInContext('awardGeode({ x: 200, y: 200 })', audio.context);
   assert.equal(vm.runInContext('level()', audio.context), 2);
   assert.equal(audio.context.rocketCount, 1);
 });
@@ -734,7 +734,7 @@ test('falling physical objects keep accelerating past launch speed with frame-in
 test('gems stay opaque past eight seconds, accelerate and leave below the viewport without bouncing', () => {
   const audio = setup();
   setupMeteors(audio);
-  vm.runInContext('createGem(200, 100)', audio.context);
+  vm.runInContext('createGem(200, 100, { vx: 0, vy: -20 })', audio.context);
   audio.context.gem = audio.context.gems[0];
   vm.runInContext('for (let i = 0; i < 600; i++) stepGem(gem, 1 / 60)', audio.context);
   assert.equal(audio.context.gem.alpha, 1);
@@ -840,30 +840,28 @@ test('flyer arcs have symmetric vertical speeds and only a small natural collisi
 
 test('earning a missile plays one bounded fanfare that disconnects, and muting suppresses it', async () => {
   const audio = setup();
-  Object.assign(audio.context, { geodesCracked: 0, rocketCount: 0, buzz() {}, updateHUD() {} });
-  vm.runInContext('const MISSILE_EVERY = 10;', audio.context);
-  loadFunctions(audio, ['awardGeode']);
+  setupMeteors(audio);
   await audio.gestures.pointerdown();
-  for (let i = 0; i < 9; i++) vm.runInContext('awardGeode()', audio.context);
+  vm.runInContext('awardPoints(200, 200, 499)', audio.context);
   assert.equal(audio.sources.length, 0);
-  vm.runInContext('awardGeode()', audio.context);
+  vm.runInContext('awardPoints(200, 200, 1)', audio.context);
   assert.equal(audio.context.rocketCount, 1);
   assert.equal(audio.sources.length, 10);
   const freqs = audio.sources.map(s => s.node.frequency.value);
   assert.ok(freqs.includes(392) && freqs.includes(783.99), `fanfare notes, got ${freqs}`);
   // A second missile in the same burst (e.g. fireball) does not stack another fanfare.
-  for (let i = 0; i < 10; i++) vm.runInContext('awardGeode()', audio.context);
-  assert.equal(audio.context.rocketCount, 2);
+  vm.runInContext('awardPoints(200, 200, 1000)', audio.context);
+  assert.equal(audio.context.rocketCount, 3);
   assert.equal(audio.sources.length, 10);
   for (const { node, time } of audio.sources) { assert.ok(node.stopTime > time); node.onended(); }
   assert.ok(audio.sources.every(({ node }) => node.disconnected));
   audio.contexts[0].currentTime += 5;
   audio.window.audioMuted = true;
-  for (let i = 0; i < 10; i++) vm.runInContext('awardGeode()', audio.context);
-  assert.equal(audio.context.rocketCount, 3);
+  vm.runInContext('awardPoints(200, 200, 500)', audio.context);
+  assert.equal(audio.context.rocketCount, 4);
   assert.equal(audio.sources.length, 10);
   audio.window.audioMuted = false;
-  for (let i = 0; i < 9; i++) vm.runInContext('awardGeode()', audio.context);
+  vm.runInContext('awardPoints(200, 200, 499)', audio.context);
   assert.equal(audio.sources.length, 10);
   assert.deepEqual(audio.errors, []);
 });
@@ -887,7 +885,7 @@ test('destroying a meteor emits one shockwave that knocks nearby geodes and rock
   assert.ok(near.kvx > 50 && Math.abs(near.kvy) < 1e-9, 'geode pushed right, away from meteor');
   assert.ok(rock.kvy < -50 && Math.abs(rock.kvx) < 1e-9, 'rock pushed up, away from meteor');
   assert.equal(far.kvx, undefined);
-  assert.equal(audio.context.pointPopups.length, 0, 'meteors award no direct points');
+  assert.deepEqual(audio.context.pointPopups.map(p => p.text), ['+100']);
   // Removing a meteor without destroying it (e.g. reset) makes no shockwave.
   vm.runInContext('spawnMeteor(); meteors.length = 0;', audio.context);
   assert.equal(audio.context.shockwaves.length, 1);
@@ -908,14 +906,14 @@ test('knockback decays so flyer arcs resume, and shockwaves and popups stay capp
   assert.ok(audio.context.pointPopups.every(p => p.text === '+5'));
 });
 
-test('rocket blast shows one +5 popup per rock matching the score awarded', () => {
+test('rocket blast shows one +100 popup per rock matching the score awarded', () => {
   const audio = setup();
   setupMeteors(audio);
   audio.context.score = 0;
   audio.context.rocks.push({ x: 200, y: 200, r: 15, color: '#555' }, { x: 220, y: 200, r: 15, color: '#555' }, { x: 380, y: 600, r: 15 });
   vm.runInContext('rocketExplode(200, 200)', audio.context);
-  assert.equal(audio.context.score, 10);
-  assert.deepEqual(audio.context.pointPopups.map(p => [p.x, p.text]), [[220, '+5'], [200, '+5']]);
+  assert.equal(audio.context.score, 200);
+  assert.deepEqual(audio.context.pointPopups.map(p => [p.x, p.text]), [[220, '+100'], [200, '+100']]);
   assert.equal(audio.context.shockwaves.length, 0, 'rocket blasts without a meteor do not emit shockwaves');
 });
 
@@ -924,15 +922,131 @@ test('fireball explosion shows popups that sum to the awarded points and emits a
   setupMeteors(audio);
   Object.assign(audio.context, {
     score: 0, GEM_TYPES: [{ name: 'diamond', color: '#b9f2ff', points: 100 }],
-    awardGeode() {}, spawnDiamond() {}, sfxExplosion() {}
+    spawnDiamond() {}, sfxExplosion() {}
   });
   loadFunctions(audio, ['explodeFireball']);
   audio.context.geodes.push({ x: 50, y: 50, r: 20 }, { x: 90, y: 50, r: 20 });
   audio.context.rocks.push({ x: 10, y: 10, r: 15 });
   vm.runInContext('explodeFireball({ x: 100, y: 100 })', audio.context);
-  assert.equal(audio.context.score, 205);
+  assert.equal(audio.context.score, 400);
   const total = audio.context.pointPopups.reduce((sum, p) => sum + Number(p.text.slice(1)), 0);
-  assert.equal(total, 205);
+  assert.equal(total, 400);
   assert.equal(audio.context.shockwaves.length, 1);
   assert.equal(audio.context.geodes.length + audio.context.rocks.length, 0);
+});
+
+function setupDestruction(audio) {
+  setupMeteors(audio);
+  Object.assign(audio.context, {
+    gameOver: false, HIT_PAD: 8, fireLaser: () => true,
+    GEM_TYPES: [{ name: 'diamond', color: '#b9f2ff', points: 100 }]
+  });
+  loadFunctions(audio, ['strike', 'pickTarget', 'maybeSpawnGem', 'spawnDiamond', 'explodeFireball', 'level', 'pace']);
+  vm.runInContext('Math.random = () => 0', audio.context);
+}
+
+test('laser and missile destruction award exact geode, rock, asteroid and fireball points', () => {
+  for (const weapon of ['strike', 'rocketExplode']) {
+    for (const [list, expected] of [['geodes', 25], ['rocks', 100], ['meteors', 100], ['fireballs', 50]]) {
+      const audio = setup();
+      setupDestruction(audio);
+      audio.context[list].push({
+        x: 200, y: 200, r: 20, baseR: 20, hp: 1, vx: -12, vy: 24, color: '#555'
+      });
+      vm.runInContext(`${weapon}(200, 200)`, audio.context);
+      assert.equal(audio.context.score, expected, `${weapon}: ${list}`);
+      assert.equal(audio.context[list].length, 0);
+      assert.deepEqual(audio.context.pointPopups.map(p => p.text), [`+${expected}`]);
+    }
+  }
+});
+
+test('score thresholds grant every crossed missile once, including large awards and spent ammo', () => {
+  const audio = setup();
+  setupMeteors(audio);
+  for (const [points, expectedScore, expectedAmmo] of [
+    [499, 499, 0], [1, 500, 1], [0, 500, 1], [1499, 1999, 3], [1, 2000, 4]
+  ]) {
+    vm.runInContext(`awardPoints(200, 200, ${points})`, audio.context);
+    assert.equal(audio.context.score, expectedScore);
+    assert.equal(audio.context.rocketCount, expectedAmmo);
+  }
+  audio.context.rocketCount = 0;
+  vm.runInContext('awardPoints(200, 200, 499)', audio.context);
+  assert.equal(audio.context.rocketCount, 0);
+  vm.runInContext('awardPoints(200, 200, 1)', audio.context);
+  assert.equal(audio.context.rocketCount, 1);
+  audio.context.score = 0;
+  audio.context.rocketCount = 0;
+  for (let i = 0; i < 10; i++) vm.runInContext('awardGeode({ x: 200, y: 200 })', audio.context);
+  assert.equal(audio.context.score, 250);
+  assert.equal(audio.context.rocketCount, 0, 'ten destroyed geodes no longer grant a missile');
+});
+
+test('released crystals inherit instantaneous velocity including knockback and level transition', () => {
+  for (const weapon of ['strike', 'rocketExplode']) {
+    for (const vy of [-35, 35]) {
+      const audio = setup();
+      setupDestruction(audio);
+      vm.runInContext(`const released = [], originalCreateGem = createGem;
+        createGem = (...args) => { originalCreateGem(...args); released.push(gems.at(-1)); };`, audio.context);
+      audio.context.geodesCracked = 99;
+      audio.context.geodes.push({
+        x: 200, y: 200, r: 20, vx: -12, vy, kvx: 4, kvy: -5, color: '#222'
+      });
+      vm.runInContext(`${weapon}(200, 200)`, audio.context);
+      const gem = vm.runInContext('released[0]', audio.context);
+      assert.ok(Math.abs(gem.vx * 1.08 - (-8)) < 1e-10);
+      assert.ok(Math.abs(gem.vy * 1.08 - (vy - 5)) < 1e-10);
+      if (weapon === 'strike') {
+        audio.context.target = gem;
+        vm.runInContext('stepGem(target, 0.1)', audio.context);
+        assert.ok(Math.abs(gem.vy - ((vy - 5) / 1.08 + 700 * 0.0045 * 0.108)) < 1e-10);
+      }
+    }
+  }
+  const audio = setup();
+  setupDestruction(audio);
+  audio.context.geodesCracked = 200;
+  vm.runInContext('spawnMeteor(); updateMeteors(0.1)', audio.context);
+  const m = audio.context.meteors[0];
+  m.x = 200; m.y = 200;
+  const { vx, vy } = m;
+  vm.runInContext('hitMeteor(meteors[0], true)', audio.context);
+  for (const gem of audio.context.gems) {
+    assert.ok(Math.abs(gem.vx * 1.16 - vx) < 1e-10);
+    assert.ok(Math.abs(gem.vy * 1.16 - vy) < 1e-10);
+  }
+});
+
+test('fireball diamonds retain parent motion and their immediate bonus cannot be collected twice', () => {
+  const audio = setup();
+  setupDestruction(audio);
+  audio.context.geodes.push({ x: 200, y: 200, r: 20, vx: -12, vy: 32, kvx: 4, kvy: 5, color: '#222' });
+  vm.runInContext('explodeFireball({ x: 100, y: 200 })', audio.context);
+  const gem = audio.context.gems[0];
+  assert.equal(audio.context.score, 175);
+  assert.equal(gem.points, 0);
+  assert.equal(gem.vx, -8);
+  assert.equal(gem.vy, 37);
+  assert.deepEqual(audio.context.pointPopups.map(p => p.text), ['+50', '+25', '+100']);
+});
+
+test('physical targets stay below the HUD and outside the heat gauge through movement', () => {
+  const audio = setup();
+  setupMeteors(audio);
+  audio.context.playfieldTop = 100;
+  audio.context.heatBounds = { left: 100, right: 300, top: 630, bottom: 670 };
+  for (const step of ['stepFlyer', 'stepGem', 'updateMeteors']) {
+    const o = { x: 200, y: 115, r: 20, vx: 0, vy: -100, age: 0, vrot: 0, rot: 0, fallSpeed: 30, trailTimer: 0 };
+    audio.context.target = o;
+    if (step === 'updateMeteors') audio.context.meteors.push(o);
+    vm.runInContext(step === 'updateMeteors' ? 'updateMeteors(0.033)' : `${step}(target, 0.033)`, audio.context);
+    assert.ok(o.y - o.r - (step === 'updateMeteors' ? 18 : 0) >= 100);
+    o.y = 640;
+    vm.runInContext('avoidHUD(target)', audio.context);
+    const r = o.r + (step === 'updateMeteors' ? 18 : 0);
+    assert.ok(o.x + r <= 100 || o.x - r >= 300 || o.y + r <= 630 || o.y - r >= 670);
+    audio.context.meteors.length = 0;
+  }
 });

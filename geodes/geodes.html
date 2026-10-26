@@ -166,6 +166,7 @@
     }
 
     #tools {
+      box-sizing: border-box;
       position: fixed;
       top: calc(52px + env(safe-area-inset-top));
       right: max(8px, env(safe-area-inset-right));
@@ -460,7 +461,7 @@
       <div class="dot"></div><span class="key">Score</span><span class="val" id="score">0</span>
     </div>
     <div class="chip speed">
-      <div class="dot"></div><span class="key">Next missile</span><span class="val" id="missileProg">0/10</span>
+      <div class="dot"></div><span class="key">Next missile</span><span class="val" id="missileProg">0/500</span>
     </div>
     <div class="chip"><span class="key">Level</span><span class="val" id="level">1</span></div>
     <button id="rocketBtn" class="hud-btn" type="button" title="Arm a missile, then tap a target">Arm</button>
@@ -499,15 +500,15 @@
         <summary>How to play</summary>
       <div class="row">
         <div class="pill">🌋 <strong>Geodes</strong> — Dark spheres launched from the volcano in random arcs. They slow at the peak and fall as gently as they rise. Tap to crack them and release
-          gems.</div>
+          gems. Each destroyed geode earns 25 points.</div>
         <div class="pill">🪨 <strong>Rocks</strong> — Jagged gray stones. Tap to break them (no gems, no penalty for
-          missing).</div>
+          missing). Each destroyed rock earns 100 points.</div>
         <div class="pill">🔥 <strong>Fireballs</strong> — Rare glowing orbs. Tap to explode and turn all geodes into
-          diamonds!</div>
-        <div class="pill">🚀 <strong>Missiles</strong> — Crack 10 geodes and a fanfare plays as a pod slides out of the gun. Right-click, long-press, or tap Arm, then tap the target. The pod retracts when you are empty.</div>
+          diamonds! Each fireball earns 50 points, plus destruction points and the immediate 100-point diamond bonus for each cleared geode.</div>
+        <div class="pill">🚀 <strong>Missiles</strong> — Earn a missile every 500 points and a fanfare plays as a pod slides out of the gun. Right-click, long-press, or tap Arm, then tap the target. The pod retracts when you are empty.</div>
         <div class="pill"><strong>Laser heat</strong> — Watch the bar below the gun. Rapid shots build heat. At 80%, the gun glows red and a klaxon sounds. At 100%, a warning sounds and the laser locks for two seconds, then vents steam as it cools. Pace your shots to cool it down. Missiles still work while the laser is hot.</div>
         <div class="pill"><strong>Levels</strong> — Every 100 destroyed geodes advances a level. Hazards and crystals move 8% faster per level; points alone do not advance levels.</div>
-        <div class="pill"><strong>Meteors</strong> — Large fiery rocks accelerate toward the gun from the sky, shrinking with each hit. Three laser shots or one missile release five gems. Destroying a meteor sends out a double-size shockwave; fireballs also knock nearby geodes and rocks away. A klaxon warns of an imminent geode impact.</div>
+        <div class="pill"><strong>Meteors (asteroids)</strong> — Large fiery rocks accelerate toward the gun from the sky, shrinking with each hit. Three laser shots or one missile earn 100 points and release five gems. Destroying a meteor sends out a double-size shockwave; fireballs also knock nearby geodes and rocks away. A klaxon warns of an imminent geode impact.</div>
         <div class="pill"><strong>Gravity</strong> — Objects fall slowly at first, then accelerate. Gravity increases by 10% of its starting strength every 10,000 points. Crystals stay visible until collected or falling offscreen.</div>
       </div>
 
@@ -614,7 +615,10 @@
         const gun = { x: 0, y: 0, aim: -Math.PI / 2 };
 
         // Configurations
-        const MISSILE_EVERY = 10;
+        const MISSILE_EVERY = 500;
+        let playfieldTop = 0;
+        let heatBounds = null;
+        let menuBounds = null;
         const LASER_SHOT_INTERVAL = 0.15;
         const LASER_HEAT_PER_SHOT = 25;
         const LASER_COOLING_RATE = 20;
@@ -675,7 +679,7 @@
           scoreEl.textContent = score.toString();
           levelEl.textContent = String(level());
           updateLaserHeat();
-          if (missileProgEl) missileProgEl.textContent = `${geodesCracked % MISSILE_EVERY}/${MISSILE_EVERY}`;
+          if (missileProgEl) missileProgEl.textContent = `${score % MISSILE_EVERY}/${MISSILE_EVERY}`;
           if (rocketBtn) {
             rocketBtn.classList.toggle('armed', rocketArmed && rocketCount > 0);
             rocketBtn.disabled = rocketCount <= 0;
@@ -710,14 +714,22 @@
           return laserOverheatedUntil > runTime || laserHeat >= LASER_WARNING_HEAT;
         }
 
-        function awardGeode() {
-          geodesCracked++;
-          if (geodesCracked % MISSILE_EVERY === 0) {
-            rocketCount++;
+        function awardPoints(x, y, points, color) {
+          const previous = score;
+          score += points;
+          const earned = Math.floor(score / MISSILE_EVERY) - Math.floor(previous / MISSILE_EVERY);
+          if (earned > 0) {
+            rocketCount += earned;
             buzz(18);
             if (window.sfxMissileFanfare) window.sfxMissileFanfare();
           }
+          showPoints(x, y, points, color);
           updateHUD();
+        }
+
+        function awardGeode(g) {
+          geodesCracked++;
+          awardPoints(g.x, g.y, 25);
         }
 
         function buzz(ms) {
@@ -770,10 +782,65 @@
           const heatGauge = document.getElementById('laserHeatChip');
           heatGauge.style.left = `${left + gun.x}px`;
           heatGauge.style.top = `${Math.min(gun.y + 30,           ch - safeBottom - 28)}px`;
-                  }
+          refreshPlayfield();
+        }
+
+        function refreshPlayfield() {
+          const c = canvas.getBoundingClientRect();
+          const hud = document.getElementById('hud').getBoundingClientRect();
+          toolsEl.style.top = `${hud.bottom + 6}px`;
+          const tools = toolsEl.getBoundingClientRect();
+          playfieldTop = Math.max(0, hud.bottom - c.top + 6);
+          menuBounds = !toolsEl.classList.contains('hidden') && tools.right > c.left && tools.left < c.right
+            ? { left: tools.left - c.left - 6, right: tools.right - c.left + 6,
+              top: tools.top - c.top - 6, bottom: tools.bottom - c.top + 6 } : null;
+          const heat = laserHeatChip.getBoundingClientRect();
+          heatBounds = { left: heat.left - c.left - 6, right: heat.right - c.left + 6,
+            top: heat.top - c.top - 6, bottom: heat.bottom - c.top + 6 };
+          for (const list of [geodes, rocks, fireballs, gems, meteors]) {
+            for (const o of list) {
+              const r = o.r + (list === meteors ? 18 : 0);
+              o.x = Math.max(r, Math.min(canvas.clientWidth - r, o.x));
+              o.y = Math.min(canvas.clientHeight - r, o.y);
+              avoidHUD(o);
+            }
+          }
+        }
+
+        function avoidHUD(o) {
+          const r = o.r + (meteors.includes(o) ? 18 : 0);
+          if (o.y - r < playfieldTop) {
+            o.y = playfieldTop + r;
+            if (o.vy < 0) o.vy = -o.vy;
+            if (o.kvy < 0) o.kvy = -o.kvy;
+          }
+          for (const bounds of [menuBounds, heatBounds]) {
+            if (!bounds || o.x + r <= bounds.left || o.x - r >= bounds.right ||
+                o.y + r <= bounds.top || o.y - r >= bounds.bottom) continue;
+            const exits = [
+              { distance: o.x + r - bounds.left, axis: 'x', position: bounds.left - r, sign: -1 },
+              { distance: bounds.right - o.x + r, axis: 'x', position: bounds.right + r, sign: 1 },
+              { distance: o.y + r - bounds.top, axis: 'y', position: bounds.top - r, sign: -1 },
+              { distance: bounds.bottom - o.y + r, axis: 'y', position: bounds.bottom + r, sign: 1 }
+            ].filter(exit => exit.axis === 'x'
+              ? exit.position >= r && exit.position <= canvas.clientWidth - r
+              : exit.position >= playfieldTop + r && exit.position <= canvas.clientHeight - r);
+            exits.sort((a, b) => a.distance - b.distance);
+            const exit = exits[0];
+            if (!exit) continue;
+            o[exit.axis] = exit.position;
+            const velocity = exit.axis === 'x' ? 'vx' : 'vy';
+            o[velocity] = Math.abs(o[velocity] || 0) * exit.sign;
+            const knock = exit.axis === 'x' ? 'kvx' : 'kvy';
+            if (o[knock]) o[knock] = Math.abs(o[knock]) * exit.sign;
+          }
+        }
+
         window.addEventListener('resize', resize, { passive: true });
         if (window.visualViewport) window.visualViewport.addEventListener('resize', resize, { passive: true });
         resize();
+        const hudObserver = new ResizeObserver(refreshPlayfield);
+        for (const el of [document.getElementById('hud'), toolsEl, laserHeatChip]) hudObserver.observe(el);
 
         // Utility
         const rand = (a = 1, b = 0) => Math.random() * (a - b) + b;
@@ -851,8 +918,6 @@
           const stepTime = dt * pace();
           o.age += stepTime;
           stepFallingBody(o, dt);
-          o.phase = o.vy < 0 ? 'up' : 'down';
-          o.fallSpeed = Math.max(0, o.vy) * pace();
           if (o.kvx || o.kvy) {
             o.x += o.kvx * stepTime;
             o.y += o.kvy * stepTime;
@@ -862,6 +927,9 @@
             if (Math.abs(o.kvx) + Math.abs(o.kvy) < 1) o.kvx = o.kvy = 0;
           }
           if (o.spin) o.rot += o.spin * stepTime;
+          avoidHUD(o);
+          o.phase = o.vy < 0 ? 'up' : 'down';
+          o.fallSpeed = Math.max(0, o.vy) * pace();
         }
 
         // Expanding ring that pushes nearby geodes and rocks outward. Returns how many were pushed.
@@ -928,11 +996,16 @@
         function spawnMeteor() {
           const w = canvas.clientWidth, h = canvas.clientHeight;
           const r = (coarsePointer ? 31 * 0.82 : 27 * 0.74) * 2.7;
+          const x = Math.random() < 0.5 ? r + 18 : w - r - 18;
+          const y = playfieldTop + r + 18;
+          const distance = Math.hypot(gun.x - x, gun.y - y);
           meteors.push({
-            x: Math.random() < 0.5 ? r : w - r, y: -r,
+            x, y, vx: (gun.x - x) / distance * h * 0.055 * pace(),
+            vy: (gun.y - y) / distance * h * 0.055 * pace(),
             r, baseR: r, hp: 3, fallSpeed: h * 0.055, rot: rand(Math.PI * 2), trailTimer: 0,
             color: '#624235', seed: (Math.random() * 20) | 0
           });
+          avoidHUD(meteors[meteors.length - 1]);
           if (window.setMeteorFlightSound) window.setMeteorFlightSound(true);
         }
 
@@ -953,6 +1026,7 @@
             m.vy = dy / distance * m.fallSpeed * pace();
             m.x += dx / distance * step;
             m.y += dy / distance * step;
+            avoidHUD(m);
             m.rot += dt * 0.6;
             m.trailTimer += dt;
             if (m.trailTimer >= 0.06) {
@@ -1008,9 +1082,10 @@
           makeShards(m.x, m.y, m.color, { x: 0, y: -1 });
           makeSparkles(m.x, m.y, '#ff6a00');
           emitShockwave(m.x, m.y, 300, 260);
-          const offset = rand(Math.PI * 2);
+          const velocity = parentVelocity(m, true);
+          awardPoints(m.x, m.y, 100);
           for (let i = 0; i < 5; i++) {
-            createGem(m.x, m.y, offset + i * Math.PI * 2 / 5);
+            createGem(m.x, m.y, velocity);
           }
         }
 
@@ -1032,6 +1107,7 @@
           const col = GEODE_COLORS[(Math.random() * GEODE_COLORS.length) | 0];
           const g = makeFlyer(radius);
           Object.assign(g, { spin, rot: rand(Math.PI * 2), color: col });
+          avoidHUD(g);
           geodes.push(g);
         }
 
@@ -1041,6 +1117,7 @@
           fb.threat = true;
           fb.vx *= 0.35;
           Object.assign(fb, { rot: 0, pulsePhase: 0 });
+          avoidHUD(fb);
           fireballs.push(fb);
         }
 
@@ -1054,6 +1131,7 @@
             spin, rot: rand(Math.PI * 2), color: col,
             seed: (Math.random() * 20) | 0
           });
+          avoidHUD(rock);
           rocks.push(rock);
         }
 
@@ -1108,73 +1186,69 @@
             });
           }
 
-          // Award points and break all geodes on screen; spawn free diamonds (visual only)
-          let awarded = 0;
+          awardPoints(fb.x, fb.y, 50);
+          // Preserve the immediate diamond bonus without awarding it again on collection.
           for (let i = geodes.length - 1; i >= 0; i--) {
             const g = geodes[i];
+            const velocity = parentVelocity(g);
             const diamondPoints = GEM_TYPES[0].points;
-            awarded += diamondPoints;
-            showPoints(g.x, g.y, diamondPoints, GEM_TYPES[0].color);
-            awardGeode();
+            awardGeode(g);
+            awardPoints(g.x, g.y - 20, diamondPoints, GEM_TYPES[0].color);
             makeShards(g.x, g.y, g.color, { x: 0, y: -1 }, g.r / 22);
-            spawnDiamond(g.x, g.y - 4, { free: true }); // spawn a visual diamond but mark it free
+            spawnDiamond(g.x, g.y - 4, { free: true, velocity });
             geodes.splice(i, 1);
           }
 
           // Also break all rocks on screen and award their points
           for (let i = rocks.length - 1; i >= 0; i--) {
             const r = rocks[i];
-            awarded += 5; // rocks worth 5 points when exploded by fireball
-            showPoints(r.x, r.y, 5);
+            awardPoints(r.x, r.y, 100);
             makeShards(r.x, r.y, r.color, { x: 0, y: 1 });
             rocks.splice(i, 1);
           }
 
           // Anything left nearby (e.g. spawned this frame) is knocked away.
           emitShockwave(fb.x, fb.y, 170, 280);
+        }
 
-          // Apply the awarded points and update HUD/sfx
-          if (awarded > 0) {
-            score += awarded;
-            updateHUD();
-          }
+        // Flyers store unscaled velocity; meteors already store pixels per active second.
+        function parentVelocity(o, meteor = false) {
+          const scale = meteor ? 1 : pace();
+          return { vx: (o.vx + (o.kvx || 0)) * scale, vy: (o.vy + (o.kvy || 0)) * scale };
         }
 
         // Gem creation
-        function maybeSpawnGem(x, y) {
+        function maybeSpawnGem(x, y, velocity) {
           if (Math.random() < 0.85) {
-            createGem(x, y);
+            createGem(x, y, velocity);
           }
         }
 
-        function createGem(x, y, angle) {
+        function createGem(x, y, velocity) {
           const t = chooseGemType();
-          let vx = rand(20, -20), vy = rand(-10, -30);
-          if (angle !== undefined) {
-            const speed = Math.hypot(vx, vy);
-            vx = Math.cos(angle) * speed;
-            vy = Math.sin(angle) * speed;
-          }
-          gems.push({
+          const gem = {
             type: t.name, color: t.color, points: t.points,
             x, y, r: coarsePointer ? 18 : 14, rot: rand(Math.PI * 2), vrot: rand(1.2, -1.2),
-            vx, vy, alpha: 1
-          });
+            vx: velocity.vx / pace(), vy: velocity.vy / pace(), alpha: 1
+          };
+          gems.push(gem);
+          avoidHUD(gem);
         }
 
         // Special function to always spawn diamonds (for fireball explosions)
         function spawnDiamond(x, y, opts = {}) {
           // opts.free -> when true the spawned diamond remains visually but awards no points if later clicked
           const diamondType = GEM_TYPES[0]; // Diamond is first in array (most valuable)
-          const drift = rand(12, -12);
           const free = !!opts.free;
-          gems.push({
+          const gem = {
             type: diamondType.name, color: diamondType.color, points: free ? 0 : diamondType.points,
             x, y, r: coarsePointer ? 18 : 14, rot: rand(Math.PI * 2), vrot: rand(1.2, -1.2),
-            vx: drift, vy: rand(-10, -30),
+            vx: opts.velocity.vx / pace(), vy: opts.velocity.vy / pace(),
             alpha: 1,
             free // mark so code can choose to treat it specially if needed
-          });
+          };
+          gems.push(gem);
+          avoidHUD(gem);
         }
 
         function stepGem(gm, dt) {
@@ -1185,7 +1259,7 @@
             gm.x = canvas.clientWidth - gm.r;
             gm.vx = -Math.abs(gm.vx) * 0.4;
           }
-          if (gm.y < gm.r) { gm.y = gm.r; gm.vy = Math.abs(gm.vy) * 0.2; }
+          avoidHUD(gm);
           return gm.y - gm.r > canvas.clientHeight;
         }
 
@@ -1783,9 +1857,7 @@
             const dist = Math.sqrt(dx * dx + dy * dy);
             if (dist < 10) {
               // Arrived at gun — award gem points only
-              score += tb.points;
-              updateHUD();
-              showPoints(gunTipX, gunTipY - 16, tb.points, tb.color);
+              awardPoints(gunTipX, gunTipY - 16, tb.points, tb.color);
               makeSparkles(gunTipX, gunTipY, tb.color);
               tractorBeams.splice(i, 1);
               continue;
@@ -2109,9 +2181,7 @@
             obj.clicked = true;
             rocks.splice(rocks.indexOf(obj), 1);
             makeShards(obj.x, obj.y, obj.color, { x: 0, y: 1 });
-            score += 5;
-            showPoints(obj.x, obj.y, 5);
-            updateHUD();
+            awardPoints(obj.x, obj.y, 100);
             if (typeof sfxRockCrumble === 'function') sfxRockCrumble();
             buzz(8);
             return;
@@ -2120,8 +2190,9 @@
           obj.clicked = true;
           geodes.splice(geodes.indexOf(obj), 1);
           makeShards(obj.x, obj.y, obj.color, { x: 0, y: -1 });
-          maybeSpawnGem(obj.x, obj.y - 4);
-          awardGeode();
+          const velocity = parentVelocity(obj);
+          awardGeode(obj);
+          maybeSpawnGem(obj.x, obj.y - 4, velocity);
           if (typeof sfxGeode === 'function') sfxGeode();
           buzz(10);
         }
@@ -2232,8 +2303,9 @@
             const g = geodes[i];
             if (dist2(rx, ry, g.x, g.y) <= blastR * blastR) {
               makeShards(g.x, g.y, g.color, { x: 0, y: -1 });
-              maybeSpawnGem(g.x, g.y - 4);
-              awardGeode();
+              const velocity = parentVelocity(g);
+              awardGeode(g);
+              maybeSpawnGem(g.x, g.y - 4, velocity);
               geodes.splice(i, 1);
             }
           }
@@ -2242,8 +2314,7 @@
             const r = rocks[i];
             if (dist2(rx, ry, r.x, r.y) <= blastR * blastR) {
               makeShards(r.x, r.y, r.color, { x: 0, y: 1 });
-              score += 5;
-              showPoints(r.x, r.y, 5);
+              awardPoints(r.x, r.y, 100);
               rocks.splice(i, 1);
             }
           }
@@ -2287,6 +2358,7 @@
           overlay.classList.add('hidden');
           pauseVeil.classList.add('hidden');
           toolsEl.classList.add('hidden');
+          refreshPlayfield();
           if (window.setRocketFlightSound) window.setRocketFlightSound(rockets.length > 0);
           if (window.setMeteorFlightSound) window.setMeteorFlightSound(meteors.length > 0);
         }
@@ -2454,7 +2526,10 @@
         pauseBtn.addEventListener('click', pauseGame);
         document.getElementById('resumeBtn').addEventListener('click', startGame);
         resetBtn.addEventListener('click', resetGame);
-        menuBtn.addEventListener('click', () => toolsEl.classList.toggle('hidden'));
+        menuBtn.addEventListener('click', () => {
+          toolsEl.classList.toggle('hidden');
+          refreshPlayfield();
+        });
         rocketBtn.addEventListener('click', () => {
           if (rocketCount <= 0) return;
           rocketArmed = !rocketArmed;
