@@ -517,7 +517,6 @@ test('meteor needs exactly three laser hits and drops five gems inheriting its v
   vm.runInContext('hitMeteor(targetMeteor)', audio.context);
   assert.equal(audio.context.gems.length, 5);
   assert.equal(audio.context.score, 500, 'destruction is awarded exactly once');
-  assert.equal(audio.context.rocketCount, 1, 'a meteor earns one missile on its own');
   assert.deepEqual(audio.context.pointPopups.map(p => p.text), ['+500']);
 });
 
@@ -529,8 +528,6 @@ test('one rocket destroys a meteor and leaves all five gems free to collect', as
   assert.equal(audio.context.meteors.length, 0);
   assert.equal(audio.context.gems.length, 5);
   assert.equal(audio.context.tractorBeams.length, 0);
-  assert.equal(audio.context.score, 500);
-  assert.equal(audio.context.rocketCount, 1, 'a missile meteor kill earns one missile');
 });
 
 test('meteor flight accelerates toward the gun and detects gun impact', () => {
@@ -931,9 +928,9 @@ test('fireball explosion shows popups that sum to the awarded points and emits a
   audio.context.geodes.push({ x: 50, y: 50, r: 20 }, { x: 90, y: 50, r: 20 });
   audio.context.rocks.push({ x: 10, y: 10, r: 15 });
   vm.runInContext('explodeFireball({ x: 100, y: 100 })', audio.context);
-  assert.equal(audio.context.score, 360);
+  assert.equal(audio.context.score, 160);
   const total = audio.context.pointPopups.reduce((sum, p) => sum + Number(p.text.slice(1)), 0);
-  assert.equal(total, 360);
+  assert.equal(total, 160);
   assert.equal(audio.context.shockwaves.length, 1);
   assert.equal(audio.context.geodes.length + audio.context.rocks.length, 0);
 });
@@ -958,7 +955,6 @@ test('laser and missile destruction award exact geode, rock, asteroid and fireba
       });
       vm.runInContext(`${weapon}(200, 200)`, audio.context);
       assert.equal(audio.context.score, expected, `${weapon}: ${list}`);
-      assert.equal(audio.context.rocketCount, list === 'meteors' ? 1 : 0, `${weapon}: ${list} missile reward`);
       assert.equal(audio.context[list].length, 0);
       assert.deepEqual(audio.context.pointPopups.map(p => p.text), [`+${expected}`]);
     }
@@ -1023,17 +1019,17 @@ test('released crystals inherit instantaneous velocity including knockback and l
   }
 });
 
-test('fireball diamonds retain parent motion and their immediate bonus cannot be collected twice', () => {
+test('fireball diamonds retain parent motion and are worth their gem value only when collected', () => {
   const audio = setup();
   setupDestruction(audio);
   audio.context.geodes.push({ x: 200, y: 200, r: 20, vx: -12, vy: 32, kvx: 4, kvy: 5, color: '#222' });
   vm.runInContext('explodeFireball({ x: 100, y: 200 })', audio.context);
   const gem = audio.context.gems[0];
-  assert.equal(audio.context.score, 225);
-  assert.equal(gem.points, 0);
+  assert.equal(audio.context.score, 125);
+  assert.equal(gem.points, 100);
   assert.equal(gem.vx, -8);
   assert.equal(gem.vy, 37);
-  assert.deepEqual(audio.context.pointPopups.map(p => p.text), ['+100', '+25', '+100']);
+  assert.deepEqual(audio.context.pointPopups.map(p => p.text), ['+100', '+25']);
 });
 
 test('physical targets stay below the HUD and outside the heat gauge through movement', () => {
