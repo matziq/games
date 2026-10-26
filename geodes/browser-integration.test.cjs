@@ -175,7 +175,8 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
     assert.equal(await evaluate('__game.tractorBeams.length'), 0);
     assert.equal(await evaluate('__game.score'), 80);
     assert.ok(await evaluate('__game.time') > beforeCollection);
-    await evaluate('__game.resetGame(); __game.startGame(); __game.spawnMeteor()');
+    // A 500-point meteor always earns a missile; mute that fanfare so only meteor audio is measured.
+    await evaluate('window.__fanfare = window.sfxMissileFanfare; window.sfxMissileFanfare = null; __game.resetGame(); __game.startGame(); __game.spawnMeteor()');
     await evaluate('__game.meteors[0].x = 200; __game.meteors[0].y = 250');
     const initialMeteorRadius = await evaluate('__game.meteors[0].r');
     await evaluate('__game.strike(200, 250)');
@@ -233,6 +234,7 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
     await evaluate("__game.endGame('Test impact')");
     await wait(600);
     assert.ok(await evaluate(rms) < 0.001);
+    await evaluate('window.sfxMissileFanfare = window.__fanfare');
 
     // Heat warnings follow real shot/cooldown transitions and actual canvas paint.
     await evaluate('__game.resetGame(); __game.startGame()');
