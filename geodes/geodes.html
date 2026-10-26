@@ -499,10 +499,10 @@
           missing).</div>
         <div class="pill">🔥 <strong>Fireballs</strong> — Rare glowing orbs. Tap to explode and turn all geodes into
           diamonds!</div>
-        <div class="pill">🚀 <strong>Missiles</strong> — Crack 10 geodes and a pod slides out of the gun. Right-click, long-press, or tap Arm, then tap the target. The pod retracts when you are empty.</div>
+        <div class="pill">🚀 <strong>Missiles</strong> — Crack 10 geodes and a fanfare plays as a pod slides out of the gun. Right-click, long-press, or tap Arm, then tap the target. The pod retracts when you are empty.</div>
         <div class="pill"><strong>Laser heat</strong> — Watch the bar below the gun. Rapid shots build heat. At 100%, a warning sounds and the laser locks for two seconds. Pace your shots to cool it down. Missiles still work while the laser is hot.</div>
         <div class="pill"><strong>Levels</strong> — Every 100 destroyed geodes advances a level. Hazards and crystals move 8% faster per level; points alone do not advance levels.</div>
-        <div class="pill"><strong>Meteors</strong> — Large fiery rocks dive toward the gun from the sky. Hit one with three laser shots or one missile to release five gems. A klaxon warns of an imminent geode impact.</div>
+        <div class="pill"><strong>Meteors</strong> — Large fiery rocks dive toward the gun from the sky. Hit one with three laser shots or one missile to release five gems. Destroying a meteor or fireball sends out a shockwave that knocks nearby geodes and rocks away. A klaxon warns of an imminent geode impact.</div>
       </div>
 
       <div class="row">
@@ -596,6 +596,11 @@
         const laserBeams = []; // Active laser beam animations
         const rockets = []; // Active rocket projectiles
         const tractorBeams = []; // Gems being pulled to gun
+        const shockwaves = []; // Expanding rings from meteor/fireball destruction
+        const pointPopups = []; // Floating "+N" score labels
+        const SHOCKWAVE_MAX = 6;
+        const POINT_POPUP_MAX = 40;
+        const KNOCK_DAMPING = 3.5; // Knockback velocity decays so arcs resume
         let rocketCount = 0;
         let geodesCracked = 0;
         let podExtend = 0;
@@ -681,7 +686,7 @@
           if (geodesCracked % MISSILE_EVERY === 0) {
             rocketCount++;
             buzz(18);
-            if (typeof sfxMilestone === 'function') sfxMilestone();
+            if (window.sfxMissileFanfare) window.sfxMissileFanfare();
           }
           updateHUD();
         }
@@ -823,7 +828,44 @@
           o.phase = o.vy < 0 ? 'up' : 'down';
           o.fallSpeed = Math.max(0, o.vy) * pace();
           o.x += o.vx * stepTime;
+          if (o.kvx || o.kvy) {
+            o.x += o.kvx * stepTime;
+            o.y += o.kvy * stepTime;
+            const decay = Math.exp(-KNOCK_DAMPING * stepTime);
+            o.kvx *= decay;
+            o.kvy *= decay;
+            if (Math.abs(o.kvx) + Math.abs(o.kvy) < 1) o.kvx = o.kvy = 0;
+          }
           if (o.spin) o.rot += o.spin * stepTime;
+        }
+
+        // Expanding ring that pushes nearby geodes and rocks outward. Returns how many were pushed.
+        function emitShockwave(x, y, radius, strength) {
+          if (shockwaves.length >= SHOCKWAVE_MAX) shockwaves.shift();
+          shockwaves.push({ x, y, radius, life: 0.55, ttl: 0.55 });
+          let pushed = 0;
+          for (const list of [geodes, rocks]) {
+            for (const o of list) {
+              const dx = o.x - x, dy = o.y - y;
+              const d = Math.hypot(dx, dy);
+              const reach = radius + o.r;
+              if (d > reach) continue;
+              const ux = d > 0.001 ? dx / d : 0;
+              const uy = d > 0.001 ? dy / d : -1;
+              const impulse = strength * (0.35 + 0.65 * (1 - d / reach));
+              o.kvx = (o.kvx || 0) + ux * impulse;
+              o.kvy = (o.kvy || 0) + uy * impulse;
+              o.impactWarned = false;
+              pushed++;
+            }
+          }
+          return pushed;
+        }
+
+        function showPoints(x, y, points, color = '#ffe27a') {
+          if (!(points > 0)) return;
+          if (pointPopups.length >= POINT_POPUP_MAX) pointPopups.shift();
+          pointPopups.push({ x, y, text: `+${points}`, color, life: 0.9, ttl: 0.9 });
         }
 
         function hitsGun(o) {
@@ -944,6 +986,7 @@
           if (playExplosion && window.sfxExplosion) window.sfxExplosion();
           makeShards(m.x, m.y, m.color, { x: 0, y: -1 });
           makeSparkles(m.x, m.y, '#ff6a00');
+          emitShockwave(m.x, m.y, 150, 260);
           const offset = rand(Math.PI * 2);
           for (let i = 0; i < 5; i++) {
             createGem(m.x, m.y, offset + i * Math.PI * 2 / 5);
@@ -1049,6 +1092,7 @@
             const g = geodes[i];
             const diamondPoints = GEM_TYPES[0].points;
             awarded += diamondPoints;
+            showPoints(g.x, g.y, diamondPoints, GEM_TYPES[0].color);
             awardGeode();
             makeShards(g.x, g.y, g.color, { x: 0, y: -1 }, g.r / 22);
             spawnDiamond(g.x, g.y - 4, { free: true }); // spawn a visual diamond but mark it free
@@ -1059,9 +1103,13 @@
           for (let i = rocks.length - 1; i >= 0; i--) {
             const r = rocks[i];
             awarded += 5; // rocks worth 5 points when exploded by fireball
+            showPoints(r.x, r.y, 5);
             makeShards(r.x, r.y, r.color, { x: 0, y: 1 });
             rocks.splice(i, 1);
           }
+
+          // Anything left nearby (e.g. spawned this frame) is knocked away.
+          emitShockwave(fb.x, fb.y, 170, 280);
 
           // Apply the awarded points and update HUD/sfx
           if (awarded > 0) {
@@ -1705,6 +1753,7 @@
               // Arrived at gun — award gem points only
               score += tb.points;
               updateHUD();
+              showPoints(gunTipX, gunTipY - 16, tb.points, tb.color);
               makeSparkles(gunTipX, gunTipY, tb.color);
               tractorBeams.splice(i, 1);
               continue;
@@ -1834,6 +1883,48 @@
             ctx.fill();
             ctx.globalAlpha = 1;
             if (p.ttl <= 0) particles.splice(i, 1);
+          }
+
+          // Update & draw shockwave rings
+          for (let i = shockwaves.length - 1; i >= 0; i--) {
+            const sw = shockwaves[i];
+            sw.ttl -= dt;
+            if (sw.ttl <= 0) { shockwaves.splice(i, 1); continue; }
+            const t = 1 - sw.ttl / sw.life;
+            const ease = 1 - (1 - t) * (1 - t);
+            const r = sw.radius * (0.15 + 0.85 * ease);
+            const a = 1 - t;
+            ctx.save();
+            ctx.globalAlpha = a * 0.18;
+            ctx.fillStyle = '#ffcf5a';
+            ctx.beginPath();
+            ctx.arc(sw.x, sw.y, r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = a * 0.9;
+            ctx.strokeStyle = '#fff1c4';
+            ctx.lineWidth = 2 + 6 * (1 - t);
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          // Update & draw floating score labels
+          for (let i = pointPopups.length - 1; i >= 0; i--) {
+            const pp = pointPopups[i];
+            pp.ttl -= dt;
+            if (pp.ttl <= 0) { pointPopups.splice(i, 1); continue; }
+            pp.y -= 42 * dt;
+            const a = clamp(pp.ttl / pp.life * 1.6, 0, 1);
+            ctx.save();
+            ctx.globalAlpha = a;
+            ctx.font = '800 16px system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+            ctx.strokeText(pp.text, pp.x, pp.y);
+            ctx.fillStyle = pp.color;
+            ctx.fillText(pp.text, pp.x, pp.y);
+            ctx.restore();
           }
 
           requestAnimationFrame(loop);
@@ -1982,6 +2073,7 @@
             rocks.splice(rocks.indexOf(obj), 1);
             makeShards(obj.x, obj.y, obj.color, { x: 0, y: 1 });
             score += 5;
+            showPoints(obj.x, obj.y, 5);
             updateHUD();
             if (typeof sfxRockCrumble === 'function') sfxRockCrumble();
             buzz(8);
@@ -2114,6 +2206,7 @@
             if (dist2(rx, ry, r.x, r.y) <= blastR * blastR) {
               makeShards(r.x, r.y, r.color, { x: 0, y: 1 });
               score += 5;
+              showPoints(r.x, r.y, 5);
               rocks.splice(i, 1);
             }
           }
@@ -2180,7 +2273,7 @@
           if (window.stopCollisionAlarm) window.stopCollisionAlarm();
           score = 0; missed = 0;
           geodes.length = 0; rocks.length = 0; shards.length = 0; gems.length = 0; particles.length = 0; fireballs.length = 0; laserBeams.length = 0; rockets.length = 0; tractorBeams.length = 0;
-          meteors.length = 0;
+                    meteors.length = 0; shockwaves.length = 0; pointPopups.length = 0;
           meteorTimer = 0;
           meteorInterval = 24 + Math.random() * 12;
           spawnTimer = 0; rockTimer = 0; fireballTimer = 0; runTime = 0;
@@ -2748,6 +2841,41 @@
           // Bright celebration noise burst
           noiseBurst({ freq: 3500, q: 4, a: 0.005, r: 0.2, gain: 0.25 });
         }
+
+        // Short brass-style "ta-ta-ta-taaa" when a missile is earned. Throttled so one
+        // fireball that earns several missiles at once plays a single fanfare.
+        const FANFARE_VOICES = 10;
+        let lastFanfareAt = -Infinity;
+        function sfxMissileFanfare() {
+          if (!ready()) return deferred(sfxMissileFanfare);
+          if (activeVoices > MAX_VOICES - FANFARE_VOICES) return;
+          const t = now();
+          if (t - lastFanfareAt < 0.8) return;
+          lastFanfareAt = t;
+          const notes = [
+            { f: 392.0, at: 0, len: 0.09 },     // G4
+            { f: 523.25, at: 0.11, len: 0.09 }, // C5
+            { f: 659.25, at: 0.22, len: 0.09 }, // E5
+            { f: 783.99, at: 0.36, len: 0.42 }  // G5 (held)
+          ];
+          for (const n of notes) {
+            const start = t + n.at;
+            const brass = osc('square', n.f);
+            env(brass.g, start, 0.012, n.len, 0.11);
+            brass.o.start(start); brass.o.stop(start + n.len + 0.06);
+            const body = osc('triangle', n.f);
+            env(body.g, start, 0.008, n.len, 0.3);
+            body.o.start(start); body.o.stop(start + n.len + 0.06);
+          }
+          // Harmony under the final note.
+          for (const f of [523.25, 659.25]) {
+            const start = t + 0.36;
+            const chord = osc('triangle', f);
+            env(chord.g, start, 0.02, 0.4, 0.16);
+            chord.o.start(start); chord.o.stop(start + 0.46);
+          }
+        }
+        window.sfxMissileFanfare = sfxMissileFanfare;
 
         function sfxGeodeEscape() {
           if (!ready()) return deferred(sfxGeodeEscape);

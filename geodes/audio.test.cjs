@@ -264,7 +264,8 @@ test('gameplay launches rockets and stops flight audio on detonation and state c
     sfxRocket: audio.window.sfxRocket, sfxExplosion: audio.window.sfxExplosion,
     running: true, paused: false, gameOver: false, rocketCount: 1,
     rockets: [], geodes: [], rocks: [], shards: [], gems: [], particles: [], meteors: [],
-    fireballs: [], laserBeams: [], tractorBeams: [], score: 0, missed: 0,
+    fireballs: [], laserBeams: [], tractorBeams: [], shockwaves: [], pointPopups: [], score: 0, missed: 0,
+    showPoints() {},
     overlay: panel, pauseVeil: panel, toolsEl: panel, introHtml: '',
     coarsePointer: false, barrelTip: () => ({ x: 10, y: 10 }),
     updateHUD() {}, buzz() {}, rand: () => 1, dist2: () => 0,
@@ -394,9 +395,11 @@ function setupMeteors(audio) {
     clamp: (value, min, max) => Math.max(min, Math.min(max, value)),
     dist2: (x1, y1, x2, y2) => (x1 - x2) ** 2 + (y1 - y2) ** 2,
     makeShards() {}, makeSparkles() {}, updateHUD() {},
+    shockwaves: [], pointPopups: [], SHOCKWAVE_MAX: 6, POINT_POPUP_MAX: 40, KNOCK_DAMPING: 3.5,
     endGame: reason => { audio.context.endedReason = reason; }
   });
   loadFunctions(audio, [
+    'emitShockwave', 'showPoints', 'stepFlyer',
     'createGem', 'spawnMeteor', 'hitMeteor', 'destroyMeteor', 'updateMeteors',
     'meteorImpactPoint', 'firstMeteorOnSegment', 'rocketExplode',
     'imminentGeodeImpact', 'warnOfGeodeImpact'
@@ -587,4 +590,103 @@ test('flyer arcs have symmetric vertical speeds and only a small natural collisi
   assert.ok(Math.abs(accelerated.x - startX - accelerated.vx * 1.08) < 1e-8);
   vm.runInContext('spawnMeteor(); updateMeteors(0.1)', audio.context);
   assert.ok(Math.abs(Math.hypot(audio.context.meteors[0].vx, audio.context.meteors[0].vy) - 700 * 0.055 * 1.08) < 1e-8);
+});
+
+test('earning a missile plays one bounded fanfare that disconnects, and muting suppresses it', async () => {
+  const audio = setup();
+  Object.assign(audio.context, { geodesCracked: 0, rocketCount: 0, buzz() {}, updateHUD() {} });
+  vm.runInContext('const MISSILE_EVERY = 10;', audio.context);
+  loadFunctions(audio, ['awardGeode']);
+  await audio.gestures.pointerdown();
+  for (let i = 0; i < 9; i++) vm.runInContext('awardGeode()', audio.context);
+  assert.equal(audio.sources.length, 0);
+  vm.runInContext('awardGeode()', audio.context);
+  assert.equal(audio.context.rocketCount, 1);
+  assert.equal(audio.sources.length, 10);
+  const freqs = audio.sources.map(s => s.node.frequency.value);
+  assert.ok(freqs.includes(392) && freqs.includes(783.99), `fanfare notes, got ${freqs}`);
+  // A second missile in the same burst (e.g. fireball) does not stack another fanfare.
+  for (let i = 0; i < 10; i++) vm.runInContext('awardGeode()', audio.context);
+  assert.equal(audio.context.rocketCount, 2);
+  assert.equal(audio.sources.length, 10);
+  for (const { node, time } of audio.sources) { assert.ok(node.stopTime > time); node.onended(); }
+  assert.ok(audio.sources.every(({ node }) => node.disconnected));
+  audio.contexts[0].currentTime += 5;
+  audio.window.audioMuted = true;
+  for (let i = 0; i < 10; i++) vm.runInContext('awardGeode()', audio.context);
+  assert.equal(audio.context.rocketCount, 3);
+  assert.equal(audio.sources.length, 10);
+  audio.window.audioMuted = false;
+  for (let i = 0; i < 9; i++) vm.runInContext('awardGeode()', audio.context);
+  assert.equal(audio.sources.length, 10);
+  assert.deepEqual(audio.errors, []);
+});
+
+test('destroying a meteor emits one shockwave that knocks nearby geodes and rocks outward only', async () => {
+  const audio = setup();
+  setupMeteors(audio);
+  await audio.gestures.pointerdown();
+  vm.runInContext('spawnMeteor(); meteors[0].x = 200; meteors[0].y = 300;', audio.context);
+  const near = { x: 260, y: 300, r: 20, vx: 0, vy: 0 };
+  const rock = { x: 200, y: 220, r: 15, vx: 0, vy: 0 };
+  const far = { x: 20, y: 650, r: 20, vx: 0, vy: 0 };
+  audio.context.geodes.push(near, far);
+  audio.context.rocks.push(rock);
+  audio.context.targetMeteor = audio.context.meteors[0];
+  vm.runInContext('hitMeteor(targetMeteor); hitMeteor(targetMeteor)', audio.context);
+  assert.equal(audio.context.shockwaves.length, 0, 'non-lethal hits do not emit a shockwave');
+  vm.runInContext('hitMeteor(targetMeteor)', audio.context);
+  assert.equal(audio.context.shockwaves.length, 1);
+  assert.equal(audio.context.shockwaves[0].x, 200);
+  assert.ok(near.kvx > 50 && Math.abs(near.kvy) < 1e-9, 'geode pushed right, away from meteor');
+  assert.ok(rock.kvy < -50 && Math.abs(rock.kvx) < 1e-9, 'rock pushed up, away from meteor');
+  assert.equal(far.kvx, undefined);
+  assert.equal(audio.context.pointPopups.length, 0, 'meteors award no direct points');
+  // Removing a meteor without destroying it (e.g. reset) makes no shockwave.
+  vm.runInContext('spawnMeteor(); meteors.length = 0;', audio.context);
+  assert.equal(audio.context.shockwaves.length, 1);
+});
+
+test('knockback decays so flyer arcs resume, and shockwaves and popups stay capped', () => {
+  const audio = setup();
+  setupMeteors(audio);
+  const g = { x: 100, y: 300, r: 20, vx: 0, vy: 0, climb: 40, gravity: 0, age: 0, kvx: 260, kvy: 0 };
+  for (let i = 0; i < 180; i++) vm.runInContext('stepFlyer(target, 1 / 60)', Object.assign(audio.context, { target: g }));
+  assert.equal(g.kvx, 0);
+  assert.ok(g.x > 160 && g.x < 100 + 260 / 3.5 + 5, `bounded displacement, got ${g.x}`);
+  for (let i = 0; i < 20; i++) vm.runInContext('emitShockwave(0, 0, 150, 260)', audio.context);
+  assert.equal(audio.context.shockwaves.length, 6);
+  for (let i = 0; i < 100; i++) vm.runInContext('showPoints(0, 0, 5)', audio.context);
+  vm.runInContext('showPoints(0, 0, 0)', audio.context);
+  assert.equal(audio.context.pointPopups.length, 40);
+  assert.ok(audio.context.pointPopups.every(p => p.text === '+5'));
+});
+
+test('rocket blast shows one +5 popup per rock matching the score awarded', () => {
+  const audio = setup();
+  setupMeteors(audio);
+  audio.context.score = 0;
+  audio.context.rocks.push({ x: 200, y: 200, r: 15, color: '#555' }, { x: 220, y: 200, r: 15, color: '#555' }, { x: 380, y: 600, r: 15 });
+  vm.runInContext('rocketExplode(200, 200)', audio.context);
+  assert.equal(audio.context.score, 10);
+  assert.deepEqual(audio.context.pointPopups.map(p => [p.x, p.text]), [[220, '+5'], [200, '+5']]);
+  assert.equal(audio.context.shockwaves.length, 0, 'rocket blasts without a meteor do not emit shockwaves');
+});
+
+test('fireball explosion shows popups that sum to the awarded points and emits a shockwave', () => {
+  const audio = setup();
+  setupMeteors(audio);
+  Object.assign(audio.context, {
+    score: 0, GEM_TYPES: [{ name: 'diamond', color: '#b9f2ff', points: 100 }],
+    awardGeode() {}, spawnDiamond() {}, sfxExplosion() {}
+  });
+  loadFunctions(audio, ['explodeFireball']);
+  audio.context.geodes.push({ x: 50, y: 50, r: 20 }, { x: 90, y: 50, r: 20 });
+  audio.context.rocks.push({ x: 10, y: 10, r: 15 });
+  vm.runInContext('explodeFireball({ x: 100, y: 100 })', audio.context);
+  assert.equal(audio.context.score, 205);
+  const total = audio.context.pointPopups.reduce((sum, p) => sum + Number(p.text.slice(1)), 0);
+  assert.equal(total, 205);
+  assert.equal(audio.context.shockwaves.length, 1);
+  assert.equal(audio.context.geodes.length + audio.context.rocks.length, 0);
 });

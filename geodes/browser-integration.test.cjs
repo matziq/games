@@ -66,7 +66,7 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
     html = html.replace(marker, `window.__game = {
       spawnMeteor, strike, rocketExplode, launchRocket, startGame, pauseGame,
       resetGame, endGame, loop: () => loop(lastTime + 33),
-      meteors, gems, geodes, rockets, gun, updateLaserHeat, tractorBeams,
+      meteors, gems, geodes, rocks, rockets, gun, shockwaves, pointPopups, updateLaserHeat, tractorBeams,
       level, pace, awardGeode, get destroyed() { return geodesCracked; },
       set destroyed(v) { geodesCracked = v; },
       get score() { return score; },
@@ -76,7 +76,12 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
     };` + marker);
     html = html.replace('<body>', `<body><script>
       window.requestAnimationFrame = () => 0;
-      window.__metrics = { sources: [], contexts: [], errors: [] };
+      window.__metrics = { sources: [], contexts: [], errors: [], drawnText: [] };
+      const fillText = CanvasRenderingContext2D.prototype.fillText;
+      CanvasRenderingContext2D.prototype.fillText = function (text, ...rest) {
+        if (/^[+][0-9]+$/.test(text)) __metrics.drawnText.push(text);
+        return fillText.call(this, text, ...rest);
+      };
       window.addEventListener('error', e => __metrics.errors.push(e.message));
       const Original = window.AudioContext;
       window.AudioContext = class extends Original {
@@ -193,6 +198,43 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
     await evaluate("__game.endGame('Test impact')");
     await wait(600);
     assert.ok(await evaluate(rms) < 0.001);
+
+    // Earning a missile plays the fanfare once.
+    await evaluate('__game.resetGame(); __game.startGame(); __game.destroyed = 9');
+    const beforeFanfare = await evaluate('__metrics.sources.length');
+    await evaluate('__game.awardGeode()');
+    assert.equal(await evaluate('__metrics.sources.length') - beforeFanfare, 10);
+    await wait(250);
+    assert.ok(await evaluate(rms) > 0.005, 'fanfare is audible');
+    await wait(900);
+    assert.ok(await evaluate(rms) < 0.001, 'fanfare finishes');
+
+    // Destroying a meteor emits a shockwave that knocks a nearby geode and rock away.
+    await evaluate(`__game.resetGame(); __game.startGame(); __game.spawnMeteor();
+      __game.meteors[0].x = 200; __game.meteors[0].y = 250;
+      const flyer = (x, y, r) => ({ x, y, r, vx: 0, vy: -1, climb: 40, gravity: 0, age: 1, rot: 0, spin: 0,
+        phase: 'up', fallSpeed: 0, color: '#222222', seed: 1 });
+      __game.geodes.push(flyer(300, 250, 20)); __game.rocks.push(flyer(200, 150, 16));
+      for (let i = 0; i < 3; i++) { __game.time += 0.2; __game.strike(200, 250); }`);
+    const wave = await evaluate(`({ meteors: __game.meteors.length, waves: __game.shockwaves.length,
+      gx: __game.geodes[0].x, ry: __game.rocks[0].y, kvx: __game.geodes[0].kvx, kvy: __game.rocks[0].kvy })`);
+    assert.deepEqual([wave.meteors, wave.waves], [0, 1]);
+    assert.ok(wave.kvx > 50 && wave.kvy < -50, JSON.stringify(wave));
+    await evaluate('for (let i = 0; i < 30; i++) __game.loop(99 + i * 33)');
+    const pushed = await evaluate('({ gx: __game.geodes[0].x, ry: __game.rocks[0].y, waves: __game.shockwaves.length })');
+    assert.ok(pushed.gx > wave.gx + 30 && pushed.ry < wave.ry - 30, JSON.stringify(pushed));
+    assert.equal(pushed.waves, 0, 'shockwave ring is cleaned up');
+
+    // Points are shown where they are awarded and then cleared.
+    await evaluate(`__game.resetGame(); __game.startGame(); __metrics.drawnText.length = 0;
+      __game.rocks.push({ x: 120, y: 200, r: 18, vx: 0, vy: -1, climb: 40, gravity: 0, age: 1, rot: 0, spin: 0,
+        phase: 'up', fallSpeed: 0, color: '#555555', seed: 1 });
+      __game.strike(120, 200); __game.loop(66)`);
+    assert.equal(await evaluate('__game.score'), 5);
+    assert.deepEqual(await evaluate('__game.pointPopups.map(p => p.text)'), ['+5']);
+    assert.ok((await evaluate('__metrics.drawnText')).includes('+5'));
+    await evaluate('for (let i = 0; i < 40; i++) __game.loop(99 + i * 33)');
+    assert.equal(await evaluate('__game.pointPopups.length'), 0);
     assert.deepEqual(await evaluate('__metrics.errors'), []);
   } finally {
     if (ws) ws.close();
