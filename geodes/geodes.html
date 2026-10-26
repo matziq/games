@@ -502,13 +502,13 @@
         <div class="pill">🌋 <strong>Geodes</strong> — Dark spheres launched from the volcano in random arcs. They slow at the peak and fall as gently as they rise. Tap to crack them and release
           gems. Each destroyed geode earns 25 points.</div>
         <div class="pill">🪨 <strong>Rocks</strong> — Jagged gray stones. Tap to break them (no gems, no penalty for
-          missing). Each destroyed rock earns 100 points.</div>
+          missing). Each destroyed rock earns 10 points.</div>
         <div class="pill">🔥 <strong>Fireballs</strong> — Rare glowing orbs. Tap to explode and turn all geodes into
-          diamonds! Each fireball earns 50 points, plus destruction points and the immediate 100-point diamond bonus for each cleared geode.</div>
+          diamonds! Each fireball earns 100 points, plus 25 for each cleared geode and 10 for each cleared rock. Collect the diamonds for their gem value.</div>
         <div class="pill">🚀 <strong>Missiles</strong> — Earn a missile every 500 points and a fanfare plays as a pod slides out of the gun. Right-click, long-press, or tap Arm, then tap the target. The pod retracts when you are empty.</div>
         <div class="pill"><strong>Laser heat</strong> — Watch the bar below the gun. Rapid shots build heat. At 80%, the gun glows red and a klaxon sounds. At 100%, a warning sounds and the laser locks for two seconds, then vents steam as it cools. Pace your shots to cool it down. Missiles still work while the laser is hot.</div>
         <div class="pill"><strong>Levels</strong> — Every 100 destroyed geodes advances a level. Hazards and crystals move 8% faster per level; points alone do not advance levels.</div>
-        <div class="pill"><strong>Meteors (asteroids)</strong> — Large fiery rocks accelerate toward the gun from the sky, shrinking with each hit. Three laser shots or one missile earn 100 points and release five gems. Destroying a meteor sends out a double-size shockwave; fireballs also knock nearby geodes and rocks away. A klaxon warns of an imminent geode impact.</div>
+        <div class="pill"><strong>Meteors (asteroids)</strong> — Large fiery rocks accelerate toward the gun from the sky, shrinking with each hit. Three laser shots or one missile earn 500 points and release five gems. Destroying a meteor sends out a double-size shockwave; fireballs also knock nearby geodes and rocks away. A klaxon warns of an imminent geode impact.</div>
         <div class="pill"><strong>Gravity</strong> — Objects fall slowly at first, then accelerate. Gravity increases by 10% of its starting strength every 10,000 points. Crystals stay visible until collected or falling offscreen.</div>
       </div>
 
@@ -1083,7 +1083,7 @@
           makeSparkles(m.x, m.y, '#ff6a00');
           emitShockwave(m.x, m.y, 300, 260);
           const velocity = parentVelocity(m, true);
-          awardPoints(m.x, m.y, 100);
+          awardPoints(m.x, m.y, 500);
           for (let i = 0; i < 5; i++) {
             createGem(m.x, m.y, velocity);
           }
@@ -1186,23 +1186,21 @@
             });
           }
 
-          awardPoints(fb.x, fb.y, 50);
-          // Preserve the immediate diamond bonus without awarding it again on collection.
+          awardPoints(fb.x, fb.y, 100);
+          // Each cleared geode awards its own value; its diamond is a normal collectible gem.
           for (let i = geodes.length - 1; i >= 0; i--) {
             const g = geodes[i];
             const velocity = parentVelocity(g);
-            const diamondPoints = GEM_TYPES[0].points;
             awardGeode(g);
-            awardPoints(g.x, g.y - 20, diamondPoints, GEM_TYPES[0].color);
             makeShards(g.x, g.y, g.color, { x: 0, y: -1 }, g.r / 22);
-            spawnDiamond(g.x, g.y - 4, { free: true, velocity });
+            spawnDiamond(g.x, g.y - 4, { velocity });
             geodes.splice(i, 1);
           }
 
           // Also break all rocks on screen and award their points
           for (let i = rocks.length - 1; i >= 0; i--) {
             const r = rocks[i];
-            awardPoints(r.x, r.y, 100);
+            awardPoints(r.x, r.y, 10);
             makeShards(r.x, r.y, r.color, { x: 0, y: 1 });
             rocks.splice(i, 1);
           }
@@ -2181,7 +2179,7 @@
             obj.clicked = true;
             rocks.splice(rocks.indexOf(obj), 1);
             makeShards(obj.x, obj.y, obj.color, { x: 0, y: 1 });
-            awardPoints(obj.x, obj.y, 100);
+            awardPoints(obj.x, obj.y, 10);
             if (typeof sfxRockCrumble === 'function') sfxRockCrumble();
             buzz(8);
             return;
@@ -2314,7 +2312,7 @@
             const r = rocks[i];
             if (dist2(rx, ry, r.x, r.y) <= blastR * blastR) {
               makeShards(r.x, r.y, r.color, { x: 0, y: 1 });
-              awardPoints(r.x, r.y, 100);
+              awardPoints(r.x, r.y, 10);
               rocks.splice(i, 1);
             }
           }

@@ -516,8 +516,8 @@ test('meteor needs exactly three laser hits and drops five gems inheriting its v
   assert.equal(new Set(audio.context.gems.map(g => g.type)).size, 2);
   vm.runInContext('hitMeteor(targetMeteor)', audio.context);
   assert.equal(audio.context.gems.length, 5);
-  assert.equal(audio.context.score, 100, 'destruction is awarded exactly once');
-  assert.deepEqual(audio.context.pointPopups.map(p => p.text), ['+100']);
+  assert.equal(audio.context.score, 500, 'destruction is awarded exactly once');
+  assert.deepEqual(audio.context.pointPopups.map(p => p.text), ['+500']);
 });
 
 test('one rocket destroys a meteor and leaves all five gems free to collect', async () => {
@@ -885,7 +885,7 @@ test('destroying a meteor emits one shockwave that knocks nearby geodes and rock
   assert.ok(near.kvx > 50 && Math.abs(near.kvy) < 1e-9, 'geode pushed right, away from meteor');
   assert.ok(rock.kvy < -50 && Math.abs(rock.kvx) < 1e-9, 'rock pushed up, away from meteor');
   assert.equal(far.kvx, undefined);
-  assert.deepEqual(audio.context.pointPopups.map(p => p.text), ['+100']);
+  assert.deepEqual(audio.context.pointPopups.map(p => p.text), ['+500']);
   // Removing a meteor without destroying it (e.g. reset) makes no shockwave.
   vm.runInContext('spawnMeteor(); meteors.length = 0;', audio.context);
   assert.equal(audio.context.shockwaves.length, 1);
@@ -906,14 +906,14 @@ test('knockback decays so flyer arcs resume, and shockwaves and popups stay capp
   assert.ok(audio.context.pointPopups.every(p => p.text === '+5'));
 });
 
-test('rocket blast shows one +100 popup per rock matching the score awarded', () => {
+test('rocket blast shows one +10 popup per rock matching the score awarded', () => {
   const audio = setup();
   setupMeteors(audio);
   audio.context.score = 0;
   audio.context.rocks.push({ x: 200, y: 200, r: 15, color: '#555' }, { x: 220, y: 200, r: 15, color: '#555' }, { x: 380, y: 600, r: 15 });
   vm.runInContext('rocketExplode(200, 200)', audio.context);
-  assert.equal(audio.context.score, 200);
-  assert.deepEqual(audio.context.pointPopups.map(p => [p.x, p.text]), [[220, '+100'], [200, '+100']]);
+  assert.equal(audio.context.score, 20);
+  assert.deepEqual(audio.context.pointPopups.map(p => [p.x, p.text]), [[220, '+10'], [200, '+10']]);
   assert.equal(audio.context.shockwaves.length, 0, 'rocket blasts without a meteor do not emit shockwaves');
 });
 
@@ -928,9 +928,9 @@ test('fireball explosion shows popups that sum to the awarded points and emits a
   audio.context.geodes.push({ x: 50, y: 50, r: 20 }, { x: 90, y: 50, r: 20 });
   audio.context.rocks.push({ x: 10, y: 10, r: 15 });
   vm.runInContext('explodeFireball({ x: 100, y: 100 })', audio.context);
-  assert.equal(audio.context.score, 400);
+  assert.equal(audio.context.score, 160);
   const total = audio.context.pointPopups.reduce((sum, p) => sum + Number(p.text.slice(1)), 0);
-  assert.equal(total, 400);
+  assert.equal(total, 160);
   assert.equal(audio.context.shockwaves.length, 1);
   assert.equal(audio.context.geodes.length + audio.context.rocks.length, 0);
 });
@@ -947,7 +947,7 @@ function setupDestruction(audio) {
 
 test('laser and missile destruction award exact geode, rock, asteroid and fireball points', () => {
   for (const weapon of ['strike', 'rocketExplode']) {
-    for (const [list, expected] of [['geodes', 25], ['rocks', 100], ['meteors', 100], ['fireballs', 50]]) {
+    for (const [list, expected] of [['geodes', 25], ['rocks', 10], ['meteors', 500], ['fireballs', 100]]) {
       const audio = setup();
       setupDestruction(audio);
       audio.context[list].push({
@@ -1019,17 +1019,17 @@ test('released crystals inherit instantaneous velocity including knockback and l
   }
 });
 
-test('fireball diamonds retain parent motion and their immediate bonus cannot be collected twice', () => {
+test('fireball diamonds retain parent motion and are worth their gem value only when collected', () => {
   const audio = setup();
   setupDestruction(audio);
   audio.context.geodes.push({ x: 200, y: 200, r: 20, vx: -12, vy: 32, kvx: 4, kvy: 5, color: '#222' });
   vm.runInContext('explodeFireball({ x: 100, y: 200 })', audio.context);
   const gem = audio.context.gems[0];
-  assert.equal(audio.context.score, 175);
-  assert.equal(gem.points, 0);
+  assert.equal(audio.context.score, 125);
+  assert.equal(gem.points, 100);
   assert.equal(gem.vx, -8);
   assert.equal(gem.vy, 37);
-  assert.deepEqual(audio.context.pointPopups.map(p => p.text), ['+50', '+25', '+100']);
+  assert.deepEqual(audio.context.pointPopups.map(p => p.text), ['+100', '+25']);
 });
 
 test('physical targets stay below the HUD and outside the heat gauge through movement', () => {
