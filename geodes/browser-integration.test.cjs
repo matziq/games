@@ -72,7 +72,8 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
       get score() { return score; },
       set score(v) { score = v; },
       get time() { return runTime; }, set time(v) { runTime = v; },
-      get heat() { return laserHeat; }, get overheat() { return laserOverheatedUntil; },
+      get heat() { return laserHeat; }, set heat(v) { laserHeat = v; }, get overheat() { return laserOverheatedUntil; },
+      fireLaser, laserHeatWarning,
       set ammo(v) { rocketCount = v; }
     };
     for (const name of ['drawRock', 'drawGun', 'drawGem', 'drawGeode', 'drawMeteor', 'drawFireball']) {
@@ -261,6 +262,47 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
     }
     assert.ok(order.indexOf('drawGeode') < order.indexOf('drawMeteor'), JSON.stringify(order));
     assert.ok(order.indexOf('drawGeode') < order.indexOf('drawFireball'), JSON.stringify(order));
+
+    // Laser at 80% heat glows red with one klaxon; recovering from overheat vents steam.
+    await evaluate('__game.resetGame(); __game.startGame(); __game.geodes.length = 0; __game.rocks.length = 0; __game.fireballs.length = 0');
+    const gunPixel = `(() => {
+      const c = document.getElementById('game'), s = c.width / c.clientWidth;
+      const d = c.getContext('2d').getImageData(Math.round((__game.gun.x - 45) * s), Math.round((__game.gun.y - 15) * s), 1, 1).data;
+      return [d[0], d[1], d[2]];
+    })()`;
+    await evaluate('__game.loop()');
+    const coolPixel = await evaluate(gunPixel);
+    await evaluate(`__metrics.warn = 0; __metrics.steam = 0;
+      for (const [name, key] of [['sfxLaserWarning', 'warn'], ['sfxLaserSteam', 'steam']]) {
+        const original = window[name];
+        window[name] = () => { __metrics[key]++; return original(); };
+      }`);
+    const beforeKlaxon = await evaluate('__metrics.sources.length');
+    await evaluate(`__game.heat = 50; __game.fireLaser(__game.gun.x, 100);
+      __game.time += 0.15; __game.fireLaser(__game.gun.x, 100)`);
+    await wait(60);
+    assert.ok(await evaluate(rms) > 0.005, 'klaxon is audible ' + await evaluate('__metrics.contexts[0].state'));
+    assert.equal(await evaluate('__metrics.warn'), 1);
+    assert.ok(await evaluate('__metrics.sources.length') - beforeKlaxon >= 6, 'two shots plus a two-voice klaxon');
+    assert.equal(await evaluate('__game.laserHeatWarning()'), true);
+    assert.ok(await evaluate("document.getElementById('laserHeatChip').classList.contains('warning')"));
+    await evaluate('__game.loop()');
+    const hotPixel = await evaluate(gunPixel);
+    assert.ok(hotPixel[0] - hotPixel[1] > coolPixel[0] - coolPixel[1] + 40, JSON.stringify({ coolPixel, hotPixel }));
+    await evaluate('__game.time += 0.15; __game.fireLaser(__game.gun.x, 100)');
+    assert.ok(await evaluate('__game.overheat') > 0);
+    await wait(800);
+    const beforeSteam = await evaluate('__metrics.sources.length');
+    await evaluate('__game.time = __game.overheat; __game.updateLaserHeat(); __game.updateLaserHeat()');
+    assert.equal(await evaluate('__game.heat'), 0);
+    assert.equal(await evaluate('__metrics.steam'), 1, 'one steam hiss');
+    assert.equal(await evaluate('__metrics.warn'), 1, 'overheat does not repeat the klaxon');
+    assert.ok(await evaluate('__metrics.sources.length') - beforeSteam >= 2, 'two-layer steam hiss');
+    assert.equal(await evaluate('__game.laserHeatWarning()'), false);
+    await wait(200);
+    assert.ok(await evaluate(rms) > 0.005, 'steam is audible');
+    await wait(1000);
+    assert.ok(await evaluate(rms) < 0.001, 'steam finishes');
 
     // Gems do not fade/expire and their fall speeds increase at score thresholds.
     await evaluate(`__game.resetGame(); __game.startGame();
