@@ -66,17 +66,22 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
     html = html.replace(marker, `window.__game = {
       spawnMeteor, strike, rocketExplode, launchRocket, startGame, pauseGame,
       resetGame, endGame, loop: () => loop(lastTime + 33),
-      meteors, gems, geodes, rocks, rockets, gun, shockwaves, pointPopups, updateLaserHeat, tractorBeams,
-      level, pace, awardGeode, get destroyed() { return geodesCracked; },
+      meteors, gems, geodes, rocks, fireballs, rockets, gun, shockwaves, pointPopups, updateLaserHeat, tractorBeams,
+      level, pace, gravity, awardGeode, get destroyed() { return geodesCracked; },
       set destroyed(v) { geodesCracked = v; },
       get score() { return score; },
+      set score(v) { score = v; },
       get time() { return runTime; }, set time(v) { runTime = v; },
       get heat() { return laserHeat; }, get overheat() { return laserOverheatedUntil; },
       set ammo(v) { rocketCount = v; }
-    };` + marker);
+    };
+    for (const name of ['drawRock', 'drawGun', 'drawGem', 'drawGeode', 'drawMeteor', 'drawFireball']) {
+      const original = eval(name);
+      eval(name + ' = function (o) { __metrics.drawOrder.push("' + name + '"); return original(o); }');
+    }` + marker);
     html = html.replace('<body>', `<body><script>
       window.requestAnimationFrame = () => 0;
-      window.__metrics = { sources: [], contexts: [], errors: [], drawnText: [] };
+      window.__metrics = { sources: [], contexts: [], errors: [], drawnText: [], drawOrder: [] };
       const fillText = CanvasRenderingContext2D.prototype.fillText;
       CanvasRenderingContext2D.prototype.fillText = function (text, ...rest) {
         if (/^[+][0-9]+$/.test(text)) __metrics.drawnText.push(text);
@@ -153,9 +158,14 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
     assert.equal(await evaluate('__game.score'), 80);
     assert.ok(await evaluate('__game.time') > beforeCollection);
     await evaluate('__game.resetGame(); __game.startGame(); __game.spawnMeteor()');
-    await evaluate(`__game.meteors[0].x = 200; __game.meteors[0].y = 250;
-      __game.strike(200, 250); __game.time += 0.2; __game.strike(200, 250)`);
+    await evaluate('__game.meteors[0].x = 200; __game.meteors[0].y = 250');
+    const initialMeteorRadius = await evaluate('__game.meteors[0].r');
+    await evaluate('__game.strike(200, 250)');
+    assert.ok(await evaluate('__game.meteors[0].r') < initialMeteorRadius);
+    const damagedRadius = await evaluate('__game.meteors[0].r');
+    await evaluate('__game.time += 0.2; __game.strike(200, 250)');
     assert.equal(await evaluate('__game.meteors[0].hp'), 1);
+    assert.ok(await evaluate('__game.meteors[0].r') < damagedRadius);
     await evaluate('__game.time += 0.2; __game.strike(200, 250)');
     assert.equal(await evaluate('__game.gems.length'), 5);
     assert.equal(await evaluate('__game.meteors.length'), 0);
@@ -235,6 +245,41 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
     assert.ok((await evaluate('__metrics.drawnText')).includes('+5'));
     await evaluate('for (let i = 0; i < 40; i++) __game.loop(99 + i * 33)');
     assert.equal(await evaluate('__game.pointPopups.length'), 0);
+
+    // Actual frame rendering keeps gems/rocks/gun behind geodes and hazards.
+    await evaluate(`__game.resetGame(); __game.startGame();
+      const item = { x: 150, y: 200, r: 20, vx: 0, vy: 0, age: 0,
+        rot: 0, spin: 0, phase: 'down', color: '#222222', seed: 1 };
+      __game.rocks.push({ ...item }); __game.geodes.push({ ...item });
+      __game.fireballs.push({ ...item, pulsePhase: 0 });
+      __game.gems.push({ ...item, type: 'ruby', color: '#ff1744', points: 80, vrot: 0, alpha: 1 });
+      __game.spawnMeteor(); __game.meteors[0].x = 150; __game.meteors[0].y = 200;
+      __metrics.drawOrder.length = 0; __game.loop()`);
+    const order = await evaluate('__metrics.drawOrder');
+    for (const ordinary of ['drawRock', 'drawGun', 'drawGem']) {
+      assert.ok(order.indexOf(ordinary) < order.indexOf('drawGeode'), JSON.stringify(order));
+    }
+    assert.ok(order.indexOf('drawGeode') < order.indexOf('drawMeteor'), JSON.stringify(order));
+    assert.ok(order.indexOf('drawGeode') < order.indexOf('drawFireball'), JSON.stringify(order));
+
+    // Gems do not fade/expire and their fall speeds increase at score thresholds.
+    await evaluate(`__game.resetGame(); __game.startGame();
+      __game.gems.push({ type: 'ruby', color: '#ff1744', points: 80, x: 150, y: 100,
+        r: 14, rot: 0, vrot: 0, vx: 0, vy: 0, alpha: 1 });
+      for (let i = 0; i < 250; i++) __game.loop()`);
+    const falling = await evaluate(`({ n: __game.gems.length, alpha: __game.gems[0].alpha,
+      vy: __game.gems[0].vy, y: __game.gems[0].y, gravity: __game.gravity() })`);
+    assert.equal(falling.n, 1);
+    assert.equal(falling.alpha, 1);
+    assert.ok(falling.vy > 10 && falling.y > 100, JSON.stringify(falling));
+    for (const [score, scale] of [[9999, 1], [10000, 1.1], [20000, 1.2]]) {
+      const acceleration = await evaluate(`__game.score = ${score}; __game.gravity()`);
+      assert.ok(Math.abs(acceleration - falling.gravity * scale) < 1e-9);
+    }
+    await evaluate(`__game.geodes.length = 0; __game.rocks.length = 0;
+      __game.meteors.length = 0; __game.fireballs.length = 0;
+      __game.gems[0].y = innerHeight + 20; __game.loop()`);
+    assert.equal(await evaluate('__game.gems.length'), 0, 'offscreen gem is removed');
     assert.deepEqual(await evaluate('__metrics.errors'), []);
   } finally {
     if (ws) ws.close();

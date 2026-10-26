@@ -502,7 +502,8 @@
         <div class="pill">🚀 <strong>Missiles</strong> — Crack 10 geodes and a fanfare plays as a pod slides out of the gun. Right-click, long-press, or tap Arm, then tap the target. The pod retracts when you are empty.</div>
         <div class="pill"><strong>Laser heat</strong> — Watch the bar below the gun. Rapid shots build heat. At 100%, a warning sounds and the laser locks for two seconds. Pace your shots to cool it down. Missiles still work while the laser is hot.</div>
         <div class="pill"><strong>Levels</strong> — Every 100 destroyed geodes advances a level. Hazards and crystals move 8% faster per level; points alone do not advance levels.</div>
-        <div class="pill"><strong>Meteors</strong> — Large fiery rocks dive toward the gun from the sky. Hit one with three laser shots or one missile to release five gems. Destroying a meteor or fireball sends out a shockwave that knocks nearby geodes and rocks away. A klaxon warns of an imminent geode impact.</div>
+        <div class="pill"><strong>Meteors</strong> — Large fiery rocks accelerate toward the gun from the sky, shrinking with each hit. Three laser shots or one missile release five gems. Destroying a meteor sends out a double-size shockwave; fireballs also knock nearby geodes and rocks away. A klaxon warns of an imminent geode impact.</div>
+        <div class="pill"><strong>Gravity</strong> — Objects fall slowly at first, then accelerate. Gravity increases by 10% of its starting strength every 10,000 points. Crystals stay visible until collected or falling offscreen.</div>
       </div>
 
       <div class="row">
@@ -645,6 +646,19 @@
         }
         function pace() {
           return 1 + (level() - 1) * 0.08;
+        }
+        function baseGravity() {
+          return (canvas.clientHeight || 700) * 0.0045;
+        }
+        function gravity() {
+          return baseGravity() * (1 + Math.floor(score / 10000) * 0.1);
+        }
+        function stepFallingBody(o, dt) {
+          const stepTime = dt * pace();
+          const acceleration = gravity();
+          o.x += o.vx * stepTime;
+          o.y += o.vy * stepTime + 0.5 * acceleration * stepTime * stepTime;
+          o.vy += acceleration * stepTime;
         }
         function globalSpeedMult() {
           return pace();
@@ -799,7 +813,7 @@
           const h = canvas.clientHeight || 700;
           const w = canvas.clientWidth || 400;
           const rise = h * rand(0.24, 0.4);
-          const climb = h * 0.055;
+          const climb = Math.sqrt(2 * baseGravity() * rise);
           eruptionPuff(mouth.x, mouth.y);
           return {
             phase: 'up',
@@ -808,7 +822,6 @@
             rise,
             climb,
             fallSpeed: 0,
-            gravity: climb * climb / (2 * rise),
             vy: -climb,
             vx: rand(-w * 0.045, w * 0.045),
             x: mouth.x + rand(-5, 5),
@@ -822,12 +835,9 @@
         function stepFlyer(o, dt) {
           const stepTime = dt * pace();
           o.age += stepTime;
-          const nextVy = Math.min(o.climb, o.vy + o.gravity * stepTime);
-          o.y += (o.vy + nextVy) * 0.5 * stepTime;
-          o.vy = nextVy;
+          stepFallingBody(o, dt);
           o.phase = o.vy < 0 ? 'up' : 'down';
           o.fallSpeed = Math.max(0, o.vy) * pace();
-          o.x += o.vx * stepTime;
           if (o.kvx || o.kvy) {
             o.x += o.kvx * stepTime;
             o.y += o.kvy * stepTime;
@@ -902,10 +912,10 @@
 
         function spawnMeteor() {
           const w = canvas.clientWidth, h = canvas.clientHeight;
-          const r = (coarsePointer ? 31 * 0.82 : 27 * 0.74) * 2;
+          const r = (coarsePointer ? 31 * 0.82 : 27 * 0.74) * 2.7;
           meteors.push({
             x: Math.random() < 0.5 ? r : w - r, y: -r,
-            r, hp: 3, rot: rand(Math.PI * 2), trailTimer: 0,
+            r, baseR: r, hp: 3, fallSpeed: h * 0.055, rot: rand(Math.PI * 2), trailTimer: 0,
             color: '#624235', seed: (Math.random() * 20) | 0
           });
           if (window.setMeteorFlightSound) window.setMeteorFlightSound(true);
@@ -915,17 +925,19 @@
           for (const m of meteors) {
             const dx = gun.x - m.x, dy = gun.y - m.y;
             const distance = Math.hypot(dx, dy);
-            const speed = canvas.clientHeight * 0.055 * pace();
-            const step = speed * dt;
+            const stepTime = dt * pace();
+            const acceleration = gravity();
+            const step = m.fallSpeed * stepTime + 0.5 * acceleration * stepTime * stepTime;
+            m.fallSpeed += acceleration * stepTime;
             const reach = 34 + m.r * 0.4;
             if (distance <= reach + step) {
               endGame('A meteor hit the gun.');
               return;
             }
-            m.vx = dx / distance * speed;
-            m.vy = dy / distance * speed;
-            m.x += m.vx * dt;
-            m.y += m.vy * dt;
+            m.vx = dx / distance * m.fallSpeed * pace();
+            m.vy = dy / distance * m.fallSpeed * pace();
+            m.x += dx / distance * step;
+            m.y += dy / distance * step;
             m.rot += dt * 0.6;
             m.trailTimer += dt;
             if (m.trailTimer >= 0.06) {
@@ -969,12 +981,6 @@
           const glowR = m.r + 18;
           ctx.drawImage(meteorGlowSprite(), m.x - glowR, m.y - glowR, glowR * 2, glowR * 2);
           drawRock(m);
-          ctx.fillStyle = '#ffcf5a';
-          for (let i = 0; i < m.hp; i++) {
-            ctx.beginPath();
-            ctx.arc(m.x + (i - (m.hp - 1) / 2) * 10, m.y, 3, 0, Math.PI * 2);
-            ctx.fill();
-          }
           ctx.restore();
         }
 
@@ -986,7 +992,7 @@
           if (playExplosion && window.sfxExplosion) window.sfxExplosion();
           makeShards(m.x, m.y, m.color, { x: 0, y: -1 });
           makeSparkles(m.x, m.y, '#ff6a00');
-          emitShockwave(m.x, m.y, 150, 260);
+          emitShockwave(m.x, m.y, 300, 260);
           const offset = rand(Math.PI * 2);
           for (let i = 0; i < 5; i++) {
             createGem(m.x, m.y, offset + i * Math.PI * 2 / 5);
@@ -998,6 +1004,7 @@
           m.hp -= rocket ? 3 : 1;
           if (m.hp <= 0) destroyMeteor(m, !rocket);
           else {
+            m.r = m.baseR * (0.55 + 0.45 * m.hp / 3);
             makeSparkles(m.x, m.y, '#ffcf5a');
             if (window.sfxRockCrumble) window.sfxRockCrumble();
           }
@@ -1136,7 +1143,7 @@
           gems.push({
             type: t.name, color: t.color, points: t.points,
             x, y, r: coarsePointer ? 18 : 14, rot: rand(Math.PI * 2), vrot: rand(1.2, -1.2),
-            vx, vy, life: 8.0, ttl: 8.0, alpha: 1
+            vx, vy, alpha: 1
           });
         }
 
@@ -1150,9 +1157,27 @@
             type: diamondType.name, color: diamondType.color, points: free ? 0 : diamondType.points,
             x, y, r: coarsePointer ? 18 : 14, rot: rand(Math.PI * 2), vrot: rand(1.2, -1.2),
             vx: drift, vy: rand(-10, -30),
-            life: 8.0, ttl: 8.0, alpha: 1,
+            alpha: 1,
             free // mark so code can choose to treat it specially if needed
           });
+        }
+
+        function stepGem(gm, dt) {
+          stepFallingBody(gm, dt);
+          gm.rot += gm.vrot * dt;
+          if (gm.x < gm.r) { gm.x = gm.r; gm.vx = Math.abs(gm.vx) * 0.4; }
+          if (gm.x > canvas.clientWidth - gm.r) {
+            gm.x = canvas.clientWidth - gm.r;
+            gm.vx = -Math.abs(gm.vx) * 0.4;
+          }
+          if (gm.y < gm.r) { gm.y = gm.r; gm.vy = Math.abs(gm.vy) * 0.2; }
+          return gm.y - gm.r > canvas.clientHeight;
+        }
+
+        function drawForegroundObjects() {
+          for (const g of geodes) drawGeode(g);
+          for (const m of meteors) drawMeteor(m);
+          for (const f of fireballs) drawFireball(f);
         }
 
         // Remove escaped geodes
@@ -1646,9 +1671,8 @@
           for (let i = shards.length - 1; i >= 0; i--) {
             const s = shards[i];
             s.ttl -= dt;
-            s.x += s.vx * dt;
-            s.y += s.vy * dt;
-            s.vx *= 0.99; s.vy += 60 * dt; // little gravity
+            stepFallingBody(s, dt);
+            s.vx *= 0.99;
             s.rot += s.vrot * dt;
             if (s.ttl <= 0) shards.splice(i, 1);
             else drawShard(s);
@@ -1679,40 +1703,15 @@
           const podTarget = rocketCount > 0 ? 1 : 0;
           podExtend += (podTarget - podExtend) * Math.min(1, dt * 4.5);
 
-          const flyers = [];
-          for (const g of geodes) flyers.push({ o: g, kind: 'geode' });
-          for (const r of rocks) flyers.push({ o: r, kind: 'rock' });
-          for (const f of fireballs) flyers.push({ o: f, kind: 'fireball' });
-          for (const m of meteors) flyers.push({ o: m, kind: 'meteor' });
-          flyers.sort((a, b) => a.o.y - b.o.y);
-          function paintFlyer(item) {
-            if (item.kind === 'geode') drawGeode(item.o);
-            else if (item.kind === 'rock') drawRock(item.o);
-            else if (item.kind === 'meteor') drawMeteor(item.o);
-            else drawFireball(item.o);
-          }
-          for (const item of flyers) if (item.o.y < gun.y - 8) paintFlyer(item);
+          for (const r of rocks) if (r.y < gun.y - 8) drawRock(r);
           drawGun();
-          for (const item of flyers) if (item.o.y >= gun.y - 8) paintFlyer(item);
+          for (const r of rocks) if (r.y >= gun.y - 8) drawRock(r);
 
           // Update & draw gems
           for (let i = gems.length - 1; i >= 0; i--) {
             const gm = gems[i];
-            gm.ttl -= dt;
-            gm.x += gm.vx * dt * pace();
-            gm.y += gm.vy * dt * pace();
-            gm.vy += 6 * dt * pace(); // subtle gravity counter to initial upward drift
-            gm.rot += gm.vrot * dt;
-            gm.alpha = clamp(gm.ttl / gm.life, 0, 1);
-
-            // Keep gems within bounds gently
-            if (gm.x < 12) { gm.x = 12; gm.vx *= -0.4; }
-            if (gm.x > canvas.clientWidth - 12) { gm.x = canvas.clientWidth - 12; gm.vx *= -0.4; }
-            if (gm.y < 12) { gm.y = 12; gm.vy *= -0.2; }
-            if (gm.y > canvas.clientHeight - 12) { gm.y = canvas.clientHeight - 12; gm.vy *= -0.6; }
-
-            drawGem(gm);
-            if (gm.ttl <= 0) gems.splice(i, 1);
+            if (stepGem(gm, dt)) gems.splice(i, 1);
+            else drawGem(gm);
           }
 
           // Update & draw laser beams
@@ -1872,8 +1871,7 @@
           for (let i = particles.length - 1; i >= 0; i--) {
             const p = particles[i];
             p.ttl -= dt;
-            p.x += p.vx * dt;
-            p.y += p.vy * dt;
+            stepFallingBody(p, dt);
             p.vx *= 0.98; p.vy *= 0.98;
             const a = clamp(p.ttl / p.life, 0, 1);
             ctx.globalAlpha = a;
@@ -1906,6 +1904,8 @@
             ctx.stroke();
             ctx.restore();
           }
+
+          drawForegroundObjects();
 
           // Update & draw floating score labels
           for (let i = pointPopups.length - 1; i >= 0; i--) {
