@@ -25,6 +25,8 @@ Rockets travel at 560 pixels per second on desktop and 680 on touch devices, wit
 
 The heat bar jumps on each actual shot and cools between shots. Spacing shots at least 1.25 seconds apart prevents cumulative heat; rapid firing overheats it. After lockout, the bar resets completely to zero (the next shot then adds its normal heat).
 
+When a shot pushes heat to 80% or more, the gun glows red with a pulsing halo (and the heat gauge turns red) for as long as heat stays at or above 80% and through any overheat lockout. A short two-cycle klaxon plays once per crossing; it re-arms only after heat cools back below 80%, and a shot that jumps straight to overheat plays only the overheat warning. When an overheat lockout ends, the gun vents with a single falling steam hiss. Both cues respect mute and the shared audio voice limits.
+
 A one-second klaxon warns when a descending geode's trajectory predicts a gun collision within 1.2 seconds. Each geode warns once, and simultaneous warnings do not stack.
 
 Every 24-36 seconds of active play, a meteor can enter from either upper corner, roughly 2.7 times the displayed size of a typical geode. Only one meteor is active at a time. It accelerates toward the gun, with a fire/smoke trail and continuous roar. Three accepted laser hits or one missile impact/blast destroy it; a gun impact ends the run. Each nonlethal hit shrinks its visible body and collision radius by 15% of its original size, replacing the old health dots. Exactly five randomly chosen gems eject evenly in all directions at the same sampled speed as geode gems, retaining their normal gravity and collection behavior without timed fading. Meteor roar and klaxon stop on pause, reset, or game over; roar resumes with a surviving meteor.
