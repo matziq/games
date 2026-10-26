@@ -500,7 +500,7 @@
         <div class="pill">🔥 <strong>Fireballs</strong> — Rare glowing orbs. Tap to explode and turn all geodes into
           diamonds!</div>
         <div class="pill">🚀 <strong>Missiles</strong> — Crack 10 geodes and a fanfare plays as a pod slides out of the gun. Right-click, long-press, or tap Arm, then tap the target. The pod retracts when you are empty.</div>
-        <div class="pill"><strong>Laser heat</strong> — Watch the bar below the gun. Rapid shots build heat. At 100%, a warning sounds and the laser locks for two seconds. Pace your shots to cool it down. Missiles still work while the laser is hot.</div>
+        <div class="pill"><strong>Laser heat</strong> — Watch the bar below the gun. At 80% heat, the gun glows red and a short klaxon sounds. At 100%, the laser locks for two seconds, then vents steam when it is ready again. Pace your shots to cool it down. Missiles still work while the laser is hot.</div>
         <div class="pill"><strong>Levels</strong> — Every 100 destroyed geodes advances a level. Hazards and crystals move 8% faster per level; points alone do not advance levels.</div>
         <div class="pill"><strong>Meteors</strong> — Large fiery rocks accelerate toward the gun from the sky, shrinking with each hit. Three laser shots or one missile release five gems. Destroying a meteor sends out a double-size shockwave; fireballs also knock nearby geodes and rocks away. A klaxon warns of an imminent geode impact.</div>
         <div class="pill"><strong>Gravity</strong> — Objects fall slowly at first, then accelerate. Gravity increases by 10% of its starting strength every 10,000 points. Crystals stay visible until collected or falling offscreen.</div>
@@ -614,7 +614,9 @@
         const LASER_HEAT_PER_SHOT = 25;
         const LASER_COOLING_RATE = 20;
         const LASER_OVERHEAT_SECONDS = 2;
+        const LASER_WARNING_HEAT = 80;
         let laserHeat = 0;
+        let laserHeatWarning = false;
         let laserHeatUpdatedAt = 0;
         let lastLaserShotAt = -Infinity;
         let laserOverheatedUntil = 0;
@@ -681,11 +683,15 @@
             if (runTime >= laserOverheatedUntil) {
               laserHeat = 0;
               laserOverheatedUntil = 0;
+              if (window.sfxLaserSteam) window.sfxLaserSteam();
             }
           } else {
             laserHeat = Math.max(0, laserHeat - Math.max(0, runTime - laserHeatUpdatedAt) * LASER_COOLING_RATE);
           }
           laserHeatUpdatedAt = runTime;
+          const warning = laserHeat >= LASER_WARNING_HEAT;
+          if (warning && !laserHeatWarning && window.sfxLaserHeatWarning) window.sfxLaserHeatWarning();
+          laserHeatWarning = warning;
           const overheated = laserOverheatedUntil > runTime;
           laserHeatChip.classList.toggle('overheated', overheated);
           const label = overheated ? 'HOT' : `${Math.round(laserHeat)}%`;
@@ -1280,8 +1286,13 @@
 
         function drawGun() {
           const x = gun.x, y = gun.y;
+          const hot = laserHeat >= LASER_WARNING_HEAT;
           ctx.save();
-          ctx.fillStyle = '#232833';
+          if (hot) {
+            ctx.shadowColor = '#ff3030';
+            ctx.shadowBlur = 22;
+          }
+          ctx.fillStyle = hot ? '#80252b' : '#232833';
           ctx.beginPath();
           ctx.moveTo(x - 54, y + 28);
           ctx.lineTo(x + 54, y + 28);
@@ -1297,13 +1308,13 @@
 
           ctx.translate(x, y);
           ctx.rotate(gun.aim);
-          ctx.fillStyle = '#4a5160';
+          ctx.fillStyle = hot ? '#e44242' : '#4a5160';
           ctx.beginPath();
           roundedRectPath(ctx, -16, -12, 32, 24, 5);
           ctx.fill();
-          ctx.fillStyle = '#2c313c';
+          ctx.fillStyle = hot ? '#b52d35' : '#2c313c';
           ctx.fillRect(10, -4, 30, 8);
-          ctx.fillStyle = '#7ef6ff';
+          ctx.fillStyle = hot ? '#ff7777' : '#7ef6ff';
           ctx.beginPath();
           ctx.arc(40, 0, 3.2, 0, Math.PI * 2);
           ctx.fill();
@@ -2278,6 +2289,7 @@
           meteorInterval = 24 + Math.random() * 12;
           spawnTimer = 0; rockTimer = 0; fireballTimer = 0; runTime = 0;
           laserHeat = 0;
+          laserHeatWarning = false;
           laserHeatUpdatedAt = 0;
           lastLaserShotAt = -Infinity;
           laserOverheatedUntil = 0;
@@ -2582,6 +2594,24 @@
           noiseBurst({ freq: 900, q: 0.8, a: 0.01, r: 0.22, gain: 0.12 });
         }
         window.sfxLaserOverheat = sfxLaserOverheat;
+        function sfxLaserHeatWarning() {
+          if (!ready()) return deferred(sfxLaserHeatWarning);
+          const t = now();
+          const alarm = osc('sawtooth', 420);
+          env(alarm.g, t, 0.006, 0.39, 0.2);
+          for (let i = 0; i < 2; i++) {
+            alarm.o.frequency.linearRampToValueAtTime(760, t + i * 0.2 + 0.09);
+            alarm.o.frequency.linearRampToValueAtTime(420, t + i * 0.2 + 0.19);
+          }
+          alarm.o.start(t);
+          alarm.o.stop(t + 0.42);
+        }
+        window.sfxLaserHeatWarning = sfxLaserHeatWarning;
+        function sfxLaserSteam() {
+          if (!ready()) return deferred(sfxLaserSteam);
+          noiseBurst({ freq: 2200, q: 0.5, a: 0.015, r: 0.55, gain: 0.32, hp: 1 });
+        }
+        window.sfxLaserSteam = sfxLaserSteam;
         function sfxRockCrumble() {
           if (!ready()) return deferred(sfxRockCrumble);
           const t = now();

@@ -88,7 +88,7 @@ function setupLaserGameplay(audio) {
     sfxLaser: audio.window.sfxLaser, barrelTip: () => ({ x: 1, y: 2 }),
     laserBeams: [], particles: [], rand: () => 1,
     running: true, gameOver: false, runTime: 0, laserHeat: 0, laserHeatUpdatedAt: 0,
-    lastLaserShotAt: -Infinity, laserOverheatedUntil: 0,
+    lastLaserShotAt: -Infinity, laserOverheatedUntil: 0, laserHeatWarning: false,
     laserHeatChip: { classList: { toggle() {} } }, laserHeatEl: { textContent: '0%' },
     laserHeatBar: { value: 0 }
   });
@@ -313,16 +313,83 @@ test('laser rate limit and two-second overheat cannot be bypassed by sustained f
   }
   assert.equal(audio.context.laserOverheatedUntil, 2.6);
   assert.equal(audio.context.laserHeatEl.textContent, 'HOT');
-  assert.equal(audio.sources.length, 13);
+  assert.equal(audio.sources.length, 14);
   for (let i = 0; i < 100; i++) {
     audio.context.runTime = 0.61 + i * 0.019;
     assert.equal(vm.runInContext('fireLaser(100, 100)', audio.context), false);
   }
-  assert.equal(audio.sources.length, 13);
+  assert.equal(audio.sources.length, 14);
   audio.context.runTime = 2.6;
   assert.equal(vm.runInContext('fireLaser(100, 100)', audio.context), true);
   assert.equal(audio.context.laserHeat, 25);
-  assert.equal(audio.sources.length, 15);
+  assert.equal(audio.sources.length, 17);
+});
+
+test('heat klaxon triggers at exactly 80 percent, rearms below it, and never repeats while hot', async () => {
+  const audio = setup();
+  setupLaserGameplay(audio);
+  await audio.gestures.pointerdown();
+  for (const [heat, expected] of [[79.999, 0], [80, 1], [90, 1], [100, 1], [79, 1], [80, 2]]) {
+    audio.context.laserHeat = heat;
+    vm.runInContext('updateLaserHeat(); updateLaserHeat()', audio.context);
+    assert.equal(audio.sources.length, expected, `heat ${heat}`);
+  }
+  audio.context.runTime = 1;
+  vm.runInContext('updateLaserHeat()', audio.context);
+  assert.equal(audio.context.laserHeatWarning, false, 'passive cooling rearms the warning');
+  assert.equal(audio.sources.length, 2, 'ordinary cooling makes no steam');
+});
+
+test('actual overheat completion vents once, not during lockout or after an ordinary cooldown', async () => {
+  const audio = setup();
+  setupLaserGameplay(audio);
+  await audio.gestures.pointerdown();
+  vm.runInContext('for (let i = 0; i < 5; i++) { runTime = i * 0.15; fireLaser(100, 100); }', audio.context);
+  const before = audio.sources.length;
+  audio.context.runTime = 2.599;
+  vm.runInContext('updateLaserHeat()', audio.context);
+  assert.equal(audio.sources.length, before);
+  assert.equal(audio.context.laserHeat, 100);
+  audio.context.runTime = 2.6;
+  vm.runInContext('updateLaserHeat(); updateLaserHeat()', audio.context);
+  assert.equal(audio.sources.length, before + 1);
+  assert.equal(audio.context.laserHeat, 0);
+  assert.equal(audio.context.laserHeatWarning, false);
+  assert.equal(audio.sources.at(-1).node.loop, undefined);
+  audio.context.runTime = 10;
+  vm.runInContext('updateLaserHeat()', audio.context);
+  assert.equal(audio.sources.length, before + 1);
+});
+
+test('heat warning and steam use bounded, self-cleaning voices and respect mute and suspension', async () => {
+  for (const cue of ['sfxLaserHeatWarning', 'sfxLaserSteam']) {
+    const audio = setup();
+    await audio.gestures.pointerdown();
+    audio.elements.muteBtn.handlers.click();
+    audio.window[cue]();
+    assert.equal(audio.sources.length, 0);
+    audio.elements.muteBtn.handlers.click();
+    audio.window[cue]();
+    assert.equal(audio.sources.length, 1);
+    const voice = audio.sources[0].node;
+    assert.ok(voice.stopTime <= 1.62, cue);
+    voice.onended();
+    assert.equal(voice.disconnected, true);
+    assert.equal(audio.gains[1].disconnected, true);
+    const ctx = audio.contexts[0];
+    ctx.state = 'suspended';
+    let release;
+    ctx.resume = () => new Promise(resolve => { release = () => { ctx.state = 'running'; resolve(); }; });
+    for (let i = 0; i < 100; i++) audio.window[cue]();
+    assert.equal(audio.sources.length, 1, 'no nodes created during suspension');
+    release();
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(audio.sources.length, 2, 'only first pending request can replay');
+    for (let i = 0; i < 100; i++) audio.window[cue]();
+    assert.equal(audio.sources.length, 65, '64 active voices maximum');
+    for (const { node } of audio.sources.slice(1)) node.onended();
+    assert.ok(audio.gains.slice(1).every(gain => gain.disconnected));
+  }
 });
 
 test('laser lockout prevents target damage and gem collection', () => {

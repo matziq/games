@@ -7,7 +7,7 @@ const { test } = require('node:test');
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-test('crystal collection continues the game loop and preserves meteor/audio behavior in Chrome', { timeout: 30000 }, async () => {
+test('crystal collection continues the game loop and preserves meteor/audio behavior in Chrome', { timeout: 45000 }, async () => {
   const executable = process.env.GEODES_TEST_BROWSER || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
   assert.ok(fs.existsSync(executable), 'Set GEODES_TEST_BROWSER to an installed Chromium browser executable');
   const profile = fs.mkdtempSync('D:\\AI_Output\\geodes-meteor-browser-');
@@ -39,13 +39,19 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
       const message = JSON.parse(event.data);
       if (!message.id) return;
       const request = pending.get(message.id);
+      if (!request) return;
       pending.delete(message.id);
+      clearTimeout(request.timeout);
       if (message.error) request.reject(message.error);
       else request.resolve(message.result);
     };
     const call = (method, params = {}) => new Promise((resolve, reject) => {
       const key = ++id;
-      pending.set(key, { resolve, reject });
+      const timeout = setTimeout(() => {
+        pending.delete(key);
+        reject(new Error(`Chrome timed out: ${method} ${params.expression || ''}`));
+      }, 5000);
+      pending.set(key, { resolve, reject, timeout });
       ws.send(JSON.stringify({ id: key, method, params }));
     });
     const evaluate = async expression => {
@@ -64,7 +70,7 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
     const marker = 'requestAnimationFrame(loop);\n        updateHUD();';
     assert.ok(html.includes(marker));
     html = html.replace(marker, `window.__game = {
-      spawnMeteor, strike, rocketExplode, launchRocket, startGame, pauseGame,
+      spawnMeteor, strike, fireLaser, drawGun, rocketExplode, launchRocket, startGame, pauseGame,
       resetGame, endGame, loop: () => loop(lastTime + 33),
       meteors, gems, geodes, rocks, fireballs, rockets, gun, shockwaves, pointPopups, updateLaserHeat, tractorBeams,
       level, pace, gravity, awardGeode, get destroyed() { return geodesCracked; },
@@ -81,7 +87,14 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
     }` + marker);
     html = html.replace('<body>', `<body><script>
       window.requestAnimationFrame = () => 0;
-      window.__metrics = { sources: [], contexts: [], errors: [], drawnText: [], drawOrder: [] };
+      window.__metrics = { sources: [], contexts: [], errors: [], drawnText: [], drawOrder: [], paints: [] };
+      for (const name of ['fill', 'fillRect']) {
+        const original = CanvasRenderingContext2D.prototype[name];
+        CanvasRenderingContext2D.prototype[name] = function (...args) {
+          if (__metrics.capturePaints) __metrics.paints.push({ color: this.fillStyle, shadow: this.shadowColor, blur: this.shadowBlur });
+          return original.apply(this, args);
+        };
+      }
       const fillText = CanvasRenderingContext2D.prototype.fillText;
       CanvasRenderingContext2D.prototype.fillText = function (text, ...rest) {
         if (/^[+][0-9]+$/.test(text)) __metrics.drawnText.push(text);
@@ -101,12 +114,14 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
           return node;
         }
         createOscillator() {
-          const node = super.createOscillator(), start = node.start.bind(node);
+          const node = super.createOscillator(), start = node.start.bind(node), disconnect = node.disconnect.bind(node);
+          node.disconnect = (...args) => { node.__disconnected = true; return disconnect(...args); };
           node.start = (...args) => { __metrics.sources.push(node); return start(...args); };
           return node;
         }
         createBufferSource() {
-          const node = super.createBufferSource(), start = node.start.bind(node);
+          const node = super.createBufferSource(), start = node.start.bind(node), disconnect = node.disconnect.bind(node);
+          node.disconnect = (...args) => { node.__disconnected = true; return disconnect(...args); };
           node.start = (...args) => { __metrics.sources.push(node); return start(...args); };
           return node;
         }
@@ -207,6 +222,80 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
     assert.ok(await evaluate(rms) > 0.005);
     await evaluate("__game.endGame('Test impact')");
     await wait(600);
+    assert.ok(await evaluate(rms) < 0.001);
+
+    // Heat warnings follow real shot/cooldown transitions and actual canvas paint.
+    await evaluate('__game.resetGame(); __game.startGame()');
+    const gunPaint = `(() => {
+      __metrics.paints.length = 0; __metrics.capturePaints = true;
+      __game.drawGun(); __metrics.capturePaints = false;
+      return __metrics.paints;
+    })()`;
+    assert.ok((await evaluate(gunPaint)).every(p => p.blur === 0));
+    const beforeHeat = await evaluate('__metrics.sources.length');
+    await evaluate('for (let i = 0; i < 3; i++) { __game.time = i * 0.15; __game.fireLaser(200, 100); }');
+    assert.equal(await evaluate('__metrics.sources.length') - beforeHeat, 6);
+    assert.ok((await evaluate(gunPaint)).every(p => p.blur === 0));
+    await evaluate('__game.time = 0.45; __game.fireLaser(200, 100)');
+    assert.equal(await evaluate('__game.heat'), 91);
+    assert.equal(await evaluate('__metrics.sources.length') - beforeHeat, 9, 'one klaxon plus four laser zaps');
+    const warningSource = beforeHeat + 6;
+    assert.ok((await evaluate(gunPaint)).some(p => p.color === '#e44242' && p.shadow === '#ff3030' && p.blur === 22));
+    await evaluate('for (let i = 0; i < 100; i++) __game.updateLaserHeat()');
+    assert.equal(await evaluate('__metrics.sources.length') - beforeHeat, 9, 'no per-frame klaxon spam');
+    await evaluate('__game.time = 0.6; __game.fireLaser(200, 100)');
+    assert.equal(await evaluate('__game.overheat'), 2.6);
+    const duringLockout = await evaluate('__metrics.sources.length');
+    await evaluate('for (let i = 0; i < 100; i++) __game.fireLaser(200, 100)');
+    assert.equal(await evaluate('__metrics.sources.length'), duringLockout, 'rejected shots do not repeat warnings');
+    await evaluate('__game.pauseGame(); __game.loop()');
+    assert.equal(await evaluate('__game.time'), 0.6, 'pause freezes cooldown');
+    assert.ok((await evaluate(gunPaint)).some(p => p.blur === 22), 'overheated gun stays red while paused');
+    await evaluate('__game.startGame(); __game.time = 2.599; __game.updateLaserHeat()');
+    assert.equal(await evaluate('__metrics.sources.length'), duringLockout, 'no steam before cooldown finishes');
+    await wait(700);
+    assert.equal(await evaluate(`__metrics.sources[${warningSource}].__disconnected`), true);
+    assert.ok(await evaluate(rms) < 0.001, 'klaxon finishes');
+    await evaluate('__game.time = 2.6; __game.updateLaserHeat(); __game.updateLaserHeat()');
+    assert.equal(await evaluate('__metrics.sources.length'), duringLockout + 1, 'one steam burst on cooldown completion');
+    assert.equal(await evaluate('__game.heat'), 0);
+    assert.ok((await evaluate(gunPaint)).every(p => p.blur === 0), 'cooled gun loses red glow');
+    await wait(100);
+    assert.ok(await evaluate(rms) > 0.005, 'steam hiss is audible');
+    await wait(700);
+    assert.equal(await evaluate('__metrics.sources.at(-1).__disconnected'), true);
+    assert.ok(await evaluate(rms) < 0.001, 'steam voice finishes and disconnects');
+    const afterSteam = await evaluate('__metrics.sources.length');
+    await evaluate('__game.time = 4; __game.fireLaser(200, 100); __game.time = 6; __game.updateLaserHeat()');
+    assert.equal(await evaluate('__metrics.sources.length'), afterSteam + 2, 'ordinary passive cooling does not vent');
+    await evaluate('__game.resetGame(); __game.startGame(); document.getElementById("muteBtn").click()');
+    const beforeMute = await evaluate('__metrics.sources.length');
+    await evaluate(`for (let i = 0; i < 5; i++) { __game.time = i * 0.15; __game.fireLaser(200, 100); }
+      __game.time = 2.6; __game.updateLaserHeat(); document.getElementById("muteBtn").click()`);
+    assert.equal(await evaluate('__metrics.sources.length'), beforeMute, 'muted warnings/steam allocate no voices or delayed replay');
+    await evaluate(`__game.resetGame(); __game.startGame();
+      for (let i = 0; i < 5; i++) { __game.time = i * 0.15; __game.fireLaser(200, 100); }`);
+    const beforeReset = await evaluate('__metrics.sources.length');
+    await evaluate('__game.resetGame(); __game.time = 10; __game.updateLaserHeat()');
+    assert.equal(await evaluate('__metrics.sources.length'), beforeReset, 'reset cancels overheat without steam');
+    await wait(700);
+
+    // A real suspended AudioContext must not accumulate a queue of new cue nodes.
+    await evaluate(`(async () => {
+      const ctx = __metrics.contexts[0]; await ctx.suspend();
+      window.__resume = ctx.resume.bind(ctx);
+      ctx.resume = () => new Promise(resolve => { window.__release = resolve; });
+    })()`);
+    const beforeSuspend = await evaluate('__metrics.sources.length');
+    await evaluate('for (let i = 0; i < 100; i++) { sfxLaserHeatWarning(); sfxLaserSteam(); } void 0');
+    assert.equal(await evaluate('__metrics.sources.length'), beforeSuspend);
+    await evaluate(`(async () => {
+      const ctx = __metrics.contexts[0]; ctx.resume = __resume;
+      await ctx.resume(); __release();
+    })()`);
+    await wait(100);
+    assert.equal(await evaluate('__metrics.sources.length'), beforeSuspend + 1, 'only first suspended cue replays');
+    await wait(700);
     assert.ok(await evaluate(rms) < 0.001);
 
     // Earning a missile plays the fanfare once.
