@@ -187,19 +187,24 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
     await evaluate('__game.time += 0.2; __game.strike(200, 250)');
     assert.equal(await evaluate('__game.gems.length'), 5);
     assert.equal(await evaluate('__game.meteors.length'), 0);
+    assert.equal(await evaluate('__game.score'), 500);
+    assert.equal(await evaluate('__game.ammo'), 1);
     const rms = `(() => {
       const c = __metrics.contexts[0], data = new Float32Array(c.meter.fftSize);
       c.meter.getFloatTimeDomainData(data);
       return Math.sqrt(data.reduce((sum, value) => sum + value * value, 0) / data.length);
     })()`;
-    await wait(600);
-    assert.ok(await evaluate(rms) < 0.001);
+    // Meteor destruction now earns a missile; let its fanfare finish with the explosion.
+    await wait(1000);
+    assert.ok(await evaluate(rms) < 0.001, 'meteor roar and missile fanfare finish');
     await evaluate(`__game.resetGame(); __game.startGame(); __game.spawnMeteor();
       __game.meteors[0].x = 200; __game.meteors[0].y = 250;
       __game.rocketExplode(200, 250)`);
     assert.equal(await evaluate('__game.gems.length'), 5);
     assert.equal(await evaluate('__game.meteors.length'), 0);
-    await wait(600);
+    assert.equal(await evaluate('__game.score'), 500);
+    assert.equal(await evaluate('__game.ammo'), 1);
+    await wait(1000);
     await evaluate(`__game.resetGame(); __game.startGame(); __game.spawnMeteor();
       __game.meteors[0].x = __game.gun.x; __game.meteors[0].y = __game.gun.y - 200;
       __game.ammo = 1; __game.launchRocket(__game.gun.x, __game.gun.y - 200);
@@ -207,7 +212,9 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
     assert.equal(await evaluate('__game.meteors.length'), 0);
     assert.equal(await evaluate('__game.rockets.length'), 0);
     assert.equal(await evaluate('__game.gems.length'), 5);
-    await wait(600);
+    assert.equal(await evaluate('__game.score'), 500);
+    assert.equal(await evaluate('__game.ammo'), 1, 'meteor award replaces the fired missile');
+    await wait(1000);
     await evaluate(`__game.resetGame(); __game.startGame(); __game.geodes.push({
       x: __game.gun.x, y: __game.gun.y - 100, r: 20, vx: 0, fallSpeed: 100,
       phase: 'down', age: 2, rot: 0, color: '#222222', vy: 100, gravity: 1, climb: 100
@@ -333,9 +340,9 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
       __game.rocks.push({ x: 120, y: 200, r: 18, vx: 0, vy: -1, climb: 40, gravity: 0, age: 1, rot: 0, spin: 0,
         phase: 'up', fallSpeed: 0, color: '#555555', seed: 1 });
       __game.strike(120, 200); __game.loop(66)`);
-    assert.equal(await evaluate('__game.score'), 100);
-    assert.deepEqual(await evaluate('__game.pointPopups.map(p => p.text)'), ['+100']);
-    assert.ok((await evaluate('__metrics.drawnText')).includes('+100'));
+    assert.equal(await evaluate('__game.score'), 10);
+    assert.deepEqual(await evaluate('__game.pointPopups.map(p => p.text)'), ['+10']);
+    assert.ok((await evaluate('__metrics.drawnText')).includes('+10'));
     await evaluate('for (let i = 0; i < 40; i++) __game.loop(99 + i * 33)');
     assert.equal(await evaluate('__game.pointPopups.length'), 0);
 
@@ -417,12 +424,13 @@ test('crystal collection continues the game loop and preserves meteor/audio beha
 
     // Exact awards, threshold crossings, and inheritance use the real browser game functions.
     for (const weapon of ['strike', 'rocketExplode']) {
-      for (const [list, points] of [['geodes', 25], ['rocks', 100], ['meteors', 100], ['fireballs', 50]]) {
+      for (const [list, points] of [['geodes', 25], ['rocks', 10], ['meteors', 500], ['fireballs', 100]]) {
         await evaluate(`__game.resetGame(); __game.startGame();
           __game.${list}.push({ x: 150, y: 250, r: 20, baseR: 20, hp: 1,
             vx: -12, vy: 35, age: 0, rot: 0, spin: 0, color: '#555555' });
           __game.${weapon}(150, 250)`);
         assert.equal(await evaluate('__game.score'), points, `${weapon}: ${list}`);
+        assert.equal(await evaluate('__game.ammo'), list === 'meteors' ? 1 : 0, `${weapon}: ${list} missile reward`);
         assert.deepEqual(await evaluate('__game.pointPopups.map(p => p.text)'), [`+${points}`]);
       }
     }
