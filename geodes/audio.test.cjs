@@ -88,14 +88,14 @@ function setupLaserGameplay(audio) {
     sfxLaser: audio.window.sfxLaser, barrelTip: () => ({ x: 1, y: 2 }),
     laserBeams: [], particles: [], rand: () => 1,
     running: true, gameOver: false, runTime: 0, laserHeat: 0, laserHeatUpdatedAt: 0,
-    lastLaserShotAt: -Infinity, laserOverheatedUntil: 0, laserHeatWarning: false,
+    lastLaserShotAt: -Infinity, laserOverheatedUntil: 0, laserWarningArmed: true,
     laserHeatChip: { classList: { toggle() {} } }, laserHeatEl: { textContent: '0%' },
     laserHeatBar: { value: 0 }
   });
   for (const declaration of html.matchAll(/const LASER_[A-Z_]+ = [^;]+;/g)) {
     vm.runInContext(declaration[0], audio.context);
   }
-  for (const name of ['updateLaserHeat', 'fireLaser']) {
+  for (const name of ['updateLaserHeat', 'laserHeatWarning', 'fireLaser']) {
     const code = html.match(new RegExp(`function ${name}\\([^)]*\\) \\{[\\s\\S]*?\\n        \\}`))[0];
     vm.runInContext(code, audio.context);
   }
@@ -313,31 +313,40 @@ test('laser rate limit and two-second overheat cannot be bypassed by sustained f
   }
   assert.equal(audio.context.laserOverheatedUntil, 2.6);
   assert.equal(audio.context.laserHeatEl.textContent, 'HOT');
-  assert.equal(audio.sources.length, 14);
+  // 5 shots (2 voices each) + one 80% klaxon (2) + overheat alarm (3).
+  assert.equal(audio.sources.length, 15);
   for (let i = 0; i < 100; i++) {
     audio.context.runTime = 0.61 + i * 0.019;
     assert.equal(vm.runInContext('fireLaser(100, 100)', audio.context), false);
   }
-  assert.equal(audio.sources.length, 14);
+  assert.equal(audio.sources.length, 15);
   audio.context.runTime = 2.6;
   assert.equal(vm.runInContext('fireLaser(100, 100)', audio.context), true);
   assert.equal(audio.context.laserHeat, 25);
-  assert.equal(audio.sources.length, 17);
+  assert.equal(audio.sources.length, 19);
 });
 
-test('heat klaxon triggers at exactly 80 percent, rearms below it, and never repeats while hot', async () => {
+test('heat warning begins at exactly 80 percent and rearms after passive cooling', async () => {
   const audio = setup();
   setupLaserGameplay(audio);
   await audio.gestures.pointerdown();
-  for (const [heat, expected] of [[79.999, 0], [80, 1], [90, 1], [100, 1], [79, 1], [80, 2]]) {
-    audio.context.laserHeat = heat;
-    vm.runInContext('updateLaserHeat(); updateLaserHeat()', audio.context);
-    assert.equal(audio.sources.length, expected, `heat ${heat}`);
-  }
+  audio.context.laserHeat = 54.999;
+  vm.runInContext('fireLaser(100, 100)', audio.context);
+  assert.equal(audio.sources.length, 2, 'below threshold only the shot plays');
+  assert.equal(vm.runInContext('laserHeatWarning()', audio.context), false);
   audio.context.runTime = 1;
+  audio.context.laserHeatUpdatedAt = 1;
+  audio.context.laserHeat = 55;
+  vm.runInContext('fireLaser(100, 100); updateLaserHeat(); updateLaserHeat()', audio.context);
+  assert.equal(audio.context.laserHeat, 80);
+  assert.equal(audio.sources.length, 6, 'exactly 80 percent adds one two-voice klaxon');
+  assert.equal(vm.runInContext('laserHeatWarning()', audio.context), true);
+  audio.context.runTime = 1.5;
   vm.runInContext('updateLaserHeat()', audio.context);
-  assert.equal(audio.context.laserHeatWarning, false, 'passive cooling rearms the warning');
-  assert.equal(audio.sources.length, 2, 'ordinary cooling makes no steam');
+  assert.equal(audio.context.laserWarningArmed, true, 'passive cooling rearms the warning');
+  assert.equal(audio.sources.length, 6, 'ordinary cooling makes no steam');
+  vm.runInContext('fireLaser(100, 100)', audio.context);
+  assert.equal(audio.sources.length, 10, 'new crossing plays the klaxon once again');
 });
 
 test('actual overheat completion vents once, not during lockout or after an ordinary cooldown', async () => {
@@ -352,17 +361,17 @@ test('actual overheat completion vents once, not during lockout or after an ordi
   assert.equal(audio.context.laserHeat, 100);
   audio.context.runTime = 2.6;
   vm.runInContext('updateLaserHeat(); updateLaserHeat()', audio.context);
-  assert.equal(audio.sources.length, before + 1);
+  assert.equal(audio.sources.length, before + 2);
   assert.equal(audio.context.laserHeat, 0);
-  assert.equal(audio.context.laserHeatWarning, false);
+  assert.equal(audio.context.laserWarningArmed, true);
   assert.equal(audio.sources.at(-1).node.loop, undefined);
   audio.context.runTime = 10;
   vm.runInContext('updateLaserHeat()', audio.context);
-  assert.equal(audio.sources.length, before + 1);
+  assert.equal(audio.sources.length, before + 2);
 });
 
 test('heat warning and steam use bounded, self-cleaning voices and respect mute and suspension', async () => {
-  for (const cue of ['sfxLaserHeatWarning', 'sfxLaserSteam']) {
+  for (const cue of ['sfxLaserWarning', 'sfxLaserSteam']) {
     const audio = setup();
     await audio.gestures.pointerdown();
     audio.elements.muteBtn.handlers.click();
@@ -370,24 +379,25 @@ test('heat warning and steam use bounded, self-cleaning voices and respect mute 
     assert.equal(audio.sources.length, 0);
     audio.elements.muteBtn.handlers.click();
     audio.window[cue]();
-    assert.equal(audio.sources.length, 1);
-    const voice = audio.sources[0].node;
-    assert.ok(voice.stopTime <= 1.62, cue);
-    voice.onended();
-    assert.equal(voice.disconnected, true);
-    assert.equal(audio.gains[1].disconnected, true);
+    assert.equal(audio.sources.length, 2);
+    for (const { node } of audio.sources) {
+      assert.ok(node.stopTime <= 1.96, cue);
+      node.onended();
+      assert.equal(node.disconnected, true);
+    }
+    assert.ok(audio.gains.slice(1).every(gain => gain.disconnected));
     const ctx = audio.contexts[0];
     ctx.state = 'suspended';
     let release;
     ctx.resume = () => new Promise(resolve => { release = () => { ctx.state = 'running'; resolve(); }; });
     for (let i = 0; i < 100; i++) audio.window[cue]();
-    assert.equal(audio.sources.length, 1, 'no nodes created during suspension');
+    assert.equal(audio.sources.length, 2, 'no nodes created during suspension');
     release();
     await new Promise(resolve => setImmediate(resolve));
-    assert.equal(audio.sources.length, 2, 'only first pending request can replay');
+    assert.equal(audio.sources.length, 4, 'only first pending request can replay');
     for (let i = 0; i < 100; i++) audio.window[cue]();
-    assert.equal(audio.sources.length, 65, '64 active voices maximum');
-    for (const { node } of audio.sources.slice(1)) node.onended();
+    assert.equal(audio.sources.length, 66, '64 active voices maximum');
+    for (const { node } of audio.sources.slice(2)) node.onended();
     assert.ok(audio.gains.slice(1).every(gain => gain.disconnected));
   }
 });
@@ -594,6 +604,78 @@ test('paced laser shots cool between shots and lockout finishes with zero heat',
   assert.equal(audio.context.laserHeat, 0);
   assert.equal(audio.context.laserHeatBar.value, 0);
   assert.equal(audio.context.laserHeatEl.textContent, '0%');
+});
+
+test('laser glows red with one klaxon at 80% heat and vents steam once when the lockout ends', async () => {
+  const audio = setup();
+  setupLaserGameplay(audio);
+  const classes = new Set();
+  audio.context.laserHeatChip.classList = { toggle(name, on) { if (on) classes.add(name); else classes.delete(name); } };
+  await audio.gestures.pointerdown();
+  const warning = () => vm.runInContext('laserHeatWarning()', audio.context);
+  audio.context.laserHeat = 50;
+  assert.equal(vm.runInContext('fireLaser(100, 100)', audio.context), true);
+  assert.equal(audio.context.laserHeat, 75);
+  assert.equal(warning(), false);
+  assert.equal(audio.sources.length, 2);
+  // Crossing 80% plays the klaxon (2 voices) once alongside the shot (2 voices).
+  audio.context.runTime = 0.15;
+  assert.equal(vm.runInContext('fireLaser(100, 100)', audio.context), true);
+  assert.equal(audio.context.laserHeat, 97);
+  assert.equal(warning(), true);
+  assert.ok(classes.has('warning'));
+  assert.equal(audio.sources.length, 6);
+  const klaxon = audio.sources.slice(2, 4).map(({ node }) => node);
+  assert.ok(klaxon.every(node => node.frequency.value === 560 && node.stopTime > 1));
+  // Staying above the threshold does not repeat it.
+  for (let i = 0; i < 20; i++) { audio.context.runTime = 0.15 + i * 0.01; vm.runInContext('updateLaserHeat()', audio.context); }
+  assert.equal(audio.sources.length, 6);
+  // Cooling below 80% clears the glow and re-arms the klaxon for the next crossing.
+  audio.context.runTime = 1.5;
+  vm.runInContext('updateLaserHeat()', audio.context);
+  assert.ok(audio.context.laserHeat < 80);
+  assert.equal(warning(), false);
+  assert.ok(!classes.has('warning'));
+  assert.equal(vm.runInContext('fireLaser(100, 100)', audio.context), true);
+  assert.equal(audio.sources.length, 10);
+  // Overheating skips a second klaxon; the gun keeps glowing through the lockout.
+  audio.context.runTime = 1.65;
+  assert.equal(vm.runInContext('fireLaser(100, 100)', audio.context), true);
+  assert.equal(audio.context.laserOverheatedUntil, 3.65);
+  assert.equal(audio.sources.length, 15);
+  assert.equal(warning(), true);
+  assert.ok(classes.has('overheated') && !classes.has('warning'));
+  audio.context.runTime = 3.0;
+  vm.runInContext('updateLaserHeat()', audio.context);
+  assert.equal(audio.sources.length, 15);
+  // Recovery vents a single steam hiss whose voices end and disconnect.
+  audio.context.runTime = 3.65;
+  vm.runInContext('updateLaserHeat(); updateLaserHeat()', audio.context);
+  assert.equal(audio.context.laserHeat, 0);
+  assert.equal(warning(), false);
+  assert.equal(audio.sources.length, 17);
+  for (const { node, time } of audio.sources.slice(15)) {
+    assert.equal(node.loop, undefined);
+    assert.ok(node.stopTime > time + 0.5);
+    node.onended();
+    assert.equal(node.disconnected, true);
+  }
+  // Muted play suppresses both cues.
+  audio.window.audioMuted = true;
+  audio.context.laserHeat = 50;
+  audio.context.runTime = 4;
+  audio.context.laserHeatUpdatedAt = 4;
+  vm.runInContext('fireLaser(100, 100)', audio.context);
+  audio.context.runTime = 4.15;
+  vm.runInContext('fireLaser(100, 100)', audio.context);
+  audio.context.runTime = 4.3;
+  vm.runInContext('fireLaser(100, 100)', audio.context);
+  assert.ok(Math.abs(audio.context.laserOverheatedUntil - 6.3) < 1e-9);
+  audio.context.runTime = 6.31;
+  vm.runInContext('updateLaserHeat()', audio.context);
+  assert.equal(audio.context.laserOverheatedUntil, 0);
+  assert.equal(audio.sources.length, 17);
+  assert.deepEqual(audio.errors, []);
 });
 
 test('levels advance every 100 destroyed geodes and apply eight-percent speed steps', () => {
