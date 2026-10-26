@@ -27,7 +27,7 @@ function setup() {
     const node = {
       frequency: param(),
       connect() {},
-      disconnect() {},
+      disconnect() { this.disconnected = true; },
       start(time) { sources.push({ node, time }); },
       stop(time) { this.stopTime = time; }
     };
@@ -47,7 +47,7 @@ function setup() {
       return Promise.resolve().then(() => { this.state = 'running'; });
     }
     createGain() {
-      const gain = { gain: param(), connect() {}, disconnect() {} };
+      const gain = { gain: param(), connect() {}, disconnect() { this.disconnected = true; } };
       gains.push(gain);
       return gain;
     }
@@ -143,6 +143,65 @@ test('audio recovers from suspension before scheduling a shot', async () => {
   await audio.window.sfxLaser();
   assert.equal(audio.contexts[0].resumes, 2);
   assert.equal(audio.sources.length, 4);
+});
+
+test('finished one-shot voices disconnect their nodes from the graph', async () => {
+  const audio = setup();
+  await audio.window.sfxLaser();
+  audio.window.sfxExplosion();
+  assert.ok(audio.sources.length >= 7);
+  for (const { node } of audio.sources) {
+    assert.equal(typeof node.onended, 'function');
+    node.onended();
+    assert.equal(node.disconnected, true);
+  }
+  const voiceGains = audio.gains.slice(1);
+  assert.ok(voiceGains.length > 0);
+  assert.ok(voiceGains.every(gain => gain.disconnected));
+});
+
+test('sounds requested while the context is suspended do not replay as a burst', async () => {
+  const audio = setup();
+  await audio.window.sfxLaser();
+  const ctx = audio.contexts[0];
+  let release;
+  ctx.state = 'suspended';
+  ctx.resume = function () {
+    this.resumes++;
+    return new Promise(resolve => { release = () => { this.state = 'running'; resolve(); }; });
+  };
+  const before = audio.sources.length;
+  for (let shot = 0; shot < 200; shot++) {
+    audio.window.sfxLaser();
+    audio.window.sfxRocket();
+    audio.window.sfxExplosion();
+  }
+  assert.equal(audio.sources.length, before);
+  assert.equal(ctx.resumes, 2);
+  release();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.ok(audio.sources.length - before <= 2, `burst of ${audio.sources.length - before} voices`);
+});
+
+test('concurrent one-shot voices are capped', async () => {
+  const audio = setup();
+  await audio.window.sfxLaser();
+  for (let i = 0; i < 500; i++) audio.window.sfxLaser();
+  assert.ok(audio.sources.length <= 70, `${audio.sources.length} voices`);
+  for (const { node } of audio.sources) node.onended();
+  const before = audio.sources.length;
+  audio.window.sfxLaser();
+  assert.equal(audio.sources.length, before + 2);
+});
+
+test('explosion echo respects mute after it was scheduled', async () => {
+  const audio = setup();
+  await audio.gestures.pointerdown();
+  audio.window.sfxExplosion();
+  const afterHit = audio.sources.length;
+  audio.elements.muteBtn.handlers.click();
+  await new Promise(resolve => setTimeout(resolve, 400));
+  assert.equal(audio.sources.length, afterHit);
 });
 
 test('initial context respects volume selected before unlock', async () => {

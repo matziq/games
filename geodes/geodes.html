@@ -533,7 +533,7 @@
     <script>
       (() => {
         const canvas = document.getElementById('game');
-        const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
+        const ctx = canvas.getContext('2d', { alpha: true });
 
         // HUD
         const scoreEl = document.getElementById('score');
@@ -561,6 +561,11 @@
         let hoverTarget = null;
         const pointers = new Map();
         const spriteCache = new Map();
+        const SPRITE_CACHE_MAX = 160;
+        function cacheSprite(key, sprite) {
+          if (spriteCache.size >= SPRITE_CACHE_MAX) spriteCache.delete(spriteCache.keys().next().value);
+          spriteCache.set(key, sprite);
+        }
         const rocketBtn = document.getElementById('rocketBtn');
         const toolsEl = document.getElementById('tools');
         const pauseVeil = document.getElementById('pauseVeil');
@@ -666,8 +671,9 @@
           laserHeatChip.classList.toggle('overheated', overheated);
           const label = overheated ? 'HOT' : `${Math.round(laserHeat)}%`;
           if (laserHeatEl.textContent !== label) laserHeatEl.textContent = label;
-          laserHeatBar.value = laserHeat;
-          laserHeatChip.title = overheated ? 'Laser overheated: wait two seconds' : 'Laser heat: pace shots to cool down';
+          if (laserHeatBar.value !== laserHeat) laserHeatBar.value = laserHeat;
+          const title = overheated ? 'Laser overheated: wait two seconds' : 'Laser heat: pace shots to cool down';
+          if (laserHeatChip.title !== title) laserHeatChip.title = title;
         }
 
         function awardGeode() {
@@ -710,9 +716,15 @@
           canvas.style.left = `${left}px`;
           canvas.style.width = `${cw}px`;
           canvas.style.height = `${ch}px`;
-          DPR = Math.max(1, Math.min(lite ? 1.5 : 2, window.devicePixelRatio || 1));
-          W = canvas.width = Math.max(1, Math.floor(cw * DPR));
-          H = canvas.height = Math.max(1, Math.floor(ch * DPR));
+          const nextDPR = Math.max(1, Math.min(lite ? 1.5 : 2, window.devicePixelRatio || 1));
+          if (nextDPR !== DPR) spriteCache.clear();
+          DPR = nextDPR;
+          const nextW = Math.max(1, Math.floor(cw * DPR));
+          const nextH = Math.max(1, Math.floor(ch * DPR));
+          if (canvas.width !== nextW) canvas.width = nextW;
+          if (canvas.height !== nextH) canvas.height = nextH;
+          W = nextW;
+          H = nextH;
           ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
           const safeBottom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom')) || 0;
           const shape = volcanoShape(cw, ch);
@@ -723,9 +735,8 @@
           gun.y = Math.min(ch - Math.max(54, safeBottom + 24), shape.mouthY + shape.height * 0.62);
           const heatGauge = document.getElementById('laserHeatChip');
           heatGauge.style.left = `${left + gun.x}px`;
-          heatGauge.style.top = `${Math.min(gun.y + 30, ch - safeBottom - 28)}px`;
-          spriteCache.clear();
-        }
+          heatGauge.style.top = `${Math.min(gun.y + 30,           ch - safeBottom - 28)}px`;
+                  }
         window.addEventListener('resize', resize, { passive: true });
         if (window.visualViewport) window.visualViewport.addEventListener('resize', resize, { passive: true });
         resize();
@@ -892,12 +903,30 @@
           }
         }
 
+        function meteorGlowSprite() {
+          const key = 'meteorGlow';
+          const cached = spriteCache.get(key);
+          if (cached) return cached;
+          const size = 128;
+          const sprite = document.createElement('canvas');
+          sprite.width = size;
+          sprite.height = size;
+          const sctx = sprite.getContext('2d');
+          const glow = sctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+          glow.addColorStop(0, 'rgba(255,106,0,0.55)');
+          glow.addColorStop(0.55, 'rgba(255,106,0,0.28)');
+          glow.addColorStop(1, 'rgba(255,106,0,0)');
+          sctx.fillStyle = glow;
+          sctx.fillRect(0, 0, size, size);
+          cacheSprite(key, sprite);
+          return sprite;
+        }
+
         function drawMeteor(m) {
           ctx.save();
-          ctx.shadowColor = '#ff6a00';
-          ctx.shadowBlur = 18;
+          const glowR = m.r + 18;
+          ctx.drawImage(meteorGlowSprite(), m.x - glowR, m.y - glowR, glowR * 2, glowR * 2);
           drawRock(m);
-          ctx.shadowBlur = 0;
           ctx.fillStyle = '#ffcf5a';
           for (let i = 0; i < m.hp; i++) {
             ctx.beginPath();
@@ -1281,7 +1310,7 @@
             g.arc(Math.cos(a) * r * 0.58, Math.sin(a * 1.4) * r * 0.5, 1.1, 0, Math.PI * 2);
             g.fill();
           }
-          spriteCache.set(key, sprite);
+          cacheSprite(key, sprite);
           return sprite;
         }
 
@@ -1309,7 +1338,7 @@
           g.fill();
           g.strokeStyle = 'rgba(255,255,255,0.12)';
           g.stroke();
-          spriteCache.set(key, sprite);
+          cacheSprite(key, sprite);
           return sprite;
         }
 
@@ -1337,7 +1366,7 @@
           g.beginPath();
           g.arc(0, 0, r, 0, Math.PI * 2);
           g.fill();
-          spriteCache.set('fb', sprite);
+          cacheSprite('fb', sprite);
           return sprite;
         }
 
@@ -1564,6 +1593,8 @@
           if (gameOver) { requestAnimationFrame(loop); return; }
 
           // Update & draw shards
+          const shardCap = lite ? 90 : 220;
+          if (shards.length > shardCap) shards.splice(0, shards.length - shardCap);
           for (let i = shards.length - 1; i >= 0; i--) {
             const s = shards[i];
             s.ttl -= dt;
@@ -2331,6 +2362,12 @@
 
         let ctx = null, master = null, compressor = null, noiseBuf = null;
         const vol = 0.60;
+        // Hard limits so heavy firing or a suspended context can never pile up audio nodes.
+        const MAX_VOICES = 64;
+        const REPLAY_WINDOW_MS = 400;
+        const RESUME_RETRY_MS = 2000;
+        let activeVoices = 0;
+        let resumePending = null, resumeStartedAt = 0;
 
         // Global mute state accessible to sound functions
         window.audioMuted = false;
@@ -2352,11 +2389,41 @@
         }
         function resumeCtx() {
           ensureCtx();
-          if (ctx.state !== 'running') {
-            return ctx.resume().catch(error => {
-              console.error('Geodes audio could not resume:', error);
-            });
-          }
+          if (ctx.state === 'running') return Promise.resolve();
+          // Share one resume request; a stalled resume (interrupted device) is retried after a delay.
+          if (resumePending && Date.now() - resumeStartedAt < RESUME_RETRY_MS) return resumePending;
+          resumeStartedAt = Date.now();
+          const pending = resumePending = ctx.resume().catch(error => {
+            console.error('Geodes audio could not resume:', error);
+          }).finally(() => {
+            if (resumePending === pending) resumePending = null;
+          });
+          return pending;
+        }
+        // True when a one-shot sound may be scheduled right now.
+        function ready() {
+          if (window.audioMuted) return false;
+          ensureCtx();
+          return ctx.state === 'running' && activeVoices < MAX_VOICES;
+        }
+        // Sounds requested while the context is not running are dropped, except the one that
+        // starts the unlock, which plays once if the context resumes promptly.
+        function deferred(replay) {
+          if (window.audioMuted || ctx.state === 'running') return;
+          const first = !resumePending;
+          const requested = Date.now();
+          const pending = resumeCtx();
+          if (!first) return pending;
+          return pending.then(() => {
+            if (ctx.state === 'running' && Date.now() - requested < REPLAY_WINDOW_MS) replay();
+          });
+        }
+        function trackVoice(source, nodes) {
+          activeVoices++;
+          source.onended = () => {
+            activeVoices = Math.max(0, activeVoices - 1);
+            for (const node of nodes) node.disconnect();
+          };
         }
         function makeNoiseBuffer() {
           const len = Math.floor(ctx.sampleRate * 1.0);
@@ -2377,6 +2444,7 @@
           o.type = type; o.frequency.value = f;
           const g = ctx.createGain();
           o.connect(g); g.connect(master);
+          trackVoice(o, [o, g]);
           return { o, g };
         }
         function noiseBurst({ freq = 1200, q = 4, a = 0.003, r = 0.12, gain = 0.6, hp = 0 } = {}) {
@@ -2387,6 +2455,7 @@
           filt.frequency.value = freq; filt.Q.value = q;
           const g = ctx.createGain();
           src.connect(filt); filt.connect(g); g.connect(master);
+          trackVoice(src, [src, filt, g]);
           const t = now();
           env(g, t, a, r, gain);
           src.start(t);
@@ -2395,14 +2464,7 @@
 
         // SFX
         function sfxLaser() {
-          if (window.audioMuted) return;
-          ensureCtx();
-          if (ctx.state !== 'running') {
-            return resumeCtx().then(() => {
-              if (ctx.state === 'running') sfxLaser();
-            });
-          }
-          resumeCtx();
+          if (!ready()) return deferred(sfxLaser);
           const t = now();
           const startFreq = 1450 + Math.random() * 450;
           const zap = osc('triangle', startFreq);
@@ -2414,13 +2476,7 @@
         // Gameplay and audio live in separate scripts.
         window.sfxLaser = sfxLaser;
         function sfxLaserOverheat() {
-          if (window.audioMuted) return;
-          ensureCtx();
-          if (ctx.state !== 'running') {
-            return resumeCtx().then(() => {
-              if (ctx.state === 'running') sfxLaserOverheat();
-            });
-          }
+          if (!ready()) return deferred(sfxLaserOverheat);
           const t = now() + 0.03;
           [320, 220].forEach((frequency, i) => {
             const alarm = osc('square', frequency);
@@ -2434,8 +2490,7 @@
         }
         window.sfxLaserOverheat = sfxLaserOverheat;
         function sfxRockCrumble() {
-          if (window.audioMuted) return;
-          resumeCtx();
+          if (!ready()) return deferred(sfxRockCrumble);
           const t = now();
           noiseBurst({ freq: 900 + Math.random() * 350, q: 1.1, a: 0.001, r: 0.045, gain: 0.32 });
           noiseBurst({ freq: 220 + Math.random() * 90, q: 0.65, a: 0.008, r: 0.18, gain: 0.3 });
@@ -2445,14 +2500,7 @@
           thud.o.start(t); thud.o.stop(t + 0.09);
         }
         function sfxRocket() {
-          if (window.audioMuted) return;
-          ensureCtx();
-          if (ctx.state !== 'running') {
-            return resumeCtx().then(() => {
-              if (ctx.state === 'running') sfxRocket();
-            });
-          }
-          resumeCtx();
+          if (!ready()) return deferred(sfxRocket);
           const t = now();
           // Whoosh launch
           noiseBurst({ freq: 800, q: 2, a: 0.005, r: 0.2, gain: 0.4 });
@@ -2560,8 +2608,8 @@
           ensureCtx();
           if (ctx.state !== 'running') {
             const generation = collisionAlarmGeneration;
-            return resumeCtx().then(() => {
-              if (generation === collisionAlarmGeneration && ctx.state === 'running') sfxCollisionAlarm();
+            return deferred(() => {
+              if (generation === collisionAlarmGeneration) sfxCollisionAlarm();
             });
           }
           const t = now();
@@ -2575,7 +2623,6 @@
             voice.o.frequency.setValueAtTime(420, start);
             voice.o.frequency.linearRampToValueAtTime(760, start + 0.1);
             voice.o.frequency.linearRampToValueAtTime(420, start + 0.22);
-            voice.o.onended = () => { voice.o.disconnect(); voice.g.disconnect(); };
             voice.o.start(start);
             voice.o.stop(start + 0.25);
             collisionAlarmVoices.push(voice);
@@ -2584,16 +2631,14 @@
         window.sfxCollisionAlarm = sfxCollisionAlarm;
         window.stopCollisionAlarm = stopCollisionAlarm;
         function sfxStart() {
-          if (window.audioMuted) return;
-          resumeCtx();
+          if (!ready()) return deferred(sfxStart);
           const t = now();
           const a = osc('sine', 440), b = osc('sine', 660);
           env(a.g, t, 0.01, 0.12, 0.9); a.o.start(t); a.o.stop(t + 0.22);
           env(b.g, t + 0.04, 0.01, 0.14, 0.6); b.o.start(t + 0.04); b.o.stop(t + 0.28);
         }
         function sfxOver() {
-          if (window.audioMuted) return;
-          resumeCtx();
+          if (!ready()) return deferred(sfxOver);
           const t = now();
           const a = osc('triangle', 520), b = osc('triangle', 390);
           env(a.g, t, 0.005, 0.18, 0.7); a.o.frequency.exponentialRampToValueAtTime(260, t + 0.22);
@@ -2603,8 +2648,7 @@
           noiseBurst({ freq: 600, q: 0.8, a: 0.01, r: 0.3, gain: 0.25, hp: 1 });
         }
         function sfxGem(points = 10) {
-          if (window.audioMuted) return;
-          resumeCtx();
+          if (!ready()) return deferred(() => sfxGem(points));
           const tier = points >= 100 ? 4 : points >= 80 ? 3 : points >= 60 ? 2 : points >= 40 ? 1 : 0;
           const base = [784, 988, 1175, 1319, 1568][tier];
           const t = now();
@@ -2618,8 +2662,7 @@
           noiseBurst({ freq: 4200, q: 2.8, a: 0.001, r: 0.035, gain: 0.07, hp: 1 });
         }
         function sfxGeode() {
-          if (window.audioMuted) return;
-          resumeCtx();
+          if (!ready()) return deferred(sfxGeode);
           const t = now();
 
           noiseBurst({ freq: 1250 + Math.random() * 300, q: 1.3, a: 0.001, r: 0.055, gain: 0.36 });
@@ -2637,14 +2680,7 @@
         }
 
         function sfxExplosion() {
-          if (window.audioMuted) return;
-          ensureCtx();
-          if (ctx.state !== 'running') {
-            return resumeCtx().then(() => {
-              if (ctx.state === 'running') sfxExplosion();
-            });
-          }
-          resumeCtx();
+          if (!ready()) return deferred(sfxExplosion);
           const t = now();
 
           // Deep explosion rumble
@@ -2670,6 +2706,7 @@
 
           // Secondary explosion echo
           setTimeout(() => {
+            if (!ready()) return;
             const echo = osc('triangle', 60);
             const echoT = now();
             env(echo.g, echoT, 0.01, 0.12, 0.3);
@@ -2679,8 +2716,7 @@
         window.sfxExplosion = sfxExplosion;
 
         function sfxMilestone() {
-          if (window.audioMuted) return;
-          resumeCtx();
+          if (!ready()) return deferred(sfxMilestone);
           const t = now();
 
           // Celebratory ascending melody - major chord progression
@@ -2714,8 +2750,7 @@
         }
 
         function sfxGeodeEscape() {
-          if (window.audioMuted) return;
-          resumeCtx();
+          if (!ready()) return deferred(sfxGeodeEscape);
           const t = now();
 
           // Lower-pitched sad descending tones
