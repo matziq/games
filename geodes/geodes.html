@@ -504,7 +504,7 @@
         <div class="pill">🪨 <strong>Rocks</strong> — Jagged gray stones. Tap to break them (no gems, no penalty for
           missing). Each destroyed rock earns 10 points.</div>
         <div class="pill">🔥 <strong>Fireballs</strong> — Rare glowing orbs. Tap to explode and turn all geodes into
-          diamonds! Each fireball earns 100 points, plus 25 for each cleared geode and 10 for each cleared rock. Collect the diamonds for their gem value.</div>
+          diamonds! Each fireball earns 100 points, plus destruction points and the immediate 100-point diamond bonus for each cleared geode.</div>
         <div class="pill">🚀 <strong>Missiles</strong> — Earn a missile every 500 points and a fanfare plays as a pod slides out of the gun. Right-click, long-press, or tap Arm, then tap the target. The pod retracts when you are empty.</div>
         <div class="pill"><strong>Laser heat</strong> — Watch the bar below the gun. Rapid shots build heat. At 80%, the gun glows red and a klaxon sounds. At 100%, a warning sounds and the laser locks for two seconds, then vents steam as it cools. Pace your shots to cool it down. Missiles still work while the laser is hot.</div>
         <div class="pill"><strong>Levels</strong> — Every 100 destroyed geodes advances a level. Hazards and crystals move 8% faster per level; points alone do not advance levels.</div>
@@ -1187,13 +1187,15 @@
           }
 
           awardPoints(fb.x, fb.y, 100);
-          // Each cleared geode awards its own value; its diamond is a normal collectible gem.
+          // Preserve the immediate diamond bonus without awarding it again on collection.
           for (let i = geodes.length - 1; i >= 0; i--) {
             const g = geodes[i];
             const velocity = parentVelocity(g);
+            const diamondPoints = GEM_TYPES[0].points;
             awardGeode(g);
+            awardPoints(g.x, g.y - 20, diamondPoints, GEM_TYPES[0].color);
             makeShards(g.x, g.y, g.color, { x: 0, y: -1 }, g.r / 22);
-            spawnDiamond(g.x, g.y - 4, { velocity });
+            spawnDiamond(g.x, g.y - 4, { free: true, velocity });
             geodes.splice(i, 1);
           }
 
