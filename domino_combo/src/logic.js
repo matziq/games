@@ -183,9 +183,8 @@ export function findGroups(board, gridSize, matchCount) {
       const queue = [{ r, c }];
       visited[r][c] = true;
 
-      // Advance a head index instead of shifting the array for every visited cell.
-      for (let head = 0; head < queue.length; head += 1) {
-        const cur = queue[head];
+      while (queue.length) {
+        const cur = queue.shift();
         group.push(cur);
         for (const [dr, dc] of dirs) {
           const nr = cur.r + dr;
