@@ -467,6 +467,7 @@
   </main>
 
   <script>
+    // Keep these fixed ET instants in sync with the visible dates below.
     const startDate = new Date("2023-12-04T18:10:00-05:00");
     const endDate = new Date("2026-11-19T00:00:00-05:00");
     const progressBar = document.querySelector('[role="progressbar"]');
@@ -552,6 +553,7 @@
       try {
         let item;
         let lastError;
+        // Prefer Rockstar's feed, then fall back to its Google News RSS mirror.
         for (const apiUrl of [newsApiUrl, newsRssApiUrl]) {
           try {
             const response = await fetch(`${apiUrl}${apiUrl.includes("?") ? "&" : "?"}_=${Date.now()}`, { cache: "no-store" });
