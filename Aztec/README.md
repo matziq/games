@@ -28,15 +28,49 @@ and broken stone remain changed when you revisit a room.
 
 Serpents charge, spiders patrol, bats fly, and guards approach and throw high
 darts. Duck under darts or bats; use a machete or limited pistol ammunition to
-fight. Some bottom tiers have sharp stones or moving ceilings. Dynamite has a
-2.4-second fuse, falls until supported, and can destroy orange walls or cracked
-platform sections. Only one stick can be lit at once, even across rooms.
-**The blast can hurt you.** Stand at least 58 game pixels away.
+fight. Some bottom tiers have sharp stones or moving ceilings. Seeded chambers
+also have **rising water** or **falling rocks**:
+
+- Flooding starts after an eight-second entry warning. Water rises at
+  `1.4 + difficulty * 0.18` pixels per second and stops at overflow vents, 76
+  pixels above the bottom floor. Middle-tier passages and upper tiers stay dry.
+  A submerged explorer has eight seconds of air, then loses one strength every
+  two seconds. Getting the head above water restores air. Climb or use the down
+  shaft; standing underwater to search costs precious time.
+- Rockfall starts three seconds after first entry, then repeats every
+  `4.4 - difficulty * 0.23` seconds. Dust, an exclamation mark, and an orange
+  ground marker warn of the exact column for 1.4 seconds before each drop.
+  Actual falling stones cause one damage on contact, then disappear on impact.
+  Columns cycle predictably across the upper-right platform; stairs, the idol
+  position, and room exits are not spawn points.
+
+Both traps persist and continue on the expedition's simulation clock after you
+leave; they do not activate in unvisited rooms. Pause/help/map/focus loss freezes
+everything, including remote floods and falling stones. Rocks are cleaned up
+after impact rather than accumulating offscreen. Retry resets all traps.
+Every seed has both types, but the entrance is always safe. Overflow limits and
+clear rockfall intervals preserve traversable mandatory routes on a late return.
+
+### What dynamite does
+
+Press **P** in classic mode, **B** in modern mode, or **BOMB** on touch controls.
+It is a demolition tool and an area weapon: breach orange **TNT-marked walls**
+to reach supplies, break orange cracked floor sections to create drops, or kill
+enemies within 65 pixels. Searchable loot falls to the next supported tier when
+its floor is destroyed. The blast report states what actually broke or died.
+
+A stick falls until supported and has a **2.4-second fuse**. Only one can be lit
+at once, even across rooms. **Your own blast costs two strength** within 58
+pixels; retreat at least 60 pixels. Main stairs and the bottom floor are protected
+in this adaptation so demolition cannot destroy the only escape route.
+Dynamite does not drain floodwater or disable the rockfall mechanism, and its
+fuse continues underwater.
 
 Recovering the idol is not enough: physically return to the entrance. The final
 reward is `max(100, difficulty * 10000 - elapsedSeconds * 5)`, rounded to an
 integer. Killing enemies and breaking stone do not add points. Difficulty
-increases enemy population, speed, detection range, and dart frequency.
+increases enemy population, speed, detection range, dart frequency, flood speed,
+and rockfall frequency.
 Death offers a full retry of the same seed or a new expedition.
 
 ## Controls
@@ -78,8 +112,8 @@ held and command movement.
 Help, map, pause, setup, and focus loss stop the simulation and reward timer.
 Closing help/map preserves the previous pause state. Sound starts off and can be
 enabled without changing game state. Reduced-motion mode removes hit flicker,
-decorative walking animation, fuse flicker, and blast flashes; it does not remove
-the motion required to play.
+decorative walking animation, fuse flicker, water shimmer, dust animation, and
+blast flashes; it retains static warnings and the motion required to play.
 
 There is **no saved run or local-storage requirement**. Reloading starts over.
 The canvas has readable HTML instructions and status, but the spatial game is
@@ -114,9 +148,10 @@ This is **not a rule-exact remake**. Its original connected generator uses an
 8-by-8 graph with extra loops, three consistent tiers, and a distant upper-tier
 idol. A guaranteed starting pistol/survey, visited-room map, modern held-arrow
 mode, touch controls, protected main stairs/bottom floor, four enemy behaviors
-(not the original ten), simplified traps, tunable health, fixed fuse, and the
+(not the original ten), overflow-limited floods, telegraphed rockfall, simplified
+trap timing, tunable health, fixed fuse, and the
 explicit reward formula above are browser adaptation decisions. It does not
-reproduce capture/confiscation, flooding, destructible stairs, a damaged-idol
+reproduce capture/confiscation, destructible stairs, a damaged-idol
 time limit, or the original's continuation after death. It is an unaffiliated
 tribute, not an official release.
 
@@ -132,9 +167,10 @@ node --check .\game.js
 
 Tests cover deterministic generation and reciprocal connectivity, reachable
 idol/escape, movement, stairs, jumping/falling, loot ordering, finite ammo,
-facing/range/cooldowns, ducking darts, dynamite, permanent terrain changes,
-health, pause, room persistence, death/win, and full untouched expeditions using
-normal game actions and physics.
+facing/range/cooldowns, ducking darts, dynamite, falling loot, permanent terrain
+changes, flood timing/air/escape, rock warnings/collision/cleanup, trap persistence
+and reset, health, pause, room persistence, death/win, and full untouched
+expeditions using normal game actions and physics.
 
 Build a portable, offline **single HTML file**, keeping generated output outside
 the repository:

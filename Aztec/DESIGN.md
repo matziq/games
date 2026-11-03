@@ -96,6 +96,8 @@ commands without introducing decorative color systems.
 
 ### Tertiary
 - **Supply orange:** equipment, shafts, hazards, messages, and focus outlines.
+  TNT labels identify destructible walls and cracked floor sections; other
+  structural platforms stay magenta.
 
 ### Neutral
 - **Paper:** figures, important labels, and ordinary control text.
@@ -170,6 +172,10 @@ terrain and surrounding HTML controls.
   height, held movement and simultaneous movement/jump support.
 - **Status:** orange live message, quiet desktop objective, jade mobile resource
   line. The canvas retains inventory and a small visited-room map.
+- **Traps:** translucent jade floodwater with sparse pixel ripples, visible
+  overflow vents, and a flood/air readout; orange ceiling patches, dust, a static
+  exclamation mark and landing-column line warn before rocks fall. Reduced motion
+  keeps the warnings but removes ripple/dust drift, not physical falling stones.
 - **Dialogs/panels:** help and map use native dialogs; pause and result panels
   stay inside the screen. Help becomes one column in the mobile layout.
 

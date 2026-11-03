@@ -81,10 +81,11 @@
     if (r.exits.right === undefined) rect(550, 140, 2, 30, color.pink);
     else text(">", 538, 135, color.orange, 8);
     for (const p of r.platforms) {
-      rect(p.x1, E.FLOORS[p.tier], p.x2 - p.x1, 2, color.pink);
+      rect(p.x1, E.FLOORS[p.tier], p.x2 - p.x1, 2, p.fragile ? color.orange : color.pink);
       if (p.fragile) {
         for (let x = p.x1 + 4; x < p.x2; x += 8) rect(x, E.FLOORS[p.tier], 2, 2, "#000");
         rect(p.x1, E.FLOORS[p.tier] + 3, p.x2 - p.x1, 1, color.dark);
+        text("TNT", p.x1 + 8, E.FLOORS[p.tier] + 11, color.orange, 7);
       }
     }
     for (const stair of r.stairs) {
@@ -104,6 +105,7 @@
     }
     for (const w of r.walls) {
       if (!w.intact) { rect(w.x - 3, E.FLOORS[w.tier] - 3, 18, 3, color.orange); continue; }
+      text("TNT", w.x + 5, E.FLOORS[w.tier] - 35, color.orange, 7, "center");
       for (let i = 0; i < 5; i++) {
         rect(w.x, E.FLOORS[w.tier] - 30 + i * 6, 10, 4, color.orange);
         rect(w.x + (i % 2 ? 3 : 7), E.FLOORS[w.tier] - 30 + i * 6, 1, 4, "#000");
@@ -115,12 +117,51 @@
         for (let x = h.x; x < h.x + h.width; x += 8) {
           rect(x, y - 2, 7, 2, color.orange); rect(x + 2, y - 5, 3, 3, color.orange); rect(x + 3, y - 7, 1, 2, color.white);
         }
-      } else {
+      } else if (h.type === "ceiling") {
         const drop = Math.max(0, Math.sin(s.time * 1.6 + h.phase)) * 55;
         rect(h.x, y - 75 + drop, h.width, 6, color.orange);
         rect(h.x + 4, y - 80, 2, drop, color.muted); rect(h.x + h.width - 6, y - 80, 2, drop, color.muted);
+      } else if (h.type === "flood") {
+        const surface = E.FLOORS[2] - h.level;
+        ctx.globalAlpha = 0.13;
+        rect(10, surface, 540, h.level, color.green);
+        ctx.globalAlpha = 1;
+        if (h.level > 0) {
+          rect(10, surface, 540, 1, color.green);
+          const drift = reducedMotion.matches ? 0 : Math.floor(s.time * 6) % 18;
+          for (let row = surface + 5; row < 258; row += 9) {
+            for (let x = 14 + drift; x < 542; x += 24) rect(x, row, 6, 1, color.green);
+          }
+        }
+        for (const x of [18, 538]) {
+          rect(x, 184, 4, 6, color.green);
+          const drip = reducedMotion.matches ? 12 : (s.time * 35) % Math.max(8, surface - 190);
+          if (surface > 198) rect(x + 1, 190 + drip, 2, 3, color.white);
+        }
+        text("OVERFLOW", 508, 179, color.green, 7, "center");
+        rect(536, 182, 14, 2, color.green);
+      } else if (h.type === "rocks") {
+        for (const x of h.columns) {
+          rect(x - 9, 18, 18, 3, color.orange);
+          rect(x - 3, 21, 6, 2, color.muted);
+        }
+        if (h.warning) {
+          const x = h.columns[h.drops % h.columns.length];
+          text("!", x, 35, color.orange, 10, "center");
+          rect(x - 10, E.FLOORS[0] - 1, 20, 1, color.orange);
+          for (let i = 0; i < 4; i++) {
+            const fall = reducedMotion.matches ? i * 7 : (s.time * 32 + i * 9) % 38;
+            rect(x - 7 + i * 4, 30 + fall, 1, 2, color.muted);
+          }
+        }
+        for (const rock of h.rocks) {
+          rect(rock.x - 4, rock.y - 10, 8, 10, color.orange);
+          rect(rock.x - 6, rock.y - 7, 12, 4, color.orange);
+          rect(rock.x - 3, rock.y - 9, 3, 3, color.white);
+        }
       }
     }
+    text(trapLabel(s), 280, 10, r.hazard?.type === "flood" ? color.green : color.orange, 8, "center");
     for (const item of r.loot) {
       const y = E.FLOORS[item.tier];
       if (item.taken) {
@@ -161,6 +202,13 @@
       }
     }
     drawHud(s);
+  }
+
+  function trapLabel(s) {
+    const h = s.rooms[s.roomId].hazard;
+    if (h?.type === "flood") return `FLOOD ${Math.round(h.level / E.FLOOD_LIMIT * 100)}% / AIR ${Math.ceil(s.player.air)}S`;
+    if (h?.type === "rocks") return h.warning ? "FALLING ROCKS: STEP OUT OF THE DUST" : "LOOSE CEILING: WATCH ABOVE";
+    return "";
   }
 
   function drawHud(s) {
@@ -208,6 +256,7 @@
     $("map-description").textContent = `You are at depth ${Math.floor(r.id / 8) + 1}, chamber ${r.id % 8 + 1}. Exits: ${Object.keys(r.exits).join(", ")}${r.id === 0 ? ", entrance to the left" : ""}. ${state.roomsVisited} of 64 chambers explored. ` +
       (inv.clue ? `The survey places the idol at depth ${Math.floor(state.idolRoom / 8) + 1}, chamber ${state.idolRoom % 8 + 1}, upper tier.` : "Search chests or debris for a survey locating the idol.");
     $("inventory-description").textContent = `Strength ${state.player.strength}/5. Machete. ${inv.pistol ? "Pistol" : "No pistol"}. ${inv.ammo} rounds. ${inv.dynamite} dynamite. ${inv.idol ? "Jade idol recovered." : "Idol not recovered."} Seed: ${state.seed}. Difficulty: ${state.difficulty}.`;
+    if (trapLabel(state)) $("map-description").textContent += " " + trapLabel(state) + ".";
   }
 
   function clearInput() { held.clear(); pointers.clear(); if (state) E.command(state, "stop"); }
@@ -215,8 +264,8 @@
 
   function updateUi() {
     if (!state) return;
-    const message = state.messageTime > 0 ? state.message : state.inventory.idol ?
-      "RETURN TO DEPTH 1, CHAMBER 1. LEAVE LEFT." : "EXPLORE. SEARCH. WATCH YOUR WAY BACK.";
+    const message = state.messageTime > 0 ? state.message : trapLabel(state) || (state.inventory.idol ?
+      "RETURN TO DEPTH 1, CHAMBER 1. LEAVE LEFT." : "EXPLORE. SEARCH. WATCH YOUR WAY BACK.");
     if (lastAnnouncement !== message) {
       $("message").textContent = message;
       lastAnnouncement = message;
@@ -290,7 +339,7 @@
 
   function tone(event) {
     if (!soundOn || !audio || audio.state !== "running") return;
-    const notes = { jump: 260, search: 180, loot: 550, shot: 90, swing: 140, hit: 110, hurt: 65, fuse: 340, blast: 42, idol: 880, win: 660, dead: 55 };
+    const notes = { jump: 260, search: 180, loot: 550, shot: 90, swing: 140, hit: 110, hurt: 65, fuse: 340, blast: 42, idol: 880, win: 660, dead: 55, warning: 150, rock: 60 };
     const oscillator = audio.createOscillator(), gain = audio.createGain();
     oscillator.type = "square"; oscillator.frequency.value = notes[event] || 200;
     gain.gain.setValueAtTime(0.035, audio.currentTime);

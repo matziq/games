@@ -36,6 +36,9 @@ test("seeded 64-room tombs have reciprocal passages and a reachable idol/escape 
       assert.ok(E.distances(s.rooms, 0).every(Number.isFinite));
       assert.ok(s.idolRoom >= 56);
       assert.ok(Number.isFinite(E.distances(s.rooms, s.idolRoom)[0]));
+      assert.equal(s.rooms[0].hazard, null);
+      assert.ok(s.rooms.some(r => r.hazard?.type === "flood"));
+      assert.ok(s.rooms.some(r => r.hazard?.type === "rocks"));
       assert.equal(s.rooms.flatMap(r => r.loot).filter(l => l.item === "idol").length, 1);
       for (const r of s.rooms) {
         for (const [direction, next] of Object.entries(r.exits)) {
@@ -163,6 +166,9 @@ test("dynamite falls, permits only one fuse, breaks optional terrain and hurts i
   assert.ok(!s.rooms[0].platforms.some(p => p.fragile && p.tier === 1));
   assert.equal(s.rooms[0].stairs.length, 2);
   assert.ok(s.rooms[0].platforms.some(p => p.tier === 2));
+  assert.equal(s.rooms[0].loot[0].tier, 2, "supplies fall when their support is demolished");
+  advance(s, 1); searchAll(s);
+  assert.equal(s.inventory.pistol, true, "fallen supplies remain reachable");
   const safe = fixture();
   safe.rooms[0].walls = [{ x: 444, tier: 2, intact: true }];
   safe.player.x = 430; safe.player.y = E.FLOORS[2];
@@ -174,6 +180,168 @@ test("dynamite falls, permits only one fuse, breaks optional terrain and hurts i
   falling.player.x = 197; falling.player.y = E.FLOORS[0];
   E.command(falling, "bomb"); advance(falling, 1);
   assert.equal(falling.bombs[0].y, E.FLOORS[1]);
+});
+
+test("dynamite is an area weapon and reports empty blasts honestly", () => {
+  const s = fixture();
+  s.player.x = 200;
+  E.command(s, "bomb");
+  advance(s, 2.35, { modern: true, left: true });
+  s.rooms[0].enemies = [230, 280].map(x => ({
+    type: "guardian", x, y: 166, tier: 1, hp: 3, dir: 1, cooldown: 99, phase: 0
+  }));
+  advance(s, 0.1);
+  assert.equal(s.rooms[0].enemies[0].hp, 0);
+  assert.equal(s.rooms[0].enemies[1].hp, 3);
+  assert.match(s.message, /0 STONE SECTIONS \/ 1 FOES/);
+  const empty = fixture();
+  empty.player.x = 200;
+  E.command(empty, "bomb"); advance(empty, 2.5, { modern: true, left: true });
+  assert.match(empty.message, /NO BREAKABLE STONE OR FOES/);
+});
+
+function trapFixture(type, difficulty = 1) {
+  const s = E.createGame({ seed: "TRAPS", difficulty });
+  const original = s.rooms.find(r => r.hazard?.type === type);
+  const h = JSON.parse(JSON.stringify(original.hazard));
+  s.rooms[0].hazard = h;
+  s.rooms[0].enemies = [];
+  return { s, h };
+}
+
+test("floods warn before rising, consume air, hurt after eight submerged seconds, and permit escape", () => {
+  const { s, h } = trapFixture("flood");
+  s.player.x = 310; s.player.y = E.FLOORS[2];
+  advance(s, 7.9);
+  assert.equal(h.level, 0);
+  assert.equal(s.player.air, 8);
+  advance(s, 0.3); assert.ok(h.level > 0);
+  const untilSubmerged = 23 / h.rate;
+  advance(s, untilSubmerged + 4);
+  assert.equal(s.player.strength, 3);
+  assert.ok(s.player.air < 5);
+  advance(s, 4);
+  assert.equal(s.player.strength, 2);
+  assert.match(s.message, /OUT OF AIR/);
+  E.command(s, "up"); advance(s, 1.5);
+  assert.equal(s.player.y, E.FLOORS[1]);
+  assert.equal(s.player.air, E.AIR_SECONDS);
+  const health = s.player.strength;
+  advance(s, 100);
+  assert.equal(h.level, E.FLOOD_LIMIT);
+  assert.equal(s.player.strength, health);
+  assert.ok(E.FLOORS[2] - h.level > E.FLOORS[1], "middle passages stay above the flood");
+});
+
+test("climbing promptly avoids flooding damage and a fully flooded shaft remains usable", () => {
+  const { s, h } = trapFixture("flood", 8);
+  s.player.x = 310; s.player.y = E.FLOORS[2];
+  E.command(s, "up"); advance(s, 120);
+  assert.equal(h.level, E.FLOOD_LIMIT);
+  assert.equal(s.player.strength, 3);
+  // Return via the real stair and walk to the shaft, without granting air or health.
+  E.command(s, "down"); advance(s, 1.5);
+  advance(s, 30 / 70, { modern: true, left: true });
+  s.rooms[0].exits.down = 8; s.rooms[8].exits.up = 0;
+  E.command(s, "down");
+  assert.equal(s.roomId, 8);
+  assert.equal(s.player.strength, 3);
+});
+
+test("floods persist offscreen, freeze with pause, and reset for retry or a new seed", () => {
+  const { s, h } = trapFixture("flood");
+  s.rooms[0].exits.right = 1; s.rooms[1].exits.left = 0;
+  s.rooms[1].enemies = []; s.rooms[1].hazard = null;
+  advance(s, 9);
+  const started = h.startedAt, firstLevel = h.level;
+  s.player.x = 551; advance(s, 0.1, { modern: true, right: true });
+  assert.equal(s.roomId, 1);
+  advance(s, 12);
+  assert.ok(h.level > firstLevel + 10);
+  E.setPaused(s, true);
+  const before = JSON.stringify(s);
+  advance(s, 30);
+  assert.equal(JSON.stringify(s), before);
+  E.setPaused(s, false);
+  advance(s, 0.3, { modern: true, left: true });
+  assert.equal(s.roomId, 0);
+  assert.equal(h.startedAt, started);
+  assert.ok(h.level > firstLevel);
+  for (const seed of ["TRAPS", "OTHER TRAPS"]) {
+    const reset = E.createGame({ seed });
+    for (const r of reset.rooms) {
+      if (r.hazard?.type === "flood") {
+        assert.equal(r.hazard.startedAt, null);
+        assert.equal(r.hazard.level, 0);
+      }
+      if (r.hazard?.type === "rocks") {
+        assert.equal(r.hazard.startedAt, null);
+        assert.equal(r.hazard.nextDrop, null);
+        assert.deepEqual(r.hazard.rocks, []);
+      }
+    }
+    assert.equal(reset.player.air, 8);
+  }
+});
+
+test("rocks telegraph their column, physically fall, hit the explorer, and clear on impact", () => {
+  const { s, h } = trapFixture("rocks");
+  s.player.x = h.columns[0]; s.player.y = E.FLOORS[0];
+  advance(s, 1.5);
+  assert.equal(h.warning, false);
+  assert.equal(h.rocks.length, 0);
+  advance(s, 0.2);
+  assert.equal(h.warning, true);
+  assert.equal(h.rocks.length, 0);
+  advance(s, 1.4);
+  assert.equal(h.rocks.length, 1);
+  assert.ok(h.rocks[0].y > 23 && h.rocks[0].y < E.FLOORS[0]);
+  assert.equal(s.player.strength, 3);
+  advance(s, 0.5);
+  assert.equal(s.player.strength, 2);
+  assert.match(s.message, /FALLING STONE/);
+  assert.equal(h.rocks.length, 0);
+});
+
+test("stepping aside during the rock warning avoids damage; paused midair rocks freeze exactly", () => {
+  const { s, h } = trapFixture("rocks");
+  s.player.x = h.columns[0]; s.player.y = E.FLOORS[0];
+  advance(s, 1.7);
+  advance(s, 0.4, { modern: true, left: true });
+  advance(s, 1);
+  assert.equal(h.rocks.length, 1);
+  E.setPaused(s, true);
+  const before = JSON.stringify(s);
+  advance(s, 20);
+  assert.equal(JSON.stringify(s), before);
+  E.setPaused(s, false); advance(s, 0.8);
+  assert.equal(s.player.strength, 3);
+  assert.equal(h.rocks.length, 0);
+});
+
+test("offscreen rockfall stays bounded, revisits keep its phase, and difficulty changes pace", () => {
+  for (const difficulty of [1, 8]) {
+    const { s, h } = trapFixture("rocks", difficulty);
+    s.rooms[0].exits.right = 1; s.rooms[1].exits.left = 0;
+    s.rooms[1].enemies = []; s.rooms[1].hazard = null;
+    advance(s, 0.1);
+    const started = h.startedAt;
+    s.player.x = 551; advance(s, 0.1, { modern: true, right: true });
+    assert.equal(s.roomId, 1);
+    for (let frame = 0; frame < 60 * 120; frame++) {
+      E.tick(s);
+      assert.ok(h.rocks.length <= 1, "old stones are removed before another drop");
+    }
+    assert.ok(h.drops > 20);
+    const drops = h.drops;
+    advance(s, 0.3, { modern: true, left: true });
+    assert.equal(s.roomId, 0);
+    assert.equal(h.startedAt, started);
+    assert.ok(h.drops >= drops);
+    assert.equal(s.player.strength, 3, "the middle-tier passage is outside falling columns");
+  }
+  assert.ok(trapFixture("rocks", 8).h.interval < trapFixture("rocks", 1).h.interval);
+  assert.ok(trapFixture("flood", 8).h.rate > trapFixture("flood", 1).h.rate);
 });
 
 test("pause freezes time, combat, movement and fuses; dead/won states do not tick", () => {

@@ -10,6 +10,9 @@
   const FLOORS = [74, 166, 258];
   const SIZE = 8;
   const STEP = 1 / 60;
+  const AIR_SECONDS = 8;
+  const FLOOD_LIMIT = 76;
+  const ROCK_WARNING = 1.4;
   const OPPOSITE = { left: "right", right: "left", up: "down", down: "up" };
   const ITEMS = ["ammo", "tonic", "dynamite", "ammo", "tonic", "journal"];
   const NAMES = {
@@ -119,6 +122,26 @@
         tier: 2, phase: rng() * 6.28
       };
     }
+    // A separate stream preserves existing seeds' rooms, loot and opponents.
+    const trapRng = random(seed + ":water-and-stone");
+    const candidates = rooms.filter(r => r.id !== 0 && !r.hazard);
+    for (const r of rooms.slice(1)) {
+      if (candidates.length >= 2) break;
+      if (!candidates.includes(r)) candidates.push(r);
+    }
+    for (let i = candidates.length - 1; i > 0; i--) {
+      const j = Math.floor(trapRng() * (i + 1));
+      [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+    }
+    const trapCount = Math.max(2, Math.round(candidates.length * (0.2 + difficulty * 0.012)));
+    for (let i = 0; i < trapCount; i++) {
+      const shift = Math.floor(trapRng() * 3);
+      candidates[i].hazard = i % 2 === 0 ?
+        { type: "flood", startedAt: null, level: 0, rate: 1.4 + difficulty * 0.18 } :
+        { type: "rocks", startedAt: null, nextDrop: null, drops: 0, warning: false,
+          columns: [402, 434, 466].map((_, n, list) => list[(n + shift) % list.length]),
+          interval: 4.4 - difficulty * 0.23, rocks: [] };
+    }
     rooms[0].visited = true;
     return { rooms, idolRoom };
   }
@@ -132,7 +155,8 @@
       player: {
         x: 40, y: FLOORS[1], vy: 0, facing: 1, grounded: true,
         climbing: null, duck: false, motion: "stop", fight: false, drawn: false,
-        stepTime: 0, strength: 3, hurt: 0, attack: 0, attackKind: "slash"
+        stepTime: 0, strength: 3, hurt: 0, attack: 0, attackKind: "slash",
+        air: AIR_SECONDS, drownTimer: 0
       },
       inventory: { machete: true, pistol: false, ammo: 0, dynamite: 3, idol: false, clue: false },
       bombs: [], projectiles: [], effects: [], events: [],
@@ -298,7 +322,7 @@
     if (p.climbing) { say(state, "FINISH CLIMBING BEFORE PLACING DYNAMITE."); return; }
     state.inventory.dynamite--;
     state.bombs.push({ roomId: state.roomId, x: p.x, y: p.y, vy: 0, fuse: 2.4 });
-    say(state, "FUSE LIT. CLEAR TWO BODY LENGTHS!", "fuse");
+    say(state, "FUSE LIT. BREAK STONE / STRIKE FOES. RUN CLEAR!", "fuse");
   }
 
   function command(state, action) {
@@ -348,19 +372,29 @@
   function explode(state, bomb) {
     const r = state.rooms[bomb.roomId];
     state.effects.push({ roomId: bomb.roomId, x: bomb.x, y: bomb.y - 8, life: 0.45, kind: "blast" });
+    const before = r.platforms.length;
     r.platforms = r.platforms.filter(p => !p.fragile ||
       Math.abs(FLOORS[p.tier] - bomb.y) > 46 || bomb.x < p.x1 - 42 || bomb.x > p.x2 + 42);
+    let broken = before - r.platforms.length, defeated = 0;
     for (const wall of r.walls) {
-      if (Math.abs(wall.x - bomb.x) < 55 && Math.abs(FLOORS[wall.tier] - bomb.y) < 50) wall.intact = false;
+      if (wall.intact && Math.abs(wall.x - bomb.x) < 55 && Math.abs(FLOORS[wall.tier] - bomb.y) < 50) {
+        wall.intact = false; broken++;
+      }
     }
     for (const enemy of r.enemies) {
-      if (Math.hypot(enemy.x - bomb.x, enemy.y - bomb.y) < 65) enemy.hp = 0;
+      if (enemy.hp > 0 && Math.hypot(enemy.x - bomb.x, enemy.y - bomb.y) < 65) {
+        enemy.hp = 0; defeated++;
+      }
+    }
+    for (const item of r.loot) {
+      while (!item.taken && item.tier < 2 && !supported(r, item.x, item.tier, 0)) item.tier++;
     }
     if (bomb.roomId === state.roomId) {
       state.events.push("blast");
       if (Math.hypot(state.player.x - bomb.x, state.player.y - bomb.y) < 58) {
         damage(state, 2, "TOO CLOSE TO YOUR OWN DYNAMITE.");
-      } else say(state, "STONE BREAKS. THE STAIRWAYS STILL STAND.");
+      } else say(state, broken || defeated ? `BLAST: ${broken} STONE SECTIONS / ${defeated} FOES.` :
+        "BLAST CLEARS. NO BREAKABLE STONE OR FOES IN RANGE.");
     }
   }
 
@@ -471,6 +505,60 @@
     state.projectiles = state.projectiles.filter(s => s.life > 0 && s.x > 0 && s.x < WIDTH);
   }
 
+  function updateTraps(state, dt) {
+    for (const r of state.rooms) {
+      const h = r.hazard;
+      if (!h || !["flood", "rocks"].includes(h.type)) continue;
+      if (h.startedAt === null) {
+        if (r.id !== state.roomId) continue;
+        h.startedAt = state.time;
+        if (h.type === "rocks") h.nextDrop = state.time + 3;
+        say(state, h.type === "flood" ? "WATER SEEPS IN. CLIMB TO THE MIDDLE TIER." :
+          "LOOSE STONE ABOVE. WATCH THE DUST; STEP ASIDE.", "warning");
+      }
+      if (h.type === "flood") {
+        // The middle-tier passages and upper stairs remain dry, even on a late return.
+        h.level = Math.min(FLOOD_LIMIT, Math.max(0, state.time - h.startedAt - 8) * h.rate);
+        continue;
+      }
+      if (state.time >= h.nextDrop) {
+        h.rocks.push({ x: h.columns[h.drops % h.columns.length], y: 23, vy: 0 });
+        h.drops++;
+        h.nextDrop += h.interval;
+        if (r.id === state.roomId) state.events.push("rock");
+      }
+      h.warning = state.time >= h.nextDrop - ROCK_WARNING;
+      for (const rock of h.rocks) {
+        const previousY = rock.y;
+        rock.vy += 220 * dt;
+        rock.y += rock.vy * dt;
+        const p = state.player;
+        const hit = r.id === state.roomId && Math.abs(rock.x - p.x) < 12 &&
+          previousY - 10 < p.y && rock.y >= p.y - (p.duck ? 12 : 26);
+        if (hit) damage(state, 1, "STRUCK BY FALLING STONE. STEP OUT OF THE DUST.");
+        rock.spent = hit || land(r, rock, previousY, 5) || rock.y > 270;
+        if (rock.spent && r.id === state.roomId) {
+          state.effects.push({ roomId: r.id, x: rock.x, y: rock.y, kind: "hit", life: 0.16 });
+        }
+      }
+      h.rocks = h.rocks.filter(rock => !rock.spent);
+    }
+    const p = state.player, h = room(state).hazard;
+    const submerged = h?.type === "flood" && h.level > 0 &&
+      p.y - (p.duck ? 8 : 22) > FLOORS[2] - h.level;
+    if (!submerged) { p.air = AIR_SECONDS; p.drownTimer = 0; return; }
+    const previousAir = p.air;
+    p.air = Math.max(0, p.air - dt);
+    if (previousAir > 4 && p.air <= 4) say(state, "AIR RUNNING OUT. CLIMB OR REACH THE DOWN SHAFT!", "warning");
+    if (p.air === 0) {
+      p.drownTimer -= dt;
+      if (p.drownTimer <= 0) {
+        damage(state, 1, "OUT OF AIR. CLIMB ABOVE THE WATER!");
+        p.drownTimer = 2;
+      }
+    }
+  }
+
   function tick(state, input = {}, elapsed = STEP) {
     if (!active(state) || !Number.isFinite(elapsed) || elapsed <= 0) return;
     let remaining = Math.min(elapsed, 0.25);
@@ -493,8 +581,9 @@
         if (bomb.fuse <= 0) explode(state, bomb);
       }
       state.bombs = state.bombs.filter(b => b.fuse > 0);
+      updateTraps(state, dt);
       const hazard = room(state).hazard;
-      if (hazard) {
+      if (hazard && ["spikes", "ceiling"].includes(hazard.type)) {
         const p = state.player;
         const dangerous = hazard.type === "spikes" || Math.sin(state.time * 1.6 + hazard.phase) > 0.68;
         if (dangerous && p.x > hazard.x && p.x < hazard.x + hazard.width &&
@@ -508,6 +597,6 @@
     }
   }
 
-  return { WIDTH, FLOORS, SIZE, STEP, OPPOSITE, NAMES, random, neighbors, distances,
+  return { WIDTH, FLOORS, SIZE, STEP, AIR_SECONDS, FLOOD_LIMIT, ROCK_WARNING, OPPOSITE, NAMES, random, neighbors, distances,
     generate, createGame, command, tick, setPaused, damage, nearestLoot, supported, tierAt };
 });
