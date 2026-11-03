@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-03T15:44:57.674Z",
+  "title": "Design System: Aztec: The jade expedition",
+  "extensions": {
+    "colorMeta": {
+      "paper": { "role": "neutral", "displayName": "Paper" },
+      "quiet": { "role": "neutral", "displayName": "Quiet" },
+      "jade": { "role": "secondary", "displayName": "Jade green" },
+      "stone": { "role": "primary", "displayName": "Stone magenta" },
+      "orange": { "role": "tertiary", "displayName": "Supply orange" },
+      "playfield": { "role": "neutral", "displayName": "Playfield" },
+      "page": { "role": "neutral", "displayName": "Page" },
+      "control": { "role": "neutral", "displayName": "Control" },
+      "control-hover": { "role": "neutral", "displayName": "Control hover" },
+      "control-border": { "role": "neutral", "displayName": "Control border" },
+      "divider": { "role": "neutral", "displayName": "Divider" },
+      "inactive-pixel": { "role": "neutral", "displayName": "Inactive pixel" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Expedition title; 48px override in short landscape." },
+      "heading": { "displayName": "Heading", "purpose": "Help, map, pause, and result headings; 20px on narrow/short layouts." },
+      "body": { "displayName": "Body", "purpose": "Default HTML text and inherited control typography." },
+      "label": { "displayName": "Label", "purpose": "Form labels and supporting interface text." }
+    },
+    "shadows": [],
+    "motion": [],
+    "breakpoints": [
+      { "name": "touch-or-narrow", "value": "(pointer: coarse), (max-width: 760px)" },
+      { "name": "narrow", "value": "(max-width: 420px)" },
+      { "name": "short-landscape", "value": "(max-height: 500px) and (min-width: 600px) and (max-width: 1000px)" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Command button",
+      "kind": "button",
+      "refersTo": "command-button",
+      "description": "Flat square command control with visible keyboard focus.",
+      "html": "<button class=\"ds-command\">Close</button>",
+      "css": ".ds-command{font:700 15px/1.5 \"Courier New\",monospace;color:var(--paper,#eeeee4);background:#111;border:1px solid #66665e;border-radius:0;min-height:44px;padding:8px 13px;cursor:pointer}.ds-command:hover{border-color:var(--paper,#eeeee4);background:#242420}.ds-command:focus-visible{outline:2px solid var(--orange,#ffa64b);outline-offset:4px}.ds-command:disabled{color:#77776d;cursor:default}"
+    },
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "primary-button",
+      "description": "Shared start, resume, and retry treatment.",
+      "html": "<button class=\"ds-primary\">Enter the tomb</button>",
+      "css": ".ds-primary{font:700 15px/1.5 \"Courier New\",monospace;color:#060806;background:var(--jade,#76e890);border:1px solid var(--jade,#76e890);border-radius:0;min-height:44px;padding:8px 24px;cursor:pointer}.ds-primary:hover{background:#a4ffb8;color:#000;border-color:#a4ffb8}.ds-primary:focus-visible{outline:2px solid var(--orange,#ffa64b);outline-offset:4px}"
+    },
+    {
+      "name": "Seed field",
+      "kind": "input",
+      "refersTo": "text-input",
+      "description": "Quiet label over a native square text field.",
+      "html": "<label class=\"ds-field\">Tomb seed<input class=\"ds-seed\" maxlength=\"24\" autocomplete=\"off\" spellcheck=\"false\" placeholder=\"RANDOM\" aria-label=\"Tomb seed, blank for a new random tomb\"></label>",
+      "css": ".ds-field{display:grid;gap:5px;font:400 12px/1.5 \"Courier New\",monospace;text-align:left;color:var(--quiet,#aaa99e)}.ds-seed{font:inherit;color:inherit;background:#111;border:1px solid #66665e;border-radius:0;height:42px;padding:6px 9px;width:130px;max-width:180px;text-transform:uppercase}.ds-seed:focus-visible{outline:2px solid var(--orange,#ffa64b);outline-offset:4px}"
+    },
+    {
+      "name": "Keyboard selector",
+      "kind": "input",
+      "refersTo": "text-input",
+      "description": "Native selection control used in the wrapping setup form.",
+      "html": "<label class=\"ds-choice\">Keyboard<select class=\"ds-select\"><option>Classic commands</option><option>Modern arrows</option></select></label>",
+      "css": ".ds-choice{display:grid;gap:5px;font:400 12px/1.5 \"Courier New\",monospace;text-align:left;color:var(--quiet,#aaa99e)}.ds-select{font:inherit;color:inherit;background:#111;border:1px solid #66665e;border-radius:0;height:42px;padding:6px 9px;max-width:180px;color-scheme:dark}.ds-select:focus-visible{outline:2px solid var(--orange,#ffa64b);outline-offset:4px}@media(pointer:coarse),(max-width:760px){.ds-select{max-width:150px}}"
+    },
+    {
+      "name": "Game toolbar",
+      "kind": "nav",
+      "description": "Compact native text buttons, enlarged for touch and short landscape.",
+      "html": "<nav class=\"ds-tools\" aria-label=\"Game controls\"><button>Map</button><button aria-pressed=\"false\">Sound off</button><button>Help</button><button>Pause</button></nav>",
+      "css": ".ds-tools{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}.ds-tools button{font:700 12px/1.5 \"Courier New\",monospace;color:var(--paper,#eeeee4);background:#111;border:1px solid #3c3c36;border-radius:0;min-height:36px;padding:6px 10px;cursor:pointer}.ds-tools button:hover{background:#242420}.ds-tools button:focus-visible{outline:2px solid var(--orange,#ffa64b);outline-offset:4px}.ds-tools button:disabled{color:#77776d;cursor:default}@media(pointer:coarse),(max-width:760px){.ds-tools{gap:4px}.ds-tools button{min-height:44px}}@media(max-width:420px){.ds-tools button{padding:6px 8px}}@media(max-height:500px) and (min-width:600px) and (max-width:1000px){.ds-tools button{min-height:44px}}"
+    },
+    {
+      "name": "Touch command groups",
+      "kind": "custom",
+      "description": "Zero-minimum D-pad tracks and a separate six-action grid; preview shows the mobile arrangement.",
+      "html": "<div class=\"ds-touch\" aria-label=\"Touch controls\"><div class=\"ds-dpad\"><button class=\"ds-up\" aria-label=\"Climb up\">UP</button><button class=\"ds-left\" aria-label=\"Move left\">LEFT</button><button aria-label=\"Stop\">STOP</button><button aria-label=\"Move right\">RIGHT</button><button class=\"ds-down\" aria-label=\"Climb down or hold to duck\">DOWN</button></div><div class=\"ds-actions\"><button>JUMP</button><button>SEARCH</button><button>STAIR</button><button>SLASH</button><button>SHOOT</button><button>BOMB</button></div></div>",
+      "css": ".ds-touch{display:grid;grid-template-columns:152px 1fr;gap:12px;margin-top:14px}.ds-touch button{font:700 11px/1.5 \"Courier New\",monospace;color:var(--paper,#eeeee4);background:#111;border:1px solid #66665e;border-radius:0;min-height:48px;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none}.ds-touch button:hover{border-color:var(--paper,#eeeee4);background:#242420}.ds-touch button:focus-visible{outline:2px solid var(--orange,#ffa64b);outline-offset:4px}.ds-dpad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}.ds-dpad button{padding:4px 2px;min-width:0}.ds-up,.ds-down{grid-column:2}.ds-left{grid-column:1}.ds-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.ds-actions button{padding:6px 3px}@media(max-width:420px){.ds-touch{grid-template-columns:140px minmax(0,1fr);gap:7px}}@media(max-height:500px) and (min-width:600px) and (max-width:1000px){.ds-touch{grid-template-columns:140px minmax(0,1fr);gap:6px;margin:0}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "A small, dangerous machine",
+    "overview": "Black space, thin magenta chamber edges, diagonal steps, and small limited-color figures define the world. The surrounding HTML is a quiet command surface, not a dashboard. Original pixel artwork honors the supplied Apple II visual grammar without copying its title illustration.\n\nThis records the built `index.html` and `game.js`, reviewed against the supplied desktop, portrait, and landscape captures. Product and adaptation facts remain in PRODUCT.md and README.md.",
+    "keyCharacteristics": [
+      "Three-tier black chambers with thin magenta structure.",
+      "Original pixel figures and alternating green/white stairs.",
+      "Compact inventory plus readable HTML commands and status.",
+      "Square controls, flat surfaces, and restrained monospaced type."
+    ],
+    "rules": [
+      {
+        "name": "The Shared Palette Rule",
+        "body": "Keep the five named HTML colors aligned with the canvas palette; the two implementations currently use identical values.",
+        "section": "colors"
+      },
+      {
+        "name": "The HTML Readability Rule",
+        "body": "Do not rely on the scaled canvas HUD alone on mobile; preserve the HTML status, map descriptions, and field guide.",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "**Do** preserve black chambers, thin magenta tiers, and green/white stairs.",
+      "**Do** keep figures small and inventory integrated into the playfield.",
+      "**Do** retain readable HTML help/status and separated touch-control groups.",
+      "**Do** keep original artwork and the shared HTML/canvas palette."
+    ],
+    "donts": [
+      "**Don't** add gradients, dashboard chrome, shadows, or copied title artwork.",
+      "**Don't** replace the command-driven exploration with decorative UI.",
+      "**Don't** enlarge pixel figures into an unrelated illustration style.",
+      "**Don't** treat this adaptation as a pixel-exact remake or fully screen-reader-playable game."
+    ]
+  }
+}
