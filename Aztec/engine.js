@@ -168,7 +168,11 @@
   function say(state, text, event) {
     state.message = text;
     state.messageTime = 4;
-    if (event) state.events.push(event);
+    if (event) emit(state, event);
+  }
+
+  function emit(state, type, source = state.player, roomId = state.roomId) {
+    state.events.push({ type, roomId, x: source.x, y: source.y, time: state.time });
   }
 
   function active(state) { return state.status === "playing" && !state.paused; }
@@ -280,7 +284,7 @@
   function hurtEnemy(state, enemy, amount) {
     enemy.hp = Math.max(0, enemy.hp - amount);
     state.effects.push({ roomId: state.roomId, x: enemy.x, y: enemy.y - 12, life: 0.16, kind: "hit" });
-    state.events.push("hit");
+    emit(state, "hit", enemy);
   }
 
   function attack(state, kind) {
@@ -289,15 +293,13 @@
     p.attack = kind === "lunge" ? 0.65 : 0.4;
     p.attackKind = kind;
     const reach = kind === "lunge" ? 43 : 32;
-    let hit = false;
+    emit(state, "swing");
     for (const enemy of room(state).enemies) {
       const dx = (enemy.x - p.x) * p.facing;
       if (enemy.hp > 0 && dx > -7 && dx < reach && Math.abs(enemy.y - p.y) < 27) {
         hurtEnemy(state, enemy, kind === "lunge" ? 2 : 1);
-        hit = true;
       }
     }
-    if (!hit) state.events.push("swing");
   }
 
   function fire(state) {
@@ -312,7 +314,7 @@
       x: p.x + 8 * p.facing, y: p.y - (p.duck ? 6 : 12),
       vx: p.facing * 280, enemy: false, life: 2
     });
-    state.events.push("shot");
+    emit(state, "shot");
   }
 
   function plant(state) {
@@ -343,7 +345,7 @@
     } else if (action === "jump") {
       if (p.grounded && !p.climbing) {
         p.vy = -205; p.grounded = false; p.duck = false; p.fight = false;
-        state.events.push("jump");
+        emit(state, "jump");
       }
     } else if (action === "climb") climb(state);
     else if (action === "up") climb(state, -1);
@@ -389,8 +391,8 @@
     for (const item of r.loot) {
       while (!item.taken && item.tier < 2 && !supported(r, item.x, item.tier, 0)) item.tier++;
     }
+    emit(state, "blast", bomb, bomb.roomId);
     if (bomb.roomId === state.roomId) {
-      state.events.push("blast");
       if (Math.hypot(state.player.x - bomb.x, state.player.y - bomb.y) < 58) {
         damage(state, 2, "TOO CLOSE TO YOUR OWN DYNAMITE.");
       } else say(state, broken || defeated ? `BLAST: ${broken} STONE SECTIONS / ${defeated} FOES.` :
@@ -525,7 +527,7 @@
         h.rocks.push({ x: h.columns[h.drops % h.columns.length], y: 23, vy: 0 });
         h.drops++;
         h.nextDrop += h.interval;
-        if (r.id === state.roomId) state.events.push("rock");
+        if (r.id === state.roomId) emit(state, "rock", h.rocks[h.rocks.length - 1]);
       }
       h.warning = state.time >= h.nextDrop - ROCK_WARNING;
       for (const rock of h.rocks) {
@@ -539,6 +541,7 @@
         rock.spent = hit || land(r, rock, previousY, 5) || rock.y > 270;
         if (rock.spent && r.id === state.roomId) {
           state.effects.push({ roomId: r.id, x: rock.x, y: rock.y, kind: "hit", life: 0.16 });
+          emit(state, "rock-impact", rock);
         }
       }
       h.rocks = h.rocks.filter(rock => !rock.spent);

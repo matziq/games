@@ -7,7 +7,7 @@ if (!destination || !path.isAbsolute(destination) || path.extname(destination).t
   process.exitCode = 1;
 } else {
   let html = fs.readFileSync(path.join(__dirname, "index.html"), "utf8");
-  for (const name of ["engine.js", "game.js"]) {
+  for (const name of ["engine.js", "audio-samples.js", "audio.js", "game.js"]) {
     const source = fs.readFileSync(path.join(__dirname, name), "utf8").replace(/<\/script/gi, "<\\/script");
     html = html.replace(`<script src="./${name}"></script>`, () => `<script>\n${source}\n</script>`);
   }

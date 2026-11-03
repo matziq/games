@@ -2,12 +2,14 @@
 
 A playable browser homage to Paul Stephenson's **Aztec**, published by Datamost
 for the Apple II in 1982. Original JavaScript and pixel-drawn artwork; no ROM,
-emulator, extracted sprites, copied title illustration, dependencies, fonts, or
-network requests. This is separate from this repository's `aztec_hero` and
+emulator, extracted sprites, copied title illustration, runtime dependencies,
+downloaded fonts, or remote audio requests. Licensed sound excerpts are bundled
+locally alongside original synthesized effects. This is separate from this repository's `aztec_hero` and
 `treasure_aztecs`.
 
 Open **index.html** directly, or launch **Aztec: The jade expedition** from the
-games menu. The source needs its sibling `engine.js` and `game.js`. Choose a
+games menu. The source needs its sibling `engine.js`, `game.js`, `audio.js`, and
+`audio-samples.js`. Choose a
 difficulty from 1 to 8, a keyboard style, and optionally a seed. Blank seeds
 generate a new tomb. The same seed and difficulty reproduce the same layout,
 contents, and starting enemies.
@@ -119,6 +121,42 @@ There is **no saved run or local-storage requirement**. Reloading starts over.
 The canvas has readable HTML instructions and status, but the spatial game is
 not fully playable with a screen reader.
 
+## Sound
+
+Sound is **off by default**; the Sound button creates/resumes Web Audio only after
+a user gesture. There is no background music or remote asset download.
+
+- The pistol uses an actual CZ-52 target-shooting excerpt, layered with a short
+  crack/body/reflection. Dynamite uses a licensed designed explosion (sensor
+  preamble removed), plus original bass rumble and debris.
+- The fuse sizzles for the actual remaining 2.4-second fuse, not a fixed UI sound.
+  Leave the room and the fuse goes quiet. A detonation in a directly connected
+  room is muffled and quiet; distant detonations are silent. Returning before
+  detonation resumes the remaining fuse instead of starting it over.
+- Live nearby serpents hiss and bats make short modulated squeaks. These animal
+  sounds are original synthesis, not recordings. Calls require the current room,
+  a live creature within 210 pixels and less than 70 vertical pixels, with
+  distance attenuation and stereo placement. At most one creature starts a call
+  every 1.8 seconds; each serpent waits at least six seconds and each bat at least
+  4.5 seconds before calling again. They are not triggered by movement keys.
+- Machete swishes, impacts, breath/thud damage, chest/rubble handling and loot
+  clinks replace the old beeps. Floodwater has quiet running-water/bubble ambience;
+  falling rocks have separate release and collision sounds; moving ceilings
+  scrape once per descent. Jump uses a brief cloth/air shuffle. There were no
+  footstep sounds in the prior game, and no new footstep system was added.
+
+Mute, pause, help, map, setup, tab hiding and focus loss fade out active voices.
+Room changes and resets discard old voices; death/win stops loops and permits
+only a short result tail. Events played while muted/paused are discarded, not
+replayed on resume. The mixer caps active voices at ten, attenuates ambience and
+creatures, and uses conservative output gain plus compression. Actual listening
+volume still depends on the device and operating-system volume.
+
+See [audio provenance and licenses](audio/LICENSES.md). The pistol archive says
+CC BY 3.0 despite a CC0 web listing; this distribution retains Vincent Sevedge /
+Tabasco attribution and the stricter license. Listener's explosion is CC0.
+Credits are also embedded in the offline game's help and sample script.
+
 ## Research and adaptation
 
 Sources consulted for this implementation:
@@ -162,7 +200,10 @@ No installation or bundler is required. With Node.js 18 or later:
 ```powershell
 node --test .\engine.test.cjs
 node --check .\engine.js
+node --test .\audio.test.cjs
+node --check .\audio.js
 node --check .\game.js
+node .\pack-audio.cjs --check
 ```
 
 Tests cover deterministic generation and reciprocal connectivity, reachable
@@ -171,6 +212,12 @@ facing/range/cooldowns, ducking darts, dynamite, falling loot, permanent terrain
 changes, flood timing/air/escape, rock warnings/collision/cleanup, trap persistence
 and reset, health, pause, room persistence, death/win, and full untouched
 expeditions using normal game actions and physics.
+
+The audio tests cover actual shot/fuse/impact events, muted/stale-event disposal,
+creature proximity/cooldowns, offscreen detonation, looping voice cleanup, bounded
+mixing, and finite, non-silent waveforms. The browser audio snapshot is read-only:
+`window.aztec.audioSnapshot()` reports context state, voices, loops, and play counts.
+Waveform measurements are not a claim that someone listened to the mix.
 
 Build a portable, offline **single HTML file**, keeping generated output outside
 the repository:

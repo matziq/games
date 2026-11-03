@@ -7,7 +7,8 @@
   const color = { white: "#eeeee4", muted: "#aaa99e", pink: "#ec62dc", green: "#76e890", orange: "#ffa64b", dark: "#25251e" };
   const held = new Set(), pointers = new Map();
   const preview = E.createGame({ seed: "THE JADE EXPEDITION", difficulty: 1 });
-  let state = null, keyboard = "classic", touchUsed = false, soundOn = false, audio = null;
+  let state = null, keyboard = "classic", touchUsed = false, soundOn = false, audio = null, mixer = null;
+  const soundDirector = new window.AztecAudio.Director();
   let lastTime = 0, accumulator = 0, lastAnnouncement = "", ended = false;
   let modalWasPaused = false, modalId = null, uiCounter = 0;
   const sprites = {
@@ -261,6 +262,15 @@
 
   function clearInput() { held.clear(); pointers.clear(); if (state) E.command(state, "stop"); }
   function focusGame() { canvas.focus({ preventScroll: true }); }
+  function silence() {
+    mixer?.stopAll();
+    if (state) state.events.length = 0;
+  }
+  function updateAudio() {
+    const blocked = !$("setup").hidden || $("help").open || $("map").open || document.hidden;
+    const plan = soundDirector.step(state, soundOn && audio?.state === "running", blocked);
+    mixer?.update(plan);
+  }
 
   function updateUi() {
     if (!state) return;
@@ -287,7 +297,7 @@
   }
 
   function start(seed, difficulty) {
-    clearInput();
+    clearInput(); silence(); soundDirector.reset();
     state = E.createGame({ seed, difficulty });
     keyboard = $("controls").value;
     touchUsed = false; ended = false; lastAnnouncement = ""; accumulator = 0;
@@ -304,6 +314,7 @@
   function pause(value = !state?.paused) {
     if (!state || state.status !== "playing" || !$("setup").hidden) return;
     clearInput(); E.setPaused(state, value);
+    if (value) silence();
     $("paused").hidden = !value;
     $("pause-button").textContent = value ? "Resume" : "Pause";
     $("pause-button").setAttribute("aria-pressed", String(value));
@@ -316,6 +327,7 @@
     clearInput(); modalWasPaused = Boolean(state?.paused);
     modalId = id;
     if (state) E.setPaused(state, true);
+    silence();
     if (id === "map") drawMap();
     $(id).showModal();
   }
@@ -329,23 +341,12 @@
   }
 
   function newExpedition() {
-    clearInput();
+    clearInput(); silence();
     if (state) E.setPaused(state, true);
     $("setup").hidden = false; $("paused").hidden = true; $("ending").hidden = true;
     $("cancel-new").hidden = !state || state.status !== "playing";
     $("pause-button").disabled = true; $("map-button").disabled = true; $("new-button").hidden = true;
     $("difficulty").focus({ preventScroll: true });
-  }
-
-  function tone(event) {
-    if (!soundOn || !audio || audio.state !== "running") return;
-    const notes = { jump: 260, search: 180, loot: 550, shot: 90, swing: 140, hit: 110, hurt: 65, fuse: 340, blast: 42, idol: 880, win: 660, dead: 55, warning: 150, rock: 60 };
-    const oscillator = audio.createOscillator(), gain = audio.createGain();
-    oscillator.type = "square"; oscillator.frequency.value = notes[event] || 200;
-    gain.gain.setValueAtTime(0.035, audio.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.12);
-    oscillator.connect(gain); gain.connect(audio.destination);
-    oscillator.start(); oscillator.stop(audio.currentTime + 0.13);
   }
 
   function playAction(action) {
@@ -409,22 +410,27 @@
   }
   document.querySelectorAll("[data-close]").forEach(button => button.addEventListener("click", () => closeModal(button.dataset.close)));
   $("sound").addEventListener("click", async () => {
+    $("sound").disabled = true;
     if (!soundOn) {
       try {
         const Audio = window.AudioContext || window.webkitAudioContext;
         if (!Audio) throw new Error("Web Audio is not available in this browser.");
         audio ||= new Audio();
+        mixer ||= new window.AztecAudio.Mixer(audio, window.AztecSamples);
         await audio.resume();
+        if (audio.state !== "running") throw new Error("The audio device did not resume.");
+        silence(); mixer.setMuted(false);
         soundOn = true;
       } catch (error) {
         console.error("Could not enable game audio:", error);
         $("message").textContent = "Sound unavailable. Play continues silently.";
+        $("sound").disabled = false;
         return;
       }
-    } else soundOn = false;
+    } else { soundOn = false; mixer?.setMuted(true); silence(); }
     $("sound").textContent = soundOn ? "Sound on" : "Sound off";
     $("sound").setAttribute("aria-pressed", String(soundOn));
-    if (soundOn) tone("loot");
+    $("sound").disabled = false;
     if (state && $("setup").hidden) focusGame();
   });
   document.querySelectorAll(".touch button").forEach(button => {
@@ -448,12 +454,12 @@
   window.addEventListener("keydown", onKey);
   window.addEventListener("keyup", event => held.delete(event.key));
   window.addEventListener("blur", () => {
-    clearInput();
+    clearInput(); silence();
     if (state && !$("help").open && !$("map").open) pause(true);
   });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
-      clearInput();
+      clearInput(); silence();
       if (state && !$("help").open && !$("map").open) pause(true);
     }
   });
@@ -472,13 +478,17 @@
         duck: held.has("ArrowDown") || touch.has("duck")
       };
       while (accumulator >= E.STEP) { E.tick(state, input); accumulator -= E.STEP; }
-      for (const event of state.events.splice(0, 4)) tone(event);
     } else accumulator = 0;
+    updateAudio();
     drawRoom(state || preview);
     if (++uiCounter % 8 === 0 || state && state.status !== "playing" && !ended) updateUi();
     requestAnimationFrame(frame);
   }
   // Observation only: automation can inspect real gameplay without altering a run.
-  window.aztec = Object.freeze({ snapshot: () => state ? JSON.parse(JSON.stringify(state)) : null });
+  window.aztec = Object.freeze({
+    snapshot: () => state ? JSON.parse(JSON.stringify(state)) : null,
+    audioSnapshot: () => mixer ? { enabled: soundOn, ...mixer.snapshot() } :
+      { enabled: false, context: "not-created", voices: 0, loops: [], played: {} }
+  });
   requestAnimationFrame(frame);
 })();

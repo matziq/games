@@ -226,6 +226,9 @@ FORM: Brief-pinned Apple II chamber grammar; no randomized concept or copied tit
     <p class="help-note">Use P (classic), B (modern), or BOMB (touch) to demolish orange TNT-marked walls and cracked floor sections, open drops to lower tiers, reach blocked supplies, or kill nearby enemies. A stick falls until supported and explodes after 2.4 seconds. Only one can be lit at once. Run at least 60 game pixels away: your own blast costs two strength. Loot drops with its broken floor instead of becoming unreachable. Main stairs and the bottom floor are protected; dynamite does not drain water or stop rockfall.</p>
     <p class="help-note">Tonics restore two strength, up to five. Health starts at three. No save game; retry regenerates the same tomb and resets its traps.</p>
     <p class="help-note">Touch controls always use held movement, regardless of keyboard style. Audio starts off. Reduced-motion mode removes decorative flicker and blast flashes. Leaving the tab pauses play. This spatial canvas game is not fully accessible to screen readers.</p>
+    <h3>Sound</h3>
+    <p class="help-note">Enable Sound for a recorded pistol crack, a layered dynamite blast, a sputtering fuse, nearby snake hisses and bat squeaks, stone impacts, and rising-water ambience. Animal calls are spaced and quieter at a distance. Mute, pause, help, map, and leaving the tab silence active sounds; resuming restores only the current room's ambience and unexpired fuse.</p>
+    <p class="help-note">Pistol recording: Vincent Sevedge / Tabasco, <a href="https://opengameart.org/content/gunshot-sounds">Gunshot sounds</a>, <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>. Dynamite effect: Listener, <a href="https://opengameart.org/content/dynamite-sound-effect">Dynamite sound effect</a>, <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0</a>. Both are trimmed, filtered, normalized, downmixed, and layered; no endorsement implied. Snake/bat calls and other Foley are original synthesis, not animal recordings. No remote audio is loaded.</p>
   </dialog>
   <dialog id="map">
     <div class="dialog-head"><h2>TOMB SURVEY</h2><button data-close="map">Close</button></div>
@@ -235,6 +238,8 @@ FORM: Brief-pinned Apple II chamber grammar; no randomized concept or copied tit
     <p class="help-note">White: you. Magenta: explored. Green: entrance. Orange: the survey's idol clue. Lines show known passages. Depth increases downward. The clock is paused.</p>
   </dialog>
   <script src="./engine.js"></script>
+  <script src="./audio-samples.js"></script>
+  <script src="./audio.js"></script>
   <script src="./game.js"></script>
 </body>
 </html>

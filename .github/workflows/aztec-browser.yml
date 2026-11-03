@@ -23,9 +23,11 @@ jobs:
         with:
           node-version: 22
       - name: Check browser scripts
-        run: node --check Aztec/engine.js && node --check Aztec/game.js
+        run: node --check Aztec/engine.js && node --check Aztec/audio.js && node --check Aztec/game.js
       - name: Test dungeon and complete expeditions
-        run: node --test Aztec/engine.test.cjs
+        run: node --test Aztec/engine.test.cjs Aztec/audio.test.cjs
+      - name: Check embedded sound assets
+        run: node Aztec/pack-audio.cjs --check
       - name: Build offline release
         run: node Aztec/build-release.cjs "$RUNNER_TEMP/Aztec.html"
       - uses: actions/upload-artifact@v4
