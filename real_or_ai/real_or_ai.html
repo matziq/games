@@ -430,7 +430,7 @@
 					signImages = unique(extractImageFilenames(signText, 'ai_sign/'));
 				}
 
-				// Fixed 10 rounds per game
+				// Show up to 20 rounds per game.
 				totalRounds = 20;
 
 				console.log('Loaded image lists:', { ai: aiImages.length, real: realImages.length, sign: signImages.length });
@@ -540,6 +540,7 @@
 		function randomIndex(count) {
 			if (count <= 1) return 0;
 			if (window.crypto && typeof crypto.getRandomValues === 'function') {
+				// Reject the uneven tail so modulo reduction keeps every index equally likely.
 				const max = 0x100000000;
 				const limit = max - (max % count);
 				const buf = new Uint32Array(1);

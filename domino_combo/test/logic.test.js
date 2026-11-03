@@ -234,6 +234,13 @@ describe('findGroups', () => {
     expect(groups[0].cells).toHaveLength(3);
   });
 
+  it('finds a large connected group without dropping queued cells', () => {
+    const board = Array.from({ length: 50 }, () => Array(50).fill(4));
+    const groups = findGroups(board, 50, 3);
+    expect(groups).toHaveLength(1);
+    expect(groups[0].cells).toHaveLength(2500);
+  });
+
   it('finds multiple distinct groups', () => {
     const board = createBoard(5);
     // group of 3s across the top

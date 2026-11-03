@@ -1,8 +1,8 @@
 # Real or AI
 
-Each round shows one matched pair at the same time: `real_0023.jpg` and `ai_0023.jpg` (same number, any extension). Which image is on the left is a fresh cryptographic coin flip, so the AI image is not stuck on one side.
+Each game shows up to 20 rounds. A round uses a matched pair such as `real_0023.jpg` and `ai_0023.jpg` (same number and supported image extension). Which image is on the left is a fresh cryptographic coin flip, so the AI image is not stuck on one side.
 
-After a choice, the AI box swaps to `ai_sign/ai_sign_0023.jpg`. That sign is not shown before the choice. The real image stays put.
+If the sign folder contains images, a round is included only when its matching `ai_sign/ai_sign_0023.jpg` also exists. After a choice, the AI box swaps to that sign; it is not shown beforehand, and the real image stays put. If there are no sign images, matched real/AI pairs can still be played.
 
 The game fills the window when it opens. Click a photo to view it full size, scroll to zoom, and drag while zoomed.
 
@@ -15,17 +15,17 @@ The game fills the window when it opens. Click a photo to view it full size, scr
 
 When you open `real_or_ai.html` directly (via `file://`), browsers usually block JavaScript from listing folders or probing files reliably.
 
-So this game uses a small **manifest file** (`image_manifest.js`) that contains the explicit list of images.
+So the game loads a small **manifest file** (`image_manifest.js`) containing the explicit image lists. The generator recognizes `.jpg`, `.jpeg`, `.png`, `.gif`, and `.webp` files.
 
 ## Regenerate the manifest
 
-From the repo root (`D:\aaaScripts\Games`), run:
+From the repository root, run:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\generate-real-or-ai-manifest.ps1 -MaxPerFolder 100
 ```
 
-That rebuilds `real_or_ai/image_manifest.js` from number-matched pairs (`real_0023` with `ai_0023` and `ai_sign_0023` when that file exists). It does not renumber files. `-MaxPerFolder 100` caps complete pairs. Use `-MaxPerFolder 0` to include every pair.
+That rebuilds `real_or_ai/image_manifest.js` from number-matched files. It does not renumber files. If any sign images exist, only pairs with a matching sign are included. `-MaxPerFolder 100` caps the number of complete pairs; use `-MaxPerFolder 0` to include every eligible pair.
 
 ## Folder structure
 

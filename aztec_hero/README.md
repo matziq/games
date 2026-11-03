@@ -63,5 +63,5 @@ The Android project is checked in. If it ever needs to be regenerated, remove on
 - Room progress is bottom-up: Room 1 at the starting chamber and Room 9 at the exit.
 - Coyote time, jump buffering, and variable jump height make jumps more forgiving without changing the level.
 - Ladders remain usable while carrying a torch.
-- Switching apps, hiding the page, or losing focus pauses simulation and ambient audio. Returning resets Phaser's frame clock and clamps the first frame so water and oxygen cannot jump.
+- Hiding the page or switching apps pauses simulation and ambient audio. Returning resets Phaser's frame clock and clamps the first frame so water and oxygen cannot jump.
 - Escape and death both stop simulation and expose explicit keyboard and touch restart controls.

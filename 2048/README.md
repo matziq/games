@@ -1,19 +1,20 @@
-# 2048 (single HTML)
+# 2048
 
-This is a single-file (no dependencies) implementation of the 2048 sliding-tile game.
+This is a standalone, single-page implementation of the 2048 sliding-tile game. The board is 4×4: each valid move slides all tiles, equal neighbors merge once, and a new 2 or 4 tile appears in an empty cell. Reach 2048 to win; you can choose to keep playing after the win.
 
 ## Run
 
-- Open `2048.html` in your browser.
+- Open `2048.html` in a browser. No build step is required.
 
-You can also launch it from the repo menu: `../gamemenu.html`.
+You can also launch it from the repository menu at `../gamemenu.html`.
 
 ## Controls
 
 - Touch: swipe on the board.
-- Mouse: click + drag on the board.
-- Keyboard (optional): arrow keys.
+- Mouse: drag on the board.
+- Keyboard: arrow keys while the board is focused.
+- Use **New Game** to restart, **Scores** to view the leaderboard, and the volume slider to adjust sound.
 
-## Rules
+## Saved data
 
-Slide tiles up/down/left/right. Tiles slide until blocked. Matching tiles merge into one tile with double the value (e.g., 2+2 → 4).
+The best score and leaderboard are saved in browser storage. Clearing this site's browser data removes them.
