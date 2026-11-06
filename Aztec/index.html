@@ -1,0 +1,245 @@
+<!doctype html>
+<!--
+THESIS: A deliberate expedition inside a small, dangerous machine; not a modern platformer dashboard.
+OWN-WORLD: Black void, magenta stone edges, green jade, orange supplies, chalk-white original pixel figures.
+STORY: Enter, learn the commands, search the tomb, find the idol, retrace the route into daylight.
+FIRST VIEWPORT: One three-tier chamber fills the center, with compact setup over it and inventory along its foot.
+FORM: Brief-pinned Apple II chamber grammar; no randomized concept or copied title illustration.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080808">
+  <meta name="description" content="An original browser homage to Aztec (1982). Search a seeded 64-room tomb, recover the jade idol, and escape.">
+  <title>Aztec — The jade expedition</title>
+  <style>
+    :root { color-scheme: dark; --paper: #eeeee4; --quiet: #aaa99e; --jade: #76e890; --stone: #ec62dc; --orange: #ffa64b; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #080808; color: var(--paper); font: 15px/1.5 "Courier New", monospace; }
+    button, input, select { font: inherit; color: inherit; border: 1px solid #66665e; border-radius: 0; background: #111; }
+    button { cursor: pointer; min-height: 44px; padding: 8px 13px; font-weight: bold; }
+    button:hover { border-color: var(--paper); background: #242420; }
+    button:disabled { color: #77776d; cursor: default; }
+    :focus-visible { outline: 2px solid var(--orange); outline-offset: 4px; }
+    a { color: var(--quiet); text-underline-offset: 4px; }
+    a:hover { color: var(--paper); }
+    [hidden] { display: none !important; }
+    .cabinet { width: min(100% - 48px, 1008px); margin: 24px auto; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .brand { display: flex; align-items: baseline; gap: 12px; }
+    .brand strong { font-size: 22px; letter-spacing: 3px; }
+    .brand span { color: var(--quiet); font-size: 12px; }
+    .tools { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+    .tools button { padding: 6px 10px; font-size: 12px; min-height: 36px; border-color: #3c3c36; }
+    .screen { position: relative; background: #000; border: 1px solid #34342f; }
+    #game { width: 100%; height: auto; display: block; image-rendering: pixelated; aspect-ratio: 7/4; }
+    .panel { position: absolute; inset: 0; overflow-y: auto; display: grid; align-content: center; justify-items: center; padding: 20px; background: #000e; text-align: center; }
+    h1 { margin: 0; font-size: clamp(42px, 9vw, 88px); line-height: 1; letter-spacing: 0.09em; color: var(--paper); }
+    .title-rule { width: 128px; height: 6px; margin: 18px 0; background: var(--stone); }
+    .mission { color: var(--jade); margin: 0 0 22px; font-weight: bold; }
+    .setup { display: flex; gap: 14px; align-items: flex-end; justify-content: center; flex-wrap: wrap; }
+    label { display: grid; gap: 5px; font-size: 12px; text-align: left; color: var(--quiet); }
+    input, select { height: 42px; padding: 6px 9px; max-width: 180px; }
+    #seed { width: 130px; text-transform: uppercase; }
+    .primary { color: #060806; background: var(--jade); border-color: var(--jade); min-height: 44px; padding-inline: 24px; }
+    .primary:hover { background: #a4ffb8; color: #000; border-color: #a4ffb8; }
+    .setup-actions { display: flex; justify-content: center; gap: 12px; margin-top: 20px; }
+    .small { color: var(--quiet); font-size: 12px; margin: 18px 0 0; max-width: 62ch; }
+    .readout { min-height: 52px; padding: 13px 0 10px; border-bottom: 1px solid #34342f; display: flex; justify-content: space-between; gap: 12px; }
+    #message { color: var(--orange); font-size: 13px; }
+    #objective { color: var(--quiet); font-size: 12px; flex-shrink: 0; }
+    .key-strip { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 24px; margin: 14px 0 0; color: var(--quiet); font-size: 12px; }
+    kbd { color: var(--paper); font-family: inherit; font-weight: bold; }
+    .footer { margin-top: 24px; display: flex; gap: 12px; justify-content: space-between; color: var(--quiet); font-size: 11px; }
+    h2 { font-size: 25px; margin: 0 0 15px; color: var(--jade); }
+    .end-text { max-width: 48ch; margin: 0 0 20px; }
+    .button-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    dialog { background: #0c0c0b; color: var(--paper); border: 1px solid var(--stone); width: min(700px, calc(100% - 24px)); max-height: 90dvh; padding: 24px; }
+    dialog::backdrop { background: #000c; }
+    .dialog-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .dialog-head h2 { margin: 0; }
+    .help-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    h3 { font-size: 15px; color: var(--orange); margin: 22px 0 8px; }
+    dl { display: grid; grid-template-columns: max-content 1fr; gap: 8px 14px; margin: 0; font-size: 13px; }
+    dt { color: var(--paper); font-weight: bold; }
+    dd { margin: 0; color: #c1c1b6; }
+    .help-note { color: #c1c1b6; font-size: 13px; max-width: 68ch; }
+    #map-canvas { display: block; width: min(100%, 400px); height: auto; margin: 16px auto; image-rendering: pixelated; }
+    #map-description { color: #c1c1b6; font-size: 13px; }
+    .touch { display: none; margin-top: 14px; gap: 12px; grid-template-columns: 152px 1fr; }
+    .dpad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+    .dpad button { padding: 4px 2px; min-width: 0; min-height: 48px; font-size: 11px; }
+    .dpad .up { grid-column: 2; }
+    .dpad .left { grid-column: 1; }
+    .dpad .down { grid-column: 2; }
+    .touch-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+    .touch-actions button { padding: 6px 3px; min-height: 48px; font-size: 11px; }
+    .touch button { touch-action: none; user-select: none; -webkit-user-select: none; }
+    .mobile-status { display: none; }
+    @media (pointer: coarse), (max-width: 760px) {
+      .touch { display: grid; }
+      .cabinet { width: calc(100% - 24px); margin: 12px auto; }
+      .brand span { display: none; }
+      .tools button { min-height: 44px; }
+      .toolbar { align-items: flex-start; }
+      .brand { padding-top: 9px; }
+      .tools { gap: 4px; }
+      .key-strip { display: none; }
+      .mobile-status { display: block; font-size: 12px; color: var(--jade); margin: 8px 0 0; }
+      #objective { display: none; }
+      .footer { margin-top: 16px; }
+      .panel { position: relative; min-height: 280px; padding: 24px 12px; }
+      .screen:has(#setup:not([hidden])) #game { display: none; }
+      .screen:has(#ending:not([hidden])) #game, .screen:has(#paused:not([hidden])) #game { opacity: .35; }
+      #ending, #paused { position: absolute; min-height: 0; padding: 12px; }
+      .mission { font-size: 13px; margin-bottom: 18px; }
+      .title-rule { margin: 12px 0; }
+      .setup { gap: 10px; }
+      input, select { max-width: 150px; }
+      .help-grid { grid-template-columns: 1fr; gap: 0; }
+    }
+    @media (max-width: 420px) {
+      .brand strong { font-size: 18px; letter-spacing: 1px; }
+      .tools button { padding: 6px 8px; }
+      .touch { grid-template-columns: 140px minmax(0, 1fr); gap: 7px; }
+      .footer { flex-direction: column; gap: 5px; }
+      h2 { font-size: 20px; }
+      .end-text { font-size: 12px; margin-bottom: 10px; }
+    }
+    @media (max-height: 500px) and (min-width: 600px) and (max-width: 1000px) {
+      .cabinet { width: calc(100% - 24px); margin: 8px auto; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 8px 12px; }
+      .toolbar { grid-column: 1 / -1; margin: 0; }
+      .brand span { display: none; }
+      .tools button { min-height: 44px; }
+      .screen { grid-column: 1; grid-row: 2; align-self: start; }
+      .touch { display: grid; grid-column: 2; grid-row: 2; margin: 0; align-self: center; grid-template-columns: 140px minmax(0, 1fr); gap: 6px; }
+      .readout { grid-column: 1 / -1; padding: 4px 0; min-height: 30px; }
+      .mobile-status { display: block; grid-column: 1 / -1; color: var(--jade); font-size: 12px; margin: 0; }
+      .key-strip, .footer, #objective { display: none; }
+      .screen:has(#setup:not([hidden])) { grid-column: 1 / -1; }
+      .screen:has(#setup:not([hidden])) #game { display: none; }
+      .screen:has(#setup:not([hidden])) .panel { position: relative; padding: 16px; }
+      .cabinet:has(#setup:not([hidden])) .touch { display: none; }
+      h1 { font-size: 48px; }
+      .title-rule { margin: 10px 0; }
+      .mission { margin-bottom: 12px; }
+      #ending, #paused { padding: 10px; }
+      h2 { font-size: 20px; }
+      .end-text { font-size: 12px; margin-bottom: 8px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; } }
+  </style>
+</head>
+<body>
+  <main class="cabinet">
+    <header class="toolbar">
+      <div class="brand"><strong>AZTEC</strong><span>THE JADE EXPEDITION</span></div>
+      <nav class="tools" aria-label="Game controls">
+        <button id="map-button" disabled>Map</button>
+        <button id="sound" aria-pressed="false">Sound off</button>
+        <button id="help-button">Help</button>
+        <button id="pause-button" disabled>Pause</button>
+        <button id="new-button" hidden>New</button>
+      </nav>
+    </header>
+    <div class="screen">
+      <canvas id="game" width="560" height="320" tabindex="0" aria-label="Aztec game. Three-tier chamber. Controls and live status are below.">This game needs a browser with HTML Canvas and JavaScript.</canvas>
+      <section id="setup" class="panel" aria-label="Expedition setup">
+        <h1>AZTEC</h1>
+        <div class="title-rule" aria-hidden="true"></div>
+        <p class="mission">FIND THE JADE IDOL. GET OUT ALIVE.</p>
+        <form id="start-form">
+          <div class="setup">
+            <label>Difficulty
+              <select id="difficulty"><option value="1">1 · Explorer</option><option value="2">2 · Scout</option><option value="3">3 · Adventurer</option><option value="4">4 · Veteran</option><option value="5">5 · Daring</option><option value="6">6 · Reckless</option><option value="7">7 · Relentless</option><option value="8">8 · Impossible?</option></select>
+            </label>
+            <label>Keyboard
+              <select id="controls"><option value="classic">Classic commands</option><option value="modern">Modern arrows</option></select>
+            </label>
+            <label>Tomb seed<input id="seed" maxlength="24" autocomplete="off" spellcheck="false" aria-label="Tomb seed, blank for a new random tomb" placeholder="RANDOM"></label>
+          </div>
+          <div class="setup-actions"><button class="primary" type="submit">Enter the tomb</button><button id="cancel-new" type="button" hidden>Return</button></div>
+        </form>
+        <p class="small">64 chambers. Three tiers. One way home.<br>An original tribute to the 1982 adventure.</p>
+      </section>
+      <section id="paused" class="panel" aria-label="Game paused" hidden>
+        <h2>EXPEDITION PAUSED</h2><p class="end-text">The tomb and its clock are still.</p>
+        <button id="resume" class="primary">Resume expedition</button>
+      </section>
+      <section id="ending" class="panel" aria-label="Expedition result" hidden>
+        <h2 id="end-title"></h2><p id="end-text" class="end-text"></p>
+        <div class="button-row"><button id="retry" class="primary">Retry this tomb</button><button id="new-tomb">New expedition</button></div>
+      </section>
+    </div>
+    <div class="readout"><span id="message" role="status" aria-live="polite">A tomb waits beneath the jungle.</span><span id="objective">IDOL / THEN ESCAPE</span></div>
+    <p id="accessible-status" class="mobile-status" hidden></p>
+    <div id="key-strip" class="key-strip">
+      <span><kbd>W</kbd> walk &nbsp; <kbd>R</kbd> run &nbsp; <kbd>S</kbd> stop &nbsp; <kbd>A D</kbd> turn</span>
+      <span><kbd>C</kbd> climb &nbsp; <kbd>O L T</kbd> search &nbsp; <kbd>F</kbd> fight &nbsp; <kbd>?</kbd> help</span>
+    </div>
+    <div class="touch" aria-label="Touch controls">
+      <div class="dpad">
+        <button class="up" data-action="up" aria-label="Climb up">UP</button>
+        <button class="left" data-hold="left" aria-label="Move left">LEFT</button>
+        <button data-action="stop" aria-label="Stop">STOP</button>
+        <button data-hold="right" aria-label="Move right">RIGHT</button>
+        <button class="down" data-action="down" data-hold="duck" aria-label="Climb down or hold to duck">DOWN</button>
+      </div>
+      <div class="touch-actions">
+        <button data-action="jump">JUMP</button><button data-action="search">SEARCH</button><button data-action="climb">STAIR</button>
+        <button data-action="slash">SLASH</button><button data-action="fire">SHOOT</button><button data-action="bomb">BOMB</button>
+      </div>
+    </div>
+    <footer class="footer"><span>Original code &amp; pixel art. Not an emulation.</span><span><a href="../index.html">All games</a> &nbsp; / &nbsp; <a href="./README.md">Field notes &amp; sources</a></span></footer>
+    <noscript><p>JavaScript is required to enter the tomb.</p></noscript>
+  </main>
+  <dialog id="help">
+    <div class="dialog-head"><h2>FIELD GUIDE</h2><button data-close="help">Close</button></div>
+    <p class="help-note">Search the entrance chest for a pistol and a survey. Recover the idol, then leave through the left edge of the entrance room's middle tier. The map shows visited rooms and the survey's clue. Nothing is awarded for unnecessary killing.</p>
+    <div class="help-grid">
+      <section><h3>Classic commands</h3><dl>
+        <dt>W / R / S</dt><dd>Walk / run / stop. Movement continues until stopped.</dd>
+        <dt>A / D</dt><dd>Face left / right.</dd>
+        <dt>J / G / C</dt><dd>Jump / crawl / climb a nearby stair or shaft.</dd>
+        <dt>O / L / T</dt><dd>Open / look / take. Rubble needs two opens.</dd>
+        <dt>F</dt><dd>Enter fight mode and stop.</dd>
+        <dt>In fight</dt><dd>A/D step; S turn; M slash; L lunge; G draw pistol; Space fire. W/R/J leave fight.</dd>
+        <dt>P</dt><dd>Place dynamite. A 2.4-second fuse; only one lit stick.</dd>
+      </dl></section>
+      <section><h3>Modern keys / touch</h3><dl>
+        <dt>Left / Right</dt><dd>Hold to move.</dd>
+        <dt>Up / Down</dt><dd>Climb at a stair end or marked shaft. Hold Down to duck.</dd>
+        <dt>Space</dt><dd>Jump. Hold a direction to clear gaps.</dd>
+        <dt>E</dt><dd>Search: open, look, then take on successive presses.</dd>
+        <dt>X / Z / B</dt><dd>Machete / pistol / dynamite.</dd>
+        <dt>Esc / ?</dt><dd>Pause / help. Both freeze the timer.</dd>
+        <dt>I / Tab</dt><dd>Map and inventory / normal browser focus navigation.</dd>
+      </dl></section>
+    </div>
+    <h3>Read the room</h3>
+    <p class="help-note">Diagonal green steps connect the three tiers. Stand at an endpoint and climb. Orange UP/DN shafts link dungeon depths. Side doors connect rooms on the middle tier. Jump the platform gaps; you can also drop to a lower tier. Kneeling avoids high darts and bats. Serpents charge, spiders patrol, and guards throw darts.</p>
+    <h3>Water and falling stone</h3>
+    <p class="help-note">Flood rooms give eight seconds of warning, then fill gradually. Overflow vents keep the middle and upper tiers dry. Underwater, you have eight seconds of air; after that, lose one strength every two seconds. Climb or use the down shaft before your air runs out. Water keeps rising while you explore other rooms, but all traps freeze with pause, help, map, or focus loss.</p>
+    <p class="help-note">Loose orange ceiling patches shed dust and show an exclamation mark 1.4 seconds before a rock falls. Step out of the marked column. Rocks hurt on contact and crumble on the platform; they never pile up to block a passage. Higher difficulty fills rooms faster and drops rocks more often. Spikes and moving ceilings remain dangerous too.</p>
+    <h3>What is dynamite for?</h3>
+    <p class="help-note">Use P (classic), B (modern), or BOMB (touch) to demolish orange TNT-marked walls and cracked floor sections, open drops to lower tiers, reach blocked supplies, or kill nearby enemies. A stick falls until supported and explodes after 2.4 seconds. Only one can be lit at once. Run at least 60 game pixels away: your own blast costs two strength. Loot drops with its broken floor instead of becoming unreachable. Main stairs and the bottom floor are protected; dynamite does not drain water or stop rockfall.</p>
+    <p class="help-note">Tonics restore two strength, up to five. Health starts at three. No save game; retry regenerates the same tomb and resets its traps.</p>
+    <p class="help-note">Touch controls always use held movement, regardless of keyboard style. Audio starts off. Reduced-motion mode removes decorative flicker and blast flashes. Leaving the tab pauses play. This spatial canvas game is not fully accessible to screen readers.</p>
+    <h3>Sound</h3>
+    <p class="help-note">Enable Sound for a recorded pistol crack, a layered dynamite blast, a sputtering fuse, nearby snake hisses and bat squeaks, stone impacts, and rising-water ambience. Animal calls are spaced and quieter at a distance. Mute, pause, help, map, and leaving the tab silence active sounds; resuming restores only the current room's ambience and unexpired fuse.</p>
+    <p class="help-note">Pistol recording: Vincent Sevedge / Tabasco, <a href="https://opengameart.org/content/gunshot-sounds">Gunshot sounds</a>, <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>. Dynamite effect: Listener, <a href="https://opengameart.org/content/dynamite-sound-effect">Dynamite sound effect</a>, <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0</a>. Both are trimmed, filtered, normalized, downmixed, and layered; no endorsement implied. Snake/bat calls and other Foley are original synthesis, not animal recordings. No remote audio is loaded.</p>
+  </dialog>
+  <dialog id="map">
+    <div class="dialog-head"><h2>TOMB SURVEY</h2><button data-close="map">Close</button></div>
+    <canvas id="map-canvas" width="256" height="256" aria-label="Eight by eight map of visited chambers"></canvas>
+    <p id="map-description"></p>
+    <p id="inventory-description" class="help-note"></p>
+    <p class="help-note">White: you. Magenta: explored. Green: entrance. Orange: the survey's idol clue. Lines show known passages. Depth increases downward. The clock is paused.</p>
+  </dialog>
+  <script src="./engine.js"></script>
+  <script src="./audio-samples.js"></script>
+  <script src="./audio.js"></script>
+  <script src="./game.js"></script>
+</body>
+</html>

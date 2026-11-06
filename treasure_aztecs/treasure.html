@@ -1974,11 +1974,6 @@
                 requestAnimationFrame(gameLoop);
             }
 
-            // Reset saved flag when starting new game
-            const origStartGame = startGame;
-            // no need, just reset in startGame
-            const _sg = startGame;
-
             showTitle();
             drawGameOver._saved = false;
             requestAnimationFrame(ts => { lastTime = ts; gameLoop(ts) });

@@ -3931,6 +3931,7 @@
             // --- Main loop ---
             let lastT = 0;
 
+            // Fixed 60Hz steps keep physics and timers consistent across refresh rates; cap catch-up after stalls.
             function tick(t) {
                 rafId = requestAnimationFrame(tick);
                 if (!lastT) lastT = t;

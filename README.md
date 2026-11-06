@@ -12,7 +12,7 @@ This repo is a small collection of single-file browser games and apps.
 ## Included games
 
 - **Emberkeep: The Ashen Crown** - overhead medieval action RPG with procedural dungeons, loot, and a dragon boss. Entry: `3d_dungeons/index.html`
-
+- **Aztec: The jade expedition** – original Apple II-inspired tomb adventure with 64 seeded rooms, classic commands, touch controls, and an idol-and-escape objective. Entry: `Aztec/index.html`
 - **2048** – classic sliding tile puzzle. Entry: `2048/2048.html`
 - **Bee** – simple bee game. Entry: `bee/bee.html`
 - **FruitPile** – physics fruit pile game with **Explosion** and **Merge** modes. Entry: `fruitpile/fruitpile.html`
@@ -29,6 +29,8 @@ This repo is a small collection of single-file browser games and apps.
 
 `gamemenu.html` is the landing page for this repo. It links to each game’s entrypoint:
 
+- `Aztec/index.html`
+- `3d_dungeons/index.html`
 - `2048/2048.html`
 - `bee/bee.html`
 - `geodes/geodes.html`

@@ -665,6 +665,7 @@
           return baseGravity() * (1 + Math.floor(score / 10000) * 0.1);
         }
         function stepFallingBody(o, dt) {
+          // Level pace scales elapsed movement time; the current score tier adjusts gravity on every step.
           const stepTime = dt * pace();
           const acceleration = gravity();
           o.x += o.vx * stepTime;
