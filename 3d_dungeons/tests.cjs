@@ -109,4 +109,12 @@ check('embedded source-art inventory contains 15 actual images', () => {
   assert.ok(sandbox.window.SOURCE_ART.every(s => s.startsWith('data:image/jpeg;base64,')));
   assert.ok(sandbox.window.FLOOR_ART.startsWith('data:image/jpeg;base64,'));
 });
+check('gameplay routes sound events without requiring browser audio support', () => {
+  const events = sandbox.window.DungeonAudio.diagnostic().events;
+  for (const event of ['strike', 'hit', 'break', 'chest', 'equip', 'gold', 'heal', 'dodge',
+    'damage', 'magic', 'warning', 'dragon', 'victory', 'death', 'floor']) {
+    assert.ok(events[event] > 0, `missing audio route: ${event}`);
+  }
+  assert.equal(sandbox.window.DungeonAudio.diagnostic().state, 'locked');
+});
 console.log(`${count} checks passed.`);

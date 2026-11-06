@@ -8,6 +8,12 @@ WASD or arrow keys move. Mouse aims; hold left click or Space to attack. Shift d
 
 Explore five randomized chapters: dungeon, castle, crypt, keep, and dragon throne. Stairs restore vitality. Gold and potions collect on approach. Weapon pickups show their power before equipping; the previous weapon remains on the floor. Skeletons telegraph melee, goblins rush, slimes lumber, and mages fire aimed bolts. The final dragon alternates a telegraphed flame cone and radial fireballs. Kill it to recover the Ashen Crown. Experience increases rank and vitality. Runs are not saved between browser sessions.
 
+## Sound
+
+Web Audio synthesizes sparse D-minor plucked music, low drones, torch/wind ambience, sword swishes and impacts, damage, coins, opening chests, breaking wood, equipment, healing, dodging, spell bolts, rank advancement, dragon warnings/fire, and victory/death cues. No external sound files or network requests are used. Audio unlocks/resumes on clicks or keys, subject to browser autoplay policy. The status message explains a blocked or unsupported audio context and provides a retry path. Sound on/off and Volume are always visible in the header; volume defaults to 55%. Ambience fades on pause or tab departure; event tails finish naturally. Mute silences both ambience and effects. Settings last for the current page session.
+
+`DungeonAudio.diagnostic()` reports the actual context state, post-volume analyser RMS, event counts, mute/volume, and startup errors. `audio_checks.py` validates gesture startup, real nonzero audio samples, event output, mute silence, unmute, zero-volume silence, and browser suspension recovery in isolated Microsoft Edge. It writes evidence and an audio-control screenshot to `D:\AI_Output`.
+
 ## Supplied artwork
 
 All 15 original `sample_images/NoLoRA_*.jpg` files were inspected as full room references, not sprite sheets. A source-art gallery embeds reduced copies of every image. Gameplay floor masonry is cropped from NoLoRA_0008 (390, 240, 510, 320); wall masonry from NoLoRA_0015 (230, 110, 350, 160). The original source files are unchanged. The procedural geometry, actors, objects, telegraphs, and effects are drawn in Canvas to match the supplied torchlit stone aesthetic.
