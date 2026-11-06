@@ -39,9 +39,12 @@ with sync_playwright() as p:
         samples.append(diag()["rms"])
     assert max(samples) > .001, "Ambience/music produces no real samples"
     assert page.evaluate("audioProbe.destinationConnections") == 1
+    page.locator("#music").click()
+    page.wait_for_timeout(700)
     effects = {}
     for event in ["strike", "hit", "damage", "break", "gold", "chest", "equip", "rank",
-                  "heal", "victory", "dragon", "warning", "magic", "dodge", "death", "floor"]:
+                  "heal", "victory", "dragon", "warning", "magic", "dodge", "death", "floor",
+                  "armor", "bottle", "barrel", "crate", "voice"]:
         before = page.evaluate("audioProbe.sources")
         page.evaluate("(name)=>DungeonAudio.play(name)", event)
         page.wait_for_timeout(80)
@@ -50,14 +53,15 @@ with sync_playwright() as p:
                           "output_rms": info["rms"]}
         assert effects[event]["sources_created"] > 0, event + " creates no sound sources"
         assert info["rms"] > .00001, event + " output is silent"
-    page.get_by_role("button", name="Sound on", exact=True).click()
+    page.get_by_role("button", name="Sound effects on", exact=True).click()
     page.wait_for_timeout(700)
     muted = diag()
     assert muted["muted"] and muted["rms"] < .000001, "Mute leaks sound"
     page.keyboard.press("Space")
     page.wait_for_timeout(100)
     assert diag()["rms"] < .000001, "Muted strike leaks sound"
-    page.get_by_role("button", name="Sound off", exact=True).click()
+    page.get_by_role("button", name="Sound effects off", exact=True).click()
+    page.locator("#music").click()
     page.wait_for_timeout(900)
     assert not diag()["muted"] and diag()["rms"] > .00001, "Unmute fails"
     page.locator("#volume").fill("0")
@@ -99,7 +103,7 @@ with sync_playwright() as p:
               "gesture_context": "running", "ambient_rms_samples": samples,
               "effect_samples": effects, "muted_rms": muted["rms"],
               "checks": ["gesture startup", "connected audio destination", "nonzero ambient/music output",
-                         "16 synthesized effect outputs", "mute silence", "muted attack silence",
+                         "21 isolated synthesized effect outputs", "mute silence", "muted attack silence",
                          "unmute", "volume zero", "volume adjustment", "browser suspend/gesture resume",
                          "single context", "pause silence/resume", "explicit autoplay error/retry status"],
               "browser_errors": errors, "console_warnings": warnings, "external_requests": requests}

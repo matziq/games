@@ -77,6 +77,31 @@ check('weapon exchange, gold pickup and healing', () => {
   assert.equal(run('player.gold'), 23); assert.equal(run('player.potions'), 4);
   run('player.hp=30;potion()'); assert.equal(run('player.hp'), 95); assert.equal(run('player.potions'), 3);
 });
+check('four coherent weapon types have distinct reach and recovery', () => {
+  const kinds = new Set();
+  for (let i=0;i<200;i++) {
+    const w=run('makeWeapon()'); kinds.add(w.kind);
+    assert.ok(w.damage>0&&w.range>=68&&w.range<=116&&w.cooldown>=.36&&w.cooldown<=.46);
+    run(`player.weapon=${JSON.stringify(w)};player.cool=0;attack()`);
+    assert.equal(run('player.cool'),w.cooldown);
+  }
+  assert.equal(kinds.size,4);
+});
+check('armor drops from all loot sources, equips, swaps and reduces damage with a cap', () => {
+  for (const type of ['slime','barrel','crate','chest']) {
+    run('loot=[]');
+    for(let i=0;i<150;i++)run(`drops({x:player.x,y:player.y,type:'${type}'},${type==='chest'})`);
+    assert.ok(run('loot.some(l=>l.type==="armor")'),type);
+  }
+  run("props=[];loot=[{x:player.x,y:player.y,type:'armor',armor:{name:'Test Plate',kind:'plate',color:'#c8cddd',reduction:.3}}];interact()");
+  assert.equal(run('player.armor.name'),'Test Plate');
+  const potions=run('player.potions');run('update(.001)');assert.equal(run('player.potions'),potions);
+  run("loot=[{x:player.x,y:player.y,type:'armor',armor:{name:'Test Chain',kind:'chain',color:'#91adb4',reduction:.2}}];interact()");
+  assert.equal(run('loot[0].armor.name'),'Test Plate');
+  run('player.hp=120;player.inv=0;damagePlayer(20)');assert.equal(run('player.hp'),104);
+  run('player.armor.reduction=1;player.inv=0;damagePlayer(20)');assert.equal(run('player.hp'),92);
+  run('player.armor=null');
+});
 check('dodge consumes resolve and grants brief invulnerability', () => {
   run('player.stamina=100;dodge()'); assert.equal(run('player.stamina'), 65);
   const hp = run('player.hp'); run('damagePlayer(20)'); assert.equal(run('player.hp'), hp);
@@ -111,7 +136,7 @@ check('embedded source-art inventory contains 15 actual images', () => {
 });
 check('gameplay routes sound events without requiring browser audio support', () => {
   const events = sandbox.window.DungeonAudio.diagnostic().events;
-  for (const event of ['strike', 'hit', 'break', 'chest', 'equip', 'gold', 'heal', 'dodge',
+  for (const event of ['strike', 'hit', 'barrel', 'crate', 'armor', 'voice', 'chest', 'equip', 'gold', 'heal', 'dodge',
     'damage', 'magic', 'warning', 'dragon', 'victory', 'death', 'floor']) {
     assert.ok(events[event] > 0, `missing audio route: ${event}`);
   }
