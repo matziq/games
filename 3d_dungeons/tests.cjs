@@ -98,6 +98,7 @@ check('armor drops from all loot sources, equips, swaps and reduces damage with 
   const potions=run('player.potions');run('update(.001)');assert.equal(run('player.potions'),potions);
   run("loot=[{x:player.x,y:player.y,type:'armor',armor:{name:'Test Chain',kind:'chain',color:'#91adb4',reduction:.2}}];interact()");
   assert.equal(run('loot[0].armor.name'),'Test Plate');
+  assert.equal(run('loot[0].x===player.x&&loot[0].y===player.y'),true);
   run('player.hp=120;player.inv=0;damagePlayer(20)');assert.equal(run('player.hp'),104);
   run('player.armor.reduction=1;player.inv=0;damagePlayer(20)');assert.equal(run('player.hp'),92);
   run('player.armor=null');
