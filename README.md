@@ -11,6 +11,8 @@ This repo is a small collection of single-file browser games and apps.
 
 ## Included games
 
+- **Emberkeep: The Ashen Crown** - overhead medieval action RPG with procedural dungeons, loot, and a dragon boss. Entry: `3d_dungeons/index.html`
+
 - **2048** – classic sliding tile puzzle. Entry: `2048/2048.html`
 - **Bee** – simple bee game. Entry: `bee/bee.html`
 - **FruitPile** – physics fruit pile game with **Explosion** and **Merge** modes. Entry: `fruitpile/fruitpile.html`
