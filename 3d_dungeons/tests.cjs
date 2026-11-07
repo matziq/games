@@ -93,7 +93,25 @@ check('chests open once; barrels and crates break', () => {
   for (const type of ['barrel', 'crate']) {
     run(`props=[{x:player.x+30,y:player.y,type:'${type}',hp:1,open:false}];player.cool=0;attack()`);
     assert.equal(run('props[0].open'), true);
+    assert.equal(run('props[0].broken'), true);
   }
+});
+check('spider venom, wizard fire and lightning are telegraphed attacks with real effects', () => {
+  for (const [type, status] of [['cave_spider','poison'],['cinder_wizard','burn']]) {
+    run(`loadFloor(1,42);player.x=world.start.x;player.y=world.start.y;player.hp=120;player.inv=0;player.poison=player.burn=0;shots=[];enemies=[makeEnemy('${type}',{x:player.x+120,y:player.y})];enemies[0].cool=0;update(.01)`);
+    assert.ok(run('enemies[0].wind>0'),`${type} has no telegraph`);
+    assert.ok(run("enemies[0].attackTarget&&Math.abs(enemies[0].attackTarget.x-player.x)<.01"),`${type} did not lock a target`);
+    for(let i=0;i<30;i++)run('update(.04)');
+    assert.ok(run(`shots.some(s=>s.type==='${status==='poison'?'venom':'fire'}')`),`${type} did not launch its projectile`);
+    run("{const s=shots[0];s.x=player.x;s.y=player.y;s.vx=0;s.vy=0;player.inv=0;update(.01)}");
+    assert.ok(run(`player.${status}>0`),`${type} did not apply ${status}`);
+  }
+  run("loadFloor(3,43);player.x=world.start.x;player.y=world.start.y;player.hp=120;player.inv=0;enemies=[makeEnemy('crypt_wizard',{x:player.x+120,y:player.y})];enemies[0].cool=0;update(.01)");
+  assert.ok(run('enemies[0].wind>0'));assert.equal(run('enemies[0].attack'),'lightning');
+  const hp=run('player.hp');run('update(1.1)');
+  assert.ok(run('player.hp<'+hp),'lightning did not strike the marked target');
+  assert.equal(run('chapterRosters[2].includes("crypt_wizard")'),true);
+  assert.equal(run('chapterRosters[4].includes("cinder_wizard")'),true);
 });
 check('weapon exchange, gold pickup and healing', () => {
   run("props=[];loot=[{x:player.x,y:player.y,type:'weapon',weapon:{name:'Runed Spear',damage:50,range:96,color:'#c6a0ed'}}];interact()");
@@ -134,6 +152,7 @@ check('dodge consumes resolve and grants brief invulnerability', () => {
   run('player.inv=0;damagePlayer(20)'); assert.equal(run('player.hp'), hp - 20);
 });
 check('stairs advance all chapters and restore health', () => {
+  run('begin()');
   for (let d = 2; d <= 5; d++) {
     run('player.x=world.end.x;player.y=world.end.y;props=[];loot=[];player.hp=10;interact()');
     assert.equal(run('depth'), d); assert.equal(run('player.hp'), run('player.max'));
@@ -163,7 +182,7 @@ check('embedded source-art inventory contains 15 actual images', () => {
 check('gameplay routes sound events without requiring browser audio support', () => {
   const events = sandbox.window.DungeonAudio.diagnostic().events;
   for (const event of ['strike', 'hit', 'barrel', 'crate', 'armor', 'voice', 'chest', 'equip', 'gold', 'heal', 'dodge',
-    'damage', 'magic', 'warning', 'dragon', 'victory', 'death', 'floor']) {
+    'damage', 'magic', 'warning', 'dragon', 'victory', 'death', 'floor', 'spellCharge', 'venom', 'lightning', 'fire', 'poison']) {
     assert.ok(events[event] > 0, `missing audio route: ${event}`);
   }
   assert.equal(sandbox.window.DungeonAudio.diagnostic().state, 'locked');

@@ -69,11 +69,12 @@ with sync_playwright() as p:
         assert page.evaluate("depth") == chapter
     page.evaluate("""() => {
       const b=enemies.find(e=>e.type==='dragon');
-      player.x=b.x-150;player.y=b.y;player.inv=10;b.cool=0;reveal();update(.01);
+      player.x=world.start.x;player.y=world.start.y;player.inv=10;
+      b.x=player.x+150;b.y=player.y;b.cool=0;b.wind=0;reveal();update(.01);
     }""")
-    page.wait_for_timeout(600)
-    page.screenshot(path=str(ROOT / "emberkeep-dragon.png"))
     assert page.evaluate("enemies.find(e=>e.type==='dragon').wind") > 0
+    page.screenshot(path=str(ROOT / "emberkeep-dragon.png"))
+    page.wait_for_function("shots.length>0", timeout=4000)
     page.wait_for_timeout(800)
     assert page.evaluate("shots.length") > 0, "dragon failed to fire"
     page.evaluate("""() => {

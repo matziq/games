@@ -59,6 +59,34 @@ with sync_playwright() as p:
         ground = page.screenshot(clip={"x": cx+80, "y": cy-40, "width": 100, "height": 80})
         armor_hashes[kind] = [hashlib.sha256(hero).hexdigest(), hashlib.sha256(ground).hexdigest()]
         pictures.extend([(kind+" worn", hero), (kind+" loot", ground)])
+    facing_hashes = {}
+    for label, angle in [("east",0),("south",1.5708),("west",3.1416),("north",-1.5708)]:
+        page.evaluate("""angle => {
+          player.angle=angle;player.armor={kind:'plate',name:'Plate',color:'#c8cddd',reduction:.3};
+          loot=[];render();
+        }""", angle)
+        image=page.screenshot(clip={"x":cx-30,"y":cy-40,"width":100,"height":80})
+        facing_hashes[label]=hashlib.sha256(image).hexdigest()
+        if not LIVE:
+            (ROOT / f"emberkeep-armor-facing-{label}.png").write_bytes(image)
+    assert len(set(facing_hashes.values())) == 4, "Armor does not render for every facing"
+    container_hashes={}
+    for label, prop in [
+        ("closed-chest",{"type":"chest","open":False}),
+        ("open-chest",{"type":"chest","open":True}),
+        ("crate",{"type":"crate","open":False,"broken":False}),
+        ("broken-crate",{"type":"crate","open":True,"broken":True}),
+    ]:
+        page.evaluate("""prop => {
+          player.armor=null;props=[{x:player.x+75,y:player.y,...prop}];
+          loot=[];world.seen.fill(1);render();
+        }""", prop)
+        image=page.screenshot(clip={"x":cx+38,"y":cy-38,"width":78,"height":76})
+        container_hashes[label]=hashlib.sha256(image).hexdigest()
+        if not LIVE:
+            (ROOT / f"emberkeep-{label}.png").write_bytes(image)
+    assert container_hashes["closed-chest"] != container_hashes["crate"], "Crate resembles chest"
+    assert container_hashes["open-chest"] != container_hashes["broken-crate"], "Open chest resembles broken crate"
     for hashes in [weapon_hashes, armor_hashes]:
         for i in [0, 1]:
             assert len({h[i] for h in hashes.values()}) == len(hashes), "Silhouettes are identical"
@@ -102,6 +130,8 @@ with sync_playwright() as p:
         page.wait_for_timeout(900)
         page.evaluate("DungeonAudio.play('strike','mace')")
         page.wait_for_timeout(75)
+        if music_on:
+            page.wait_for_function("DungeonAudio.diagnostic().musicRms>.00001", timeout=2500)
         d = diag()
         assert (d["effectsRms"] > .00001) == effects_on, d
         assert (d["musicRms"] > .00001) == music_on, d
@@ -116,9 +146,9 @@ with sync_playwright() as p:
         }""", kind)
     assert len({round(values[0]) for values in profiles.values()}) == 4
     enemy_profiles, material_profiles = {}, {}
-    enemies = ["slime", "goblin", "bog_wraith", "thornling", "wolf", "vine_archer",
+    enemies = ["slime", "goblin", "bog_wraith", "cave_spider", "thornling", "wolf", "vine_archer",
                "skeleton", "bone_archer", "wraith", "gargoyle", "iron_knight",
-               "cultist", "emberling", "ash_wraith", "dragon"]
+               "crypt_wizard", "cultist", "emberling", "ash_wraith", "cinder_wizard", "dragon"]
     for kind in enemies:
         page.wait_for_timeout(500)
         enemy_profiles[kind] = page.evaluate("""kind => {
@@ -168,6 +198,8 @@ with sync_playwright() as p:
               "audio_combinations": combinations, "weapon_audio_profiles": profiles,
               "enemy_audio_profiles": enemy_profiles, "material_audio_profiles": material_profiles, "varied_coin_pitches": varied,
               "checks": ["4 equipped and ground weapon silhouettes", "3 worn and ground armor silhouettes",
+                         "plate armor rendered on all four facings", "domed chest distinct from cross-braced crate",
+                         "open chest distinct from broken crate",
                          "E chest armor loot/equip/swap", "visible equipment stats", "damage reduction",
                          "40% cap", "4 independent audio combinations", "weapon sounds",
                          "15 distinct realm-creature voice/hit profiles", "6 material/loot sounds", "randomized pitch"],

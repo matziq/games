@@ -39,36 +39,45 @@ with sync_playwright() as p:
         samples.append(diag()["rms"])
     assert max(samples) > .001, "Ambience/music produces no real samples"
     assert page.evaluate("audioProbe.destinationConnections") == 1
-    page.locator("#music").click()
-    page.wait_for_timeout(700)
+    page.wait_for_function("DungeonAudio.diagnostic().music.phrase>=1", timeout=12000)
+    music = page.evaluate("DungeonAudio.diagnostic().music")
+    assert len(set(music["recentNotes"])) >= 4, "Music did not develop a varied phrase"
     effects = {}
     for event in ["strike", "hit", "damage", "break", "gold", "chest", "equip", "rank",
                   "heal", "victory", "dragon", "warning", "magic", "dodge", "death", "floor",
-                  "armor", "bottle", "barrel", "crate", "voice"]:
+                  "armor", "bottle", "barrel", "crate", "voice", "spellCharge", "venom",
+                  "lightning", "fire", "poison"]:
         before = page.evaluate("audioProbe.sources")
         page.evaluate("(name)=>DungeonAudio.play(name)", event)
         page.wait_for_timeout(80)
         info = diag()
         effects[event] = {"sources_created": page.evaluate("audioProbe.sources") - before,
-                          "output_rms": info["rms"]}
+                          "output_rms": info["effectsRms"]}
         assert effects[event]["sources_created"] > 0, event + " creates no sound sources"
-        assert info["rms"] > .00001, event + " output is silent"
+        assert info["effectsRms"] > .00001, event + " output is silent"
     page.get_by_role("button", name="Sound effects on", exact=True).click()
     page.wait_for_timeout(700)
     muted = diag()
-    assert muted["muted"] and muted["rms"] < .000001, "Mute leaks sound"
+    assert muted["muted"] and muted["effectsRms"] < .000001, "Effects mute leaks sound"
+    page.wait_for_function("DungeonAudio.diagnostic().musicRms>.00001", timeout=2500)
+    muted = diag()
+    assert muted["musicRms"] > .00001, "Muting effects disabled Music"
     page.keyboard.press("Space")
     page.wait_for_timeout(100)
-    assert diag()["rms"] < .000001, "Muted strike leaks sound"
+    assert diag()["effectsRms"] < .000001, "Muted strike leaks sound"
     page.get_by_role("button", name="Sound effects off", exact=True).click()
     page.locator("#music").click()
-    page.wait_for_timeout(900)
-    assert not diag()["muted"] and diag()["rms"] > .00001, "Unmute fails"
+    page.wait_for_function("DungeonAudio.diagnostic().musicRms<.000001", timeout=2500)
+    page.evaluate("DungeonAudio.play('strike','sword')")
+    page.wait_for_function("DungeonAudio.diagnostic().effectsRms>.00001", timeout=2000)
+    assert not diag()["muted"] and diag()["effectsRms"] > .00001, "Unmute fails"
+    assert diag()["musicMuted"] and diag()["musicRms"] < .000001, "Muting Music disabled Sound effects"
+    page.locator("#music").click()
     page.locator("#volume").fill("0")
     page.wait_for_timeout(700)
     assert diag()["volume"] == 0 and diag()["rms"] < .000001, "Volume zero leaks"
     page.locator("#volume").fill("35")
-    page.wait_for_timeout(800)
+    page.wait_for_function("DungeonAudio.diagnostic().rms>.00001", timeout=2500)
     assert diag()["volume"] == .35 and diag()["rms"] > .00001
     page.evaluate("audioProbe.contexts[0].suspend()")
     assert diag()["state"] == "suspended"
@@ -101,9 +110,11 @@ with sync_playwright() as p:
     assert "retry" in failed.locator("#audioStatus").inner_text()
     report = {"browser": "isolated Microsoft Edge", "initial_context": "locked",
               "gesture_context": "running", "ambient_rms_samples": samples,
+              "music_phrase": music,
               "effect_samples": effects, "muted_rms": muted["rms"],
               "checks": ["gesture startup", "connected audio destination", "nonzero ambient/music output",
-                         "21 isolated synthesized effect outputs", "mute silence", "muted attack silence",
+                         "evolving music phrase with multiple notes", "26 isolated synthesized effect outputs",
+                         "independent music/effects mute behavior", "muted attack silence",
                          "unmute", "volume zero", "volume adjustment", "browser suspend/gesture resume",
                          "single context", "pause silence/resume", "explicit autoplay error/retry status"],
               "browser_errors": errors, "console_warnings": warnings, "external_requests": requests}

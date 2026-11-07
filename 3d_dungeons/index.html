@@ -18,7 +18,7 @@
 <div class="hud"><div class="label">Knight <span id="level">I</span> <span id="health"></span></div><bar><i id="hp"></i></bar><div class="label">Resolve / dodge</div><bar><i id="stamina"></i></bar><bar style="height:3px"><i id="xp"></i></bar></div>
 <div class="area"><span id="area">The Sunken Halls</span><small id="floor">CHAPTER I / V</small></div>
 <div id="audioStatus" role="status" aria-live="polite">Sound starts when you enter the halls.</div><div class="prompt" id="prompt"></div><div class="boss" id="boss" hidden>VARKHOS, THE CINDER KING<bar><i id="bosshp"></i></bar></div>
-<div class="overlay" id="overlay"><div class="intro"><div class="eyebrow">A PROCEDURAL MEDIEVAL ADVENTURE</div><h2 id="title">Steel. Stone.<br>Something beneath.</h2><p id="story">Below Emberkeep, a dragon guards the Ashen Crown. Descend through five distinct realms: drowned halls, a thornbound castle, a moonlit crypt, a fallen keep, and a volcanic throne. Each has its own creatures and atmosphere. Break forgotten stores, claim better steel and armor, and survive the fire.</p><div class="controls"><kbd>WASD / ARROWS</kbd> move &nbsp; <kbd>MOUSE</kbd> aim<br><kbd>CLICK / SPACE</kbd> attack &nbsp; <kbd>SHIFT</kbd> dodge &nbsp; <kbd>Q</kbd> potion<br><kbd>E</kbd> open / equip weapons &amp; armor / descend &nbsp; <kbd>P</kbd> pause<br>Gold and potions collect on approach. Every realm has distinct monsters and scenery.<br>Music includes ambience. Sound effects and Music toggle independently.</div><button class="primary" id="start">Enter the halls</button><p id="error"></p></div></div>
+<div class="overlay" id="overlay"><div class="intro"><div class="eyebrow">A PROCEDURAL MEDIEVAL ADVENTURE</div><h2 id="title">Steel. Stone.<br>Something beneath.</h2><p id="story">Below Emberkeep, a dragon guards the Ashen Crown. Descend through five distinct realms: drowned halls, a thornbound castle, a moonlit crypt, a fallen keep, and a volcanic throne. Each has its own creatures and atmosphere. Break forgotten stores, claim better steel and armor, and survive the fire.</p><div class="controls"><kbd>WASD / ARROWS</kbd> move &nbsp; <kbd>MOUSE</kbd> aim<br><kbd>CLICK / SPACE</kbd> attack &nbsp; <kbd>SHIFT</kbd> dodge &nbsp; <kbd>Q</kbd> potion<br><kbd>E</kbd> open / equip weapons &amp; armor / descend &nbsp; <kbd>P</kbd> pause<br>Gold and potions collect on approach. Every realm has distinct monsters and scenery.<br>Watch for spider venom and wizard spell markers; dodge before they strike.<br>Music includes evolving chapter motifs. Sound effects and Music toggle independently.</div><button class="primary" id="start">Enter the halls</button><p id="error"></p></div></div>
 </div>
 <aside><div class="label">Cartographer</div><h2>The path unfolds</h2><canvas id="map" width="225" height="174" aria-label="Explored dungeon minimap"></canvas><section class="panel"><div class="label">Equipment</div><div id="weapon">Worn Longsword</div><div class="stat"><span>Strike power</span><b id="damage">16</b></div><div class="stat"><span>Reach / recovery</span><b id="weaponStats">76 / 0.36s</b></div><div id="armor">No armor</div><div class="stat"><span>Damage reduction</span><b id="defense">0%</b></div><div class="stat"><span>Gold recovered</span><b id="gold">0</b></div><div class="stat"><span>Healing potions [Q]</span><b id="potions">3</b></div><div class="stat"><span>Monsters slain</span><b id="kills">0</b></div></section><section class="panel"><div class="label">Your objective</div><p id="objective" style="font-size:13px;line-height:1.7">Find the blue stairway. Loot the halls to prepare for the dragon in Chapter V.</p></section><section class="panel"><div class="label">Chronicle</div><div class="logs" id="logs" aria-live="polite"></div></section><p class="label" style="line-height:1.8">[E] Equip weapons &amp; armor<br>Music includes ambience<br>Randomized every run<br>No network required<br>Desktop keyboard + mouse</p></aside>
 </main><footer>WASD MOVE &nbsp; / &nbsp; SPACE STRIKE &nbsp; / &nbsp; E INTERACT &nbsp; / &nbsp; SHIFT DODGE &nbsp; / &nbsp; Q HEAL</footer>
@@ -27,9 +27,10 @@
 <script>
 'use strict';
 window.DungeonAudio=(()=>{
- let context,master,bus,effectsBus,analyser,musicAnalyser,effectsAnalyser,noise,ambient=false,muted=false,musicMuted=false,volume=.55,playing=false,nextBeat=0,beat=0,chapter=1,blocked='',variation=1,events={};
+ let context,master,bus,effectsBus,analyser,musicAnalyser,effectsAnalyser,noise,ambient=false,muted=false,musicMuted=false,volume=.55,playing=false,nextBeat=0,beat=0,chapter=1,blocked='',variation=1,musicNotes=[],events={};
  const enemySounds={
   slime:[160,'sine',420,210,'sine',420],goblin:[230,'sawtooth',850,310,'square',1100],bog_wraith:[110,'sine',700,175,'triangle',520],
+  cave_spider:[145,'sawtooth',620,225,'square',780],crypt_wizard:[310,'triangle',1800,470,'sine',2600],cinder_wizard:[105,'sawtooth',420,185,'triangle',950],
   thornling:[280,'triangle',1400,330,'triangle',1800],wolf:[135,'sawtooth',470,245,'square',750],vine_archer:[360,'triangle',1900,420,'triangle',2100],
   skeleton:[480,'triangle',2400,690,'triangle',2700],bone_archer:[405,'sawtooth',1750,560,'triangle',2300],wraith:[220,'sine',1200,190,'triangle',900],
   gargoyle:[95,'sawtooth',450,115,'square',620],iron_knight:[320,'square',2300,285,'triangle',3000],cultist:[165,'triangle',950,250,'sawtooth',1400],
@@ -84,10 +85,15 @@ window.DungeonAudio=(()=>{
   const now=context.currentTime;if(nextBeat<now-.2)nextBeat=now;
   if(nextBeat>now+.12)return;
   const scales=[[146.83,174.61,220,196,130.81,174.61,164.81,110],[164.81,196,246.94,220,146.83,185,164.81,123.47],[130.81,155.56,196,174.61,116.54,155.56,146.83,98],[138.59,164.81,207.65,185,123.47,164.81,155.56,103.83],[110,130.81,164.81,146.83,98,130.81,123.47,82.41]];
-  const t=Math.max(now,nextBeat),notes=scales[chapter-1];ambient=true;variation=1;
-  // Sparse D-minor plucked notes over a low drone and filtered torch/wind noise.
-  tone(notes[beat%notes.length],t,.8,.07);tone(notes[beat%notes.length]*2,t+.055,.5,.025,'sine');
-  if(beat%4===0){const drone=[55,61.74,49,51.91,41.2][chapter-1];tone(drone,t,2.2,.085,'sine');tone(drone*1.5,t,2,.025,'sine');hiss(t,2.1,.07,[320,560,250,460,180][chapter-1])}
+  const motifs=[[0,2,4,null,3,2,1,null],[4,null,3,2,6,null,5,3],[0,4,null,6,4,null,2,1],[5,4,3,null,2,4,0,null]];
+  const progressions=[[0,5,3,6],[0,3,5,2],[0,4,2,5],[0,5,2,6],[0,3,5,4]];
+  const t=Math.max(now,nextBeat),notes=scales[chapter-1],step=beat%8,phrase=Math.floor(beat/8),motifIndex=(phrase+chapter-1)%motifs.length,bar=Math.floor(beat/4)%4,rootIndex=progressions[chapter-1][bar];
+  ambient=true;variation=1;
+  if(step%4===0){const root=notes[rootIndex];tone(root/2,t,1.25,.04,'sine');tone(root*1.5,t+.02,.72,.017,'triangle');tone(notes[(rootIndex+2)%notes.length],t,.62,.013,'sine')}
+  const noteIndex=motifs[motifIndex][step];
+  if(noteIndex!==null){const frequency=notes[noteIndex];musicNotes.push(frequency);if(musicNotes.length>48)musicNotes.shift();events.musicNote=(events.musicNote||0)+1;tone(frequency,t,.43,.052,'triangle');if(step===0||step===4)tone(frequency*2,t+.045,.24,.014,'sine')}
+  if(phrase%2===1&&step===6){const pickup=notes[(motifs[(motifIndex+1)%motifs.length][7]??2)];musicNotes.push(pickup);tone(pickup,t+.29,.2,.022,'sine')}
+  if(step===7)hiss(t,.5,.018,[320,560,250,460,180][chapter-1]);
   nextBeat=t+.62;beat++;ambient=false;
  }
  function play(name,kind=''){
@@ -119,6 +125,15 @@ window.DungeonAudio=(()=>{
   }else if(name==='dragon'){hiss(t,.8,.28,700);tone(70,t,.7,.14,'sawtooth',32)}
   else if(name==='warning'){tone(78,t,.7,.1,'sawtooth',52);tone(117,t,.65,.05,'triangle',78)}
   else if(name==='magic'){tone(780,t,.3,.065,'sine',190);hiss(t,.2,.06,2000,'bandpass')}
+  else if(name==='spellCharge'){
+   if(kind==='lightning'){tone(280,t,.55,.055,'sine',1250);tone(410,t+.18,.35,.035,'triangle',1750)}
+   else if(kind==='fire'){tone(80,t,.55,.07,'sawtooth',145);hiss(t,.45,.06,700)}
+   else{tone(190,t,.32,.045,'sine',95);hiss(t,.3,.06,650)}
+  }
+  else if(name==='venom'){hiss(t,.18,.12,760,'lowpass');tone(210,t,.16,.07,'sawtooth',90)}
+  else if(name==='lightning'){hiss(t,.16,.22,3400,'highpass');[1250,1870,820].forEach((n,i)=>tone(n,t+i*.025,.12,.08,'square',n*.45))}
+  else if(name==='fire'){hiss(t,.34,.2,1200);tone(110,t,.28,.1,'sawtooth',55);hiss(t+.08,.22,.07,2600,'highpass')}
+  else if(name==='poison'){tone(125,t,.28,.045,'sine',78);hiss(t,.2,.055,520,'lowpass')}
   else if(name==='dodge')hiss(t,.17,.12,1100,'bandpass');
   else if(name==='death'){tone(146.83,t,.6,.12,'triangle',55);tone(110,t+.2,.8,.1,'sine',40)}
   else if(name==='floor'){tone(146.83,t,.5,.08);tone(220,t+.15,.5,.06)}
@@ -138,9 +153,9 @@ window.DungeonAudio=(()=>{
  document.addEventListener('pointerdown',unlock);document.addEventListener('keydown',unlock);
  function sample(node){if(!node)return 0;const data=new Float32Array(node.fftSize);node.getFloatTimeDomainData(data);return Math.sqrt(data.reduce((sum,n)=>sum+n*n,0)/data.length)}
  function diagnostic(){
-  return {state:context?context.state:'locked',muted,musicMuted,volume,playing,rms:sample(analyser),musicRms:sample(musicAnalyser),effectsRms:sample(effectsAnalyser),events:{...events},blocked};
+  return {state:context?context.state:'locked',muted,musicMuted,volume,playing,rms:sample(analyser),musicRms:sample(musicAnalyser),effectsRms:sample(effectsAnalyser),events:{...events},music:{chapter,phrase:Math.floor(beat/8),step:beat%8,recentNotes:[...musicNotes]},blocked};
  }
- return {update,play,chronicle,diagnostic,setChapter(d){chapter=Math.max(1,Math.min(5,d|0));nextBeat=context?context.currentTime:0;beat=0}};
+ return {update,play,chronicle,diagnostic,setChapter(d){chapter=Math.max(1,Math.min(5,d|0));nextBeat=context?context.currentTime:0;beat=0;musicNotes=[]}};
 })();
 </script>
 <script>
@@ -155,27 +170,30 @@ const chapterThemes=[
  {id:'cinder-forge',name:'Cinder Forge',floor:'#51322b',wall:'#2b1d1b',backdrop:'#170804',accent:'#ff6842',torch:'#ff753c',motif:'lava',description:'Soot-black volcanic blocks, glowing magma seams, and furnace fire.'}
 ];
 const chapterRosters=[
- ['slime','goblin','bog_wraith'],
+ ['slime','goblin','bog_wraith','cave_spider'],
  ['thornling','wolf','vine_archer'],
- ['skeleton','bone_archer','wraith'],
+ ['skeleton','bone_archer','wraith','crypt_wizard'],
  ['gargoyle','iron_knight','cultist'],
- ['emberling','ash_wraith']
+ ['emberling','ash_wraith','cinder_wizard']
 ];
 const creatures={
  slime:{hp:34,speed:56,damage:7,color:'#69a77c',reach:44,windup:.42,cooldown:.9,attack:'melee'},
  goblin:{hp:42,speed:104,damage:9,color:'#9aad65',reach:43,windup:.32,cooldown:.85,attack:'charge'},
  bog_wraith:{hp:47,speed:47,damage:10,color:'#62bfc0',reach:210,windup:.8,cooldown:1.75,attack:'ranged',shotSpeed:205,projectile:'#66ded3'},
+ cave_spider:{hp:38,speed:78,damage:8,color:'#75b84e',reach:225,windup:.82,cooldown:1.8,attack:'venom',shotSpeed:175,projectile:'#9be05c'},
  thornling:{hp:50,speed:65,damage:11,color:'#95a94b',reach:48,windup:.5,cooldown:1,attack:'melee'},
  wolf:{hp:45,speed:128,damage:11,color:'#ad7950',reach:47,windup:.38,cooldown:1.05,attack:'charge'},
  vine_archer:{hp:41,speed:58,damage:10,color:'#719949',reach:270,windup:.82,cooldown:1.7,attack:'ranged',shotSpeed:175,projectile:'#a4d965'},
  skeleton:{hp:55,speed:75,damage:11,color:'#cecdb5',reach:48,windup:.54,cooldown:1.1,attack:'melee'},
  bone_archer:{hp:45,speed:65,damage:12,color:'#ded6ad',reach:290,windup:.9,cooldown:1.8,attack:'ranged',shotSpeed:225,projectile:'#eadca4'},
  wraith:{hp:50,speed:92,damage:13,color:'#a88be0',reach:50,windup:.4,cooldown:1,attack:'charge'},
+ crypt_wizard:{hp:58,speed:48,damage:16,color:'#9581de',reach:255,windup:1.05,cooldown:2,attack:'lightning'},
  gargoyle:{hp:72,speed:74,damage:16,color:'#a06f73',reach:180,windup:.62,cooldown:1.5,attack:'charge'},
  iron_knight:{hp:88,speed:53,damage:17,color:'#b3a68e',reach:50,windup:.68,cooldown:1.25,attack:'melee'},
  cultist:{hp:52,speed:61,damage:14,color:'#c47769',reach:265,windup:.86,cooldown:1.8,attack:'ranged',shotSpeed:195,projectile:'#e47572'},
  emberling:{hp:58,speed:112,damage:15,color:'#f27d42',reach:48,windup:.38,cooldown:.95,attack:'charge'},
  ash_wraith:{hp:65,speed:72,damage:16,color:'#db7160',reach:250,windup:.75,cooldown:1.6,attack:'ranged',shotSpeed:215,projectile:'#ff7049'},
+ cinder_wizard:{hp:67,speed:53,damage:19,color:'#e87847',reach:275,windup:1,cooldown:2.1,attack:'fire',shotSpeed:185,projectile:'#ff6b36'},
  dragon:{hp:850,speed:56,damage:24,color:'#a1523a',reach:320,windup:1.15,cooldown:2.6,attack:'dragon',shotSpeed:260,projectile:'#ff9d44'}
 };
 const keys=new Set(),mouse={x:0,y:0,active:false,down:false};let vw=900,vh=700,camera={x:0,y:0},state='title',world,player,enemies=[],props=[],loot=[],shots=[],effects=[],messages=[],depth=1,kills=0,clock=0,last=0,pathTimer=0,distances,bossDefeated=false;
@@ -210,7 +228,7 @@ function roomSpot(r){return {x:(integer(r.x+1,r.x+r.w-2)+.5)*T,y:(integer(r.y+1,
 function makeEnemy(type,p){const base=creatures[type];if(!base)throw new Error('Unknown creature: '+type);return {...p,...base,type,hp:base.hp+(type==='dragon'?0:depth*6),max:base.hp+(type==='dragon'?0:depth*6),radius:type==='dragon'?25:12,cool:random(.5,2),hit:0,wind:0,lunge:0,attackAngle:0,phase:0}}
 function loadFloor(d,s){
  depth=d;world=generate(s,d);enemies=[];props=[];loot=[];shots=[];effects=[];distances=null;bossDefeated=false;
- player.x=world.start.x;player.y=world.start.y;player.hp=player.max;player.inv=1;player.stamina=100;
+ player.x=world.start.x;player.y=world.start.y;player.hp=player.max;player.inv=1;player.stamina=100;player.poison=player.burn=player.poisonTick=player.burnTick=0;
  world.rooms.forEach((r,i)=>{
   let spawn=0;const roster=chapterRosters[d-1];
   if(i>0&&!(d===5&&i===11))for(let n=0;n<2+Math.floor(d/2);n++)enemies.push(makeEnemy(roster[(spawn++ + i)%roster.length],roomSpot(r)));
@@ -221,25 +239,25 @@ function loadFloor(d,s){
  $('objective').textContent=d===5?'Defeat Varkhos. The red cones warn of flame; dodge out before they ignite. Claim the Ashen Crown. '+world.theme.description:world.theme.description+' Find the blue stairway to a new realm and a different monster brood.';
  log('Entered '+chapters[d-1]+'.');updateHUD();
 }
-function begin(){kills=0;messages=[];player={x:0,y:0,hp:120,max:120,stamina:100,gold:0,potions:3,xp:0,level:1,weapon:{name:'Worn Longsword',kind:'sword',damage:16,range:76,cooldown:.36,color:'#d5d9d0'},armor:null,angle:0,cool:0,inv:0,dash:0,swing:0};loadFloor(1,crypto.getRandomValues(new Uint32Array(1))[0]);state='playing';$('overlay').hidden=true;canvas.focus()}
+function begin(){kills=0;messages=[];player={x:0,y:0,hp:120,max:120,stamina:100,gold:0,potions:3,xp:0,level:1,weapon:{name:'Worn Longsword',kind:'sword',damage:16,range:76,cooldown:.36,color:'#d5d9d0'},armor:null,angle:0,cool:0,inv:0,dash:0,swing:0,poison:0,poisonTick:0,burn:0,burnTick:0};loadFloor(1,crypto.getRandomValues(new Uint32Array(1))[0]);state='playing';$('overlay').hidden=true;canvas.focus()}
 function reveal(){const px=Math.floor(player.x/T),py=Math.floor(player.y/T);for(let y=Math.max(0,py-8);y<Math.min(H,py+9);y++)for(let x=Math.max(0,px-8);x<Math.min(W,px+9);x++)if(Math.hypot(x-px,y-py)<8)world.seen[y*W+x]=1}
 function buildPaths(){distances=new Int16Array(W*H).fill(-1);const start=Math.floor(player.y/T)*W+Math.floor(player.x/T),queue=[start];distances[start]=0;for(let i=0;i<queue.length;i++){const k=queue[i];for(const n of [k-1,k+1,k-W,k+W])if(n>=0&&n<W*H&&world.tiles[n]&&distances[n]<0){distances[n]=distances[k]+1;queue.push(n)}}}
 function targetDirection(e){let x=player.x,y=player.y;const k=Math.floor(e.y/T)*W+Math.floor(e.x/T);if(distances&&distances[k]>2){let best=k;for(const n of [k-W,k+W,k-1,k+1])if(distances[n]>=0&&distances[n]<distances[best])best=n;if(best!==k){x=(best%W+.5)*T;y=(Math.floor(best/W)+.5)*T}}return Math.atan2(y-e.y,x-e.x)}
 function particle(x,y,color,n=8){for(let i=0;i<n;i++)effects.push({x,y,vx:random(-85,85),vy:random(-85,85),life:random(.2,.5),color})}
 function reduction(){return Math.min(.4,Math.max(0,player.armor?.reduction||0))}
-function damagePlayer(amount){if(player.inv>0||state!=='playing')return;window.DungeonAudio.play('damage');if(player.armor)window.DungeonAudio.play('armor');player.hp=Math.max(0,player.hp-amount*(1-reduction()));player.inv=.6;particle(player.x,player.y,'#d89b84');if(player.hp===0){window.DungeonAudio.play('death');state='dead';showOverlay('The embers fade.','You recovered '+player.gold+' gold and defeated '+kills+' monsters in Chapter '+depth+'. A new path awaits.','Try a new run')}}
+function damagePlayer(amount,source='physical'){if((player.inv>0&&source!=='poison'&&source!=='burn')||state!=='playing')return;window.DungeonAudio.play('damage');if(player.armor)window.DungeonAudio.play('armor');player.hp=Math.max(0,player.hp-amount*(1-reduction()));if(source==='physical')player.inv=.6;particle(player.x,player.y,source==='poison'?'#9ae66d':source==='burn'?'#ff8b45':'#d89b84');if(player.hp===0){window.DungeonAudio.play('death');state='dead';showOverlay('The embers fade.','You recovered '+player.gold+' gold and defeated '+kills+' monsters in Chapter '+depth+'. A new path awaits.','Try a new run')}}
 const weaponTypes={sword:{label:'Longsword',range:82,cooldown:.36,bonus:0},axe:{label:'War Axe',range:74,cooldown:.46,bonus:7},mace:{label:'Mace',range:68,cooldown:.42,bonus:5},spear:{label:'Spear',range:108,cooldown:.4,bonus:-2}};
 function weaponKind(w){return w.kind||(w.name.includes('Axe')?'axe':w.name.includes('Spear')?'spear':w.name.includes('Mace')?'mace':'sword')}
 function makeWeapon(){const tier=integer(0,99),rarity=tier>88?2:tier>55?1:0,kind=['sword','axe','mace','spear'][integer(0,3)],type=weaponTypes[kind];return {name:['Iron','Knight\'s','Runed'][rarity]+' '+type.label,kind,damage:15+depth*5+rarity*9+type.bonus,range:type.range+rarity*4,cooldown:type.cooldown,color:['#c5d4d4','#78c8e0','#c6a0ed'][rarity]}}
 function makeArmor(){const tier=integer(0,2),kind=['leather','chain','plate'][tier];return {name:['Hardened Leather','Riveted Chainmail','Knight\'s Plate'][tier],kind,reduction:Math.min(.4,.08+tier*.08+depth*.025),color:['#ad7951','#91adb4','#c8cddd'][tier]}}
 function drops(e,chest=false){loot.push({x:e.x-12,y:e.y,type:'gold',value:chest?integer(20,40)*depth:integer(3,10)*depth});if(chest||rng()<.25)loot.push({x:e.x+22,y:e.y+12,type:'weapon',weapon:makeWeapon()});if(chest||rng()<.16)loot.push({x:e.x-24,y:e.y+25,type:'armor',armor:makeArmor()});if(rng()<(chest?.65:.14))loot.push({x:e.x,y:e.y-22,type:'potion'})}
 function hurtEnemy(e,amount){window.DungeonAudio.play('hit',e.type);window.DungeonAudio.play('voice',e.type);e.hp-=amount;e.hit=.15;particle(e.x,e.y,e.type==='slime'?'#74b788':'#d4a873');if(e.hp<=0){kills++;drops(e);player.xp+=e.type==='dragon'?250:18+depth*3;log(e.type==='dragon'?'Varkhos has fallen! The crown is yours.':e.type[0].toUpperCase()+e.type.slice(1)+' defeated.');while(player.xp>=player.level*65){player.xp-=player.level*65;player.level++;player.max+=15;player.hp=Math.min(player.max,player.hp+40);log('Knight rank '+player.level+'. Vitality increased.')}if(e.type==='dragon'){bossDefeated=true;player.gold+=500;state='won';showOverlay('The Ashen Crown is yours.','Varkhos falls beneath your steel. Five chapters conquered. '+player.gold+' gold recovered, '+kills+' foes defeated. Every new adventure reshapes the keep.','Adventure again')}}}
-function attack(){if(state!=='playing'||player.cool>0)return;const w=player.weapon;window.DungeonAudio.play('strike',weaponKind(w));player.cool=w.cooldown||.36;player.swing=.2;enemies.filter(e=>e.hp>0&&distance(e,player)<w.range+e.radius&&clearLine(player,e)&&Math.abs(angleDiff(Math.atan2(e.y-player.y,e.x-player.x),player.angle))<1.2).forEach(e=>hurtEnemy(e,w.damage+player.level*2));props.filter(p=>!p.open&&p.type!=='chest'&&distance(p,player)<w.range&&clearLine(player,p)&&Math.abs(angleDiff(Math.atan2(p.y-player.y,p.x-player.x),player.angle))<1.3).forEach(p=>{p.hp-=w.damage;particle(p.x,p.y,'#bf8e56');if(p.hp<=0){p.open=true;drops(p);log(p.type==='barrel'?'Barrel broken.':'Crate shattered.')}})}
+function attack(){if(state!=='playing'||player.cool>0)return;const w=player.weapon;window.DungeonAudio.play('strike',weaponKind(w));player.cool=w.cooldown||.36;player.swing=.2;enemies.filter(e=>e.hp>0&&distance(e,player)<w.range+e.radius&&clearLine(player,e)&&Math.abs(angleDiff(Math.atan2(e.y-player.y,e.x-player.x),player.angle))<1.2).forEach(e=>hurtEnemy(e,w.damage+player.level*2));props.filter(p=>!p.open&&p.type!=='chest'&&distance(p,player)<w.range&&clearLine(player,p)&&Math.abs(angleDiff(Math.atan2(p.y-player.y,p.x-player.x),player.angle))<1.3).forEach(p=>{p.hp-=w.damage;particle(p.x,p.y,'#bf8e56');if(p.hp<=0){p.open=true;p.broken=true;particle(p.x,p.y,p.type==='crate'?'#c79b61':'#9e7146',14);drops(p);log(p.type==='barrel'?'Barrel broken.':'Crate shattered.')}})}
 function nearby(){const candidates=[...props.filter(p=>p.type==='chest'&&!p.open),...loot.filter(l=>l.type==='weapon'||l.type==='armor'),{...world.end,type:'stairs'}].filter(o=>distance(o,player)<70&&clearLine(player,o));return candidates.sort((a,b)=>distance(a,player)-distance(b,player))[0]}
 function interact(){if(state!=='playing')return;const o=nearby();if(!o)return;if(o.type==='chest'){o.open=true;drops(o,true);log('Treasure chest opened.')}if(o.type==='weapon'||o.type==='armor'){const old=player[o.type];player[o.type]=o[o.type];loot.splice(loot.indexOf(o),1);if(old)loot.push({x:o.x,y:o.y,type:o.type,[o.type]:old});log('Equipped '+player[o.type].name+'.');if(o.type==='armor')window.DungeonAudio.play('armor');updateHUD()}if(o.type==='stairs'){if(depth<5)loadFloor(depth+1,crypto.getRandomValues(new Uint32Array(1))[0]);else log('Defeat the Cinder King to claim the crown.');}}
 function potion(){if(state!=='playing')return;if(player.potions>0&&player.hp<player.max){player.potions--;player.hp=Math.min(player.max,player.hp+65);particle(player.x,player.y,'#81dab5',20);log('Healing draught restores 65 vitality.')}else log(player.potions?'Already at full vitality.':'No potions left.')}
 function dodge(){if(state!=='playing'||player.stamina<35||player.dash>0)return;window.DungeonAudio.play('dodge');player.stamina-=35;player.dash=.18;player.inv=.3;let x=(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0),y=(keys.has('s')||keys.has('arrowdown')?1:0)-(keys.has('w')||keys.has('arrowup')?1:0);const a=x||y?Math.atan2(y,x):player.angle;player.dashX=Math.cos(a);player.dashY=Math.sin(a)}
-function shoot(e,a,speed=180){if(e.type!=='dragon')window.DungeonAudio.play('magic');shots.push({x:e.x,y:e.y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,life:3,damage:e.damage,color:e.projectile||'#bd90ed'})}
+function shoot(e,a,speed=180,spell=''){const type=spell||e.attack;if(type==='venom'||type==='fire'||type==='lightning')window.DungeonAudio.play(type);else if(e.type!=='dragon')window.DungeonAudio.play('magic');shots.push({x:e.x,y:e.y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,life:3,damage:e.damage,color:e.projectile||'#bd90ed',type})}
 function update(dt){
  clock+=dt;player.cool=Math.max(0,player.cool-dt);player.swing=Math.max(0,player.swing-dt);player.inv=Math.max(0,player.inv-dt);player.stamina=Math.min(100,player.stamina+22*dt);
  let dx=(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0),dy=(keys.has('s')||keys.has('arrowdown')?1:0)-(keys.has('w')||keys.has('arrowup')?1:0);
@@ -251,18 +269,20 @@ function update(dt){
   if(e.lunge>0){const step=Math.min(dt,e.lunge);move(e,Math.cos(e.attackAngle)*420*step,Math.sin(e.attackAngle)*420*step);e.lunge-=step;if(distance(e,player)<30)damagePlayer(e.damage);continue}
   if(e.wind>0){e.wind-=dt;if(e.wind<=0){
   if(e.type==='dragon'){window.DungeonAudio.play('dragon');if(e.phase%2===0){for(let a=-.5;a<=.5;a+=.1)shoot(e,e.attackAngle+a,260)}else{for(let a=0;a<TAU;a+=TAU/12)shoot(e,a,180)}e.phase++;e.cool=2.6}
-  else if(e.attack==='ranged'){shoot(e,e.attackAngle,e.shotSpeed);e.cool=e.cooldown}
+  else if(e.attack==='lightning'){const target=e.attackTarget||player;window.DungeonAudio.play('lightning');particle(target.x,target.y,'#c7c8ff',18);if(distance(player,target)<38&&clearLine(e,target))damagePlayer(e.damage);e.cool=e.cooldown}
+  else if(e.attack==='ranged'||e.attack==='venom'||e.attack==='fire'){shoot(e,e.attackAngle,e.shotSpeed,e.attack);e.cool=e.cooldown}
   else if(e.attack==='charge'){e.lunge=.28;e.cool=e.cooldown}
   else if(d<e.reach&&clearLine(e,player)&&Math.abs(angleDiff(Math.atan2(player.y-e.y,player.x-e.x),e.attackAngle))<1.3){damagePlayer(e.damage);e.cool=e.cooldown}else e.cool=e.cooldown;
   }continue}
   if(d>600)continue;
   const a=targetDirection(e);const range=e.reach;
   const sight=clearLine(e,player);
-  if(d<range&&sight&&e.cool<=0){window.DungeonAudio.play(e.type==='dragon'?'warning':'voice',e.type);e.attackAngle=Math.atan2(player.y-e.y,player.x-e.x);e.wind=e.windup;continue}
+  if(d<range&&sight&&e.cool<=0){if(e.type==='dragon')window.DungeonAudio.play('warning',e.type);else if(e.attack==='venom'||e.attack==='lightning'||e.attack==='fire'){window.DungeonAudio.play('spellCharge',e.attack);window.DungeonAudio.play('voice',e.type)}else window.DungeonAudio.play('voice',e.type);e.attackAngle=Math.atan2(player.y-e.y,player.x-e.x);e.attackTarget={x:player.x,y:player.y};e.wind=e.windup;continue}
   if(d>range*.75||!sight){const speed=e.speed*(e.attack==='charge'&&d<180?1.45:1);move(e,Math.cos(a)*speed*dt,Math.sin(a)*speed*dt)}
   if(d<20){move(e,-Math.cos(a)*25*dt,-Math.sin(a)*25*dt)}
  }
- for(const s of shots){s.x+=s.vx*dt;s.y+=s.vy*dt;s.life-=dt;if(!floorAt(s.x,s.y))s.life=0;if(distance(s,player)<18){damagePlayer(s.damage);s.life=0}}
+ for(const s of shots){s.x+=s.vx*dt;s.y+=s.vy*dt;s.life-=dt;if(!floorAt(s.x,s.y))s.life=0;if(distance(s,player)<18){const dodging=player.inv>0;damagePlayer(s.damage);if(!dodging&&s.type==='venom'){player.poison=Math.max(player.poison,2.4);player.poisonTick=.45;window.DungeonAudio.play('poison');particle(player.x,player.y,'#9be05c',12)}if(!dodging&&s.type==='fire'){player.burn=Math.max(player.burn,2);player.burnTick=.4;window.DungeonAudio.play('fire');particle(player.x,player.y,'#ff793c',12)}s.life=0}}
+ for(const status of ['poison','burn'])if(player[status]>0){player[status]=Math.max(0,player[status]-dt);player[status+'Tick']-=dt;if(player[status]>0&&player[status+'Tick']<=0){player[status+'Tick']=status==='poison'?.75:.65;damagePlayer(status==='poison'?3:4,status);particle(player.x,player.y,status==='poison'?'#9be05c':'#ff793c',4)}}
  shots=shots.filter(s=>s.life>0);enemies=enemies.filter(e=>e.hp>0);
  for(const l of loot){if((l.type==='gold'||l.type==='potion')&&distance(l,player)<32){window.DungeonAudio.play(l.type==='gold'?'gold':'bottle');if(l.type==='gold')player.gold+=l.value;else player.potions++;l.taken=true;particle(l.x,l.y,l.type==='gold'?'#edbf72':'#7ae4ba',5)}}
  loot=loot.filter(l=>!l.taken);for(const p of effects){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt}effects=effects.filter(p=>p.life>0);updateHUD();
@@ -281,15 +301,15 @@ function drawWeapon(w){
  else{polygon([[37,-4],[52,0],[37,4],[40,0]],w.color);ctx.fillStyle='#d6ac60';ctx.fillRect(35,-4,3,8)}
 }
 function drawArmor(a){
- polygon([[-6,-11],[-14,-8],[-12,0],[-8,-2],[-9,12],[9,12],[8,-2],[12,0],[14,-8],[6,-11],[4,-6],[-4,-6]],a.color);
+ polygon([[-6,-6],[-14,-3],[-12,5],[-9,2],[-9,13],[9,13],[9,2],[12,5],[14,-3],[6,-6],[4,-1],[-4,-1]],a.color);
  ctx.strokeStyle=a.kind==='leather'?'#63422d':'#435c66';ctx.lineWidth=2;
- if(a.kind==='chain'){for(let y=-5;y<=8;y+=4){ctx.beginPath();ctx.moveTo(-7,y);ctx.lineTo(7,y);ctx.stroke()}for(let x=-5;x<7;x+=5){ctx.beginPath();ctx.moveTo(x,-5);ctx.lineTo(x,10);ctx.stroke()}}
- else if(a.kind==='plate'){ctx.fillStyle='#e3e2d6';ctx.fillRect(-14,-8,7,7);ctx.fillRect(7,-8,7,7);ctx.beginPath();ctx.moveTo(0,-5);ctx.lineTo(0,9);ctx.moveTo(-8,4);ctx.lineTo(8,4);ctx.stroke()}
- else{ctx.beginPath();ctx.moveTo(-6,-4);ctx.lineTo(7,9);ctx.stroke();ctx.fillStyle='#dcc080';ctx.fillRect(-8,7,16,3)}
+ if(a.kind==='chain'){for(let y=1;y<=10;y+=4){ctx.beginPath();ctx.moveTo(-7,y);ctx.lineTo(7,y);ctx.stroke()}for(let x=-5;x<7;x+=5){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,11);ctx.stroke()}}
+ else if(a.kind==='plate'){ctx.fillStyle='#e3e2d6';ctx.fillRect(-14,-3,7,7);ctx.fillRect(7,-3,7,7);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,11);ctx.moveTo(-8,8);ctx.lineTo(8,8);ctx.stroke()}
+ else{ctx.beginPath();ctx.moveTo(-6,2);ctx.lineTo(7,12);ctx.stroke();ctx.fillStyle='#dcc080';ctx.fillRect(-8,9,16,3)}
 }
 function drawActor(e,hero=false){
  ctx.save();ctx.translate(e.x,e.y);ctx.shadowColor='#000';ctx.shadowBlur=7;circle(2,7,e.type==='dragon'?29:14,'#0008');ctx.shadowBlur=0;
- if(hero){ctx.rotate(player.angle);polygon([[-14,-11],[-17,14],[6,11],[12,0],[6,-11]],'#943f3b');ctx.fillStyle='#65818b';ctx.fillRect(-9,-9,18,18);if(player.armor)drawArmor(player.armor);circle(0,0,7,'#c8ccba');ctx.fillStyle='#3c515e';ctx.fillRect(2,-6,4,12);ctx.fillStyle='#e2ba70';ctx.fillRect(-4,-5,11,3);ctx.fillStyle='#6c8d96';ctx.fillRect(-7,14,18,7);ctx.strokeStyle='#ecc979';ctx.strokeRect(-7,14,18,7);ctx.save();ctx.translate(8,-16);ctx.rotate(player.swing>0?-.6+player.swing*4:0);drawWeapon(player.weapon);ctx.restore()}
+ if(hero){ctx.rotate(player.angle);polygon([[-11,-8],[-16,11],[-10,16],[9,16],[15,9],[10,-8],[6,-10],[-6,-10]],'#943f3b');ctx.fillStyle='#65818b';ctx.fillRect(-9,-7,18,19);if(player.armor)drawArmor(player.armor);circle(0,-15,7,'#c8ccba');ctx.fillStyle='#3c515e';ctx.fillRect(2,-21,4,12);ctx.fillStyle='#e2ba70';ctx.fillRect(-4,-20,11,3);ctx.fillStyle='#6c8d96';ctx.fillRect(-7,12,18,8);ctx.strokeStyle='#ecc979';ctx.strokeRect(-7,12,18,8);ctx.save();ctx.translate(8,-16);ctx.rotate(player.swing>0?-.6+player.swing*4:0);drawWeapon(player.weapon);ctx.restore()}
  else if(e.type==='slime'){ctx.scale(1,1+Math.sin(clock*4)*.07);circle(0,1,15,'#294e39');circle(0,-2,13,e.hit?'#fff4c6':'#69a77c');circle(-5,-5,3,'#b3dab1');circle(4,-4,2,'#12281e');circle(-5,-4,2,'#12281e')}
  else if(e.type==='dragon'){ctx.rotate(e.attackAngle);polygon([[-10,0],[-39,-45],[10,-35],[32,-53],[27,-9]],'#69342e');polygon([[-10,0],[-39,45],[10,35],[32,53],[27,9]],'#69342e');ctx.strokeStyle='#b46c4b';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-10,0);ctx.lineTo(32,-53);ctx.moveTo(-10,0);ctx.lineTo(32,53);ctx.stroke();polygon([[-15,-10],[-65,0],[-20,9],[5,22],[26,12],[44,6],[44,-7],[26,-12],[5,-22]],e.hit?'#ffc078':'#a1523a');for(let i=0;i<4;i++)polygon([[-20+i*13,-9],[-13+i*13,-24],[-7+i*13,-9]],'#d0a16a');circle(30,-8,3,'#ffd67b');circle(30,8,3,'#ffd67b')}
  else if(e.type==='goblin'){polygon([[-11,-8],[-17,-15],[-4,-13],[0,-21],[6,-12],[15,-14],[10,-5],[13,13],[-12,13]],e.hit?'#dcdf92':'#8c9850');circle(0,-6,9,'#a5ad5c');circle(-4,-7,2,'#1c2419');circle(4,-7,2,'#1c2419');ctx.strokeStyle='#c9d2b2';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(10,1);ctx.lineTo(19,12);ctx.stroke()}
@@ -300,6 +320,8 @@ function drawActor(e,hero=false){
  else if(e.type==='gargoyle'){polygon([[-5,4],[-23,-15],[-24,-1],[-13,9],[-18,14],[-8,13],[0,19],[8,13],[18,14],[13,8],[24,-1],[22,-16],[5,4]],e.hit?'#e4b5a7':'#82616a');circle(0,-4,10,'#a77776');polygon([[-7,-9],[-11,-18],[-2,-12]],'#b88979');polygon([[7,-9],[11,-18],[2,-12]],'#b88979');circle(-4,-5,2,'#ffd184');circle(4,-5,2,'#ffd184')}
  else if(e.type==='iron_knight'){polygon([[-12,-11],[-17,-8],[-13,12],[13,12],[17,-8],[12,-11],[8,-4],[-8,-4]],e.hit?'#fff0c8':'#898a83');ctx.strokeStyle='#d2c5a2';ctx.lineWidth=3;ctx.strokeRect(-11,-9,22,18);circle(0,-13,9,'#b7ae9a');ctx.fillStyle='#333840';ctx.fillRect(-4,-15,8,3);ctx.strokeStyle='#d4bd87';ctx.lineWidth=3;ctx.strokeRect(-21,-6,7,17);ctx.fillStyle='#a04640';ctx.fillRect(15,-13,3,27)}
  else if(e.type==='cultist'){polygon([[-15,14],[-11,-8],[0,-21],[11,-8],[15,14]],e.hit?'#f2c6ad':'#713f47');polygon([[-10,-8],[0,-20],[10,-8],[5,-5],[-5,-5]],'#332734');circle(0,-5,3,'#f19d76');ctx.strokeStyle='#d0aa78';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(17,13);ctx.lineTo(17,-19);ctx.stroke();glow(17,-19,16,'#e5757266');circle(17,-19,4,'#ffd0a1')}
+ else if(e.type==='cave_spider'){for(let side of [-1,1])for(let i=0;i<4;i++){ctx.strokeStyle=e.hit?'#d9f3a5':'#3e623d';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(side*7,i*3-3);ctx.lineTo(side*(15+i*2),i*4-12);ctx.lineTo(side*(21+i),i*6+5);ctx.stroke();circle(side*(21+i),i*6+5,2,'#769c53')}ctx.fillStyle=e.hit?'#f4e3b2':'#4c733f';ctx.beginPath();ctx.ellipse(0,2,12,9,0,0,TAU);ctx.fill();circle(0,-8,8,'#608c48');circle(-3,-10,2,'#e3cf72');circle(3,-10,2,'#e3cf72');circle(-3,-10,1,'#172014');circle(3,-10,1,'#172014');for(let i=-1;i<=1;i++){ctx.strokeStyle='#c7d975';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(i*3,-14);ctx.lineTo(i*5,-19);ctx.stroke()}glow(0,1,16,'#82cf4b22')}
+ else if(e.type==='crypt_wizard'||e.type==='cinder_wizard'){const fire=e.type==='cinder_wizard',robe=fire?'#873c31':'#554777',edge=fire?'#f37b42':'#a99be8';glow(0,-5,25,edge+'33');polygon([[-15,15],[-12,-5],[-7,-15],[0,-20],[8,-13],[13,-4],[16,15]],e.hit?'#f2d6ad':robe);polygon([[-10,-10],[0,-24],[10,-10],[5,-7],[-5,-7]],fire?'#542219':'#302743');circle(0,-6,3,fire?'#ffaf55':'#a6ddff');ctx.strokeStyle=fire?'#b68458':'#c0b9da';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(17,14);ctx.lineTo(17,-19);ctx.stroke();glow(17,-20,15,fire?'#ff673c88':'#8faeff88');circle(17,-20,4,fire?'#ffc271':'#d9e8ff');ctx.strokeStyle=edge;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-9,6);ctx.lineTo(0,12);ctx.lineTo(9,6);ctx.stroke()}
  else if(e.type==='bog_wraith'||e.type==='wraith'||e.type==='ash_wraith'){
   const ghost=e.type==='bog_wraith'?{robe:'#306b70',edge:'#8be5dc',eye:'#bafff1'}:e.type==='wraith'?{robe:'#655080',edge:'#c2a8f4',eye:'#f1dcff'}:{robe:'#773b36',edge:'#ff9c6c',eye:'#ffe0a2'};
   const ash=e.type==='ash_wraith',bog=e.type==='bog_wraith';
@@ -344,15 +366,25 @@ function render(){
  }
  for(const t of world.torches)if(world.seen[Math.floor(t.y/T)*W+Math.floor(t.x/T)]){glow(t.x,t.y,120,world.theme.torch+'44');glow(t.x,t.y,40,world.theme.torch+'88');ctx.fillStyle=world.theme.motif==='lava'?'#42231d':'#59402b';ctx.fillRect(t.x-4,t.y-4,8,15);circle(t.x,t.y-7,5+Math.sin(clock*9+t.x)*1.3,world.theme.torch);circle(t.x,t.y-9,2,'#fff0ae')}
  if(world.seen[Math.floor(world.end.y/T)*W+Math.floor(world.end.x/T)]){glow(world.end.x,world.end.y,55,world.theme.accent+'55');ctx.strokeStyle=world.theme.accent;ctx.lineWidth=2;for(let i=0;i<5;i++)ctx.strokeRect(world.end.x-18+i*2,world.end.y-19+i*7,36-i*4,6)}
- for(const p of props){if(!world.seen[Math.floor(p.y/T)*W+Math.floor(p.x/T)])continue;ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='#0006';ctx.fillRect(-16,-8,35,29);if(p.open){ctx.fillStyle='#6d5037';ctx.fillRect(-11,4,22,4);ctx.fillRect(-17,9,7,3);if(p.type==='chest'){ctx.strokeStyle='#b8a063';ctx.strokeRect(-14,-6,28,20);ctx.fillStyle='#0c1517';ctx.fillRect(-11,-4,22,10)}}
-  else if(p.type==='barrel'){circle(0,0,14,'#855b38');ctx.strokeStyle='#35382d';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,0,12,14,0,0,TAU);ctx.stroke();ctx.fillStyle='#c09355';ctx.fillRect(-10,-6,20,3);ctx.fillRect(-10,5,20,3)}
-  else{ctx.fillStyle=p.type==='chest'?'#98713c':'#785638';ctx.fillRect(-15,-12,30,25);ctx.strokeStyle=p.type==='chest'?'#e1b35e':'#af8352';ctx.lineWidth=3;ctx.strokeRect(-14,-11,28,23);ctx.beginPath();ctx.moveTo(-12,-9);ctx.lineTo(12,10);if(p.type==='crate'){ctx.moveTo(12,-9);ctx.lineTo(-12,10)}ctx.stroke();if(p.type==='chest'){ctx.fillStyle='#f4ce71';ctx.fillRect(-3,-3,6,9)}}ctx.restore()}
+ for(const p of props){if(!world.seen[Math.floor(p.y/T)*W+Math.floor(p.x/T)])continue;ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='#0006';ctx.fillRect(-17,-5,35,27);
+  if(p.type==='chest'){
+   if(p.open){ctx.fillStyle='#4a3329';ctx.fillRect(-15,0,30,14);ctx.fillStyle='#171d1c';ctx.fillRect(-11,2,22,7);ctx.strokeStyle='#d1a950';ctx.lineWidth=3;ctx.strokeRect(-16,-1,32,16);ctx.fillStyle='#8c603d';ctx.beginPath();ctx.moveTo(-15,-4);ctx.lineTo(-13,-16);ctx.quadraticCurveTo(0,-22,13,-16);ctx.lineTo(15,-4);ctx.closePath();ctx.fill();ctx.strokeStyle='#e2bf70';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#d4b264';ctx.fillRect(-10,-13,3,10);ctx.fillRect(7,-13,3,10)}
+   else{ctx.fillStyle='#76502e';ctx.fillRect(-15,-3,30,17);ctx.strokeStyle='#d3a84f';ctx.lineWidth=3;ctx.strokeRect(-15,-3,30,17);ctx.fillStyle='#9a6b3a';ctx.beginPath();ctx.moveTo(-15,-3);ctx.lineTo(-15,-10);ctx.quadraticCurveTo(0,-23,15,-10);ctx.lineTo(15,-3);ctx.closePath();ctx.fill();ctx.strokeStyle='#e1bb62';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#dfbd68';ctx.fillRect(-10,-12,3,10);ctx.fillRect(7,-12,3,10);ctx.fillStyle='#f5d276';ctx.fillRect(-3,-5,6,9);ctx.fillStyle='#624b36';ctx.fillRect(-1,-2,2,3)}
+  }else if(p.type==='barrel'){
+   if(p.broken){ctx.strokeStyle='#a2784d';ctx.lineWidth=5;for(const a of [-.65,.4]){ctx.save();ctx.rotate(a);ctx.beginPath();ctx.moveTo(-14,-9);ctx.lineTo(-6,13);ctx.moveTo(3,-13);ctx.lineTo(13,8);ctx.stroke();ctx.restore()}ctx.strokeStyle='#4a3930';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,13,7,.2,0,TAU);ctx.stroke()}
+   else{circle(0,0,14,'#855b38');ctx.strokeStyle='#35382d';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,0,12,14,0,0,TAU);ctx.stroke();ctx.fillStyle='#c09355';ctx.fillRect(-10,-6,20,3);ctx.fillRect(-10,5,20,3)}
+  }else if(p.broken){polygon([[-16,9],[-8,-7],[-3,8],[6,-13],[11,8],[17,11]],'#997044');ctx.strokeStyle='#593e2c';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-16,9);ctx.lineTo(-8,-7);ctx.lineTo(-3,8);ctx.lineTo(6,-13);ctx.lineTo(11,8);ctx.lineTo(17,11);ctx.stroke()}
+  else{ctx.fillStyle='#815b39';ctx.fillRect(-15,-11,30,23);ctx.strokeStyle='#aa8357';ctx.lineWidth=2;ctx.strokeRect(-14,-10,28,21);ctx.fillStyle='#99734b';for(let x of [-9,-3,3,9])ctx.fillRect(x-1,-9,2,19);ctx.strokeStyle='#c09a65';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-14,-10);ctx.lineTo(14,10);ctx.moveTo(14,-10);ctx.lineTo(-14,10);ctx.stroke();ctx.fillStyle='#d5b17a';for(const x of [-11,11])for(const y of [-7,7])circle(x,y,1.3,'#d5b17a')}
+  ctx.restore()}
  for(const l of loot)if(world.seen[Math.floor(l.y/T)*W+Math.floor(l.x/T)]){const c=l.type==='weapon'?l.weapon.color:l.type==='armor'?l.armor.color:l.type==='gold'?'#edbf72':'#76d9ac';glow(l.x,l.y,24,c+'44');if(l.type==='gold'){circle(l.x,l.y,5,c);circle(l.x-5,l.y+4,4,'#a78041')}else if(l.type==='potion'){ctx.fillStyle=c;ctx.fillRect(l.x-5,l.y-3,10,12);ctx.fillStyle='#d9d6ba';ctx.fillRect(l.x-3,l.y-7,6,4)}else{ctx.save();ctx.translate(l.x,l.y);if(l.type==='armor')drawArmor(l.armor);else{ctx.rotate(-.8);ctx.scale(.8,.8);ctx.translate(-15,0);drawWeapon(l.weapon)}ctx.restore()}}
  for(const e of enemies)if(distance(e,player)<440&&world.seen[Math.floor(e.y/T)*W+Math.floor(e.x/T)]){
-  if(e.wind>0){ctx.fillStyle=e.type==='dragon'?'#ff5e3938':e.color+'38';ctx.strokeStyle=e.type==='dragon'?'#f28b57':e.color;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(e.x,e.y);const r=e.type==='dragon'?330:e.attack==='ranged'?e.reach:Math.max(e.reach,65);const arc=e.type==='dragon'&&e.phase%2===1?Math.PI:e.type==='dragon'?.55:e.attack==='ranged'?.16:.45;ctx.arc(e.x,e.y,r,e.attackAngle-arc,e.attackAngle+arc);ctx.closePath();ctx.fill();ctx.stroke()}
+  if(e.wind>0){const spell=e.attack==='venom'||e.attack==='fire'||e.attack==='lightning',color=e.type==='dragon'?'#f28b57':e.attack==='venom'?'#9be05c':e.attack==='fire'?'#ff713c':e.attack==='lightning'?'#bbc5ff':e.color;ctx.fillStyle=color+'38';ctx.strokeStyle=color;ctx.lineWidth=2;
+   if(e.attack==='lightning'&&e.attackTarget){const tx=e.attackTarget.x,ty=e.attackTarget.y;ctx.setLineDash([5,5]);ctx.beginPath();ctx.arc(tx,ty,24+Math.sin(clock*10)*3,0,TAU);ctx.fill();ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.moveTo(e.x,e.y);for(let i=1;i<=6;i++){const f=i/7,offset=(i%2?1:-1)*10;ctx.lineTo(e.x+(tx-e.x)*f+offset,e.y+(ty-e.y)*f-offset)}ctx.lineTo(tx,ty);ctx.stroke()}
+   else{ctx.beginPath();ctx.moveTo(e.x,e.y);const r=e.type==='dragon'?330:e.attack==='ranged'||spell?e.reach:Math.max(e.reach,65);const arc=e.type==='dragon'&&e.phase%2===1?Math.PI:e.type==='dragon'?.55:e.attack==='ranged'||e.attack==='venom'||e.attack==='fire'?.16:.45;ctx.arc(e.x,e.y,r,e.attackAngle-arc,e.attackAngle+arc);ctx.closePath();ctx.fill();ctx.stroke()}
+  }
   drawActor(e);
  }
- for(const s of shots){glow(s.x,s.y,20,s.color+'77');circle(s.x,s.y,5,s.color)}
+ for(const s of shots){glow(s.x,s.y,s.type==='fire'?25:18,s.color+'77');if(s.type==='venom'){ctx.strokeStyle='#c8e88a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(s.x-6,s.y);ctx.lineTo(s.x+6,s.y);ctx.stroke();circle(s.x,s.y,4,s.color)}else if(s.type==='fire'){circle(s.x,s.y,6,'#ffd178');circle(s.x-3,s.y+2,4,s.color)}else circle(s.x,s.y,5,s.color)}
  ctx.globalAlpha=player.inv>0&&Math.floor(clock*18)%2===0?.6:1;drawActor(player,true);ctx.globalAlpha=1;
  if(player.swing>0){ctx.strokeStyle='#f7ddb3';ctx.lineWidth=5;ctx.beginPath();ctx.arc(player.x,player.y,player.weapon.range-10,player.angle-1.1,player.angle+1.1);ctx.stroke();glow(player.x,player.y,90,'#f4cc6420')}
  for(const p of effects){ctx.globalAlpha=Math.min(1,p.life*3);circle(p.x,p.y,2,p.color)}ctx.globalAlpha=1;
