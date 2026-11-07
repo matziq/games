@@ -116,15 +116,19 @@ with sync_playwright() as p:
         }""", kind)
     assert len({round(values[0]) for values in profiles.values()}) == 4
     enemy_profiles, material_profiles = {}, {}
-    for kind in ["slime", "goblin", "skeleton", "mage", "dragon"]:
+    enemies = ["slime", "goblin", "bog_wraith", "thornling", "wolf", "vine_archer",
+               "skeleton", "bone_archer", "wraith", "gargoyle", "iron_knight",
+               "cultist", "emberling", "ash_wraith", "dragon"]
+    for kind in enemies:
         page.wait_for_timeout(500)
         enemy_profiles[kind] = page.evaluate("""kind => {
-          soundProfiles.length=0;DungeonAudio.play('voice',kind);DungeonAudio.play('hit',kind);
-          return [...soundProfiles];
+          soundProfiles.length=0;const random=Math.random;Math.random=()=>.5;
+          try{DungeonAudio.play('voice',kind);DungeonAudio.play('hit',kind);return [...soundProfiles]}
+          finally{Math.random=random}
         }""", kind)
         page.wait_for_timeout(80)
         assert diag()["effectsRms"] > .00001, kind
-    assert len({round(v[0]) for v in enemy_profiles.values()}) == 5
+    assert len({round(v[0]) for v in enemy_profiles.values()}) == len(enemies)
     for material in ["barrel", "crate", "armor", "bottle", "gold", "chest"]:
         page.wait_for_timeout(600)
         material_profiles[material] = page.evaluate("""name => {
@@ -166,7 +170,7 @@ with sync_playwright() as p:
               "checks": ["4 equipped and ground weapon silhouettes", "3 worn and ground armor silhouettes",
                          "E chest armor loot/equip/swap", "visible equipment stats", "damage reduction",
                          "40% cap", "4 independent audio combinations", "weapon sounds",
-                         "5 enemy voice/hit profiles", "6 material/loot sounds", "randomized pitch"],
+                         "15 distinct realm-creature voice/hit profiles", "6 material/loot sounds", "randomized pitch"],
               "browser_errors": errors}
     (ROOT / ("emberkeep-equipment-publication.json" if LIVE else "emberkeep-equipment-validation.json")).write_text(json.dumps(report, indent=2))
     print(json.dumps(report, indent=2))

@@ -41,6 +41,31 @@ check('generation is deterministic and varied', () => {
   assert.deepEqual(sandbox.window.emberkeep.generate(42, 1).tiles, sandbox.window.emberkeep.generate(42, 1).tiles);
   assert.notDeepEqual(sandbox.window.emberkeep.generate(42, 1).tiles, sandbox.window.emberkeep.generate(43, 1).tiles);
 });
+check('five chapter themes and monster rosters stay distinct across generated floors', () => {
+  run('begin()');
+  const api=sandbox.window.emberkeep;
+  assert.equal(new Set(api.chapterThemes.map(t=>t.id)).size,5);
+  assert.equal(new Set(api.chapterThemes.map(t=>t.floor)).size,5);
+  assert.equal(new Set(api.chapterRosters.flat()).size,api.chapterRosters.flat().length);
+  for(let chapter=1;chapter<=5;chapter++){
+    const themes=new Set(),rosters=[];
+    for(let seed=0;seed<12;seed++){
+      const generated=api.generate(seed,chapter);themes.add(generated.theme.id);
+      run(`loadFloor(${chapter},${seed+100})`);
+      const present=new Set(api.snapshot().enemyTypes);
+      for(const type of api.chapterRosters[chapter-1])assert.ok(present.has(type),`missing ${type} on chapter ${chapter}`);
+      if(chapter===5)assert.ok(present.has('dragon'));
+      for(const type of present)assert.ok(type==='dragon'&&chapter===5||api.chapterRosters[chapter-1].includes(type),`wrong creature ${type}`);
+      rosters.push([...present].sort().join(','));
+    }
+    assert.deepEqual([...themes],[api.chapterThemes[chapter-1].id]);
+    assert.equal(new Set(rosters).size,1);
+  }
+  assert.equal(new Set(api.chapterRosters.map(r=>r.join(','))).size,5);
+  for(const attacks of api.chapterAttacks){
+    assert.ok(new Set(attacks).size>=2,'chapter roster needs distinct combat behaviors');
+  }
+});
 run('begin();');
 check('sanctuary and stairs are free; movement respects walls', () => {
   assert.equal(run('free(player.x,player.y,12)&&free(world.end.x,world.end.y,12)'), true);
@@ -115,9 +140,9 @@ check('stairs advance all chapters and restore health', () => {
   }
   assert.equal(run('enemies.filter(e=>e.type==="dragon").length'), 1);
 });
-check('mage telegraphs and fires; shots collide with walls', () => {
-  run("player.x=world.start.x;player.y=world.start.y;player.inv=0;enemies=[makeEnemy('mage',{x:player.x+100,y:player.y})];enemies[0].cool=0;update(.01)");
-  assert.ok(run('enemies[0].wind>0')); run('update(.8)'); assert.ok(run('shots.length>0'));
+check('chapter archer telegraphs and fires; shots collide with walls', () => {
+  run("player.x=world.start.x;player.y=world.start.y;player.inv=0;enemies=[makeEnemy('vine_archer',{x:player.x+220,y:player.y})];enemies[0].cool=0;update(.01)");
+  assert.ok(run('enemies[0].wind>0')); run('update(.9)'); assert.ok(run('shots.length>0'));
   run("shots=[{x:5,y:5,vx:0,vy:0,life:3,damage:8}];update(.01)"); assert.equal(run('shots.length'), 0);
 });
 check('dragon alternates telegraphed cone and radial attacks', () => {

@@ -11,7 +11,7 @@ This repo is a small collection of single-file browser games and apps.
 
 ## Included games
 
-- **Emberkeep: The Ashen Crown** - overhead medieval action RPG with procedural dungeons, distinct weapons, lootable armor, independent music/effects controls, and a dragon boss. Entry: `3d_dungeons/index.html`
+- **Emberkeep: The Ashen Crown** - overhead medieval action RPG with five distinct procedural realms and monster broods, weapons, lootable armor, independent music/effects controls, and a dragon boss. Entry: `3d_dungeons/index.html`
 - **Aztec: The jade expedition** – original Apple II-inspired tomb adventure with 64 seeded rooms, classic commands, touch controls, and an idol-and-escape objective. Entry: `Aztec/index.html`
 - **2048** – classic sliding tile puzzle. Entry: `2048/2048.html`
 - **Bee** – simple bee game. Entry: `bee/bee.html`
