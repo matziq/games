@@ -47,19 +47,24 @@ check('five chapter themes and monster rosters stay distinct across generated fl
   assert.equal(new Set(api.chapterThemes.map(t=>t.id)).size,5);
   assert.equal(new Set(api.chapterThemes.map(t=>t.floor)).size,5);
   assert.equal(new Set(api.chapterRosters.flat()).size,api.chapterRosters.flat().length);
+  assert.equal(api.MAX_FLOOR,10);
   for(let chapter=1;chapter<=5;chapter++){
     const themes=new Set(),rosters=[];
-    for(let seed=0;seed<12;seed++){
-      const generated=api.generate(seed,chapter);themes.add(generated.theme.id);
-      run(`loadFloor(${chapter},${seed+100})`);
-      const present=new Set(api.snapshot().enemyTypes);
-      for(const type of api.chapterRosters[chapter-1])assert.ok(present.has(type),`missing ${type} on chapter ${chapter}`);
-      if(chapter===5)assert.ok(present.has('dragon'));
-      for(const type of present)assert.ok(type==='dragon'&&chapter===5||api.chapterRosters[chapter-1].includes(type),`wrong creature ${type}`);
-      rosters.push([...present].sort().join(','));
+    for(const floor of [chapter*2-1,chapter*2]){
+      for(let seed=0;seed<12;seed++){
+        const generated=api.generate(seed,chapter);themes.add(generated.theme.id);
+        run(`loadFloor(${floor},${seed+100})`);
+        const snapshot=api.snapshot(),present=new Set(snapshot.enemyTypes);
+        assert.equal(snapshot.realm,chapter);
+        for(const type of api.chapterRosters[chapter-1])assert.ok(present.has(type),`missing ${type} on floor ${floor}`);
+        if(floor===10)assert.ok(present.has('dragon'));
+        else assert.ok(!present.has('dragon'),`dragon appeared before floor 10`);
+        for(const type of present)assert.ok(type==='dragon'&&floor===10||api.chapterRosters[chapter-1].includes(type),`wrong creature ${type}`);
+        rosters.push([...present].sort().join(','));
+      }
     }
     assert.deepEqual([...themes],[api.chapterThemes[chapter-1].id]);
-    assert.equal(new Set(rosters).size,1);
+    assert.equal(new Set(rosters).size,chapter===5?2:1);
   }
   assert.equal(new Set(api.chapterRosters.map(r=>r.join(','))).size,5);
   for(const attacks of api.chapterAttacks){
@@ -106,7 +111,7 @@ check('spider venom, wizard fire and lightning are telegraphed attacks with real
     run("{const s=shots[0];s.x=player.x;s.y=player.y;s.vx=0;s.vy=0;player.inv=0;update(.01)}");
     assert.ok(run(`player.${status}>0`),`${type} did not apply ${status}`);
   }
-  run("loadFloor(3,43);player.x=world.start.x;player.y=world.start.y;player.hp=120;player.inv=0;enemies=[makeEnemy('crypt_wizard',{x:player.x+120,y:player.y})];enemies[0].cool=0;update(.01)");
+  run("loadFloor(5,43);player.x=world.start.x;player.y=world.start.y;player.hp=120;player.inv=0;enemies=[makeEnemy('crypt_wizard',{x:player.x+120,y:player.y})];enemies[0].cool=0;update(.01)");
   assert.ok(run('enemies[0].wind>0'));assert.equal(run('enemies[0].attack'),'lightning');
   const hp=run('player.hp');run('update(1.1)');
   assert.ok(run('player.hp<'+hp),'lightning did not strike the marked target');
@@ -151,11 +156,64 @@ check('dodge consumes resolve and grants brief invulnerability', () => {
   const hp = run('player.hp'); run('damagePlayer(20)'); assert.equal(run('player.hp'), hp);
   run('player.inv=0;damagePlayer(20)'); assert.equal(run('player.hp'), hp - 20);
 });
+check('stillness telegraphs zombie emergence; movement resets the timer, not combat', () => {
+  run('loadFloor(1,42);state="playing";enemies=[];props=[];loot=[];keys.clear();player.dash=0;player.x=world.start.x;player.y=world.start.y;');
+  run('for(let i=0;i<224;i++)update(.04)');
+  assert.equal(sandbox.window.emberkeep.snapshot().idle.markers.length,0);
+  run('attack();update(.04)');
+  assert.ok(sandbox.window.emberkeep.snapshot().idle.elapsed>8.9,'attacking incorrectly reset stillness');
+  run('update(.04)');
+  assert.equal(sandbox.window.emberkeep.snapshot().idle.markers.length,2,'warning markers did not appear at nine seconds');
+  assert.equal(sandbox.window.emberkeep.snapshot().idle.zombies,0,'zombies spawned before their warning');
+  run('keys.add("d");update(.04);keys.clear()');
+  assert.ok(sandbox.window.emberkeep.snapshot().idle.elapsed<.05,'movement did not reset the idle clock');
+  assert.equal(sandbox.window.emberkeep.snapshot().idle.triggered,false);
+  run('for(let i=0;i<301;i++)update(.04)');
+  const idle=sandbox.window.emberkeep.snapshot().idle;
+  assert.equal(idle.triggered,true);
+  assert.equal(idle.zombies,2,'a single idle cycle should spawn two zombies');
+  assert.ok(run('enemies.filter(e=>e.type==="zombie").every(e=>e.emerge>0)'),'zombies skipped the emergence animation');
+  const x=run('enemies.find(e=>e.type==="zombie").x');
+  run('move(enemies.find(e=>e.type==="zombie"),10,0)');
+  assert.equal(run('enemies.find(e=>e.type==="zombie").x'),x,'emerging zombies moved before surfacing');
+});
+check('merchant schedule, safe room and weapon armor potion transactions work on floors 2 and 4', () => {
+  for(const floor of [1,3,5,7,9,10]){
+    run(`loadFloor(${floor},42)`);
+    assert.equal(sandbox.window.emberkeep.snapshot().merchant,null,`unexpected merchant on floor ${floor}`);
+  }
+  for(const floor of [2,4,6,8])assert.equal(sandbox.window.emberkeep.hasMerchant(floor),true);
+  for(const floor of [2,4]){
+    run(`loadFloor(${floor},42);state="playing";player.gold=300;player.hp=50;player.weapon={name:"Current Sword"};player.armor=null;`);
+    const snapshot=sandbox.window.emberkeep.snapshot();
+    assert.ok(snapshot.merchant,'merchant missing from floor '+floor);
+    assert.ok(run('props.every(p=>!pointInRoom(p,world.rooms[0],0))'),'trade room contains breakable containers');
+    assert.equal(run('openShop()'),true);assert.equal(run('state'),'shop');
+    const gold=run('player.gold'),weapon=run('world.merchant.stock.weapon');
+    assert.equal(run('buyProduct("weapon")'),true);
+    assert.equal(run('player.gold'),gold-weapon.price);
+    assert.equal(run('player.weapon.name'),'Current Sword','purchase replaced equipped gear automatically');
+    assert.ok(run('loot.some(item=>item.type==="weapon"&&item.weapon.name===world.merchant.stock.weapon.item.name)'));
+    const armor=run('world.merchant.stock.armor');
+    assert.equal(run('buyProduct("armor")'),true);assert.equal(run('world.merchant.stock.armor.quantity'),0);
+    assert.ok(run('loot.some(item=>item.type==="armor"&&item.armor.name===world.merchant.stock.armor.item.name)'));
+    const potions=run('player.potions'),potionQuantity=run('world.merchant.stock.potion.quantity');
+    assert.equal(run('buyProduct("potion")'),true);assert.equal(run('player.potions'),potions+1);
+    assert.equal(run('world.merchant.stock.potion.quantity'),potionQuantity-1);
+    run('player.gold=0');
+    assert.equal(run('buyProduct("potion")'),false);assert.equal(run('player.gold'),0);
+    run('closeShop()');assert.equal(run('state'),'playing');
+    run('player.x=world.merchant.x;player.y=world.merchant.y;player.hp=50;player.inv=0;damagePlayer(20)');
+    assert.equal(run('player.hp'),50,'the merchant chamber is not safe');
+    assert.equal(run('player.gold'),0);
+  }
+});
 check('stairs advance all chapters and restore health', () => {
   run('begin()');
-  for (let d = 2; d <= 5; d++) {
+  for (let d = 2; d <= 10; d++) {
     run('player.x=world.end.x;player.y=world.end.y;props=[];loot=[];player.hp=10;interact()');
     assert.equal(run('depth'), d); assert.equal(run('player.hp'), run('player.max'));
+    assert.equal(run('world.theme.id'),run(`chapterThemes[${Math.ceil(d/2)-1}].id`));
   }
   assert.equal(run('enemies.filter(e=>e.type==="dragon").length'), 1);
 });
