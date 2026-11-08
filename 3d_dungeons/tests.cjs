@@ -126,6 +126,36 @@ check('weapon exchange, gold pickup and healing', () => {
   assert.equal(run('player.gold'), 23); assert.equal(run('player.potions'), 4);
   run('player.hp=30;potion()'); assert.equal(run('player.hp'), 95); assert.equal(run('player.potions'), 3);
 });
+check('floating combat and pickup feedback reports actual values without duplicates', () => {
+  run("loadFloor(1,63);state='playing';keys.clear();player.x=world.start.x;player.y=world.start.y;player.angle=0;player.cool=0;player.inv=0;player.armor=null;player.hp=100;enemies=[];props=[];loot=[];floatingTexts=[]");
+  run("const target=makeEnemy('slime',{x:player.x+34,y:player.y});target.hp=target.max=7;enemies=[target];attack()");
+  let texts=sandbox.window.emberkeep.snapshot().floatingTexts;
+  assert.equal(texts.length,1);assert.equal(texts[0].text,'-7');assert.equal(texts[0].kind,'strike');
+  run("floatingTexts=[];player.cool=0;enemies=[makeEnemy('slime',{x:player.x-34,y:player.y})];attack()");
+  assert.equal(sandbox.window.emberkeep.snapshot().floatingTexts.length,0,'a missed attack showed damage');
+  run("floatingTexts=[];player.hp=100;player.inv=0;damagePlayer(11)");
+  texts=sandbox.window.emberkeep.snapshot().floatingTexts;
+  assert.equal(texts.length,1);assert.equal(texts[0].text,'-11');assert.equal(texts[0].kind,'damage');
+  run("player.hp=100;player.armor={reduction:.25};player.inv=0;damagePlayer(12)");
+  assert.equal(sandbox.window.emberkeep.snapshot().floatingTexts.at(-1).text,'-9','damage label ignored armor');
+  const beforeInvulnerable=sandbox.window.emberkeep.snapshot().floatingTexts.length;
+  run('player.inv=1;damagePlayer(20)');
+  assert.equal(sandbox.window.emberkeep.snapshot().floatingTexts.length,beforeInvulnerable,'invulnerability produced a false hit label');
+  run("player.armor=null;player.inv=0;player.gold=0;player.potions=0;player.hp=100;floatingTexts=[];loot=[{x:player.x-12,y:player.y,type:'gold',value:37},{x:player.x+12,y:player.y,type:'potion'}];update(.01)");
+  texts=sandbox.window.emberkeep.snapshot().floatingTexts;
+  assert.deepEqual(texts.map(f=>f.text).sort(),['+1 HEALING POTION','+37 GOLD'].sort());
+  assert.equal(run('player.gold'),37);assert.equal(run('player.potions'),1);
+  run('update(.01)');
+  assert.equal(sandbox.window.emberkeep.snapshot().floatingTexts.length,2,'a collected item was notified more than once');
+  run("loot=[{x:player.x+12,y:player.y,type:'weapon',weapon:{name:'Test Spear',damage:20,range:90,color:'#c6a0ed'}}];interact()");
+  assert.ok(sandbox.window.emberkeep.snapshot().floatingTexts.some(f=>f.text==='+ Test Spear'));
+  run("loot=[{x:player.x+12,y:player.y,type:'armor',armor:{name:'Test Plate',kind:'plate',color:'#c8cddd',reduction:.3}}];interact()");
+  assert.ok(sandbox.window.emberkeep.snapshot().floatingTexts.some(f=>f.text==='+ Test Plate'));
+  run("floatingTexts=[];props=[{x:player.x+20,y:player.y,type:'chest',hp:20,open:false}];loot=[];interact()");
+  assert.equal(sandbox.window.emberkeep.snapshot().floatingTexts[0].text,'CHEST OPENED');
+  run('floatingTexts=[];player.hp=10;player.potions=1;potion()');
+  assert.equal(sandbox.window.emberkeep.snapshot().floatingTexts[0].text,'+65 HP');
+});
 check('four coherent weapon types have distinct reach and recovery', () => {
   const kinds = new Set();
   for (let i=0;i<200;i++) {
@@ -195,12 +225,14 @@ check('merchant schedule, safe room and weapon armor potion transactions work on
     assert.equal(run('player.gold'),gold-weapon.price);
     assert.equal(run('player.weapon.name'),'Current Sword','purchase replaced equipped gear automatically');
     assert.ok(run('loot.some(item=>item.type==="weapon"&&item.weapon.name===world.merchant.stock.weapon.item.name)'));
+    assert.ok(sandbox.window.emberkeep.snapshot().floatingTexts.some(f=>f.text.startsWith('PURCHASED ')));
     const armor=run('world.merchant.stock.armor');
     assert.equal(run('buyProduct("armor")'),true);assert.equal(run('world.merchant.stock.armor.quantity'),0);
     assert.ok(run('loot.some(item=>item.type==="armor"&&item.armor.name===world.merchant.stock.armor.item.name)'));
     const potions=run('player.potions'),potionQuantity=run('world.merchant.stock.potion.quantity');
     assert.equal(run('buyProduct("potion")'),true);assert.equal(run('player.potions'),potions+1);
     assert.equal(run('world.merchant.stock.potion.quantity'),potionQuantity-1);
+    assert.ok(sandbox.window.emberkeep.snapshot().floatingTexts.some(f=>f.text==='+1 HEALING POTION'));
     run('player.gold=0');
     assert.equal(run('buyProduct("potion")'),false);assert.equal(run('player.gold'),0);
     run('closeShop()');assert.equal(run('state'),'playing');

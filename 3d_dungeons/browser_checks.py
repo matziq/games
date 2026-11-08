@@ -62,6 +62,20 @@ with sync_playwright() as p:
     }""")
     page.wait_for_timeout(350)
     page.screenshot(path=str(ROOT / "emberkeep-gameplay.png"))
+    page.evaluate("""() => {
+      state='playing';loadFloor(2,874326);keys.clear();player.x=(world.rooms[1].cx+.5)*T;player.y=(world.rooms[1].cy+.5)*T;
+      player.angle=0;player.cool=0;player.inv=0;player.armor=null;player.hp=90;
+      enemies=[makeEnemy('slime',{x:player.x+48,y:player.y})];enemies[0].hp=30;
+      props=[];loot=[];floatingTexts=[];attack();damagePlayer(8);
+      loot=[{x:player.x-12,y:player.y,type:'gold',value:37},{x:player.x+12,y:player.y,type:'potion'}];
+      update(.01);reveal();render();
+    }""")
+    floating = page.evaluate("emberkeep.snapshot().floatingTexts.map(f=>({text:f.text,kind:f.kind}))")
+    assert {"text": "-18", "kind": "strike"} in floating, floating
+    assert {"text": "-8", "kind": "damage"} in floating, floating
+    assert {"text": "+37 GOLD", "kind": "gold"} in floating, floating
+    assert {"text": "+1 HEALING POTION", "kind": "heal"} in floating, floating
+    page.screenshot(path=str(ROOT / "emberkeep-floating-feedback.png"))
     # Fixture positioning isolates stairs/boss without skipping their real input paths.
     for floor in range(3, 11):
         page.evaluate("player.x=world.end.x;player.y=world.end.y;props=[];loot=[];player.inv=10")
@@ -101,10 +115,11 @@ with sync_playwright() as p:
               "external_requests": external, "checks": [
                   "offline image decoding", "keyboard movement", "pause/resume", "source-art gallery",
                   "chest opening and weapon drop", "Space attacks break barrel", "Q healing", "Shift dodge",
+                  "green successful-strike, red received-damage, gold-value, and potion floating feedback",
                   "E stairs progression", "dragon telegraph and projectiles", "Space boss victory",
                   "restart confirmation and cancellation", "1024px layout", "canvas rendering"],
               "screenshots": ["emberkeep-title.png", "emberkeep-source-art.png", "emberkeep-gameplay.png",
-                              "emberkeep-dragon.png", "emberkeep-victory.png"]}
+                              "emberkeep-floating-feedback.png", "emberkeep-dragon.png", "emberkeep-victory.png"]}
     (ROOT / "emberkeep-browser-validation.json").write_text(json.dumps(report, indent=2))
     print(json.dumps(report, indent=2))
     browser.close()

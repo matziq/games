@@ -93,6 +93,20 @@ with sync_playwright() as p:
         page.screenshot(path=str(OUTPUT / f"Emberkeep-mobile-{name}-shop.png"))
         page.locator("#closeShop").tap()
         assert page.evaluate("state") == "playing"
+        page.evaluate("""() => {
+          loadFloor(2,705);player.x=(world.rooms[1].cx+.5)*T;player.y=(world.rooms[1].cy+.5)*T;
+          player.angle=0;player.cool=0;player.inv=0;player.armor=null;player.hp=90;
+          enemies=[makeEnemy('slime',{x:player.x+48,y:player.y})];enemies[0].hp=30;
+          props=[];loot=[];floatingTexts=[];attack();damagePlayer(8);
+          loot=[{x:player.x-12,y:player.y,type:'gold',value:37},{x:player.x+12,y:player.y,type:'potion'}];
+          update(.01);reveal();render();
+        }""")
+        floating = page.evaluate("emberkeep.snapshot().floatingTexts.map(f=>({text:f.text,kind:f.kind}))")
+        for event in ({"text": "-18", "kind": "strike"}, {"text": "-8", "kind": "damage"},
+                      {"text": "+37 GOLD", "kind": "gold"}, {"text": "+1 HEALING POTION", "kind": "heal"}):
+            assert event in floating, (name, floating, event)
+        page.screenshot(path=str(OUTPUT / f"Emberkeep-mobile-{name}-floating-feedback.png"))
+        assert page.evaluate("document.documentElement.scrollWidth<=innerWidth&&document.documentElement.scrollHeight<=innerHeight")
         page.locator("#mute").tap()
         page.locator("#music").tap()
         audio = page.evaluate("DungeonAudio.diagnostic()")
@@ -105,6 +119,7 @@ with sync_playwright() as p:
             assert not external, external
         report["layouts"].append({"name": name, "dimensions": dimensions, "movement": [start, end],
                                   "multi_touch_attack": True, "heal_dodge_inventory_shop": True,
+                                  "floating_combat_and_pickup_feedback": floating,
                                   "audio_gesture_running": True, "toggled_audio": audio, "errors": errors})
         context.close()
     browser.close()
