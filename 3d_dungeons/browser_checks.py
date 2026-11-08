@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
-ROOT = Path(r"D:\AI_Output")
+ROOT = Path(r"D:\OneDrive\Scripts\games\emberkeep")
 URL = Path(__file__).with_name("index.html").resolve().as_uri() + "?test"
 
 with sync_playwright() as p:
@@ -63,10 +63,10 @@ with sync_playwright() as p:
     page.wait_for_timeout(350)
     page.screenshot(path=str(ROOT / "emberkeep-gameplay.png"))
     # Fixture positioning isolates stairs/boss without skipping their real input paths.
-    for chapter in range(3, 6):
+    for floor in range(3, 11):
         page.evaluate("player.x=world.end.x;player.y=world.end.y;props=[];loot=[];player.inv=10")
         page.keyboard.press("e")
-        assert page.evaluate("depth") == chapter
+        assert page.evaluate("depth") == floor
     page.evaluate("""() => {
       const b=enemies.find(e=>e.type==='dragon');
       player.x=world.start.x;player.y=world.start.y;player.inv=10;

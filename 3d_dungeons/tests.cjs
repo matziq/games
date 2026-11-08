@@ -7,14 +7,15 @@ const context = new Proxy({}, { get: (_, key) => key === 'createRadialGradient' 
 function element() {
   return { style: {}, hidden: false, textContent: '', open: false, children: [], getContext: () => context,
     getBoundingClientRect: () => ({ width: 1000, height: 700 }), focus() {}, addEventListener() {},
-    append(e) { this.children.push(e); }, replaceChildren(...e) { this.children = e; },
+    append(e) { this.children.push(e); }, prepend(e) { this.children.unshift(e); }, replaceChildren(...e) { this.children = e; },
+    setAttribute() {}, insertAdjacentHTML() {}, classList: { toggle() {}, remove() {}, add() {}, contains() { return false; } },
     showModal() { this.open = true; }, close() { this.open = false; } };
 }
 const sandbox = { console, Uint8Array, Int16Array, Uint32Array, Math, URLSearchParams, structuredClone,
   crypto: webcrypto, location: { search: '?test' }, requestAnimationFrame() {},
   ResizeObserver: class { observe() {} }, Image: class { complete = true; naturalWidth = 120; },
   document: { getElementById(id) { if (!elements.has(id)) elements.set(id, element()); return elements.get(id); },
-    createElement: element, addEventListener() {} },
+    createElement: element, querySelector: element, addEventListener() {} },
   window: { addEventListener() {} } };
 vm.createContext(sandbox);
 const html = fs.readFileSync(require('node:path').join(__dirname, 'index.html'), 'utf8');

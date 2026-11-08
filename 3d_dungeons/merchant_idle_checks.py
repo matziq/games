@@ -4,7 +4,7 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-ROOT = Path(r"D:\AI_OUTPUT")
+ROOT = Path(r"D:\OneDrive\Scripts\games\emberkeep")
 URL = Path(__file__).with_name("index.html").resolve().as_uri() + "?test"
 ROOT.mkdir(parents=True, exist_ok=True)
 

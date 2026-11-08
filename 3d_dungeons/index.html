@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Emberkeep | The Ashen Crown</title>
 <meta name="description" content="An offline overhead medieval action RPG. Explore procedural dungeons, plunder castles, and challenge an ancient dragon.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23141c20'/%3E%3Cpath d='M9 30L30 9M23 9h7v7M9 22l9 9' stroke='%23edbf72' stroke-width='4'/%3E%3C/svg%3E">
@@ -402,7 +402,7 @@ function showOverlay(title,story,label){$('title').textContent=title;$('story').
 function togglePause(){if(state==='playing'){state='paused';keys.clear();mouse.down=false;showOverlay('A moment by the fire.','Your journey waits here. Resume when you are ready.','Resume journey')}else if(state==='paused'){state='playing';$('overlay').hidden=true;canvas.focus()}}
 window.addEventListener('keydown',e=>{if($('artDialog').open)return;const k=e.key.toLowerCase();if([' ','arrowup','arrowdown','arrowleft','arrowright','shift'].includes(k))e.preventDefault();keys.add(k);if(e.repeat)return;if(k==='p'||k==='escape')togglePause();if(k==='e')interact();if(k==='q')potion();if(k==='shift')dodge();if(k===' ')attack()});
 window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{keys.clear();mouse.down=false;if(state==='playing')togglePause()});document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='playing')togglePause()});
-canvas.addEventListener('pointermove',e=>{const r=canvas.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;mouse.active=true});canvas.addEventListener('pointerdown',e=>{if(e.button===0){mouse.down=true;const r=canvas.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;mouse.active=true;player&&(player.angle=Math.atan2(mouse.y+camera.y-player.y,mouse.x+camera.x-player.x));canvas.focus();attack()}});window.addEventListener('pointerup',()=>mouse.down=false);canvas.addEventListener('pointerleave',()=>{mouse.active=false;mouse.down=false});
+canvas.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;const r=canvas.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;mouse.active=true});canvas.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse')return;if(e.button===0){mouse.down=true;const r=canvas.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;mouse.active=true;player&&(player.angle=Math.atan2(mouse.y+camera.y-player.y,mouse.x+camera.x-player.x));canvas.focus();attack()}});window.addEventListener('pointerup',()=>mouse.down=false);canvas.addEventListener('pointerleave',()=>{mouse.active=false;mouse.down=false});
 $('start').onclick=()=>state==='paused'?togglePause():begin();$('pause').onclick=togglePause;$('restart').onclick=()=>{if(state==='title'||state==='dead'||state==='won')begin();else{state='confirm';keys.clear();mouse.down=false;showOverlay('Begin a new journey?','This replaces your current run. Press Escape to keep your adventure, or begin again below.','Start a new run')}};
 window.addEventListener('keydown',e=>{if(e.key==='Escape'&&state==='confirm'){state='playing';$('overlay').hidden=true;canvas.focus()}});
 let artWasPlaying=false;$('art').onclick=()=>{artWasPlaying=state==='playing';if(artWasPlaying)togglePause();$('artDialog').showModal();$('artDialog').scrollTop=0};$('closeArt').onclick=()=>$('artDialog').close();$('artDialog').addEventListener('close',()=>{if(artWasPlaying&&state==='paused')togglePause()});
@@ -592,6 +592,88 @@ if(window.emberkeep){
  window.emberkeep.idleConstants={warning:IDLE_WARNING_SECONDS,spawn:IDLE_SPAWN_SECONDS};
  window.emberkeep.snapshot=()=>({...baseSnapshot(),floor:depth,realm:realmForFloor(depth),merchant:world&&world.merchant?{x:world.merchant.x,y:world.merchant.y,stock:structuredClone(world.merchant.stock)}:null,idle:{elapsed:idleThreat.elapsed,triggered:idleThreat.triggered,markers:structuredClone(idleThreat.markers),zombies:enemies.filter(e=>e.type==='zombie').length}});
 }
+</script>
+<style>
+#inventoryToggle,#closeInventory,.touch-controls{display:none}
+@media(pointer:coarse),(max-width:1000px){
+ body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+ header{height:auto;min-height:0;flex-shrink:0;flex-wrap:wrap;padding:6px 10px;gap:5px}
+ h1{font-size:16px;letter-spacing:3px}header small{display:none}
+ header nav{flex-wrap:wrap;gap:4px;align-items:center}header button{min-height:38px;padding:6px 9px;font-size:11px}
+ .audio-controls{gap:4px;flex-wrap:wrap}.audio-controls label{display:none}.audio-controls input{width:54px;min-height:38px}
+ main{display:block;flex:1;min-height:0;height:auto;position:relative}.viewport{height:100%;width:100%}footer{display:none}
+ #inventoryToggle,#closeInventory{display:inline-block}#art{display:none}
+ aside{display:none;position:absolute;right:0;top:0;bottom:0;width:min(330px,95%);z-index:7;padding:14px 18px;box-shadow:-10px 0 35px #000b}
+ aside.inventory-open{display:block}#closeInventory{float:right;min-height:44px}#map{width:225px;max-width:100%;height:174px}
+ .hud{left:10px;top:10px;width:145px}.hud .label{font-size:9px;letter-spacing:.5px}.hud bar{margin:4px 0 6px;height:6px}
+ .area{top:10px;right:10px;left:auto;max-width:47%;font-size:14px;text-align:right}.area small{font-size:9px}
+ #audioStatus{left:10px;bottom:174px;max-width:90%;font-size:9px}.prompt{bottom:194px;max-width:94%;white-space:normal;text-align:center;padding:6px 10px;font-size:11px}
+ #threatStatus{top:75px;max-width:95%;width:max-content;padding:6px 10px;font-size:10px}.boss{bottom:225px;font-size:11px}
+ .touch-controls{display:flex;position:absolute;bottom:10px;left:10px;right:10px;justify-content:space-between;align-items:end;pointer-events:none;z-index:3;user-select:none}
+ #movePad{width:116px;height:116px;border:2px solid #93bab799;border-radius:50%;background:#172b37a8;position:relative;touch-action:none;pointer-events:auto}
+ #movePad::before{content:'MOVE';position:absolute;top:8px;width:100%;text-align:center;font-size:9px;color:#c8d9d6;letter-spacing:2px}
+ #moveKnob{position:absolute;width:44px;height:44px;left:34px;top:34px;border-radius:50%;border:2px solid #edbf72;background:#536762cc;pointer-events:none}
+ .touch-actions{display:grid;grid-template-columns:repeat(2,62px);gap:6px;pointer-events:auto}.touch-actions button{min-height:50px;padding:6px;font-size:12px;touch-action:none;background:#20343ce8}
+ .touch-actions #touchAttack{grid-row:span 2;min-height:106px;background:#765334e8;color:#ffe3ad;font-weight:700}
+ .touch-actions button.pressed{background:#b88950;box-shadow:0 0 18px #edbf7270}
+ #touchFeedback{position:absolute;top:-20px;right:0;color:#ffe3ad;font-size:11px;text-shadow:0 2px 4px #000}
+ dialog{width:95%;max-height:90dvh;padding:14px}dialog button{min-height:44px}.shop-products{grid-template-columns:1fr;gap:8px}.shop-products p{min-height:0}
+ .overlay{padding:14px;overflow:auto;align-items:safe center}.intro h2{font-size:32px;margin:10px 0}.intro p{font-size:12px;line-height:1.5}.intro .controls{font-size:11px;line-height:1.5;margin:10px 0}
+}
+@media(max-height:500px) and (pointer:coarse){
+ header{flex-wrap:nowrap}header h1{font-size:12px}header button{min-height:32px}
+ #movePad{width:94px;height:94px}#moveKnob{left:23px;top:23px}
+ .touch-actions{grid-template-columns:repeat(3,56px)}.touch-actions #touchAttack{grid-row:auto;min-height:48px}.touch-actions button{min-height:48px}
+ .prompt{bottom:108px}#audioStatus{bottom:5px;left:120px}.boss{bottom:138px}
+ .intro h2{font-size:24px}.intro .controls{display:none}
+}
+</style>
+<div class="touch-controls" id="touchControls" aria-label="Touch game controls">
+ <div id="movePad" role="application" aria-label="Drag to move and face the knight"><span id="moveKnob"></span></div>
+ <div class="touch-actions"><button id="touchAttack" aria-label="Hold to attack">Attack</button><button id="touchInteract">Use / Equip</button><button id="touchDodge">Dodge</button><button id="touchHeal">Heal</button></div>
+ <span id="touchFeedback" role="status"></span>
+</div>
+<script id="mobile-controls">
+'use strict';
+const inventoryToggle=document.createElement('button'),closeInventory=document.createElement('button');
+inventoryToggle.id='inventoryToggle';inventoryToggle.textContent='Gear / Map';inventoryToggle.setAttribute('aria-expanded','false');
+closeInventory.id='closeInventory';closeInventory.textContent='Close';
+document.querySelector('header nav').append(inventoryToggle);
+const inventory=document.querySelector('aside');inventory.prepend(closeInventory);
+function setInventory(open){
+ inventory.classList.toggle('inventory-open',open);inventoryToggle.setAttribute('aria-expanded',String(open));
+ if(open&&state==='playing')togglePause();
+ if(!open)inventoryToggle.focus();
+}
+inventoryToggle.onclick=()=>setInventory(!inventory.classList.contains('inventory-open'));closeInventory.onclick=()=>setInventory(false);
+document.querySelector('.viewport').append($('touchControls'));
+const movePad=$('movePad'),moveKnob=$('moveKnob'),touchDirections=['w','a','s','d'];
+let movePointer=null,attackPointer=null,feedbackTimer=0;
+function stopMovement(){for(const k of touchDirections)keys.delete(k);movePointer=null;moveKnob.style.transform='';}
+function resetTouch(){stopMovement();keys.delete(' ');attackPointer=null;$('touchAttack').classList.remove('pressed')}
+function touchFeedback(text){$('touchFeedback').textContent=text;clearTimeout(feedbackTimer);feedbackTimer=setTimeout(()=>$('touchFeedback').textContent='',1200)}
+function steer(e){
+ if(state!=='playing')return;
+ const r=movePad.getBoundingClientRect(),x=e.clientX-r.left-r.width/2,y=e.clientY-r.top-r.height/2;
+ const length=Math.hypot(x,y),limit=r.width*.28,scale=length>limit?limit/length:1;
+ moveKnob.style.transform='translate('+x*scale+'px,'+y*scale+'px)';
+ for(const k of touchDirections)keys.delete(k);
+ if(length>10){if(x>length*.3)keys.add('d');if(x<-length*.3)keys.add('a');if(y>length*.3)keys.add('s');if(y<-length*.3)keys.add('w');mouse.active=false;player.angle=Math.atan2(y,x)}
+}
+movePad.addEventListener('pointerdown',e=>{e.preventDefault();if(movePointer!==null||state!=='playing')return;movePointer=e.pointerId;movePad.setPointerCapture(e.pointerId);steer(e)});
+movePad.addEventListener('pointermove',e=>{if(e.pointerId===movePointer)steer(e)});
+for(const event of ['pointerup','pointercancel','lostpointercapture'])movePad.addEventListener(event,e=>{if(e.pointerId===movePointer)stopMovement()});
+const attackButton=$('touchAttack');
+attackButton.addEventListener('pointerdown',e=>{e.preventDefault();if(state!=='playing'||attackPointer!==null)return;attackPointer=e.pointerId;attackButton.setPointerCapture(e.pointerId);keys.add(' ');attackButton.classList.add('pressed');attack();touchFeedback('Striking')});
+for(const event of ['pointerup','pointercancel','lostpointercapture'])attackButton.addEventListener(event,e=>{if(e.pointerId===attackPointer){keys.delete(' ');attackPointer=null;attackButton.classList.remove('pressed')}});
+$('touchInteract').onclick=()=>{if(state!=='playing')return;const target=nearby();interact();touchFeedback(target?'Used '+target.type:'Move closer to loot, stairs or merchant')};
+$('touchDodge').onclick=()=>{if(state!=='playing')return;dodge();touchFeedback(player.dash>0?'Dodging':'Need 35 resolve')};
+$('touchHeal').onclick=()=>{if(state!=='playing')return;const before=player.hp;potion();touchFeedback(player.hp>before?'Vitality restored':player.potions?'Already at full vitality':'No potions left')};
+canvas.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'||state!=='playing')return;const r=canvas.getBoundingClientRect();player.angle=Math.atan2(e.clientY-r.top+camera.y-player.y,e.clientX-r.left+camera.x-player.x);mouse.active=false;touchFeedback('Facing target')});
+window.addEventListener('blur',resetTouch);document.addEventListener('visibilitychange',()=>{if(document.hidden)resetTouch()});
+const touchUpdate=update;
+update=function(dt){touchUpdate(dt);if(state!=='playing')resetTouch()};
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Touch: drag MOVE to walk and face; hold Attack. Tap Use / Equip, Dodge or Heal. Tap the hall to aim. Gear / Map opens inventory and pauses.');
 </script>
 </body>
 </html>
