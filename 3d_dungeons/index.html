@@ -6,6 +6,8 @@
 <meta name="description" content="An offline overhead medieval action RPG. Explore procedural dungeons, plunder castles, and challenge an ancient dragon.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23141c20'/%3E%3Cpath d='M9 30L30 9M23 9h7v7M9 22l9 9' stroke='%23edbf72' stroke-width='4'/%3E%3C/svg%3E">
 <style>
+.viewport .overlay{overflow:auto;align-items:center}.overlay .intro{width:100%;max-height:100%;min-height:0;display:flex;flex-direction:column}.intro>*{flex-shrink:0}.overlay .intro .controls{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:4px 8px;touch-action:pan-y}.intro #start{align-self:center;flex-shrink:0;position:relative}.intro #error:empty{display:none}
+@media(max-height:700px){.overlay .intro h2{font-size:28px;margin:8px 0}.overlay .intro p{font-size:12px;line-height:1.4;margin:6px 0;max-height:18vh;overflow-y:auto}.overlay .intro .controls{display:block;font-size:11px;line-height:1.5;margin:8px 0}.overlay .intro .eyebrow{font-size:9px;letter-spacing:2px}.overlay .intro button{padding:10px 24px}}
 @media(max-width:650px),(max-height:500px){#scrollPanel[open]~#selectionPanel{display:none}}
 @media(max-height:650px){#scrollStatus{display:none}}
 @media(max-width:650px) and (max-height:650px){.viewport #scrollPanel{position:fixed;top:76px;bottom:auto;left:156px;width:154px;font-size:12px;padding:6px}}
@@ -341,7 +343,13 @@ function update(dt){
  }
  for(const status of ['poison','burn'])if(player[status]>0){player[status]=Math.max(0,player[status]-dt);player[status+'Tick']-=dt;if(player[status]>0&&player[status+'Tick']<=0){player[status+'Tick']=status==='poison'?.75:.65;damagePlayer(status==='poison'?3:4,status);particle(player.x,player.y,status==='poison'?'#9be05c':'#ff793c',4)}}
  shots=shots.filter(s=>s.life>0);enemies=enemies.filter(e=>e.hp>0);
- for(const l of loot){if((l.type==='gold'||l.type==='potion')&&distance(l,player)<32){window.DungeonAudio.play(l.type==='gold'?'gold':'bottle');if(l.type==='gold'){player.gold+=l.value;floatText(l.x,l.y-10,'+'+l.value+' GOLD','gold')}else{player.potions++;floatText(l.x,l.y-10,'+1 HEALING POTION','heal')}l.taken=true;particle(l.x,l.y,l.type==='gold'?'#edbf72':'#7ae4ba',5)}}
+ for(const l of loot){
+  if(l.type==='gold'&&!l.taken){
+   const gap=distance(l,player);
+   if(gap<=3*T&&gap>0){const step=Math.min(gap,360*dt);l.x+=(player.x-l.x)/gap*step;l.y+=(player.y-l.y)/gap*step}
+  }
+  if(!l.taken&&(l.type==='gold'||l.type==='potion')&&distance(l,player)<32){window.DungeonAudio.play(l.type==='gold'?'gold':'bottle');if(l.type==='gold'){player.gold+=l.value;floatText(l.x,l.y-10,'+'+l.value+' GOLD','gold')}else{player.potions++;floatText(l.x,l.y-10,'+1 HEALING POTION','heal')}l.taken=true;particle(l.x,l.y,l.type==='gold'?'#edbf72':'#7ae4ba',5)}
+ }
  loot=loot.filter(l=>!l.taken);for(const p of effects){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt}effects=effects.filter(p=>p.life>0);tickFloatingTexts(dt);updateHUD();
  $('prompt').textContent=interactionPrompt(nearby());
 }
@@ -1140,6 +1148,7 @@ function worldTargets(){
 }
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Rubble and furnishings are attack-only obstacles, not selectable items. Click to strike them; on touch, tap to aim then use Attack. E / Use does not break them.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Inspect torchlit floor glints: a rare 8% chance reveals a hidden-hoard weapon with +5 power over its normal floor-level roll instead of a trap. Select and equip it with E / Use. Stepping on an uninspected glint still triggers its trap.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Dropped gold automatically flies to you within 3 tiles (120 world units). Potions still collect on close approach; equipment remains selectable.');
 function isWorldTarget(target){return worldTargets().includes(target)}
 function targetReachable(target){return distance(target,player)<72&&clearLine(player,target)}
 function worldTargetName(target){

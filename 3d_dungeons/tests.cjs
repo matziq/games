@@ -105,6 +105,18 @@ check('hidden hoards use small seeded odds and grant exactly one boosted floor w
   assert.equal(run('forfeited.triggered&&loot.length===0&&depth===10'),true);
   run('begin()');
 });
+check('gold vacuums within exactly three tiles and collects once without attracting other loot', () => {
+  run("begin();enemies=[];props=[];world.traps=[];world.quake.next=Infinity;player.inv=1000;var vacuumStart=player.x;var vacuumGold=player.gold;var nearGold={x:player.x+3*T,y:player.y,type:'gold',value:17};var farGold={x:player.x+3*T+.01,y:player.y,type:'gold',value:29};var farPotion={x:player.x+80,y:player.y,type:'potion'};loot=[nearGold,farGold,farPotion];baseUpdate(.04)");
+  assert.ok(run('nearGold.x<vacuumStart+3*T'));
+  assert.equal(run('farGold.x'),run('vacuumStart+3*T+.01'));
+  assert.equal(run('farPotion.x'),run('vacuumStart+80'));
+  run('for(let n=0;n<20;n++)baseUpdate(.04)');
+  assert.equal(run('player.gold'),run('vacuumGold+17'));
+  assert.equal(run('loot.includes(nearGold)'),false);
+  run('baseUpdate(.04)');
+  assert.equal(run('player.gold'),run('vacuumGold+17'));
+  run('begin()');
+});
 check('2,500 seeded floors have connected, bounded rooms and exits', () => {
   for (let chapter = 1; chapter <= 5; chapter++) for (let seed = 0; seed < 500; seed++) {
     const w = sandbox.window.emberkeep.generate(seed, chapter);
