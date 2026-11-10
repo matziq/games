@@ -64,16 +64,16 @@ with sync_playwright() as p:
         assert all(0 <= edge["steps"][i] - edge["steps"][i+1] < .02 for i in range(100))
         screenshot = OUTPUT / f"{PREFIX}-{label}-round-falloff.png"
         page.screenshot(path=str(screenshot))
-        # Real keyboard/touch action changes this exact nearby torch, not overlapping loot.
-        page.evaluate("state='playing';player.inv=1000;selectedWorldItem=null;keys.clear()")
-        page.locator("#touchTorch").tap() if touch else page.keyboard.press("f")
+        # Real weapon input toggles the nearby torch without requiring fire.
+        page.evaluate("state='playing';player.inv=1000;selectedWorldItem=null;keys.clear();player.cool=0;player.weapon={...weaponTypes.sword,kind:'sword'}")
+        page.locator("#touchAttack").tap() if touch else page.keyboard.press("Space")
         assert page.evaluate("!lightTorch.lit")
         page.evaluate("state='paused';overlay.hidden=true;render()")
         dark = OUTPUT / f"{PREFIX}-{label}-doused.png"
         page.screenshot(path=str(dark))
         assert page.evaluate("torchIllumination(player)===0&&lightAt(player)<.6")
-        page.evaluate("state='playing'")
-        page.locator("#touchTorch").tap() if touch else page.keyboard.press("f")
+        page.evaluate("state='playing';player.cool=0")
+        page.locator("#touchAttack").tap() if touch else page.keyboard.press("Space")
         assert page.evaluate("lightTorch.lit")
         occlusion = page.evaluate("""() => {
           state='paused';overlay.hidden=true;

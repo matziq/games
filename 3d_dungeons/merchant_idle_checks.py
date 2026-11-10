@@ -23,7 +23,7 @@ with sync_playwright() as p:
         page.evaluate(
             """floor => {
               loadFloor(floor,700+floor);state='playing';enemies=[];props=[];loot=[];
-              player.gold=350;player.potions=3;player.hp=50;player.dash=0;
+              player.gold=1000;player.potions=3;player.hp=50;player.dash=0;
               player.x=world.merchant.x-28;player.y=world.merchant.y;
             }""",
             floor,
@@ -37,11 +37,11 @@ with sync_playwright() as p:
         page.keyboard.press("e")
         page.get_by_role("dialog").wait_for(state="visible")
         products = page.locator("#shopProducts article")
-        assert products.count() == 3
+        assert products.count() == 11
         prices = page.evaluate(
             """() => Object.fromEntries(Object.entries(world.merchant.stock).map(([k,v])=>[k,v.price]))"""
         )
-        for index, item in enumerate(("weapon", "armor", "potion")):
+        for index, item in enumerate(prices):
             button = products.nth(index).locator("button")
             assert button.is_enabled(), f"floor {floor} {item} should be affordable"
             button.click()
@@ -55,10 +55,12 @@ with sync_playwright() as p:
         assert state["potions"] == 4
         assert state["weapon"] == "Worn Longsword"
         assert "weapon" in state["loot"] and "armor" in state["loot"]
-        assert state["stock"] == {"weapon": 0, "armor": 0, "potion": 4}
+        assert state["stock"] == {item: 4 if item == "potion" else 0 for item in prices}
         page.evaluate("player.gold=0;updateShop()")
-        assert page.locator("#shopProducts button").nth(2).is_disabled()
-        assert "more gold" in page.locator("#shopProducts button").nth(2).inner_text()
+        potion_button = page.locator("#shopProducts article").filter(
+            has=page.get_by_role("heading", name="Healing potion", exact=True)).locator("button")
+        assert potion_button.is_disabled()
+        assert "more gold" in potion_button.inner_text()
         page.get_by_role("button", name="Leave the shop").click()
         assert page.evaluate("state") == "playing"
         page.evaluate("player.x=world.merchant.x;player.y=world.merchant.y;player.hp=50;player.inv=0;damagePlayer(20)")

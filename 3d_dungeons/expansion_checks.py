@@ -74,14 +74,15 @@ with sync_playwright() as p:
         assert page.evaluate("world.traps[0].triggered&&player.hp<120&&player.poison>0")
         screenshot(page, "phone-poison" if mobile else "trap-poison")
 
-        # Use the same context-sensitive action for desktop and touch torches.
+        # Torches respond to weapon hits only, not E / Use.
         fixture(page, """var darkTorch=world.torches.find(t=>!t.lit);
-          player.x=darkTorch.x;player.y=darkTorch.y+35;reveal();render()""")
+          player.x=darkTorch.x;player.y=darkTorch.y+35;player.angle=-Math.PI/2;player.weapon={...weaponTypes.sword,kind:'sword'};reveal();render()""")
         page.wait_for_timeout(100)
-        assert page.evaluate("nearby().type") == "torch"
+        assert page.evaluate("nearby()?.type!=='torch'")
         before = page.evaluate("lightAt({x:darkTorch.x+70,y:darkTorch.y+70})")
         dark = screenshot(page, "phone-dark" if mobile else "room-dark")
-        action = lambda: page.locator("#touchInteract").tap() if mobile else page.keyboard.press("e")
+        action = lambda: page.locator("#touchAttack").tap() if mobile else page.keyboard.press("Space")
+        page.evaluate("player.cool=0")
         action()
         page.wait_for_timeout(120)
         assert page.evaluate("darkTorch.lit")

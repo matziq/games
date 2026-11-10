@@ -67,7 +67,7 @@ with sync_playwright() as p:
 
         tap_world()
         assert page.evaluate("selectedWorldItem===floorWeapon&&strikes===0&&player.weapon===beforeWeapon&&!floorTorch.lit"), page.evaluate("({mode:innerWidth,state,selected:selectedWorldItem,choices:selectionChoices.map(worldTargetName),strikes,lit:floorTorch.lit,point:overlap,camera:{...camera},vw,vh,trace:pointerTrace,player:{x:player.x,y:player.y}})")
-        assert page.locator("#selectionChoices button").count() == 3
+        assert page.locator("#selectionChoices button").count() == 2
         # Repeated world taps cycle when unobscured. Named choices also work on small screens.
         button("#clearSelected")
         tap_world()
@@ -77,11 +77,11 @@ with sync_playwright() as p:
             tap_world()
             assert page.evaluate("selectedWorldItem===floorArmor")
             tap_world()
-            assert page.evaluate("selectedWorldItem===floorTorch")
+            assert page.evaluate("selectedWorldItem===floorWeapon")
         button("#selectionChoices button:has-text('Selected Helmet')")
         assert page.evaluate("selectedWorldItem===floorArmor&&strikes===0&&loot.includes(floorArmor)")
-        button("#touchTorch") if mobile else page.keyboard.press("f")
-        assert page.evaluate("floorTorch.lit&&selectedWorldItem===floorArmor&&loot.includes(floorWeapon)")
+        page.keyboard.press("f")
+        assert page.evaluate("!floorTorch.lit&&selectedWorldItem===floorArmor&&loot.includes(floorWeapon)")
         shot = picture(page, mode + "-selected-overlap")
         bounds = page.locator("#selectionPanel").bounding_box()
         assert bounds["x"] >= 0 and bounds["y"] >= 0 and bounds["x"] + bounds["width"] <= width
@@ -98,10 +98,10 @@ with sync_playwright() as p:
         button("#selectionChoices button:has-text('Selected Helmet')")
         button("#touchInteract") if mobile else page.keyboard.press("e")
         assert page.evaluate("player.helmet===floorArmor.armor&&!loot.includes(floorArmor)&&!undoGearDelete()&&strikes===0")
-        # Select a torch through remaining loot, and use that exact selection.
+        # The torch never enters the chooser, even beneath the remaining weapon.
         tap_world()
-        button("#selectionChoices button:has-text('Lit torch')")
-        button("#touchInteract") if mobile else page.keyboard.press("e")
+        assert page.locator("#selectionChoices button").count() == 1
+        assert page.evaluate("selectionChoices[0]===floorWeapon&&!worldTargets().includes(floorTorch)")
         assert page.evaluate("!floorTorch.lit&&loot.includes(floorWeapon)")
         button("#clearSelected")
         # Empty floor clicks still attack; on touch they aim, and Attack remains separate.
@@ -152,7 +152,7 @@ with sync_playwright() as p:
         clean_shot = picture(page, mode + "-clean-floor")
         assert page.evaluate("document.documentElement.scrollWidth<=innerWidth&&document.documentElement.scrollHeight<=innerHeight")
         if mobile:
-            for control in ["touchAttack", "touchInteract", "touchDodge", "touchHeal", "touchTorch"]:
+            for control in ["touchAttack", "touchInteract", "touchDodge", "touchHeal"]:
                 box = page.locator("#" + control).bounding_box()
                 assert box and 0 <= box["x"] and box["x"] + box["width"] <= width
                 assert 0 <= box["y"] and box["y"] + box["height"] <= height

@@ -31,7 +31,7 @@
 <aside><div class="label">Cartographer</div><h2>The path unfolds</h2><canvas id="map" width="225" height="174" aria-label="Explored dungeon minimap"></canvas><section class="panel"><div class="label">Equipment</div><div id="weapon">Worn Longsword</div><div class="stat"><span>Strike power</span><b id="damage">16</b></div><div class="stat"><span>Reach / recovery</span><b id="weaponStats">76 / 0.36s</b></div><div id="armor">No armor</div><div class="stat"><span>Damage reduction</span><b id="defense">0%</b></div><div class="stat"><span>Gold recovered</span><b id="gold">0</b></div><div class="stat"><span>Healing potions [Q]</span><b id="potions">3</b></div><div class="stat"><span>Monsters slain</span><b id="kills">0</b></div></section><section class="panel"><div class="label">Your objective</div><p id="objective" style="font-size:13px;line-height:1.7">Find the blue stairway. Loot the halls to prepare for the dragon in Chapter V.</p></section><section class="panel"><div class="label">Chronicle</div><div class="logs" id="logs" aria-live="polite"></div></section><p class="label" style="line-height:1.8">[E] Equip weapons &amp; armor<br>Music includes ambience<br>Randomized every run<br>No network required<br>Desktop keyboard + mouse</p></aside>
 </main><footer>WASD MOVE &nbsp; / &nbsp; SPACE STRIKE &nbsp; / &nbsp; E INTERACT &nbsp; / &nbsp; SHIFT DODGE &nbsp; / &nbsp; Q HEAL</footer>
 <dialog id="artDialog"><h2 style="font-family:Georgia;color:#edbf72">The stones that inspired Emberkeep</h2><p>All 15 supplied images are full overhead room renders, not sprite sheets. Their torchlit masonry, geometric halls, and throne rooms guide this game's art direction. Cropped floor and wall samples from NoLoRA_0008 and NoLoRA_0015 texture the actual procedural world below; the original layouts are shown here as references, not collision maps.</p><div class="gallery" id="gallery"></div><p id="assetStatus"></p><button id="closeArt">Return to the halls</button></dialog>
-<dialog id="shopDialog" aria-labelledby="shopTitle"><h2 id="shopTitle" style="font-family:Georgia;color:#edbf72">The Roadside Merchant</h2><p id="shopDescription">A safe room for trade. Your current equipment stays equipped; purchased gear is placed nearby for you to equip with E.</p><p class="shop-gold">Your gold: <b id="shopGold">0</b></p><div id="shopProducts" class="shop-products"></div><button id="closeShop">Leave the shop</button></dialog>
+<dialog id="shopDialog" aria-labelledby="shopTitle"><h2 id="shopTitle" style="font-family:Georgia;color:#edbf72">The Roadside Merchant</h2><p id="shopDescription">A safe room for trade. Your current equipment stays equipped; purchased gear is placed nearby for you to equip with E. Scroll down to sell carried potions and scrolls, one at a time.</p><p class="shop-gold">Your gold: <b id="shopGold">0</b></p><div id="shopProducts" class="shop-products"></div><button id="closeShop">Leave the shop</button></dialog>
 <style>
 #scrollPanel{position:absolute;left:12px;top:110px;width:190px;padding:8px;background:#101b23e8;border:1px solid #70654c;border-radius:6px;z-index:2}#scrollPanel[hidden]{display:none}#scrollPanel .label{font-size:9px;letter-spacing:.6px}.scroll-choices{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:6px 0}#scrollPanel button{font-size:11px;padding:6px;min-height:32px}#scrollPanel button[aria-pressed=true]{border-color:#ffe1a0;background:#66512e}#castScroll{width:100%}#scrollStatus{font-size:10px;color:#c3d0c7;margin-top:5px}@media(pointer:coarse){#scrollPanel{top:80px;width:176px}#scrollPanel button{min-height:40px}}@media(max-height:500px){#scrollPanel{top:75px;width:155px}#scrollPanel button{min-height:28px;padding:3px}}
 .shop-products{display:grid;grid-template-columns:repeat(3,minmax(150px,1fr));gap:12px;margin:18px 0}.shop-products article{border:1px solid #5b654e;background:#111b1d;padding:13px;border-radius:6px}.shop-products h3{font:16px Georgia,serif;color:#edbf72;margin:0 0 8px}.shop-products p{min-height:42px;font-size:12px;margin:6px 0 12px}.shop-products button{width:100%;font-size:12px}.shop-gold{color:#edbf72}@media(max-width:620px){.shop-products{grid-template-columns:1fr}}
@@ -315,7 +315,10 @@ function strikeWeb(spider){
  ].map(c=>({...c,at:segmentHit(spider,player,c.object,c.radius)})).filter(c=>c.at!==null).sort((a,b)=>a.at-b.at)[0];
  const at=collision?.at??1,point={x:spider.x+(player.x-spider.x)*at,y:spider.y+(player.y-spider.y)*at};
  world.webStrikes.push({...point,from:{x:spider.x,y:spider.y},life:.18});
- if(collision?.object===player&&player.inv<=0&&!inMerchantSanctuary()){player.root=1;floatText(player.x,player.y-15,'WEBBED - STUCK 1s','damage')}
+ if(collision?.object===player&&player.inv<=0&&!inMerchantSanctuary()){
+  player.root=1;if(spider.giant)damagePlayer(spider.damage);
+  floatText(player.x,player.y-15,'WEBBED - STUCK 1s','damage');
+ }
 }
 function update(dt){
  clock+=dt;player.cool=Math.max(0,player.cool-dt);player.swing=Math.max(0,player.swing-dt);player.inv=Math.max(0,player.inv-dt);player.stamina=Math.min(100,player.stamina+22*dt);
@@ -408,7 +411,7 @@ function drawArmor(a){
  else{ctx.beginPath();ctx.moveTo(-6,2);ctx.lineTo(7,12);ctx.stroke();ctx.fillStyle='#dcc080';ctx.fillRect(-8,9,16,3)}
 }
 function drawActor(e,hero=false){
- ctx.save();ctx.translate(e.x,e.y);if(e.baby)ctx.scale(.55,.55);ctx.shadowColor='#000';ctx.shadowBlur=7;circle(hero?0:2,7,e.type==='dragon'?29:14,'#0008');ctx.shadowBlur=0;
+ ctx.save();ctx.translate(e.x,e.y);if(e.baby)ctx.scale(.55,.55);else if(e.giant)ctx.scale(2,2);ctx.shadowColor='#000';ctx.shadowBlur=7;circle(hero?0:2,7,e.type==='dragon'?29:14,'#0008');ctx.shadowBlur=0;
  if(hero){ctx.save();ctx.scale(heroFacing(player.angle),1);polygon([[-11,-8],[-16,11],[-10,16],[9,16],[15,9],[10,-8],[6,-10],[-6,-10]],'#943f3b');ctx.fillStyle='#65818b';ctx.fillRect(-9,-7,18,19);if(player.armor)drawArmor(player.armor);circle(0,-15,7,'#c8ccba');ctx.fillStyle='#3c515e';ctx.fillRect(2,-21,4,12);ctx.fillStyle='#e2ba70';ctx.fillRect(-4,-20,11,3);ctx.fillStyle='#6c8d96';ctx.fillRect(-7,12,18,8);ctx.strokeStyle='#ecc979';ctx.strokeRect(-7,12,18,8);for(const slot of ['boots','gloves','helmet'])if(player[slot]){ctx.save();ctx.translate(0,slot==='helmet'?-15:slot==='boots'?22:1);drawArmor(player[slot]);ctx.restore()}ctx.restore();ctx.save();ctx.translate(0,-4);ctx.rotate(player.angle+(player.swing>0?-.6+player.swing*4:0));ctx.translate(8,0);drawWeapon(player.weapon);ctx.restore()}
  else if(e.type==='slime'){ctx.scale(1,1+Math.sin(clock*4)*.07);circle(0,1,15,'#294e39');circle(0,-2,13,e.hit?'#fff4c6':'#69a77c');circle(-5,-5,3,'#b3dab1');circle(4,-4,2,'#12281e');circle(-5,-4,2,'#12281e')}
  else if(e.type==='dragon'){ctx.rotate(e.attackAngle);polygon([[-10,0],[-39,-45],[10,-35],[32,-53],[27,-9]],'#69342e');polygon([[-10,0],[-39,45],[10,35],[32,53],[27,9]],'#69342e');ctx.strokeStyle='#b46c4b';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-10,0);ctx.lineTo(32,-53);ctx.moveTo(-10,0);ctx.lineTo(32,53);ctx.stroke();polygon([[-15,-10],[-65,0],[-20,9],[5,22],[26,12],[44,6],[44,-7],[26,-12],[5,-22]],e.hit?'#ffc078':'#a1523a');for(let i=0;i<4;i++)polygon([[-20+i*13,-9],[-13+i*13,-24],[-7+i*13,-9]],'#d0a16a');circle(30,-8,3,'#ffd67b');circle(30,8,3,'#ffd67b')}
@@ -489,7 +492,7 @@ function render(){
 function resize(){const r=canvas.getBoundingClientRect();vw=Math.round(r.width);vh=Math.round(r.height);canvas.width=vw;canvas.height=vh}new ResizeObserver(resize).observe(canvas);
 function showOverlay(title,story,label){$('title').textContent=title;$('story').textContent=story;$('start').textContent=label;$('overlay').hidden=false}
 function togglePause(){if(state==='playing'){state='paused';keys.clear();mouse.down=false;showOverlay('A moment by the fire.','Your journey waits here. Resume when you are ready.','Resume journey')}else if(state==='paused'){state='playing';$('overlay').hidden=true;canvas.focus()}}
-window.addEventListener('keydown',e=>{if($('artDialog').open)return;const k=e.key.toLowerCase();if(e.target?.closest?.('#selectionPanel')&&[' ','enter'].includes(k))return;if([' ','arrowup','arrowdown','arrowleft','arrowright','shift'].includes(k))e.preventDefault();keys.add(k);if(e.repeat)return;if(k==='p'||k==='escape')togglePause();if(k==='e')interact();if(k==='f')toggleNearbyTorch();if(k==='x')deleteSelectedGear();if(k==='q')potion();if(k==='shift')dodge();if(k===' ')attack()});
+window.addEventListener('keydown',e=>{if($('artDialog').open)return;const k=e.key.toLowerCase();if(e.target?.closest?.('#selectionPanel')&&[' ','enter'].includes(k))return;if([' ','arrowup','arrowdown','arrowleft','arrowright','shift'].includes(k))e.preventDefault();keys.add(k);if(e.repeat)return;if(k==='p'||k==='escape')togglePause();if(k==='e')interact();if(k==='x')deleteSelectedGear();if(k==='q')potion();if(k==='shift')dodge();if(k===' ')attack()});
 window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{keys.clear();mouse.down=false;if(state==='playing')togglePause()});document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='playing')togglePause()});
 canvas.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;const r=canvas.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;mouse.active=true});canvas.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse')return;if(e.button===0){if(selectWorldPointer(e))return;mouse.down=true;const r=canvas.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;mouse.active=true;player&&(player.angle=Math.atan2(mouse.y+camera.y-player.y,mouse.x+camera.x-player.x));canvas.focus();attack()}});window.addEventListener('pointerup',()=>mouse.down=false);canvas.addEventListener('pointerleave',()=>{mouse.active=false;mouse.down=false});
 $('start').onclick=()=>state==='paused'?togglePause():begin();$('pause').onclick=togglePause;$('restart').onclick=()=>{if(state==='title'||state==='dead'||state==='won')begin();else{state='confirm';keys.clear();mouse.down=false;showOverlay('Begin a new journey?','This replaces your current run. Press Escape to keep your adventure, or begin again below.','Start a new run')}};
@@ -807,7 +810,6 @@ function interactionPrompt(o){
   return trap?(trap.inspect>0?'Inspecting floor glint: '+Math.min(100,Math.floor(trap.inspect/TRAP_REVEAL_SECONDS*100))+'%':'Floor glint: stop beside it for 2 seconds to reveal / disarm.'):'';
  }
  if(o.type==='trap')return o.arming>0?'Activating '+o.kind+' trap in '+o.arming.toFixed(1)+'s - stand clear!':'[E / Use] Activate safe '+o.kind+' trap (2-second delay; affects everyone)';
- if(o.type==='torch')return '[E / Use or F / Torch] '+(o.lit?'Extinguish':'Light')+' torch';
  if(o.type==='merchant')return '[E / Use] Trade with the merchant';
  if(o.type==='stairs')return depth===MAX_FLOOR?'Defeat the dragon to claim the crown':'[E / Use] Descend to Floor '+(depth+1)+' / restore vitality';
  if(o.type==='chest')return '[E / Use] Open treasure chest';
@@ -858,7 +860,7 @@ function configureRoomDetails(){
  const kinds=[...roomKinds];for(let i=kinds.length-1;i>0;i--){const j=integer(0,i);[kinds[i],kinds[j]]=[kinds[j],kinds[i]]}
  world.webs=[];world.cracks=[];world.quake={elapsed:0,next:random(38,60),warning:0,pending:null};
  world.rooms.forEach((room,i)=>{
-  const kind=i===0?{id:'entrance',name:world.merchant?'Merchant Sanctuary':'The Arrival Hall',color:world.theme.accent}:i===11?{id:'throne',name:depth===MAX_FLOOR?'The Cinder Throne':'The Descent Hall',color:world.theme.accent}:kinds[(i-1)%kinds.length];
+  const kind=i===0?{id:'entrance',name:'Entrance Hall',color:world.theme.accent}:i===11?{id:'throne',name:depth===MAX_FLOOR?'The Cinder Throne':'The Descent Hall',color:world.theme.accent}:kinds[(i-1)%kinds.length];
   room.kind=kind.id;room.name=kind.name;room.detailColor=kind.color;
   room.decor=[];
   if(i===0||i===11)return;
@@ -870,8 +872,9 @@ function configureRoomDetails(){
   if(kind.id==='spider'){
    room.hatchStarted=false;room.hatchTimer=0;
    for(const p of room.decor.filter(p=>p.variant%2===0))world.webs.push({x:p.x,y:p.y,radius:34,decor:p});
-   const spiders=enemies.filter(e=>e.type==='cave_spider').slice(0,2);
-   spiders.forEach((e,n)=>{const p=room.decor[n*3];if(free(p.x,p.y,e.radius||14)){e.x=p.x;e.y=p.y}});
+   const spot={x:(room.x+room.w/2)*T,y:(room.y+room.h/2)*T};
+   room.parent=enemies.find(e=>e.type==='cave_spider'&&pointInRoom(e,room));
+   if(!room.parent){room.parent=withRealmDepth(baseMakeEnemy,'cave_spider',spot);enemies.push(room.parent)}
   }
  });
 }
@@ -879,7 +882,7 @@ function drawRoomDetails(){
  for(const r of world.rooms){
   if(!world.seen[Math.floor((r.y+r.h/2))*W+Math.floor(r.x+r.w/2)]&&r.decor.every(p=>!world.seen[Math.floor(p.y/T)*W+Math.floor(p.x/T)]))continue;
   ctx.save();ctx.fillStyle=r.detailColor;ctx.globalAlpha=.045;ctx.fillRect(r.x*T,r.y*T,r.w*T,r.h*T);ctx.globalAlpha=1;
-  ctx.font='bold 12px Georgia';ctx.textAlign='center';ctx.fillStyle=r.detailColor;ctx.fillText(r.name.toUpperCase(),(r.x+r.w/2)*T,(r.y+1)*T+4);
+  if(r.kind==='entrance'){ctx.font='bold 12px Georgia';ctx.textAlign='center';ctx.fillStyle=r.detailColor;ctx.fillText('ENTRANCE HALL',(r.x+r.w/2)*T,(r.y+1)*T+4)}
   for(const p of r.decor){
    if(p.broken||!world.seen[Math.floor(p.y/T)*W+Math.floor(p.x/T)])continue;
    ctx.save();ctx.translate(p.x,p.y);ctx.lineWidth=2;ctx.strokeStyle=r.detailColor;
@@ -1024,6 +1027,25 @@ function updateShop(){
   button.disabled=!affordable;button.onclick=()=>buyProduct(id);
   card.append(title,description,button);host.append(card);
  }
+ for(const [id,label,quantity,price] of [
+  ['potion','Healing potion',player.potions,8],
+  ...Object.entries(scrollTypes).map(([id,scroll])=>[id,scroll.name+' scroll',player.scrolls[id]||0,12])
+ ]){
+  const card=document.createElement('article'),title=document.createElement('h3'),description=document.createElement('p'),button=document.createElement('button');
+  title.textContent='Sell '+label;description.textContent='Carried: '+quantity+'. Sell one for '+price+' gold.';
+  button.textContent='Sell for '+price+' gold';button.disabled=quantity<1;button.onclick=()=>sellConsumable(id);
+  card.append(title,description,button);host.append(card);
+ }
+}
+function sellConsumable(id){
+ if(state!=='shop'||!world?.merchant)return false;
+ if(id!=='potion'&&!Object.hasOwn(scrollTypes,id)){log('The merchant does not buy that item.');return false}
+ const quantity=id==='potion'?player.potions:player.scrolls[id];
+ if(!(quantity>0)){log('You have none of that item to sell.');updateShop();return false}
+ if(id==='potion')player.potions--;else player.scrolls[id]--;
+ const price=id==='potion'?8:12;player.gold+=price;
+ log('Sold one '+(id==='potion'?'healing potion':scrollTypes[id].name+' scroll')+' for '+price+' gold.');
+ window.DungeonAudio.play('gold');updateHUD();updateShop();return true;
 }
 function openShop(){
  if(state!=='playing'||!world.merchant)return false;
@@ -1102,10 +1124,25 @@ function updateNestsAndPits(dt,before){
      const angle=i*TAU/3,spot={x:egg.x+Math.cos(angle)*26,y:egg.y+Math.sin(angle)*26};
      if(!free(spot.x,spot.y,8)){spot.x=egg.x;spot.y=egg.y}
      const baby=withRealmDepth(baseMakeEnemy,'cave_spider',spot);
-     Object.assign(baby,{hp:10,max:10,radius:8,speed:245,damage:4,trapSwarm:true,swarmLife:Infinity,emerge:.4,cool:.6,baby:true});
+     Object.assign(baby,{hp:10,max:10,radius:8,speed:245,damage:4,trapSwarm:true,swarmLife:Infinity,emerge:.4,cool:.6,baby:true,nest:world.rooms.indexOf(room)});
      enemies.push(baby);
     }
     particle(egg.x,egg.y,'#d4dfb6',18);
+   }
+  }
+  if(room.kind==='spider'&&room.hatchStarted&&!pointInRoom(player,room)){
+   const brood=enemies.filter(e=>e.baby&&e.nest===world.rooms.indexOf(room)&&e.hp>0);
+   if(brood.length){
+    let parent=room.parent;
+    if(!parent||parent.hp<=0||!enemies.includes(parent)){
+     parent=withRealmDepth(baseMakeEnemy,'cave_spider',{x:brood[0].x,y:brood[0].y});enemies.push(parent);room.parent=parent;
+    }
+    if(!parent.giant){
+     const health=parent.hp/parent.max;parent.max*=3;parent.hp=parent.max*health;parent.damage*=3;parent.giant=true;
+    }
+    enemies=enemies.filter(e=>!brood.includes(e));
+    particle(parent.x,parent.y,'#b5ef7e',30);floatText(parent.x,parent.y-30,'GIANT SPIDER!','damage');
+    log('The abandoned brood combines into a giant spider: triple vitality and damage!');
    }
   }
   const collapse=room.collapse;
@@ -1271,7 +1308,7 @@ function worldTargets(){
  world.end.type='stairs';
  if(world.merchant)world.merchant.type='merchant';
  for(const trap of world.traps)trap.type='trap';
- return [...loot.filter(o=>o.type==='weapon'||o.type==='armor'),...props.filter(p=>!p.open&&p.type==='chest'),...world.torches,...world.traps.filter(t=>t.revealed&&!t.triggered),...(world.merchant?[world.merchant]:[]),world.end];
+ return [...loot.filter(o=>o.type==='weapon'||o.type==='armor'),...props.filter(p=>!p.open&&p.type==='chest'),...world.traps.filter(t=>t.revealed&&!t.triggered),...(world.merchant?[world.merchant]:[]),world.end];
 }
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Rubble and furnishings are attack-only obstacles, not selectable items. Click to strike them; on touch, tap to aim then use Attack. E / Use does not break them.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Inspect torchlit floor glints: a rare 8% chance reveals a hidden-hoard weapon with +5 power over its normal floor-level roll instead of a trap. Select and equip it with E / Use. Stepping on an uninspected glint still triggers its trap.');
@@ -1281,7 +1318,6 @@ function isWorldTarget(target){return worldTargets().includes(target)}
 function targetReachable(target){return distance(target,player)<72&&clearLine(player,target)}
 function worldTargetName(target){
  if(target.type==='weapon'||target.type==='armor')return target[target.type].name;
- if(target.type==='torch')return (target.lit?'Lit':'Unlit')+' torch';
  if(target.type==='trap')return 'Safe '+target.kind+' trap';
  return target.type==='stairs'?'Stairway':target.type==='merchant'?'Merchant':'Treasure chest';
 }
@@ -1315,18 +1351,6 @@ document.addEventListener('click',event=>{
  if(selectionPointerId!==null&&event.pointerId===selectionPointerId){event.preventDefault();event.stopPropagation()}
  selectionPointerId=null;
 },true);
-function toggleTorch(target){
- if(state!=='playing'||!target||!world.torches.includes(target)||!targetReachable(target))return false;
- target.lit=!target.lit;window.DungeonAudio.play(target.lit?'fire':'dodge');
- floatText(target.x,target.y-12,target.lit?'TORCH LIT':'TORCH EXTINGUISHED','treasure');
- log(target.lit?'Torch lit. The shadows retreat.':'Torch extinguished.');refreshSelectionPanel();return true;
-}
-function toggleNearbyTorch(){
- if(state!=='playing')return false;
- const target=world?.torches.filter(targetReachable).sort((a,b)=>distance(a,player)-distance(b,player))[0];
- if(!target){log('Move closer to a torch to light or douse it.');return false}
- return toggleTorch(target);
-}
 function deleteSelectedGear(){
  if(state!=='playing'||!selectedWorldItem||!loot.includes(selectedWorldItem)||!['weapon','armor'].includes(selectedWorldItem.type)||!targetReachable(selectedWorldItem)){
   if(state==='playing')log('Select a nearby loose weapon or armor before deleting.');return false;
@@ -1357,7 +1381,7 @@ nearby=function(){
  if(target)return target;
  const trap=world?.traps.filter(t=>t.revealed&&!t.triggered&&distance(t,player)<72&&clearLine(player,t)).sort((a,b)=>distance(a,player)-distance(b,player))[0];
  if(trap){trap.type='trap';return trap}
- return world?.torches.filter(t=>distance(t,player)<72&&clearLine(player,t)).sort((a,b)=>distance(a,player)-distance(b,player))[0];
+ return null;
 };
 interact=function(){
 if(state!=='playing')return;
@@ -1368,9 +1392,6 @@ if(target?.type==='trap'){
  target.arming=TRAP_ARM_SECONDS;
  floatText(target.x,target.y-15,'ACTIVATING IN 2s!','damage');window.DungeonAudio.play('warning');
  log(target.kind+' trap activates in 2 seconds. It can harm you too.');return;
-}
-if(target?.type==='torch'){
- toggleTorch(target);return;
 }
 if(target?.type==='stairs'){
  if(depth<MAX_FLOOR)loadFloor(depth+1,crypto.getRandomValues(new Uint32Array(1))[0]);
@@ -1448,7 +1469,7 @@ update=function(dt){
  const webbed=world.webs.some(w=>distance(w,player)<w.radius);
  if(webbed){player.slow=Math.max(player.slow,.18);if(!player.webbed)floatText(player.x,player.y-15,'WEBBED - SLOWED','damage')}
  player.webbed=webbed;
- const room=world.rooms.find(r=>pointInRoom(player,r));$('roomName').textContent=room?.name||'Connecting Passage';
+ const room=world.rooms.find(r=>pointInRoom(player,r));$('roomName').textContent=room?.kind==='entrance'?'Entrance Hall':'';
  $('prompt').textContent=interactionPrompt(nearby());
  if(selectedWorldItem&&(!isWorldTarget(selectedWorldItem)||!targetReachable(selectedWorldItem)))refreshSelectionPanel();
 };
@@ -1543,7 +1564,7 @@ if(window.emberkeep){
 </style>
 <div class="touch-controls" id="touchControls" aria-label="Touch game controls">
  <div id="movePad" role="application" aria-label="Drag to move and face the knight"><span id="moveKnob"></span></div>
- <div class="touch-actions"><button id="touchAttack" aria-label="Hold to attack">Attack</button><button id="touchInteract">Use / Equip</button><button id="touchDodge">Dodge</button><button id="touchHeal">Heal</button><button id="touchTorch">Torch [F]</button></div>
+ <div class="touch-actions"><button id="touchAttack" aria-label="Hold to attack">Attack</button><button id="touchInteract">Use / Equip</button><button id="touchDodge">Dodge</button><button id="touchHeal">Heal</button></div>
  <span id="touchFeedback" role="status"></span>
 </div>
 <script id="mobile-controls">
@@ -1583,12 +1604,11 @@ for(const event of ['pointerup','pointercancel','lostpointercapture'])attackButt
 $('touchInteract').onclick=()=>{if(state!=='playing')return;const target=nearby();interact();touchFeedback(target?'Used '+target.type:'Move closer to loot, stairs or merchant')};
 $('touchDodge').onclick=()=>{if(state!=='playing')return;dodge();touchFeedback(player.dash>0?'Dodging':'Need 35 resolve')};
 $('touchHeal').onclick=()=>{if(state!=='playing')return;const before=player.hp;potion();touchFeedback(player.hp>before?'Vitality restored':player.potions?'Already at full vitality':'No potions left')};
-$('touchTorch').onclick=()=>{const toggled=toggleNearbyTorch();touchFeedback(toggled?'Torch toggled':'Move closer to a torch')};
 canvas.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'||state!=='playing')return;if(selectWorldPointer(e)){touchFeedback('Selected - tap Use');return}const r=canvas.getBoundingClientRect();player.angle=Math.atan2(e.clientY-r.top+camera.y-player.y,e.clientX-r.left+camera.x-player.x);mouse.active=false;touchFeedback('Facing target')});
 window.addEventListener('blur',resetTouch);document.addEventListener('visibilitychange',()=>{if(document.hidden)resetTouch()});
 const touchUpdate=update;
 update=function(dt){touchUpdate(dt);if(state!=='playing')resetTouch()};
-document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Touch: drag MOVE to walk and face; hold Attack. Tap Use / Equip, Dodge or Heal. Tap an item to select (not attack); tap again to cycle overlaps or choose its name. E / Use acts on your selection; Clear restores nearby interaction. Empty hall taps aim; empty clicks attack.<br>F / Torch lights or douses the nearest torch even under loot. X / Delete gear removes only selected loose weapons or armor. Undo last delete restores one item during this run, even after descent. Break furnishings for 1-2 coins; trap swarms never drop loot.<br>Traps glint intermittently only in torchlight. Stop beside one for 2 seconds to make it safe. E / Use beside a SAFE trap activates it after 2 seconds: stand clear and lure monsters into it! Each torch lights its share of the room.<br>Find body armor, boots, gloves, helmets, halberds, bows, boomerangs, throwing spears, knives and axes. Projectiles stop at the first creature or intact container.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Touch: drag MOVE to walk and face; hold Attack. Tap Use / Equip, Dodge or Heal. Tap an item to select (not attack); tap again to cycle overlaps or choose its name. E / Use acts on your selection; Clear restores nearby interaction. Empty hall taps aim; empty clicks attack.<br>Torches are attack-only: hit with any weapon to switch them off or on, no fire needed. E / Use cannot toggle or select them. X / Delete gear removes only selected loose weapons or armor. Undo last delete restores one item during this run, even after descent. Break furnishings for 1-2 coins; trap swarms never drop loot.<br>Leaving a nest with living spiderlings combines its brood into a giant parent with 3x normal vitality and damage. If the parent was slain, the surviving brood forms a new giant. Kill the brood before leaving to prevent this.<br>Merchants buy carried potions for 8 gold and each scroll for 12 gold; use the Sell buttons in the shop.<br>Traps glint intermittently only in torchlight. Stop beside one for 2 seconds to make it safe. E / Use beside a SAFE trap activates it after 2 seconds: stand clear and lure monsters into it! Each torch lights its share of the room.<br>Find body armor, boots, gloves, helmets, halberds, bows, boomerangs, throwing spears, knives and axes. Projectiles stop at the first creature or intact container.');
 </script>
 </body>
 </html>

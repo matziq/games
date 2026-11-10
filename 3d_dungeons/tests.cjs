@@ -24,6 +24,60 @@ scripts.forEach(script => vm.runInContext(script, sandbox));
 const run = code => vm.runInContext(code, sandbox);
 let count = 0;
 function check(name, fn) { fn(); count++; console.log('PASS ' + name); }
+check('only Entrance Hall has a room label in the HUD or world renderer', () => {
+  run("begin();loadFloor(1,604);enemies=[];world.traps=[];update(.01)");
+  assert.equal(elements.get('roomName').textContent,'Entrance Hall');
+  run("player.x=(world.rooms[1].x+world.rooms[1].w/2)*T;player.y=(world.rooms[1].y+world.rooms[1].h/2)*T;update(.01)");
+  assert.equal(elements.get('roomName').textContent,'');
+  assert.ok(html.includes("if(r.kind==='entrance')"));
+});
+check('merchant buys one carried potion or each scroll once per valid transaction, not outside the shop', () => {
+  run("loadFloor(2,604);player.gold=0;player.potions=1;player.scrolls={fireball:1,light:1,poison:1,lightning:1}");
+  assert.equal(run("sellConsumable('potion')"),false);
+  run("openShop()");
+  for(const id of ['potion','fireball','light','poison','lightning']){
+    assert.equal(run(`sellConsumable('${id}')`),true);
+    assert.equal(run(`sellConsumable('${id}')`),false);
+  }
+  assert.equal(run('player.gold'),56);
+  assert.equal(run("sellConsumable('__proto__')"),false);
+  assert.equal(run('player.gold'),56);
+  run('closeShop()');
+});
+check('leaving a hatched nest merges only its living brood once and triples parent vitality and damage', () => {
+  run("loadFloor(1,604);world.traps=[];var giantNest=world.rooms.find(r=>r.kind==='spider');var parentSpider=giantNest.parent;var parentMax=parentSpider.max,parentDamage=parentSpider.damage;parentSpider.hp/=2;player.x=(giantNest.x+giantNest.w/2)*T;player.y=(giantNest.y+giantNest.h/2)*T;updateNestsAndPits(4,player);var ownBrood=enemies.filter(e=>e.baby);var unrelatedBaby={...ownBrood[0],nest:-1};enemies.push(unrelatedBaby)");
+  assert.equal(run('ownBrood.length'),18);
+  assert.equal(run('!!parentSpider.giant'),false);
+  run('player.x=world.start.x;player.y=world.start.y;updateNestsAndPits(.01,player)');
+  assert.equal(run('parentSpider.giant&&parentSpider.max===parentMax*3&&parentSpider.hp===parentMax*1.5&&parentSpider.damage===parentDamage*3'),true);
+  assert.equal(run('ownBrood.every(e=>!enemies.includes(e))&&enemies.includes(unrelatedBaby)'),true);
+  run('updateNestsAndPits(10,player)');
+  assert.equal(run('parentSpider.max'),run('parentMax*3'));
+});
+check('cleared eggs or killed spiderlings prevent giants; an orphaned surviving brood can form exactly one giant', () => {
+  for(const cleared of ['eggs','babies','parent']){
+    run("loadFloor(1,604);world.traps=[];var edgeNest=world.rooms.find(r=>r.kind==='spider');var originalParent=edgeNest.parent;player.x=(edgeNest.x+edgeNest.w/2)*T;player.y=(edgeNest.y+edgeNest.h/2)*T");
+    if(cleared==='eggs')run('edgeNest.decor.forEach(p=>breakProp(p,999))');
+    run('updateNestsAndPits(4,player)');
+    if(cleared==='babies')run('enemies.filter(e=>e.baby).forEach(e=>e.hp=0)');
+    if(cleared==='parent')run('originalParent.hp=0;enemies=enemies.filter(e=>e!==originalParent)');
+    run('player.x=world.start.x;player.y=world.start.y;updateNestsAndPits(.01,player)');
+    assert.equal(run('enemies.filter(e=>e.giant).length'),cleared==='parent'?1:0);
+    if(cleared==='parent')assert.equal(run('edgeNest.parent!==originalParent&&!enemies.some(e=>e.baby&&e.hp>0)'),true);
+  }
+});
+check('leaving during the egg countdown merges the later hatch rather than duplicating a roaming brood', () => {
+  run('loadFloor(1,604);world.traps=[];var delayedNest=world.rooms.find(r=>r.kind==="spider");player.x=(delayedNest.x+delayedNest.w/2)*T;player.y=(delayedNest.y+delayedNest.h/2)*T;updateNestsAndPits(.1,player);player.x=world.start.x;player.y=world.start.y;updateNestsAndPits(4,player);updateNestsAndPits(4,player)');
+  assert.equal(run('delayedNest.parent.giant&&!enemies.some(e=>e.baby)&&enemies.filter(e=>e.giant).length===1'),true);
+});
+check('giant web strikes inflict tripled base damage and root; normal webs remain root-only and dodge protects', () => {
+  run("loadFloor(1,604);world.tiles.fill(1);props=[];world.traps=[];player.armor=player.boots=player.gloves=player.helmet=null;player.hp=120;player.inv=0;var giantStriker=makeEnemy('cave_spider',{x:player.x+120,y:player.y});enemies=[giantStriker];strikeWeb(giantStriker)");
+  assert.equal(run('player.hp===120&&player.root===1'),true);
+  run('player.root=0;giantStriker.giant=true;giantStriker.damage*=3;strikeWeb(giantStriker)');
+  assert.equal(run('player.hp===120-creatures.cave_spider.damage*3&&player.root===1'),true);
+  run('player.root=0;player.inv=.3;var hpAfterWeb=player.hp;strikeWeb(giantStriker)');
+  assert.equal(run('player.hp===hpAfterWeb&&player.root===0'),true);
+});
 check('scrolls vacuum at three tiles and collect exactly once; gear potions and ammunition stay put', () => {
   run("begin();loadFloor(1,604);enemies=[];props=[];world.traps=[];player.dash=0;var scrollX=player.x;var scrollCount=player.scrolls.light;var nearScroll={x:player.x+3*T,y:player.y,type:'scroll',scroll:'light'};var farScroll={x:player.x+3*T+.01,y:player.y,type:'scroll',scroll:'light'};var stillLoot=['weapon','armor','potion','ammo'].map(type=>({x:player.x+100,y:player.y,type}));loot=[nearScroll,farScroll,...stillLoot];baseUpdate(.04)");
   assert.ok(run('nearScroll.x<scrollX+3*T'));
@@ -146,7 +200,7 @@ check('elemental projectiles apply fire poison splash and expiring wall-bounded 
   }
 });
 check('melee and projectiles can extinguish and relight a torch exactly once per shot', () => {
-  for(const kind of ['sword','bow','crossbow','boomerang']){
+  for(const kind of run('Object.keys(weaponTypes)')){
     run(`loadFloor(1,604);world.tiles.fill(1);props=[];enemies=[];player.angle=0;player.cool=0;state='playing';var struck={x:player.x+34,y:player.y,lit:true};world.torches=[struck];player.weapon={...weaponTypes.${kind},kind:'${kind}',damage:20};heroShots=[];attack();if(heroShots.length)updateHeroShots(.2)`);
     assert.equal(run('struck.lit'),false,kind);
     run('heroShots=[];player.cool=0;attack();if(heroShots.length)updateHeroShots(.2)');
@@ -319,7 +373,7 @@ check('five chapter themes and monster rosters stay distinct across generated fl
         for(const type of api.chapterRosters[chapter-1])assert.ok(present.has(type),`missing ${type} on floor ${floor}`);
         if(floor===10)assert.ok(present.has('dragon'));
         else assert.ok(!present.has('dragon'),`dragon appeared before floor 10`);
-        for(const type of present)assert.ok(type==='dragon'&&floor===10||api.chapterRosters[chapter-1].includes(type),`wrong creature ${type}`);
+        for(const type of present)assert.ok(type==='cave_spider'||type==='dragon'&&floor===10||api.chapterRosters[chapter-1].includes(type),`wrong creature ${type}`);
         rosters.push([...present].sort().join(','));
       }
     }
@@ -692,9 +746,10 @@ check('room lighting, reachable torches and hazard placement preserve safe entra
   assert.equal(kinds.size,7);
   run("loadFloor(1,604);enemies=[];props=[];loot=[];const torch=world.torches.find(t=>!t.lit);player.x=torch.x;player.y=torch.y+35;world.end.x=2500;world.end.y=1900");
   const before=run('lightAt({x:torch.x+70,y:torch.y+70})');
-  run('interact();update(.01)');assert.equal(run('torch.lit'),true);
-  assert.ok(run('lightAt({x:torch.x+70,y:torch.y+70})')>before);
   run('interact()');assert.equal(run('torch.lit'),false);
+  run('player.angle=-Math.PI/2;player.cool=0;player.weapon={...weaponTypes.sword,kind:"sword"};attack();update(.01)');assert.equal(run('torch.lit'),true);
+  assert.ok(run('lightAt({x:torch.x+70,y:torch.y+70})')>before);
+  run('player.cool=0;attack()');assert.equal(run('torch.lit'),false);
   run("loot=[{x:player.x,y:player.y,type:'armor',armor:{name:'Priority mail',kind:'chain',reduction:.2}}];interact()");
   assert.equal(run('player.armor.name'),'Priority mail');assert.equal(run('torch.lit'),false);
   run('player.x=world.start.x;player.y=world.start.y;var roomIndex=3;var samplePoint={x:world.torches[roomIndex*4].x+15,y:world.torches[roomIndex*4].y+15};world.torches.filter(t=>t.room===roomIndex).forEach(t=>t.lit=true)');
@@ -888,7 +943,7 @@ check('repeated floor motifs, tile outlines, and expired overlays are absent but
   assert.ok(images.some(args=>args[0]===run('floorImage')),'supplied floor texture disappeared');
   context.strokeRect = originalStroke;context.drawImage = originalImage;
 });
-check('exactly overlapping weapon armor and torch cycle individually without attacking or equipping', () => {
+check('overlapping gear cycles without selecting the underlying torch', () => {
   run(`loadFloor(1,604);state='playing';enemies=[];props=[];world.traps=[];world.torches=[];
     var overlap={x:player.x+40,y:player.y}, sword={...overlap,type:'weapon',weapon:makeWeapon()}, mail={...overlap,type:'armor',armor:makeArmor()}, sconce={...overlap,type:'torch',lit:false};
     loot=[sword,mail];world.torches=[sconce];world.seen.fill(1);
@@ -896,23 +951,24 @@ check('exactly overlapping weapon armor and torch cycle individually without att
     var oldWeapon=player.weapon;var oldCool=player.cool;var oldAngle=player.angle`);
   assert.equal(run("selectWorldPointer(selectEvent)"),true);
   assert.equal(run("selectedWorldItem===sword&&nearby()===sword"),true);
-  assert.equal(run("selectionChoices.length"),3);
+  assert.equal(run("selectionChoices.length"),2);
   run("selectWorldPointer(selectEvent)");assert.equal(run("selectedWorldItem===mail"),true);
-  run("selectWorldPointer(selectEvent)");assert.equal(run("selectedWorldItem===sconce"),true);
+  run("selectWorldPointer(selectEvent)");assert.equal(run("selectedWorldItem===sword"),true);
   assert.equal(run("player.weapon===oldWeapon&&player.cool===oldCool&&player.angle===oldAngle&&!mouse.down&&!sconce.lit"),true);
-  run("selectWorldPointer(selectEvent);interact()");
+  run("interact()");
   assert.equal(run("player.weapon===sword.weapon&&!loot.includes(sword)"),true);
   assert.equal(run("selectedWorldItem"),null);
   assert.ok(elements.get('selectionChoices').children.length>=1);
 });
-check('dedicated torch action ignores overlapping gear, preserves selected item and respects reach and pause', () => {
+check('torches have no selection or nearby use action, while weapon hits toggle without fire', () => {
   run("loadFloor(1,604);state='playing';props=[];world.traps=[];var dedicatedTorch={x:player.x+40,y:player.y,type:'torch',lit:false};world.torches=[dedicatedTorch];loot=[{x:dedicatedTorch.x,y:dedicatedTorch.y,type:'armor',armor:makeArmor()}];selectedWorldItem=loot[0]");
-  assert.equal(run("toggleNearbyTorch()"),true);assert.equal(run("dedicatedTorch.lit"),true);
-  assert.equal(run("selectedWorldItem===loot[0]"),true);
-  run("state='paused'");assert.equal(run("toggleNearbyTorch()"),false);
-  run("state='playing';dedicatedTorch.x+=300");assert.equal(run("toggleNearbyTorch()"),false);
-  run("dedicatedTorch.x=player.x+40;world.tiles[Math.floor(player.y/T)*W+Math.floor((player.x+20)/T)]=0");
-  assert.equal(run("toggleNearbyTorch()"),false);
+  run("interact()");
+  assert.equal(run("dedicatedTorch.lit"),false);
+  assert.equal(run("worldTargets().includes(dedicatedTorch)"),false);
+  run("loot=[];selectedWorldItem=null;interact()");
+  assert.equal(run("nearby()"),null);
+  run("player.angle=0;player.cool=0;player.weapon={...weaponTypes.sword,kind:'sword'};attack()");
+  assert.equal(run("dedicatedTorch.lit"),true);
 });
 check('delete and one-use undo restore the precise selected overlapping item without duplication', () => {
   run("loadFloor(1,604);state='playing';props=[];world.traps=[];world.torches=[];var a={x:player.x+35,y:player.y,type:'weapon',weapon:makeWeapon()},b={x:player.x+35,y:player.y,type:'armor',armor:makeArmor()};loot=[a,b];selectedWorldItem=b;var equippedBefore=player.weapon");
