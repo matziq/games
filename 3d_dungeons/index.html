@@ -886,20 +886,30 @@ function crossesCrack(from,to,crack){
  return intersect||Math.min(pointSegmentDistance(from,a,b),pointSegmentDistance(to,a,b),pointSegmentDistance(a,from,to),pointSegmentDistance(b,from,to))<17;
 }
 function updateEarthquakes(dt,before){
- if(depth===MAX_FLOOR||inMerchantSanctuary())return false;
- for(const crack of world.cracks){
+ if(depth<3||inMerchantSanctuary())return false;
+ for(const crack of depth<MAX_FLOOR?world.cracks:[]){
   crack.grace=Math.max(0,crack.grace-dt);
   if(crack.grace===0&&crossesCrack(before,player,crack))return fallToFloor(depth+1,'The fissure swallowed you. Fell one floor to');
  }
  const q=world.quake;
  if(q.warning>0){
   q.warning=Math.max(0,q.warning-dt);
-  if(q.warning<1e-8){q.warning=0;world.cracks.push({...q.pending,grace:.8});q.pending=null;q.elapsed=0;q.next=random(45,70);log('A fissure opened! Its golden edges mark a drop to the next floor.')}
+  if(q.warning<1e-8){
+   q.warning=0;
+   if(depth<MAX_FLOOR){world.cracks.push({...q.pending,grace:.8});log('A fissure opened! Its golden edges mark a drop to the next floor.')}
+   else log('The tremor subsides. Varkhos waits in the final chamber on this floor.');
+   q.pending=null;q.elapsed=0;q.next=random(45,70);
+  }
  }else if(world.cracks.length<3){
   q.elapsed+=dt;
   if(q.elapsed>=q.next){
-   const points=findIdlePoints(110,190);if(!points.length){q.elapsed=q.next-2;return false}
-   q.pending=points[0];q.warning=3;window.DungeonAudio.play('earthquake');log('Earthquake! The masonry is splitting nearby.');floatText(player.x,player.y-24,'EARTHQUAKE!','damage');
+   if(depth<MAX_FLOOR){
+    const points=findIdlePoints(110,190);if(!points.length){q.elapsed=q.next-2;return false}
+    q.pending=points[0];
+   }
+   q.warning=3;window.DungeonAudio.play('earthquake');
+   log(depth<MAX_FLOOR?'Earthquake! The masonry is splitting nearby.':'Earthquake! Varkhos shakes the foundations. No way down: face him in the final chamber.');
+   floatText(player.x,player.y-24,'EARTHQUAKE!','damage');
   }
  }
  return false;
@@ -940,8 +950,8 @@ loadFloor=function(floor,s){
  $('area').style.color=world.theme.accent;
  $('floor').textContent='FLOOR '+floor+' / '+MAX_FLOOR+'  |  '+world.theme.name.toUpperCase();
  $('objective').textContent=floor===MAX_FLOOR
-  ?'Defeat Varkhos. The red cones warn of flame; dodge out before they ignite. Claim the Ashen Crown. '+world.theme.description
-  :world.theme.description+(world.merchant?' A traveling merchant waits in the safe entrance chamber. ':' ')+(floor===MAX_FLOOR-1?'Find the blue stairway to the final floor.':'Find the blue stairway to descend one floor and face a new brood.');
+  ?'Varkhos waits in the final chamber of Floor 10, at the marked exit. Follow the halls to him. The red cones warn of flame; dodge before they ignite. Claim the Ashen Crown. '+world.theme.description
+  :'Varkhos guards the final chamber of Floor 10. '+world.theme.description+(world.merchant?' A traveling merchant waits in the safe entrance chamber. ':' ')+(floor===MAX_FLOOR-1?'Find the blue stairway to the final floor.':'Find the blue stairway to descend one floor and face a new brood.')+(floor>=3?' Tremors herald the dragon below.':' Earthquakes begin on Floor 3.');
  window.DungeonAudio.setChapter(realm);
  updateHUD();
 };

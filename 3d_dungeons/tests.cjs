@@ -228,7 +228,7 @@ check('idle undead emerge locally, extinguish only their room, then approach and
   assert.ok(run('player.hp<120'),'local undead never attacked');
 });
 check('merchant sanctuary suppresses stillness threats and earthquake timers', () => {
-  run('loadFloor(2,42);state="playing";keys.clear();player.dash=0;world.quake.next=.1;for(let i=0;i<1000;i++)update(.04)');
+  run('loadFloor(4,42);state="playing";keys.clear();player.dash=0;world.quake.next=.1;for(let i=0;i<1000;i++)update(.04)');
   assert.equal(run('idleThreat.elapsed'),0);
   assert.equal(run('idleThreat.markers.length'),0);
   assert.ok(run('!enemies.some(e=>e.idleRisen)&&world.quake.elapsed===0&&world.cracks.length===0'));
@@ -256,6 +256,28 @@ check('upright facing mirrors the body while attacks retain their actual aim in 
   assert.ok(body.indexOf('ctx.scale(heroFacing(player.angle),1)')<body.indexOf('circle(0,-15'));
   assert.ok(body.indexOf('ctx.rotate(player.angle')>body.indexOf('ctx.restore();ctx.save()'),'body is still rotating with aim');
 });
+check('earthquakes begin on floor 3, not floors 1 or 2 even outside the sanctuary', () => {
+  for(const floor of [1,2]){
+    run(`loadFloor(${floor},42);state="playing";player.x=world.end.x;player.y=world.end.y;world.quake.next=.01;updateEarthquakes(200,player)`);
+    assert.ok(run('!inMerchantSanctuary()&&world.quake.elapsed===0&&world.quake.warning===0&&world.cracks.length===0'));
+  }
+});
+check('Varkhos spawns once in the reachable final room on 100 seeded floor-10 layouts', () => {
+  for(let seed=0;seed<100;seed++){
+    run(`loadFloor(10,${seed})`);
+    assert.ok(run(`(() => {
+      const bosses=enemies.filter(e=>e.type==='dragon'),boss=bosses[0];
+      if(bosses.length!==1||distance(boss,world.end)!==0||!pointInRoom(boss,world.rooms.at(-1))||!free(boss.x,boss.y,boss.radius))return false;
+      const start=Math.floor(world.start.y/T)*W+Math.floor(world.start.x/T),goal=Math.floor(boss.y/T)*W+Math.floor(boss.x/T);
+      const visited=new Set([start]),queue=[start];
+      for(let i=0;i<queue.length;i++)for(const n of [queue[i]-1,queue[i]+1,queue[i]-W,queue[i]+W]){
+        if(n<0||n>=W*H||visited.has(n)||!free((n%W+.5)*T,(Math.floor(n/W)+.5)*T,player.radius||12))continue;
+        visited.add(n);queue.push(n);
+      }
+      return visited.has(goal);
+    })()`),`boss unreachable on seed ${seed}`);
+  }
+});
 check('earthquakes telegraph three seconds, open traversable cracks, and sweep entry down exactly one floor', () => {
   run('loadFloor(3,42);state="playing";enemies=[];props=[];world.traps=[];world.quake.next=.1;updateEarthquakes(.11,player)');
   assert.equal(run('world.quake.warning'),3);
@@ -275,6 +297,13 @@ check('earthquakes telegraph three seconds, open traversable cracks, and sweep e
   assert.equal(run('depth'),10);
   assert.equal(run('enemies.filter(e=>e.type==="dragon").length'),1);
   run('world.quake.next=.01;updateEarthquakes(200,player)');
+  assert.equal(run('world.quake.warning'),3);
+  assert.equal(run('world.quake.pending'),null,'final floor advertised a descending fissure');
+  run('updateEarthquakes(3,player)');
+  assert.equal(run('world.quake.warning'),0);
+  assert.equal(run('world.quake.elapsed'),0);
+  run('world.quake.next=.01;updateEarthquakes(.02,player)');
+  assert.equal(run('world.quake.warning'),3,'final floor tremors did not recur');
   assert.equal(run('depth'),10);assert.equal(run('world.cracks.length'),0);
   assert.ok(run('state==="playing"'),'a crack bypassed the final boss');
 });
