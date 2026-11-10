@@ -3,10 +3,10 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const { webcrypto } = require('node:crypto');
 const elements = new Map();
-const context = new Proxy({}, { get: (_, key) => key === 'createRadialGradient' ? () => ({ addColorStop() {} }) : () => {} });
+const context = new Proxy({}, { get: (target, key) => Object.hasOwn(target,key) ? target[key] : key === 'createRadialGradient' ? () => ({ addColorStop() {} }) : () => {} });
 function element() {
   return { style: {}, hidden: false, textContent: '', open: false, children: [], getContext: () => context,
-    getBoundingClientRect: () => ({ width: 1000, height: 700 }), focus() {}, addEventListener() {},
+    getBoundingClientRect: () => ({ left: 0, top: 0, width: 1000, height: 700 }), focus() {}, addEventListener() {},
     append(e) { this.children.push(e); }, prepend(e) { this.children.unshift(e); }, replaceChildren(...e) { this.children = e; },
     setAttribute() {}, insertAdjacentHTML() {}, classList: { toggle() {}, remove() {}, add() {}, contains() { return false; } },
     showModal() { this.open = true; }, close() { this.open = false; } };
@@ -321,7 +321,7 @@ check('stairs advance all chapters and restore health', () => {
   assert.equal(run('enemies.filter(e=>e.type==="dragon").length'), 1);
 });
 check('chapter archer telegraphs and fires; shots collide with walls', () => {
-  run("player.x=world.start.x;player.y=world.start.y;player.inv=0;enemies=[makeEnemy('vine_archer',{x:player.x+220,y:player.y})];enemies[0].cool=0;update(.01)");
+  run("player.x=world.start.x;player.y=world.start.y;player.inv=0;props=[];enemies=[makeEnemy('vine_archer',{x:player.x+220,y:player.y})];enemies[0].cool=0;update(.01)");
   assert.ok(run('enemies[0].wind>0')); run('update(.9)'); assert.ok(run('shots.length>0'));
   run("shots=[{x:5,y:5,vx:0,vy:0,life:3,damage:8}];update(.01)"); assert.equal(run('shots.length'), 0);
 });
@@ -545,6 +545,96 @@ check('returning boomerangs can leave an impact but cannot cross that intact tar
     run('player.x=blocker.x+70;updateHeroShots(.2)');
     assert.equal(run('heroShots.length'),0,'boomerang passed through its still-intact impact target');
     assert.ok(run('blocker.hp>0'));
+  }
+});
+check('repeated floor motifs and expired trap overlays are absent but active hazards remain drawn', () => {
+  assert.ok(!html.includes("const mark=(x*17+y*31+depth*7)%19"));
+  assert.ok(!html.includes("FISSURE: DOWN 1 FLOOR"));
+  run("loadFloor(1,604);world.traps=[{x:player.x,y:player.y,kind:'fire',triggered:true,active:0,revealed:true}];heroShots=[]");
+  const original = context.fillText, labels = [];
+  context.fillText = text => labels.push(text);
+  run("drawHazardsAndLighting()");
+  assert.equal(labels.includes('SPENT'),false);assert.equal(labels.includes('SAFE'),false);
+  run("world.traps[0].active=3;drawHazardsAndLighting()");
+  assert.ok(labels.includes('FIRE'));
+  context.fillText = original;
+});
+check('exactly overlapping weapon armor and torch cycle individually without attacking or equipping', () => {
+  run(`loadFloor(1,604);state='playing';enemies=[];props=[];world.traps=[];world.torches=[];
+    var overlap={x:player.x+40,y:player.y}, sword={...overlap,type:'weapon',weapon:makeWeapon()}, mail={...overlap,type:'armor',armor:makeArmor()}, sconce={...overlap,type:'torch',lit:false};
+    loot=[sword,mail];world.torches=[sconce];world.seen.fill(1);
+    var selectEvent={clientX:(overlap.x-camera.x)/vw*1000,clientY:(overlap.y-camera.y)/vh*700,preventDefault(){}};
+    var oldWeapon=player.weapon;var oldCool=player.cool;var oldAngle=player.angle`);
+  assert.equal(run("selectWorldPointer(selectEvent)"),true);
+  assert.equal(run("selectedWorldItem===sword&&nearby()===sword"),true);
+  assert.equal(run("selectionChoices.length"),3);
+  run("selectWorldPointer(selectEvent)");assert.equal(run("selectedWorldItem===mail"),true);
+  run("selectWorldPointer(selectEvent)");assert.equal(run("selectedWorldItem===sconce"),true);
+  assert.equal(run("player.weapon===oldWeapon&&player.cool===oldCool&&player.angle===oldAngle&&!mouse.down&&!sconce.lit"),true);
+  run("selectWorldPointer(selectEvent);interact()");
+  assert.equal(run("player.weapon===sword.weapon&&!loot.includes(sword)"),true);
+  assert.equal(run("selectedWorldItem"),null);
+  assert.ok(elements.get('selectionChoices').children.length>=1);
+});
+check('dedicated torch action ignores overlapping gear, preserves selected item and respects reach and pause', () => {
+  run("loadFloor(1,604);state='playing';props=[];world.traps=[];var dedicatedTorch={x:player.x+40,y:player.y,type:'torch',lit:false};world.torches=[dedicatedTorch];loot=[{x:dedicatedTorch.x,y:dedicatedTorch.y,type:'armor',armor:makeArmor()}];selectedWorldItem=loot[0]");
+  assert.equal(run("toggleNearbyTorch()"),true);assert.equal(run("dedicatedTorch.lit"),true);
+  assert.equal(run("selectedWorldItem===loot[0]"),true);
+  run("state='paused'");assert.equal(run("toggleNearbyTorch()"),false);
+  run("state='playing';dedicatedTorch.x+=300");assert.equal(run("toggleNearbyTorch()"),false);
+  run("dedicatedTorch.x=player.x+40;world.tiles[Math.floor(player.y/T)*W+Math.floor((player.x+20)/T)]=0");
+  assert.equal(run("toggleNearbyTorch()"),false);
+});
+check('delete and one-use undo restore the precise selected overlapping item without duplication', () => {
+  run("loadFloor(1,604);state='playing';props=[];world.traps=[];world.torches=[];var a={x:player.x+35,y:player.y,type:'weapon',weapon:makeWeapon()},b={x:player.x+35,y:player.y,type:'armor',armor:makeArmor()};loot=[a,b];selectedWorldItem=b;var equippedBefore=player.weapon");
+  assert.equal(run("deleteSelectedGear()"),true);
+  assert.equal(run("loot.length===1&&loot[0]===a&&lastGearDelete.item===b&&player.weapon===equippedBefore"),true);
+  assert.equal(run("deleteSelectedGear()"),false);
+  assert.equal(run("undoGearDelete()"),true);
+  assert.equal(run("loot.length===2&&loot.filter(o=>o===b).length===1"),true);
+  assert.equal(run("undoGearDelete()"),false);
+  run("selectedWorldItem=b;interact()");
+  assert.equal(run("player[armorSlot(b.armor)]===b.armor&&!loot.includes(b)"),true);
+  assert.equal(run("undoGearDelete()"),false);
+});
+check('delete protects nongear and pause state; latest undo expires on floors and new runs', () => {
+  run("loadFloor(1,604);state='playing';var one={x:player.x+40,y:player.y,type:'weapon',weapon:makeWeapon()},two={x:player.x+40,y:player.y,type:'armor',armor:makeArmor()};loot=[one,two];selectedWorldItem=one");
+  run("state='paused'");assert.equal(run("deleteSelectedGear()"),false);
+  run("state='playing';selectedWorldItem=world.torches[0]");assert.equal(run("deleteSelectedGear()"),false);
+  run("selectedWorldItem=one;deleteSelectedGear();selectedWorldItem=two;deleteSelectedGear();undoGearDelete()");
+  assert.equal(run("!loot.includes(one)&&loot.includes(two)&&loot.length===1"),true);
+  run("selectedWorldItem=two;deleteSelectedGear();loadFloor(2,604)");
+  assert.equal(run("lastGearDelete===null&&selectedWorldItem===null&&!undoGearDelete()"),true);
+  run("state='playing';loot=[{x:player.x+30,y:player.y,type:'weapon',weapon:makeWeapon()}];selectedWorldItem=loot[0];deleteSelectedGear();begin()");
+  assert.equal(run("lastGearDelete===null&&!undoGearDelete()"),true);
+});
+check('all room decor breaks once for exactly 1-2 coins only and destroys its own web patch', () => {
+  run("loadFloor(9,604);state='playing';loot=[]");
+  const kinds = run("JSON.stringify(world.rooms.filter(r=>r.decor.length).map(r=>r.kind))");
+  assert.equal(new Set(JSON.parse(kinds)).size,8);
+  assert.equal(run("world.rooms.every(r=>r.decor.every(p=>props.includes(p)&&p.type==='decor'&&p.hp>0))"),true);
+  run("var furnishings=props.filter(p=>p.type==='decor');furnishings.forEach(p=>{breakProp(p,1000);breakProp(p,1000)})");
+  assert.equal(run("loot.length===furnishings.length&&loot.every(l=>l.type==='gold'&&[1,2].includes(l.value))"),true);
+  assert.equal(run("world.webs.length"),0);
+  assert.equal(run("world.torches.every(t=>!props.includes(t))&&!props.includes(world.end)"),true);
+});
+check('melee and projectiles shatter decor; projectiles stop on impact then pass rubble', () => {
+  for(const kind of ['sword','bow','boomerang']){
+    run(`loadFloor(1,604);state='playing';world.traps=[];loot=[];enemies=[];var furnishing={x:player.x+55,y:player.y,type:'decor',label:'Armor stand',hp:1,open:false};props=[furnishing];player.angle=0;player.weapon={...weaponTypes.${kind},kind:'${kind}',damage:25,color:'#ddd'};player.cool=0;attack();${kind==='sword'?'':'updateHeroShots(.25);'} `);
+    assert.equal(run("furnishing.broken"),true);
+    assert.equal(run("loot.length===1&&loot[0].type==='gold'&&[1,2].includes(loot[0].value)"),true);
+    run("heroShots=[];player.cool=0;attack()");assert.equal(run("loot.length"),1);
+  }
+});
+check('trap-spawned bugs and bats yield no treasure via melee ranged damage status or direct drops', () => {
+  for(const type of ['bug','bat'])for(const path of ['melee','projectile','status','direct']){
+    run(`loadFloor(1,604);state='playing';props=[];loot=[];world.traps=[];player.angle=0;player.weapon={...weaponTypes.sword,kind:'sword',damage:25};var swarm=makeEnemy('${type}',{x:player.x+45,y:player.y});swarm.trapSwarm=true;swarm.hp=1;enemies=[swarm];player.cool=0;`);
+    if(path==='melee')run("attack()");
+    if(path==='projectile')run("player.weapon={...weaponTypes.bow,kind:'bow',damage:25};attack();updateHeroShots(.25)");
+    if(path==='status')run("swarm.burn=1;swarm.burnTick=0;swarm.swarmLife=12;updateTraps(.2,false)");
+    if(path==='direct')run("hurtEnemy(swarm,1000);drops(swarm,true)");
+    assert.equal(run("loot.length"),0,`${type} ${path} rewarded treasure`);
+    assert.ok(run("swarm.hp<=0"),`${type} ${path} failed to kill fixture`);
   }
 });
 console.log(`${count} checks passed.`);
