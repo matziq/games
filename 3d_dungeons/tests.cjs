@@ -84,6 +84,27 @@ check('light scroll shares wall-bounded radial glint lighting and expires withou
   assert.equal(run('world.scrollLights.length'),0);
   run('begin()');
 });
+check('hidden hoards use small seeded odds and grant exactly one boosted floor weapon only after inspection', () => {
+  const first=run("loadFloor(5,604);JSON.stringify(world.traps.map(t=>[t.x,t.y,t.kind,t.rewardWeapon]))");
+  assert.equal(run("loadFloor(5,604);JSON.stringify(world.traps.map(t=>[t.x,t.y,t.kind,t.rewardWeapon]))"),first);
+  let rewards=0,total=0;
+  for(let seed=1;seed<=100;seed++){
+    const result=run(`loadFloor(5,${seed});[world.traps.filter(t=>t.rewardWeapon).length,world.traps.length]`);
+    rewards+=result[0];total+=result[1];
+  }
+  assert.ok(rewards/total>.04&&rewards/total<.12,`${rewards}/${total}`);
+  run("loadFloor(5,604);enemies=[];props=[];loot=[];player.inv=0;world.torches.forEach(t=>t.lit=true);var hoardWeapon=withRealmDepth(makeWeapon);var normalPower=hoardWeapon.damage;hoardWeapon.damage+=5;var hoard={x:player.x+45,y:player.y,kind:'trapdoor',rewardWeapon:hoardWeapon,inspect:0,active:0};world.traps=[hoard];var beforeHoardHP=player.hp;var beforeHoardDepth=depth;updateTraps(1.9,false)");
+  assert.equal(run('loot.length'),0);
+  run('updateTraps(.11,false);updateTraps(2,false)');
+  assert.equal(run('loot.length===1&&loot[0].weapon===hoardWeapon&&loot[0].weapon.damage===normalPower+5'),true);
+  assert.equal(run('hoard.triggered&&hoard.revealed&&hoard.active===0&&!hoard.rewardWeapon'),true);
+  assert.equal(run('player.hp===beforeHoardHP&&depth===beforeHoardDepth&&!triggerTrap(hoard,true)&&!worldTargets().includes(hoard)'),true);
+  run("selectedWorldItem=loot[0];interact()");
+  assert.equal(run('player.weapon===hoardWeapon'),true);
+  run("loadFloor(10,604);enemies=[];props=[];loot=[];player.inv=0;var forfeited={x:player.x,y:player.y,kind:'explosion',rewardWeapon:hoardWeapon,inspect:0,active:0};world.traps=[forfeited];updateTraps(.04,true)");
+  assert.equal(run('forfeited.triggered&&loot.length===0&&depth===10'),true);
+  run('begin()');
+});
 check('2,500 seeded floors have connected, bounded rooms and exits', () => {
   for (let chapter = 1; chapter <= 5; chapter++) for (let seed = 0; seed < 500; seed++) {
     const w = sandbox.window.emberkeep.generate(seed, chapter);

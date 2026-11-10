@@ -509,7 +509,9 @@ function configureHazards(){
    }
    if(!p)continue;
    const kind=trapKinds[(i*2+n+depth)%trapKinds.length];
-   world.traps.push({...p,kind:kind==='trapdoor'&&depth>MAX_FLOOR-2?'explosion':kind,revealed:false,triggered:false,inspect:0,active:0});
+   const rewardWeapon=rng()<.08?withRealmDepth(makeWeapon):null;
+   if(rewardWeapon){rewardWeapon.damage+=5;rewardWeapon.name="Hidden Hoard "+rewardWeapon.name}
+   world.traps.push({...p,kind:kind==='trapdoor'&&depth>MAX_FLOOR-2?'explosion':kind,rewardWeapon,revealed:false,triggered:false,inspect:0,active:0});
   }
  });
 }
@@ -594,6 +596,14 @@ function updateTraps(dt,moved){
   if(t.triggered)continue;
   t.inspect=!moved&&d>=23&&d<72&&clearLine(player,t)&&torchIllumination(t)>.2?t.inspect+dt:0;
   if(t.inspect>=TRAP_REVEAL_SECONDS){
+   if(t.rewardWeapon){
+    t.revealed=true;t.triggered=true;t.inspect=0;t.active=0;
+    loot.push({x:t.x,y:t.y,type:'weapon',weapon:t.rewardWeapon});t.rewardWeapon=null;
+    floatText(t.x,t.y-20,'HIDDEN HOARD! +5 POWER','treasure');
+    particle(t.x,t.y,'#ffe1a0',28);window.DungeonAudio.play('gold');
+    log('Hidden treasure, not a trap! A floor-forged weapon with +5 strike power. Select it and E / Use to equip.');
+    continue;
+   }
    t.revealed=true;floatText(t.x,t.y-12,t.kind.toUpperCase()+' DISARMED','heal');
    window.DungeonAudio.play('gold');log('Revealed '+t.kind+' trap. Safe to cross. E / Use can activate it after a 2-second delay.');
   }
@@ -1129,6 +1139,7 @@ function worldTargets(){
  return [...loot.filter(o=>o.type==='weapon'||o.type==='armor'),...props.filter(p=>!p.open&&p.type==='chest'),...world.torches,...world.traps.filter(t=>t.revealed&&!t.triggered),...(world.merchant?[world.merchant]:[]),world.end];
 }
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Rubble and furnishings are attack-only obstacles, not selectable items. Click to strike them; on touch, tap to aim then use Attack. E / Use does not break them.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Inspect torchlit floor glints: a rare 8% chance reveals a hidden-hoard weapon with +5 power over its normal floor-level roll instead of a trap. Select and equip it with E / Use. Stepping on an uninspected glint still triggers its trap.');
 function isWorldTarget(target){return worldTargets().includes(target)}
 function targetReachable(target){return distance(target,player)<72&&clearLine(player,target)}
 function worldTargetName(target){

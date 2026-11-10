@@ -103,6 +103,22 @@ with sync_playwright() as p:
         assert not outside, "Context menu disabled outside canvas"
         page.evaluate("state='playing';refreshScrollHUD()")
         page.screenshot(path=str(OUTPUT / f"{PREFIX}-{label}-scroll-panel.png"))
+        page.evaluate("""() => {
+          for(let seed=1;seed<100;seed++){loadFloor(5,seed);if(world.traps.some(t=>t.rewardWeapon))break}
+          state='playing';props=[];enemies=[];loot=[];world.quake.next=Infinity;
+          window.rewardTrap=world.traps.find(t=>t.rewardWeapon);window.rewardGear=rewardTrap.rewardWeapon;
+          world.traps=[rewardTrap];world.torches.forEach(t=>t.lit=true);
+          const adjacent=[{x:45,y:0},{x:-45,y:0},{x:0,y:45},{x:0,y:-45}]
+            .map(d=>({x:rewardTrap.x+d.x,y:rewardTrap.y+d.y}))
+            .find(p=>free(p.x,p.y,12)&&clearLine(p,rewardTrap));
+          if(!adjacent)throw new Error('No safe inspection position');
+          player.x=adjacent.x;player.y=adjacent.y;keys.clear();mouse.down=false;
+          world.seen.fill(1);window.rewardFloor=depth;window.rewardHP=player.hp;
+        }""")
+        page.wait_for_function("rewardTrap.triggered&&loot.some(item=>item.weapon===rewardGear)", timeout=6000)
+        assert page.evaluate("depth===rewardFloor&&player.hp===rewardHP&&rewardTrap.active===0&&loot.filter(item=>item.weapon===rewardGear).length===1")
+        page.wait_for_timeout(500)
+        page.screenshot(path=str(OUTPUT / f"{PREFIX}-{label}-hidden-hoard.png"))
         assert page.evaluate("document.documentElement.scrollWidth<=innerWidth&&document.documentElement.scrollHeight<=innerHeight")
         assert not errors, errors
         report["layouts"].append({"device": label, "right_click": not touch, "keyboard_R": True,
@@ -110,6 +126,7 @@ with sync_playwright() as p:
                                   "pickup": True, "paused_cast_preserves_inventory": True,
                                   "context_menu_only_canvas": True, "no_primary_attack": True,
                                   "key_repeat_ignored": True, "spell_choice_while_gear_selected": True,
+                                  "natural_inspection_hidden_hoard_once_no_trap": True,
                                   "no_overflow": True, "errors": errors})
         context.close()
     browser.close()
