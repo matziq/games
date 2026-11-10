@@ -607,6 +607,8 @@ check('delete and one-use undo restore the precise selected overlapping item wit
   assert.equal(run("undoGearDelete()"),false);
 });
 check('delete protects nongear and pause state; latest undo survives descent but clears on new runs', () => {
+  assert.ok(html.includes('Undo last delete restores one item during this run, even after descent.'));
+  assert.ok(!html.includes('Undo last delete restores one item on the same floor.'));
   run("loadFloor(1,604);state='playing';var one={x:player.x+40,y:player.y,type:'weapon',weapon:makeWeapon()},two={x:player.x+40,y:player.y,type:'armor',armor:makeArmor()};loot=[one,two];selectedWorldItem=one");
   run("state='paused'");assert.equal(run("deleteSelectedGear()"),false);
   run("state='playing';selectedWorldItem=world.torches[0]");assert.equal(run("deleteSelectedGear()"),false);
