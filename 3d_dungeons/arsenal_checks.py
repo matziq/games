@@ -73,11 +73,71 @@ with sync_playwright() as p:
           shoot(spider,Math.PI,spider.shotSpeed);window.webX=player.x;
         }""")
         page.wait_for_function("player.root>0")
+        assert page.evaluate("!shots.some(s=>s.type==='web')")
+        page.screenshot(path=str(OUT / f"{PREFIX}-{name}-web.png"))
         page.keyboard.down("d")
         page.wait_for_timeout(300)
         assert page.evaluate("Math.abs(player.x-webX)<.01")
         page.wait_for_function("player.x>webX+5")
         page.keyboard.up("d")
+        page.evaluate("""() => {
+          enemies=[];props=[];world.traps=[];heroShots=[];player.root=0;player.dash=0;player.inv=1000;
+          window.scrollBefore=player.scrolls.light;window.lootX=player.x;
+          window.fadingGear={x:player.x+95,y:player.y,type:'weapon',weapon:makeWeapon(),age:9.7};
+          loot=[fadingGear,{x:player.x+120,y:player.y,type:'scroll',scroll:'light'}];
+        }""")
+        page.wait_for_function("player.scrolls.light===scrollBefore+1")
+        assert page.evaluate("fadingGear.x===lootX+95")
+        page.wait_for_function("fadingGear.age>10")
+        page.keyboard.press("p")
+        paused_age = page.evaluate("fadingGear.age")
+        page.wait_for_timeout(350)
+        assert page.evaluate("fadingGear.age") == paused_age
+        page.keyboard.press("p")
+        page.wait_for_function("lootVisible(fadingGear)")
+        page.screenshot(path=str(OUT / f"{PREFIX}-{name}-fading-loot.png"))
+        page.evaluate("fadingGear.age=19.8")
+        page.wait_for_function("!loot.includes(fadingGear)")
+        for container in ["barrel", "crate", "chest"]:
+            page.evaluate("""type => {
+              loot=[];props=[];world.traps=[];player.angle=0;mouse.active=false;canvas.focus();player.cool=0;
+              player.weapon={...weaponTypes.sword,kind:'sword',damage:100,name:'Test Sword',color:'#ddd'};
+              window.remnant={x:player.x+45,y:player.y,type,hp:1,open:false};props=[remnant];
+            }""", container)
+            if container == "chest":
+                if touch:
+                    page.locator("#touchInteract").tap()
+                else:
+                    page.keyboard.press("e")
+            elif touch:
+                page.locator("#touchAttack").tap()
+            else:
+                page.keyboard.press("Space")
+            page.wait_for_function("remnant.open")
+            page.evaluate("loot=[];player.cool=0")
+            if touch:
+                page.locator("#touchAttack").tap()
+            else:
+                page.keyboard.press("Space")
+            page.wait_for_function("remnant.destroyed")
+            assert page.evaluate("loot.length===0&&!blocksShot(remnant)")
+        page.evaluate("""() => {
+          props=[];loot=[];heroShots=[];player.inv=1000;
+          window.safeTest={x:player.x+45,y:player.y,kind:'fire',inspect:0,active:0};
+          window.trapBug=makeEnemy('bug',safeTest);trapBug.hp=300;trapBug.trapSwarm=true;trapBug.emerge=10;
+          enemies=[trapBug];world.traps=[safeTest];
+        }""")
+        page.wait_for_timeout(350)
+        assert page.evaluate("!safeTest.triggered&&trapBug.hp===300")
+        page.evaluate("safeTest.revealed=true")
+        if touch:
+            page.locator("#touchInteract").tap()
+        else:
+            page.keyboard.press("e")
+        page.wait_for_function("safeTest.arming>0")
+        assert page.evaluate("!safeTest.triggered")
+        page.wait_for_function("safeTest.triggered&&trapBug.burn>0&&trapBug.hp<300")
+        page.screenshot(path=str(OUT / f"{PREFIX}-{name}-active-trap.png"))
         page.evaluate("""() => {
           loadFloor(3,604);enemies=[];props=[];world.traps=[];world.quake.next=Infinity;
           const room=world.rooms.find(r=>r.kind==='abandoned');
@@ -94,7 +154,10 @@ with sync_playwright() as p:
         report["layouts"].append({"name": name, "natural_egg_hatch": True, "destroyed_egg_stays_dead": True,
                                    "five_pack_pickup": True, "ammo_keyboard_or_touch_selection": True,
                                    "real_attack_consumption": True, "projectile_relights_torch": True,
-                                   "web_root_and_expiry": True, "pit_exact_one_floor": True, "errors": errors})
+                                   "instant_web_root_and_expiry": True, "pit_exact_one_floor": True,
+                                   "scroll_vacuum": True, "loot_blink_expiry_pause": True,
+                                   "clear_container_remains": True, "mob_only_affected_after_activation": True,
+                                   "errors": errors})
         context.close()
     browser.close()
 (OUT / f"{PREFIX}-checks.json").write_text(json.dumps(report, indent=2), encoding="utf-8")

@@ -24,6 +24,97 @@ scripts.forEach(script => vm.runInContext(script, sandbox));
 const run = code => vm.runInContext(code, sandbox);
 let count = 0;
 function check(name, fn) { fn(); count++; console.log('PASS ' + name); }
+check('scrolls vacuum at three tiles and collect exactly once; gear potions and ammunition stay put', () => {
+  run("begin();loadFloor(1,604);enemies=[];props=[];world.traps=[];player.dash=0;var scrollX=player.x;var scrollCount=player.scrolls.light;var nearScroll={x:player.x+3*T,y:player.y,type:'scroll',scroll:'light'};var farScroll={x:player.x+3*T+.01,y:player.y,type:'scroll',scroll:'light'};var stillLoot=['weapon','armor','potion','ammo'].map(type=>({x:player.x+100,y:player.y,type}));loot=[nearScroll,farScroll,...stillLoot];baseUpdate(.04)");
+  assert.ok(run('nearScroll.x<scrollX+3*T'));
+  assert.equal(run('farScroll.x'),run('scrollX+3*T+.01'));
+  assert.equal(run('stillLoot.every(item=>item.x===scrollX+100)'),true);
+  run('for(let i=0;i<30;i++){baseUpdate(.04);updateScrolls(.04)}');
+  assert.equal(run('player.scrolls.light'),run('scrollCount+1'));
+  assert.equal(run('loot.includes(nearScroll)'),false);
+  assert.equal(run('loot.includes(farScroll)'),true);
+});
+check('only loose gear and potions blink at ten seconds and expire at twenty, with no duplicate undo', () => {
+  run("loadFloor(1,604);enemies=[];props=[];world.traps=[];var timed=['weapon','armor','potion'].map(type=>({x:player.x+200,y:player.y,type}));var permanent=['gold','scroll','ammo'].map(type=>({x:player.x+240,y:player.y,type}));loot=[...timed,...permanent];baseUpdate(9.99)");
+  assert.equal(run('timed.every(item=>lootVisible(item)&&item.age===9.99)'),true);
+  run('baseUpdate(.02)');
+  assert.equal(run('timed.every(item=>item.age>10&&lootVisible(item))'),true);
+  run('baseUpdate(.21)');
+  assert.equal(run('timed.every(item=>!lootVisible(item))'),true);
+  run('baseUpdate(9.77)');
+  assert.equal(run('loot.length'),6);
+  run('baseUpdate(.02)');
+  assert.equal(run('loot.length'),3);
+  assert.equal(run('permanent.every(item=>loot.includes(item)&&lootVisible(item))'),true);
+  run("var timedGear={x:player.x+40,y:player.y,type:'weapon',weapon:makeWeapon(),age:19};loot=[timedGear];selectedWorldItem=timedGear;deleteSelectedGear();baseUpdate(5);undoGearDelete();undoGearDelete()");
+  assert.equal(run('loot.length===1&&loot[0]===timedGear&&timedGear.age===19'),true);
+  run('baseUpdate(1.01)');
+  assert.equal(run('loot.length'),0);
+});
+check('monsters and trap creatures never spring hidden or disarmed traps, even while crossing them', () => {
+  for(const type of ['slime','bug','bat','cave_spider','cinder_wizard']){
+    for(const revealed of [false,true]){
+      run(`loadFloor(1,604);world.tiles.fill(1);props=[];loot=[];var inert={x:player.x+100,y:player.y,kind:'explosion',revealed:${revealed},inspect:0,active:0};world.traps=[inert];var passer=makeEnemy('${type}',inert);passer.hp=300;passer.trapSwarm=${type==='bug'||type==='bat'};passer.emerge=10;enemies=[passer];updateTraps(.1,false)`);
+      assert.equal(run('!!inert.triggered'),false,`${type}, revealed=${revealed}`);
+      assert.equal(run('passer.hp'),300);
+    }
+  }
+});
+check('active hazards catch late-arriving ordinary monsters spiderlings and trap swarms without swarm loot', () => {
+  for(const type of ['slime','bug','bat','cave_spider','cinder_wizard']){
+    for(const kind of ['poison','fire','explosion','quicksand','trapdoor']){
+      run(`loadFloor(1,604);world.tiles.fill(1);props=[];loot=[];enemies=[];var liveTrap={x:player.x+120,y:player.y,kind:'${kind}',revealed:true};world.traps=[liveTrap];triggerTrap(liveTrap,true);var entrant=makeEnemy('${type}',liveTrap);entrant.hp=300;entrant.trapSwarm=${type==='bug'||type==='bat'||type==='cave_spider'};entrant.baby=${type==='cave_spider'};entrant.emerge=10;enemies=[entrant];updateTraps(.01,false)`);
+      if(kind==='poison')assert.equal(run('entrant.poison>0&&entrant.hp<300'),true);
+      if(kind==='fire')assert.equal(run('entrant.burn>0&&entrant.hp<300'),true);
+      if(kind==='explosion')assert.equal(run('entrant.hp'),268);
+      if(kind==='quicksand')assert.ok(run('entrant.slow>0'));
+      if(kind==='trapdoor'){
+        assert.equal(run('entrant.hp'),0);
+        assert.equal(run('depth'),1);
+        if(type!=='slime'&&type!=='cinder_wizard')assert.equal(run('loot.length'),0);
+      }
+    }
+  }
+});
+check('activated bug and bat broods attack approaching trap creatures but do not attack their own brood', () => {
+  for(const kind of ['bugs','bats']){
+    run(`loadFloor(1,604);world.tiles.fill(1);props=[];loot=[];enemies=[];player.x=world.start.x-150;var broodTrap={...world.start,kind:'${kind}',revealed:true};world.traps=[];triggerTrap(broodTrap,true);var brood=enemies.slice();var fighter=brood[0];var outsider=makeEnemy('bug',{x:fighter.x+20,y:fighter.y});outsider.hp=100;outsider.trapSwarm=true;outsider.emerge=10;enemies.push(outsider);fighter.emerge=0;fighter.cool=0;updateTraps(.01,false)`);
+    assert.ok(run('outsider.hp<100'));
+    assert.equal(run('brood.slice(1).every(e=>e.hp===e.max)'),true);
+  }
+});
+check('barrel and box remnants and opened chests clear on a second melee or projectile hit without extra loot', () => {
+  for(const kind of ['sword','bow','crossbow']){
+    for(const type of ['barrel','crate','chest']){
+      run(`loadFloor(1,604);world.tiles.fill(1);world.torches=[];enemies=[];loot=[];player.angle=0;player.weapon={...weaponTypes.${kind},kind:'${kind}',damage:100};var remnant={x:player.x+40,y:player.y,type:'${type}',hp:1,open:false};props=[remnant];breakProp(remnant,100)`);
+      if(type==='chest'){
+        assert.equal(run('remnant.open'),false,'unopened chest must be protected');
+        run('interact()');
+      }
+      assert.equal(run('remnant.open&&!remnant.destroyed'),true);
+      const earned=run('loot.length');
+      run('player.cool=0;attack();if(heroShots.length)updateHeroShots(.2)');
+      assert.equal(run('remnant.destroyed&&!blocksShot(remnant)'),true,`${kind} ${type}`);
+      assert.equal(run('loot.length'),earned,'clearing remains duplicated loot');
+      run('breakProp(remnant,999)');
+      assert.equal(run('loot.length'),earned);
+    }
+  }
+});
+check('spider webs track current position and strike immediately after charge; cover dodge and sanctuaries protect', () => {
+  run("loadFloor(1,604);world.tiles.fill(1);props=[];world.traps=[];player.inv=0;player.dash=0;var snapSpider=makeEnemy('cave_spider',{x:player.x+150,y:player.y});enemies=[snapSpider];snapSpider.cool=0;update(.01);player.y+=40;update(snapSpider.wind+.001)");
+  assert.equal(run('player.root'),1);
+  assert.equal(run("shots.some(s=>s.type==='web')"),false);
+  for(const blocked of ['wall','chest','dodge','range','sanctuary']){
+    run(`loadFloor(${blocked==='sanctuary'?2:1},604);world.tiles.fill(1);props=[];world.traps=[];player.inv=0;player.root=0;var guardedSpider=makeEnemy('cave_spider',{x:player.x+150,y:player.y});enemies=[guardedSpider]`);
+    if(blocked==='wall')run('world.tiles[Math.floor(player.y/T)*W+Math.floor((player.x+70)/T)]=0');
+    if(blocked==='chest')run("props=[{x:player.x+70,y:player.y,type:'chest',open:false}]");
+    if(blocked==='dodge')run('player.inv=.3');
+    if(blocked==='range')run('guardedSpider.x=player.x+400');
+    run('shoot(guardedSpider,0,430,"web")');
+    assert.equal(run('player.root'),0,blocked);
+  }
+});
 check('elemental packs grant exactly five, preserve inventories on descent, reset on new run', () => {
   run("begin();loot=[];for(let i=0;i<100;i++)drops(player,true)");
   assert.equal(run("['bow','crossbow'].every(kind=>Object.keys(ammoColors).every(special=>loot.some(l=>l.type==='ammo'&&l.ammoKind===kind&&l.special===special&&l.value===5)))"),true);
@@ -276,8 +367,10 @@ check('spider webs, wizard fire and lightning are telegraphed attacks with real 
     assert.ok(run('enemies[0].wind>0'),`${type} has no telegraph`);
     assert.ok(run("enemies[0].attackTarget&&Math.abs(enemies[0].attackTarget.x-player.x)<.01"),`${type} did not lock a target`);
     for(let i=0;i<(type==='cave_spider'?22:30);i++)run('update(.04)');
-    assert.ok(run(`shots.some(s=>s.type==='${status==='root'?'web':'fire'}')`),`${type} did not launch its projectile`);
-    run("{const s=shots[0];s.x=player.x;s.y=player.y;s.vx=0;s.vy=0;player.inv=0;update(.01)}");
+    if(status==='burn'){
+      assert.ok(run("shots.some(s=>s.type==='fire')"),`${type} did not launch its projectile`);
+      run("{const s=shots[0];s.x=player.x;s.y=player.y;s.vx=0;s.vy=0;player.inv=0;update(.01)}");
+    }else assert.equal(run("shots.some(s=>s.type==='web')"),false,'web should have no travel delay');
     assert.ok(run(`player.${status}>0`),`${type} did not apply ${status}`);
   }
   run("loadFloor(5,43);player.x=world.start.x;player.y=world.start.y;player.hp=120;player.inv=0;enemies=[makeEnemy('crypt_wizard',{x:player.x+120,y:player.y})];enemies[0].cool=0;update(.01)");
@@ -745,13 +838,15 @@ check('all trap types affect monsters; swarms attack nearby monsters and players
     }
   }
 });
-check('every projectile stops at the first intact collider even on a killing hit; later shots pass debris', () => {
+check('every projectile stops on the first collider; one additional shot clears debris before shots pass', () => {
   for(const kind of ['bow','crossbow','javelin','knife','throwing_axe','boomerang']){
     for(const prop of ['crate','barrel']){
       run(`loadFloor(1,604);state='playing';world.traps=[];player.level=1;player.angle=0;player.weapon={...weaponTypes.${kind},kind:'${kind}',damage:25,color:'#ddd'};props=[{x:player.x+65,y:player.y,type:'${prop}',hp:60,open:false}];enemies=[makeEnemy('slime',{x:player.x+110,y:player.y})];var behind=enemies[0];behind.hp=300;player.cool=0;attack();updateHeroShots(.25)`);
       assert.equal(run('props[0].hp'),33);assert.equal(run('behind.hp'),300);
       run('heroShots=[];props[0].hp=1;player.cool=0;attack();updateHeroShots(.25)');
       assert.equal(run('props[0].broken'),true);assert.equal(run('behind.hp'),300);
+      run('heroShots=[];player.cool=0;attack();updateHeroShots(.35)');
+      assert.equal(run('props[0].destroyed'),true);assert.equal(run('behind.hp'),300);
       run('heroShots=[];player.cool=0;attack();updateHeroShots(.35)');
       assert.ok(run('behind.hp')<300);
     }

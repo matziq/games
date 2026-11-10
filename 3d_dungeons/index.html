@@ -278,7 +278,14 @@ function makeWeapon(){const tier=integer(0,99),rarity=tier>88?2:tier>55?1:0,kind
 function makeArmor(slot=armorSlots[integer(0,armorSlots.length-1)]){const tier=integer(0,2),kind=['leather','chain','plate'][tier];return {name:slot==='armor'?['Hardened Leather','Riveted Chainmail','Knight\'s Plate'][tier]:['Leather','Chain','Plate'][tier]+' '+{boots:'Boots',gloves:'Gloves',helmet:'Helmet'}[slot],kind,slot,reduction:slot==='armor'?Math.min(.4,.08+tier*.08+depth*.025):Math.min(.12,.025+tier*.025+depth*.006),color:['#ad7951','#91adb4','#c8cddd'][tier]}}
 function drops(e,chest=false){if(e.trapSwarm)return;loot.push({x:e.x-12,y:e.y,type:'gold',value:chest?integer(20,40)*depth:integer(3,10)*depth});if(chest||rng()<.25)loot.push({x:e.x+22,y:e.y+12,type:'weapon',weapon:makeWeapon()});if(chest||rng()<.16)loot.push({x:e.x-24,y:e.y+25,type:'armor',armor:makeArmor()});if(rng()<(chest?.65:.14))loot.push({x:e.x,y:e.y-22,type:'potion'})}
 function hurtEnemy(e,amount){if(e.hp<=0)return;window.DungeonAudio.play('hit',e.type);window.DungeonAudio.play('voice',e.type);const actual=Math.min(Math.max(0,e.hp),amount);e.hp-=amount;e.hit=.15;if(actual>0)floatText(e.x,e.y-25,'-'+Math.ceil(actual),'strike');particle(e.x,e.y,e.type==='slime'?'#74b788':'#d4a873');if(e.hp<=0){kills++;drops(e);player.xp+=e.type==='dragon'?250:18+depth*3;log(e.type==='dragon'?'Varkhos has fallen! The crown is yours.':e.type[0].toUpperCase()+e.type.slice(1)+' defeated.');while(player.xp>=player.level*65){player.xp-=player.level*65;player.level++;player.max+=15;player.hp=Math.min(player.max,player.hp+40);log('Knight rank '+player.level+'. Vitality increased.')}if(e.type==='dragon'){bossDefeated=true;player.gold+=500;floatText(player.x,player.y-25,'+500 GOLD','gold');state='won';showOverlay('The Ashen Crown is yours.','Varkhos falls beneath your steel. Five chapters conquered. '+player.gold+' gold recovered, '+kills+' foes defeated. Every new adventure reshapes the keep.','Adventure again')}}}
-function breakProp(p,amount){if(p.open||p.hp<=0)return;p.hp-=amount;particle(p.x,p.y,'#bf8e56');if(p.hp<=0){p.open=true;p.broken=true;particle(p.x,p.y,p.type==='crate'?'#c79b61':'#9e7146',14);if(p.type==='decor'){loot.push({x:p.x,y:p.y,type:'gold',value:integer(1,2)});world.webs=world.webs.filter(w=>w.decor!==p);log(p.label+' destroyed. A few coins remain.')}else{drops(p);log(p.type==='barrel'?'Barrel broken.':'Crate shattered.')}}}
+function canStrikeProp(p){return !p.destroyed&&(p.type==='chest'?p.open:!p.open||p.type==='barrel'||p.type==='crate')}
+function blocksShot(p){return !p.destroyed&&(!p.open||canStrikeProp(p))}
+function breakProp(p,amount){
+ if(amount<=0||!canStrikeProp(p))return;
+ particle(p.x,p.y,'#bf8e56');
+ if(p.open){p.destroyed=true;particle(p.x,p.y,'#aa8054',14);return}
+ p.hp-=amount;
+ if(p.hp<=0){p.open=true;p.broken=true;particle(p.x,p.y,p.type==='crate'?'#c79b61':'#9e7146',14);if(p.type==='decor'){loot.push({x:p.x,y:p.y,type:'gold',value:integer(1,2)});world.webs=world.webs.filter(w=>w.decor!==p);log(p.label+' destroyed. A few coins remain.')}else{drops(p);log(p.type==='barrel'?'Barrel broken.':'Crate shattered.')}}}
 function attack(){
  if(state!=='playing'||player.cool>0)return;
  const w=player.weapon,kind=weaponKind(w);
@@ -291,14 +298,25 @@ function attack(){
   return;
  }
  enemies.filter(e=>e.hp>0&&distance(e,player)<w.range+e.radius&&clearLine(player,e)&&Math.abs(angleDiff(Math.atan2(e.y-player.y,e.x-player.x),player.angle))<1.2).forEach(e=>hurtEnemy(e,w.damage+player.level*2));
- props.filter(p=>!p.open&&p.type!=='chest'&&distance(p,player)<w.range&&clearLine(player,p)&&Math.abs(angleDiff(Math.atan2(p.y-player.y,p.x-player.x),player.angle))<1.3).forEach(p=>breakProp(p,w.damage));
+ props.filter(p=>canStrikeProp(p)&&distance(p,player)<w.range&&clearLine(player,p)&&Math.abs(angleDiff(Math.atan2(p.y-player.y,p.x-player.x),player.angle))<1.3).forEach(p=>breakProp(p,w.damage));
  for(const torch of world.torches)if(distance(torch,player)<w.range&&clearLine(player,torch)&&Math.abs(angleDiff(Math.atan2(torch.y-player.y,torch.x-player.x),player.angle))<1.3)strikeTorch(torch);
 }
 function nearby(){const candidates=[...props.filter(p=>p.type==='chest'&&!p.open),...loot.filter(l=>l.type==='weapon'||l.type==='armor'),{...world.end,type:'stairs'}].filter(o=>distance(o,player)<70&&clearLine(player,o));return candidates.sort((a,b)=>distance(a,player)-distance(b,player))[0]}
 function interact(){if(state!=='playing')return;const o=nearby();if(!o)return;if(o.type==='chest'){o.open=true;drops(o,true);floatText(o.x,o.y-18,'CHEST OPENED','treasure');log('Treasure chest opened.')}if(o.type==='weapon'||o.type==='armor'){const slot=o.type==='armor'?armorSlot(o.armor):'weapon',old=player[slot];player[slot]=o[o.type];loot.splice(loot.indexOf(o),1);if(old)loot.push({x:o.x,y:o.y,type:o.type,[o.type]:old});floatText(o.x,o.y-18,'+ '+player[slot].name,'loot');log('Equipped '+player[slot].name+'.');if(o.type==='armor')window.DungeonAudio.play('armor');updateHUD()}if(o.type==='stairs'){if(depth<5)loadFloor(depth+1,crypto.getRandomValues(new Uint32Array(1))[0]);else log('Defeat the Cinder King to claim the crown.');}}
 function potion(){if(state!=='playing')return;if(player.potions>0&&player.hp<player.max){const restored=Math.min(65,player.max-player.hp);player.potions--;player.hp+=restored;floatText(player.x,player.y-15,'+'+Math.ceil(restored)+' HP','heal');particle(player.x,player.y,'#81dab5',20);log('Healing draught restores 65 vitality.')}else log(player.potions?'Already at full vitality.':'No potions left.')}
 function dodge(){if(state!=='playing'||player.stamina<35||player.dash>0)return;window.DungeonAudio.play('dodge');player.stamina-=35;player.dash=.18;player.inv=.3;let x=(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0),y=(keys.has('s')||keys.has('arrowdown')?1:0)-(keys.has('w')||keys.has('arrowup')?1:0);const a=x||y?Math.atan2(y,x):player.angle;player.dashX=Math.cos(a);player.dashY=Math.sin(a)}
-function shoot(e,a,speed=180,spell=''){const type=spell||e.attack;if(type==='web')window.DungeonAudio.play('venom');else if(type==='venom'||type==='fire'||type==='lightning')window.DungeonAudio.play(type);else if(e.type!=='dragon')window.DungeonAudio.play('magic');shots.push({x:e.x,y:e.y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,life:3,damage:type==='web'?0:e.damage,color:e.projectile||'#bd90ed',type,owner:e})}
+function shoot(e,a,speed=180,spell=''){const type=spell||e.attack;if(type==='web'){strikeWeb(e);return}else if(type==='venom'||type==='fire'||type==='lightning')window.DungeonAudio.play(type);else if(e.type!=='dragon')window.DungeonAudio.play('magic');shots.push({x:e.x,y:e.y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,life:3,damage:e.damage,color:e.projectile||'#bd90ed',type,owner:e})}
+function strikeWeb(spider){
+ window.DungeonAudio.play('venom');
+ if(distance(spider,player)>spider.reach+18||!clearLine(spider,player))return;
+ const collision=[
+  ...props.filter(blocksShot).map(object=>({object,radius:20})),
+  ...[player,...enemies.filter(e=>e.hp>0&&e!==spider)].map(object=>({object,radius:object===player?18:object.radius+5}))
+ ].map(c=>({...c,at:segmentHit(spider,player,c.object,c.radius)})).filter(c=>c.at!==null).sort((a,b)=>a.at-b.at)[0];
+ const at=collision?.at??1,point={x:spider.x+(player.x-spider.x)*at,y:spider.y+(player.y-spider.y)*at};
+ world.webStrikes.push({...point,from:{x:spider.x,y:spider.y},life:.18});
+ if(collision?.object===player&&player.inv<=0&&!inMerchantSanctuary()){player.root=1;floatText(player.x,player.y-15,'WEBBED - STUCK 1s','damage')}
+}
 function update(dt){
  clock+=dt;player.cool=Math.max(0,player.cool-dt);player.swing=Math.max(0,player.swing-dt);player.inv=Math.max(0,player.inv-dt);player.stamina=Math.min(100,player.stamina+22*dt);
  let dx=(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0),dy=(keys.has('s')||keys.has('arrowdown')?1:0)-(keys.has('w')||keys.has('arrowup')?1:0);
@@ -326,14 +344,14 @@ function update(dt){
   s.life-=dt;const steps=Math.max(1,Math.ceil(Math.hypot(s.vx,s.vy)*dt/8));
   for(let i=0;i<steps&&s.life>0;i++){
    const next={x:s.x+s.vx*dt/steps,y:s.y+s.vy*dt/steps},colliders=[
-    ...props.filter(p=>!p.open).map(object=>({object,radius:20,prop:true})),
+    ...props.filter(blocksShot).map(object=>({object,radius:20,prop:true})),
     ...[player,...enemies.filter(e=>e.hp>0&&e!==s.owner)].map(object=>({object,radius:object===player?18:object.radius+5,prop:false}))
    ].map(c=>({...c,at:segmentHit(s,next,c.object,c.radius)})).filter(c=>c.at!==null).sort((a,b)=>a.at-b.at),collision=colliders[0],fraction=collision?.at??1;
    s.x+=(next.x-s.x)*fraction;s.y+=(next.y-s.y)*fraction;
    if(!floorAt(s.x,s.y)){s.life=0;break}
    if(!collision)continue;
    const target=collision.object;
-   if(collision.prop){if(target.type!=='chest')breakProp(target,s.damage)}
+   if(collision.prop)breakProp(target,s.damage);
    else{
     const dodging=target===player&&player.inv>0;
     if(s.damage>0){if(target===player)damagePlayer(s.damage);else hurtEnemy(target,s.damage)}
@@ -349,7 +367,8 @@ function update(dt){
  for(const status of ['poison','burn'])if(player[status]>0){player[status]=Math.max(0,player[status]-dt);player[status+'Tick']-=dt;if(player[status]>0&&player[status+'Tick']<=0){player[status+'Tick']=status==='poison'?.75:.65;damagePlayer(status==='poison'?3:4,status);particle(player.x,player.y,status==='poison'?'#9be05c':'#ff793c',4)}}
  shots=shots.filter(s=>s.life>0);enemies=enemies.filter(e=>e.hp>0);
  for(const l of loot){
-  if(l.type==='gold'&&!l.taken){
+  if(['weapon','armor','potion'].includes(l.type)){l.age=(l.age||0)+dt;if(l.age>=20){l.taken=true;continue}}
+  if((l.type==='gold'||l.type==='scroll')&&!l.taken){
    const gap=distance(l,player);
    if(gap<=3*T&&gap>0){const step=Math.min(gap,360*dt);l.x+=(player.x-l.x)/gap*step;l.y+=(player.y-l.y)/gap*step}
   }
@@ -442,7 +461,7 @@ function render(){
  drawRoomDetails();
  for(const t of world.torches)if(world.seen[Math.floor(t.y/T)*W+Math.floor(t.x/T)]){if(t.lit){glow(t.x,t.y,120,world.theme.torch+'44');glow(t.x,t.y,40,world.theme.torch+'88')}ctx.fillStyle=world.theme.motif==='lava'?'#42231d':'#59402b';ctx.fillRect(t.x-4,t.y-4,8,15);circle(t.x,t.y-7,t.lit?5+Math.sin(clock*9+t.x)*1.3:4,t.lit?world.theme.torch:'#8c8275');if(t.lit)circle(t.x,t.y-9,2,'#fff0ae')}
  if(world.seen[Math.floor(world.end.y/T)*W+Math.floor(world.end.x/T)]){glow(world.end.x,world.end.y,55,world.theme.accent+'55');ctx.strokeStyle=world.theme.accent;ctx.lineWidth=2;for(let i=0;i<5;i++)ctx.strokeRect(world.end.x-18+i*2,world.end.y-19+i*7,36-i*4,6)}
- for(const p of props){if(p.type==='decor'||!world.seen[Math.floor(p.y/T)*W+Math.floor(p.x/T)])continue;ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='#0006';ctx.fillRect(-17,-5,35,27);
+ for(const p of props){if(p.destroyed||p.type==='decor'||!world.seen[Math.floor(p.y/T)*W+Math.floor(p.x/T)])continue;ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='#0006';ctx.fillRect(-17,-5,35,27);
   if(p.type==='chest'){
    if(p.open){ctx.fillStyle='#4a3329';ctx.fillRect(-15,0,30,14);ctx.fillStyle='#171d1c';ctx.fillRect(-11,2,22,7);ctx.strokeStyle='#d1a950';ctx.lineWidth=3;ctx.strokeRect(-16,-1,32,16);ctx.fillStyle='#8c603d';ctx.beginPath();ctx.moveTo(-15,-4);ctx.lineTo(-13,-16);ctx.quadraticCurveTo(0,-22,13,-16);ctx.lineTo(15,-4);ctx.closePath();ctx.fill();ctx.strokeStyle='#e2bf70';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#d4b264';ctx.fillRect(-10,-13,3,10);ctx.fillRect(7,-13,3,10)}
    else{ctx.fillStyle='#76502e';ctx.fillRect(-15,-3,30,17);ctx.strokeStyle='#d3a84f';ctx.lineWidth=3;ctx.strokeRect(-15,-3,30,17);ctx.fillStyle='#9a6b3a';ctx.beginPath();ctx.moveTo(-15,-3);ctx.lineTo(-15,-10);ctx.quadraticCurveTo(0,-23,15,-10);ctx.lineTo(15,-3);ctx.closePath();ctx.fill();ctx.strokeStyle='#e1bb62';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#dfbd68';ctx.fillRect(-10,-12,3,10);ctx.fillRect(7,-12,3,10);ctx.fillStyle='#f5d276';ctx.fillRect(-3,-5,6,9);ctx.fillStyle='#624b36';ctx.fillRect(-1,-2,2,3)}
@@ -452,7 +471,7 @@ function render(){
   }else if(p.broken){polygon([[-16,9],[-8,-7],[-3,8],[6,-13],[11,8],[17,11]],'#997044');ctx.strokeStyle='#593e2c';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-16,9);ctx.lineTo(-8,-7);ctx.lineTo(-3,8);ctx.lineTo(6,-13);ctx.lineTo(11,8);ctx.lineTo(17,11);ctx.stroke()}
   else{ctx.fillStyle='#815b39';ctx.fillRect(-15,-11,30,23);ctx.strokeStyle='#aa8357';ctx.lineWidth=2;ctx.strokeRect(-14,-10,28,21);ctx.fillStyle='#99734b';for(let x of [-9,-3,3,9])ctx.fillRect(x-1,-9,2,19);ctx.strokeStyle='#c09a65';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-14,-10);ctx.lineTo(14,10);ctx.moveTo(14,-10);ctx.lineTo(-14,10);ctx.stroke();ctx.fillStyle='#d5b17a';for(const x of [-11,11])for(const y of [-7,7])circle(x,y,1.3,'#d5b17a')}
   ctx.restore()}
- for(const l of loot)if(l.type!=='ammo'&&world.seen[Math.floor(l.y/T)*W+Math.floor(l.x/T)]){const c=l.type==='scroll'?scrollTypes[l.scroll].color:l.type==='weapon'?l.weapon.color:l.type==='armor'?l.armor.color:l.type==='gold'?'#edbf72':'#76d9ac';glow(l.x,l.y,24,c+'44');if(l.type==='gold'){circle(l.x,l.y,5,c);circle(l.x-5,l.y+4,4,'#a78041')}else if(l.type==='scroll'){ctx.fillStyle='#ecd6a5';ctx.fillRect(l.x-7,l.y-9,14,18);ctx.strokeStyle=c;ctx.lineWidth=3;ctx.strokeRect(l.x-8,l.y-9,16,18);ctx.fillStyle=c;ctx.font='bold 11px Georgia';ctx.textAlign='center';ctx.fillText(l.scroll[0].toUpperCase(),l.x,l.y+4)}else if(l.type==='potion'){ctx.fillStyle=c;ctx.fillRect(l.x-5,l.y-3,10,12);ctx.fillStyle='#d9d6ba';ctx.fillRect(l.x-3,l.y-7,6,4)}else{ctx.save();ctx.translate(l.x,l.y);if(l.type==='armor')drawArmor(l.armor);else{ctx.rotate(-.8);ctx.scale(.8,.8);ctx.translate(-15,0);drawWeapon(l.weapon)}ctx.restore()}}
+ for(const l of loot)if(lootVisible(l)&&l.type!=='ammo'&&world.seen[Math.floor(l.y/T)*W+Math.floor(l.x/T)]){const c=l.type==='scroll'?scrollTypes[l.scroll].color:l.type==='weapon'?l.weapon.color:l.type==='armor'?l.armor.color:l.type==='gold'?'#edbf72':'#76d9ac';glow(l.x,l.y,24,c+'44');if(l.type==='gold'){circle(l.x,l.y,5,c);circle(l.x-5,l.y+4,4,'#a78041')}else if(l.type==='scroll'){ctx.fillStyle='#ecd6a5';ctx.fillRect(l.x-7,l.y-9,14,18);ctx.strokeStyle=c;ctx.lineWidth=3;ctx.strokeRect(l.x-8,l.y-9,16,18);ctx.fillStyle=c;ctx.font='bold 11px Georgia';ctx.textAlign='center';ctx.fillText(l.scroll[0].toUpperCase(),l.x,l.y+4)}else if(l.type==='potion'){ctx.fillStyle=c;ctx.fillRect(l.x-5,l.y-3,10,12);ctx.fillStyle='#d9d6ba';ctx.fillRect(l.x-3,l.y-7,6,4)}else{ctx.save();ctx.translate(l.x,l.y);if(l.type==='armor')drawArmor(l.armor);else{ctx.rotate(-.8);ctx.scale(.8,.8);ctx.translate(-15,0);drawWeapon(l.weapon)}ctx.restore()}}
  for(const e of enemies)if(distance(e,player)<440&&world.seen[Math.floor(e.y/T)*W+Math.floor(e.x/T)]){
   if(e.wind>0){const spell=e.attack==='venom'||e.attack==='web'||e.attack==='fire'||e.attack==='lightning',color=e.type==='dragon'?'#f28b57':e.attack==='web'?'#e4e6d3':e.attack==='venom'?'#9be05c':e.attack==='fire'?'#ff713c':e.attack==='lightning'?'#bbc5ff':e.color;ctx.fillStyle=color+'38';ctx.strokeStyle=color;ctx.lineWidth=2;
    if(e.attack==='lightning'&&e.attackTarget){const tx=e.attackTarget.x,ty=e.attackTarget.y;ctx.setLineDash([5,5]);ctx.beginPath();ctx.arc(tx,ty,24+Math.sin(clock*10)*3,0,TAU);ctx.fill();ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.moveTo(e.x,e.y);for(let i=1;i<=6;i++){const f=i/7,offset=(i%2?1:-1)*10;ctx.lineTo(e.x+(tx-e.x)*f+offset,e.y+(ty-e.y)*f-offset)}ctx.lineTo(tx,ty);ctx.stroke()}
@@ -530,7 +549,7 @@ function configureHazards(){
  });
 }
 function applyTrap(t,actor){
- if(t.victims.has(actor)||actor.hp<=0||actor.trapSwarm)return false;
+ if(t.victims.has(actor)||actor.hp<=0)return false;
  t.victims.add(actor);
  const hero=actor===player,hit=amount=>hero?damagePlayer(amount):hurtEnemy(actor,amount);
  if(t.kind==='poison'||t.kind==='fire'){
@@ -561,7 +580,7 @@ function triggerTrap(t,manual=false){
  particle(t.x,t.y,t.kind==='poison'?'#9ae66d':t.kind==='fire'||t.kind==='explosion'?'#ff8b45':'#bfa67c',28);
  if(t.kind==='bugs'||t.kind==='bats'){
   for(let i=0;i<3;i++){const a=i*TAU/3,p={x:t.x+Math.cos(a)*48,y:t.y+Math.sin(a)*48};
-   if(free(p.x,p.y,12)){const e=withRealmDepth(baseMakeEnemy,t.kind==='bugs'?'bug':'bat',p);e.emerge=.8;e.cool=1.5;e.trapSwarm=true;e.swarmLife=12;enemies.push(e)}
+   if(free(p.x,p.y,12)){const e=withRealmDepth(baseMakeEnemy,t.kind==='bugs'?'bug':'bat',p);e.emerge=.8;e.cool=1.5;e.trapSwarm=true;e.trapSource=t;e.swarmLife=12;enemies.push(e)}
   }
  }
  const radius=t.kind==='explosion'?65:t.kind==='quicksand'?48:28;
@@ -579,7 +598,7 @@ function updateTraps(dt,moved){
   if(e.trapSwarm&&e.hp>0){
    e.swarmLife-=dt;if(e.swarmLife<=0){e.hp=0;particle(e.x,e.y,e.color);continue}
    if(e.emerge>0)continue;
-   const target=[player,...(e.baby?[]:enemies.filter(other=>other!==e&&!other.trapSwarm&&other.hp>0))].filter(a=>!inMerchantSanctuary(a)&&clearLine(e,a)).sort((a,b)=>distance(e,a)-distance(e,b))[0];
+   const target=[player,...(e.baby?[]:enemies.filter(other=>other!==e&&other.hp>0&&(!e.trapSource||other.trapSource!==e.trapSource)))].filter(a=>!inMerchantSanctuary(a)&&clearLine(e,a)).sort((a,b)=>distance(e,a)-distance(e,b))[0];
    if(!target)continue;
    e.cool-=dt;const a=Math.atan2(target.y-e.y,target.x-e.x);e.attackAngle=a;
    if(distance(e,target)>25)move(e,Math.cos(a)*e.speed*dt,Math.sin(a)*e.speed*dt);
@@ -604,7 +623,6 @@ function updateTraps(dt,moved){
    continue;
   }
   if(t.revealed)continue;
-  if(enemies.some(e=>e.hp>0&&!e.trapSwarm&&distance(t,e)<23&&clearLine(t,e))){if(triggerTrap(t))return true;continue}
   const d=distance(t,player);
   if(d<23&&triggerTrap(t))return true;
   if(t.triggered)continue;
@@ -644,7 +662,7 @@ function updateHeroShots(dt){
     (s.x-object.x)*s.vx+(s.y-object.y)*s.vy>0;
    const next={x:s.x+s.vx*step,y:s.y+s.vy*step},colliders=[
     ...world.torches.filter(object=>!s.hits.has(object)).map(object=>({object,radius:12,torch:true})),
-    ...props.filter(p=>!p.open&&!canDepart(p)).map(object=>({object,radius:20,prop:true})),
+    ...props.filter(p=>blocksShot(p)&&!canDepart(p)).map(object=>({object,radius:20,prop:true})),
     ...enemies.filter(e=>e.hp>0&&!canDepart(e)).map(object=>({object,radius:object.radius+5,prop:false}))
    ].map(c=>({...c,at:segmentHit(s,next,c.object,c.radius)})).filter(c=>c.at!==null).sort((a,b)=>a.at-b.at);
    const collision=colliders[0],fraction=collision?.at??1;
@@ -653,7 +671,7 @@ function updateHeroShots(dt){
    if(collision){
     s.hits.add(collision.object);
     if(collision.torch)strikeTorch(collision.object);
-    else if(collision.prop){if(collision.object.type!=='chest')breakProp(collision.object,s.damage)}
+    else if(collision.prop)breakProp(collision.object,s.damage);
     else hurtEnemy(collision.object,s.damage);
     impactAmmo(s,collision.torch?null:collision.object);
     // A boomerang turns away from its first impact; it never pierces an intact target.
@@ -980,7 +998,7 @@ loadFloor=function(floor,s){
  player.root=0;world.pits=[];
  for(const room of world.rooms)room.collapse=depth<MAX_FLOOR&&room.kind!=='entrance'&&room.kind!=='throne'&&rng()<.04?{timer:7,warning:null,count:0}:null;
  if(!player.scrolls){player.scrolls={fireball:1,light:1,poison:1,lightning:1};player.selectedScroll='fireball';player.scrollCooldown=0}
- world.scrollLights=[];world.scrollZones=[];world.scrollFlashes=[];
+ world.scrollLights=[];world.scrollZones=[];world.scrollFlashes=[];world.webStrikes=[];
  selectedWorldItem=null;selectionChoices=[];refreshSelectionPanel();
  idleThreat.elapsed=0;idleThreat.triggered=false;idleThreat.markers=[];
  $('threatStatus').hidden=true;$('roomName').textContent=world.rooms[0].name;
@@ -1067,7 +1085,7 @@ function impactAmmo(shot,target){
  if(shot.special==='explosive'){
   particle(shot.x,shot.y,ammoColors.explosive,30);
   for(const enemy of [...enemies])if(enemy.hp>0&&distance(shot,enemy)<75&&clearLine(shot,enemy))hurtEnemy(enemy,35);
-  for(const prop of props)if(!prop.open&&prop.type!=='chest'&&distance(shot,prop)<75&&clearLine(shot,prop))breakProp(prop,35);
+  for(const prop of props)if(canStrikeProp(prop)&&prop!==target&&distance(shot,prop)<75&&clearLine(shot,prop))breakProp(prop,35);
  }
  if(shot.special==='light')world.scrollLights.push({x:shot.x,y:shot.y,lit:true,magicRadius:170,life:15});
 }
@@ -1141,7 +1159,7 @@ function scrollAimPoint(){
   const next={x:player.x+direction.x*travel,y:player.y+direction.y*travel};
   if(!floorAt(next.x,next.y))break;
   point=next;
-  if(props.some(p=>!p.open&&distance(p,point)<22)||enemies.some(e=>e.hp>0&&distance(e,point)<e.radius+8))break;
+  if(props.some(p=>blocksShot(p)&&distance(p,point)<22)||enemies.some(e=>e.hp>0&&distance(e,point)<e.radius+8))break;
  }
  return point;
 }
@@ -1160,7 +1178,7 @@ function castScroll(){
    if(kind==='fireball'){enemy.burn=3;enemy.burnTick=.4}
    hurtEnemy(enemy,kind==='fireball'?55:100);
   }
-  for(const prop of props)if(!prop.open&&prop.type!=='chest'&&distance(point,prop)<radius+15&&clearLine(point,prop))breakProp(prop,80);
+  for(const prop of props)if(canStrikeProp(prop)&&distance(point,prop)<radius+15&&clearLine(point,prop))breakProp(prop,80);
  }
  world.scrollFlashes.push({...point,from:{x:player.x,y:player.y},kind,life:.45});
  particle(point.x,point.y,spell.color,24);window.DungeonAudio.play(kind==='light'?'magic':kind==='fireball'?'fire':kind==='poison'?'poison':'lightning');
@@ -1193,9 +1211,17 @@ function updateScrolls(dt){
  world.scrollZones=world.scrollZones.filter(zone=>zone.life>0);
  for(const flash of world.scrollFlashes)flash.life-=dt;
  world.scrollFlashes=world.scrollFlashes.filter(flash=>flash.life>0);
+ for(const strike of world.webStrikes)strike.life-=dt;
+ world.webStrikes=world.webStrikes.filter(strike=>strike.life>0);
  refreshScrollHUD();
 }
+function lootVisible(item){return !['weapon','armor','potion'].includes(item.type)||(item.age||0)<10||Math.floor(((item.age||0)-10)*5)%2===0}
 function drawScrollMagic(){
+ for(const strike of world.webStrikes){
+  ctx.save();ctx.globalAlpha=strike.life/.18;ctx.strokeStyle='#e2ecd2';ctx.lineWidth=2;ctx.beginPath();
+  ctx.moveTo(strike.from.x,strike.from.y);ctx.lineTo(strike.x,strike.y);ctx.stroke();
+  for(let i=0;i<3;i++){ctx.beginPath();ctx.ellipse(strike.x,strike.y,8+i*5,5+i*4,i*.5,0,TAU);ctx.stroke()}ctx.restore();
+ }
  for(const item of loot)if(item.type==='ammo'&&world.seen[Math.floor(item.y/T)*W+Math.floor(item.x/T)]){
   ctx.strokeStyle=ammoColors[item.special];ctx.lineWidth=2;
   for(let n=-1;n<=1;n++){ctx.beginPath();ctx.moveTo(item.x-9,item.y+n*5+5);ctx.lineTo(item.x+10,item.y+n*5-5);ctx.stroke()}
@@ -1249,7 +1275,7 @@ function worldTargets(){
 }
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Rubble and furnishings are attack-only obstacles, not selectable items. Click to strike them; on touch, tap to aim then use Attack. E / Use does not break them.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Inspect torchlit floor glints: a rare 8% chance reveals a hidden-hoard weapon with +5 power over its normal floor-level roll instead of a trap. Select and equip it with E / Use. Stepping on an uninspected glint still triggers its trap.');
-document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Silken nests: entering starts a 4-second egg countdown. Attack the sacs before three very fast spiderlings hatch from each! Adult spiders spit fast webs that root you for 1 second. Weapon strikes and projectiles toggle torches, including relighting them.<br>Find 5-shot Fire, Poison, Explosive, and Light arrow/bolt packs. Bow uses arrows; Crossbow uses bolts. C or Ammo in the Scrolls panel cycles available types. Special ammo returns to unlimited regular shots when empty. Rare unstable rooms mark a tile for 2 seconds before it becomes a pit down exactly one floor (never on floor 10).');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Silken nests: entering starts a 4-second egg countdown. Attack the sacs before three very fast spiderlings hatch from each! After a warning, adult spider webs strike instantly and root you for 1 second. Weapon strikes and projectiles toggle torches, including relighting them.<br>Find 5-shot Fire, Poison, Explosive, and Light arrow/bolt packs. Bow uses arrows; Crossbow uses bolts. C or Ammo in the Scrolls panel cycles available types. Special ammo returns to unlimited regular shots when empty. Rare unstable rooms mark a tile for 2 seconds before it becomes a pit down exactly one floor (never on floor 10).<br>Gold and scrolls vacuum within 3 tiles. Loose gear and potions blink after 10 seconds and vanish at 20 seconds. Hit broken barrels/boxes or opened chests again to clear them, without extra loot. Monsters never spring hidden traps; deliberately activated traps catch approaching foes, including trap creatures.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Dropped gold automatically flies to you within 3 tiles (120 world units). Potions still collect on close approach; equipment remains selectable.');
 function isWorldTarget(target){return worldTargets().includes(target)}
 function targetReachable(target){return distance(target,player)<72&&clearLine(player,target)}
