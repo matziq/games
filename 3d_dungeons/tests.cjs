@@ -24,6 +24,81 @@ scripts.forEach(script => vm.runInContext(script, sandbox));
 const run = code => vm.runInContext(code, sandbox);
 let count = 0;
 function check(name, fn) { fn(); count++; console.log('PASS ' + name); }
+check('elemental packs grant exactly five, preserve inventories on descent, reset on new run', () => {
+  run("begin();loot=[];for(let i=0;i<100;i++)drops(player,true)");
+  assert.equal(run("['bow','crossbow'].every(kind=>Object.keys(ammoColors).every(special=>loot.some(l=>l.type==='ammo'&&l.ammoKind===kind&&l.special===special&&l.value===5)))"),true);
+  run("loot=[{x:player.x,y:player.y,type:'ammo',ammoKind:'bow',special:'fire',value:5}];updateScrolls(.01);updateScrolls(.01)");
+  assert.equal(run("player.ammo.bow.fire===5&&player.ammoChoice.bow==='fire'"),true);
+  run('loadFloor(2,604)');assert.equal(run('player.ammo.bow.fire'),5);
+  run('begin()');assert.equal(run('player.ammo.bow.fire'),0);
+});
+check('bows and crossbows consume one special round per successful shot then fall back to regular', () => {
+  for(const kind of ['bow','crossbow'])for(const special of ['fire','poison','explosive','light']){
+    run(`loadFloor(1,604);world.tiles.fill(1);world.torches=[];enemies=[];props=[];player.weapon={...weaponTypes.${kind},kind:'${kind}',damage:20};player.ammo.${kind}.${special}=5;player.ammoChoice.${kind}='${special}';heroShots=[];player.cool=0;state='playing';attack();attack()`);
+    assert.equal(run(`heroShots.length===1&&heroShots[0].special==='${special}'&&player.ammo.${kind}.${special}===4`),true);
+    run("for(let i=0;i<5;i++){player.cool=0;attack()}");
+    assert.equal(run(`player.ammo.${kind}.${special}===0&&player.ammoChoice.${kind}==='regular'&&heroShots.at(-1).special===null`),true);
+    run("state='paused';player.cool=0;attack()");
+    assert.equal(run('heroShots.length'),6);
+  }
+});
+check('elemental projectiles apply fire poison splash and expiring wall-bounded light on actual impact', () => {
+  for(const special of ['fire','poison','explosive','light']){
+    run(`loadFloor(1,604);world.tiles.fill(1);world.torches=[];props=[];player.angle=0;player.cool=0;state='playing';player.weapon={...weaponTypes.crossbow,kind:'crossbow',damage:20};player.ammo.crossbow.${special}=1;player.ammoChoice.crossbow='${special}';var ammoVictim=makeEnemy('slime',{x:player.x+100,y:player.y});ammoVictim.hp=500;enemies=[ammoVictim];attack();updateHeroShots(.3)`);
+    if(special==='fire'||special==='poison')assert.equal(run(`ammoVictim.${special==='fire'?'burn':'poison'}`),4);
+    if(special==='explosive')assert.ok(run('ammoVictim.hp<450'));
+    if(special==='light'){
+      assert.equal(run('world.scrollLights.length===1&&world.scrollLights[0].life===15'),true);
+      run('updateScrolls(16)');assert.equal(run('world.scrollLights.length'),0);
+    }
+    assert.equal(run('heroShots.length'),0);
+  }
+});
+check('melee and projectiles can extinguish and relight a torch exactly once per shot', () => {
+  for(const kind of ['sword','bow','crossbow','boomerang']){
+    run(`loadFloor(1,604);world.tiles.fill(1);props=[];enemies=[];player.angle=0;player.cool=0;state='playing';var struck={x:player.x+34,y:player.y,lit:true};world.torches=[struck];player.weapon={...weaponTypes.${kind},kind:'${kind}',damage:20};heroShots=[];attack();if(heroShots.length)updateHeroShots(.2)`);
+    assert.equal(run('struck.lit'),false,kind);
+    run('heroShots=[];player.cool=0;attack();if(heroShots.length)updateHeroShots(.2)');
+    assert.equal(run('struck.lit'),true,kind);
+  }
+});
+check('entering nests hatches only intact eggs once into fast hostile lootless spiderlings', () => {
+  run("loadFloor(1,604);enemies=[];world.traps=[];var nest=world.rooms.find(r=>r.kind==='spider');var egg=nest.decor[0];breakProp(egg,999);loot=[];updateNestsAndPits(5,player)");
+  assert.equal(run('enemies.length'),0);
+  run('player.x=(nest.x+nest.w/2)*T;player.y=(nest.y+nest.h/2)*T;updateNestsAndPits(.01,player)');
+  assert.ok(run('nest.hatchTimer>3.9'));
+  run('updateNestsAndPits(4,player)');
+  assert.equal(run('enemies.filter(e=>e.baby).length'),15);
+  assert.equal(run('enemies.every(e=>e.speed===245&&e.hp===10&&e.trapSwarm)'),true);
+  run('updateNestsAndPits(9,player)');assert.equal(run('enemies.length'),15);
+  run("var baby=enemies[0];var prevDistance=distance(baby,player);baby.emerge=0;updateTraps(.1,false)");
+  assert.ok(run('distance(baby,player)<prevDistance'));
+  run('for(const baby of enemies)hurtEnemy(baby,999)');
+  assert.equal(run('loot.length'),0);
+});
+check('web root blocks movement and dodge displacement then expires after one active second', () => {
+  run("loadFloor(1,604);props=[];enemies=[];world.traps=[];player.root=1;var rootX=player.x;move(player,20,0)");
+  assert.equal(run('player.x'),run('rootX'));
+  run("update(.5);move(player,20,0)");assert.equal(run('player.x'),run('rootX'));
+  run("update(.51);move(player,20,0)");assert.equal(run('player.x'),run('rootX+20'));
+});
+check('rare collapsing rooms warn then open exact-one-floor pits, never on final floor or sanctuaries', () => {
+  run("loadFloor(3,604);enemies=[];world.traps=[];var unstable=world.rooms.find(r=>r.kind==='abandoned');player.x=(unstable.x+unstable.w/2)*T;player.y=(unstable.y+unstable.h/2)*T;unstable.collapse={timer:0,warning:null,count:0};updateNestsAndPits(.01,player)");
+  assert.equal(run('world.pits.length===0&&unstable.collapse.warning.life===2'),true);
+  run('updateNestsAndPits(1,player)');assert.equal(run('world.pits.length'),0);
+  run('updateNestsAndPits(1,player)');
+  // The tile may already have taken the player down if it formed under them.
+  if(run('depth')===3){
+    assert.equal(run('world.pits.length'),1);
+    run('var pit=world.pits[0];player.x=pit.x+35;player.y=pit.y;var pitBefore={...player};player.x=pit.x-35;updateNestsAndPits(.01,pitBefore)');
+  }
+  assert.equal(run('depth'),4);
+  run('loadFloor(10,604)');assert.equal(run('world.rooms.every(r=>!r.collapse)&&world.pits.length===0'),true);
+  run('loadFloor(3,604)');assert.equal(run("world.rooms.filter(r=>r.kind==='entrance'||r.kind==='throne').every(r=>!r.collapse)"),true);
+  let candidates=0,total=0;
+  for(let seed=0;seed<100;seed++){run(`loadFloor(2,${seed})`);candidates+=run('world.rooms.filter(r=>r.collapse).length');total+=10}
+  assert.ok(candidates>10&&candidates<total*.08,`${candidates}/${total} collapsing rooms`);
+});
 check('scroll inventory starts fresh, persists between floors, and every kind is obtainable', () => {
   run('begin()');
   assert.equal(run('Object.values(player.scrolls).every(count=>count===1)'),true);
@@ -195,13 +270,13 @@ check('chests open once; barrels and crates break', () => {
     assert.equal(run('props[0].broken'), true);
   }
 });
-check('spider venom, wizard fire and lightning are telegraphed attacks with real effects', () => {
-  for (const [type, status] of [['cave_spider','poison'],['cinder_wizard','burn']]) {
+check('spider webs, wizard fire and lightning are telegraphed attacks with real effects', () => {
+  for (const [type, status] of [['cave_spider','root'],['cinder_wizard','burn']]) {
     run(`loadFloor(1,42);player.x=world.start.x;player.y=world.start.y;player.hp=120;player.inv=0;player.poison=player.burn=0;shots=[];enemies=[makeEnemy('${type}',{x:player.x+120,y:player.y})];enemies[0].cool=0;update(.01)`);
     assert.ok(run('enemies[0].wind>0'),`${type} has no telegraph`);
     assert.ok(run("enemies[0].attackTarget&&Math.abs(enemies[0].attackTarget.x-player.x)<.01"),`${type} did not lock a target`);
-    for(let i=0;i<30;i++)run('update(.04)');
-    assert.ok(run(`shots.some(s=>s.type==='${status==='poison'?'venom':'fire'}')`),`${type} did not launch its projectile`);
+    for(let i=0;i<(type==='cave_spider'?22:30);i++)run('update(.04)');
+    assert.ok(run(`shots.some(s=>s.type==='${status==='root'?'web':'fire'}')`),`${type} did not launch its projectile`);
     run("{const s=shots[0];s.x=player.x;s.y=player.y;s.vx=0;s.vy=0;player.inv=0;update(.01)}");
     assert.ok(run(`player.${status}>0`),`${type} did not apply ${status}`);
   }
@@ -249,15 +324,15 @@ check('floating combat and pickup feedback reports actual values without duplica
   run('floatingTexts=[];player.hp=10;player.potions=1;potion()');
   assert.equal(sandbox.window.emberkeep.snapshot().floatingTexts[0].text,'+65 HP');
 });
-check('ten coherent melee and ranged weapon types drop with valid stats', () => {
+check('eleven coherent melee and ranged weapon types drop with valid stats', () => {
   const kinds = new Set();
   for (let i=0;i<200;i++) {
     const w=run('makeWeapon()'); kinds.add(w.kind);
-    assert.ok(w.damage>0&&w.range>=68&&w.range<=498&&w.cooldown>=.3&&w.cooldown<=.8);
+    assert.ok(w.damage>0&&w.range>=68&&w.range<=568&&w.cooldown>=.3&&w.cooldown<=.85);
     run(`heroShots=[];player.weapon=${JSON.stringify(w)};player.cool=0;attack()`);
     assert.equal(run('player.cool'),w.cooldown);
   }
-  assert.equal(kinds.size,10);
+  assert.equal(kinds.size,11);
 });
 check('armor drops from all loot sources, equips, swaps and reduces damage with a cap', () => {
   for (const type of ['slime','barrel','crate','chest']) {
@@ -535,7 +610,7 @@ check('room lighting, reachable torches and hazard placement preserve safe entra
   assert.ok(allLit-run('lightAt(samplePoint)')>.5,'extinguishing a previously lit room must darken it');
 });
 check('ranged projectiles hit monsters and containers, stop at stone, and do not melee at distance', () => {
-  for(const kind of ['bow','javelin','boomerang']){
+  for(const kind of ['bow','crossbow','javelin','boomerang']){
     run(`loadFloor(1,604);enemies=[];props=[];loot=[];world.traps=[];player.angle=0;player.weapon={...weaponTypes.${kind},kind:'${kind}',name:'Test',damage:25,color:'#ddd'};player.cool=0;enemies=[makeEnemy('slime',{x:player.x+100,y:player.y})];enemies[0].hp=200;attack()`);
     assert.equal(run('enemies[0].hp'),200);
     for(let i=0;i<30;i++)run('updateHeroShots(.01)');
@@ -671,7 +746,7 @@ check('all trap types affect monsters; swarms attack nearby monsters and players
   }
 });
 check('every projectile stops at the first intact collider even on a killing hit; later shots pass debris', () => {
-  for(const kind of ['bow','javelin','knife','throwing_axe','boomerang']){
+  for(const kind of ['bow','crossbow','javelin','knife','throwing_axe','boomerang']){
     for(const prop of ['crate','barrel']){
       run(`loadFloor(1,604);state='playing';world.traps=[];player.level=1;player.angle=0;player.weapon={...weaponTypes.${kind},kind:'${kind}',damage:25,color:'#ddd'};props=[{x:player.x+65,y:player.y,type:'${prop}',hp:60,open:false}];enemies=[makeEnemy('slime',{x:player.x+110,y:player.y})];var behind=enemies[0];behind.hp=300;player.cool=0;attack();updateHeroShots(.25)`);
       assert.equal(run('props[0].hp'),33);assert.equal(run('behind.hp'),300);

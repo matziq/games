@@ -115,7 +115,7 @@ with sync_playwright() as p:
         page.evaluate("""() => {
           loot=[];window.overlap={x:player.x-40,y:player.y+15};
           window.stand={...overlap,type:'decor',label:'Armor stand',hp:1,open:false};
-          props=[stand];selectedWorldItem=null;player.cool=0;mouse.down=false;
+          props=[stand];selectedWorldItem=null;player.cool=0;mouse.down=false;window.beforeDecorGold=player.gold;
         }""")
         tap_world()
         assert page.evaluate("selectedWorldItem===null&&!selectionChoices.includes(stand)&&!worldTargets().includes(stand)")
@@ -123,7 +123,7 @@ with sync_playwright() as p:
             button("#touchInteract")
             assert page.evaluate("!stand.open")
             button("#touchAttack")
-        assert page.evaluate("stand.broken&&loot.length===1&&loot[0].type==='gold'&&[1,2].includes(loot[0].value)")
+        assert page.evaluate("stand.broken&&loot.every(l=>l.type==='gold')&&[1,2].includes(player.gold-beforeDecorGold+loot.reduce((sum,l)=>sum+l.value,0))"), (mode, page.evaluate("({stand,loot,gold:player.gold,weapon:player.weapon,state})"))
         # A real stairs interaction must retain Undo and restore the same gear safely on the new floor.
         page.evaluate("""() => {
           window.overlap={x:player.x-35,y:player.y};
