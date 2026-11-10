@@ -251,7 +251,7 @@ function loadFloor(d,s){
  $('objective').textContent=d===5?'Defeat Varkhos. The red cones warn of flame; dodge out before they ignite. Claim the Ashen Crown. '+world.theme.description:world.theme.description+' Find the blue stairway to a new realm and a different monster brood.';
  log('Entered '+chapters[d-1]+'.');updateHUD();
 }
-function begin(){kills=0;messages=[];player={x:0,y:0,hp:120,max:120,stamina:100,gold:0,potions:3,xp:0,level:1,weapon:{name:'Worn Longsword',kind:'sword',damage:16,range:76,cooldown:.36,color:'#d5d9d0'},armor:null,angle:0,cool:0,inv:0,dash:0,swing:0,poison:0,poisonTick:0,burn:0,burnTick:0};loadFloor(1,crypto.getRandomValues(new Uint32Array(1))[0]);state='playing';$('overlay').hidden=true;canvas.focus()}
+function begin(){kills=0;messages=[];lastGearDelete=null;player={x:0,y:0,hp:120,max:120,stamina:100,gold:0,potions:3,xp:0,level:1,weapon:{name:'Worn Longsword',kind:'sword',damage:16,range:76,cooldown:.36,color:'#d5d9d0'},armor:null,angle:0,cool:0,inv:0,dash:0,swing:0,poison:0,poisonTick:0,burn:0,burnTick:0};loadFloor(1,crypto.getRandomValues(new Uint32Array(1))[0]);state='playing';$('overlay').hidden=true;canvas.focus()}
 function reveal(){const px=Math.floor(player.x/T),py=Math.floor(player.y/T);for(let y=Math.max(0,py-8);y<Math.min(H,py+9);y++)for(let x=Math.max(0,px-8);x<Math.min(W,px+9);x++)if(Math.hypot(x-px,y-py)<8)world.seen[y*W+x]=1}
 function buildPaths(){distances=new Int16Array(W*H).fill(-1);const start=Math.floor(player.y/T)*W+Math.floor(player.x/T),queue=[start];distances[start]=0;for(let i=0;i<queue.length;i++){const k=queue[i];for(const n of [k-1,k+1,k-W,k+W])if(n>=0&&n<W*H&&world.tiles[n]&&distances[n]<0){distances[n]=distances[k]+1;queue.push(n)}}}
 function targetDirection(e){let x=player.x,y=player.y;const k=Math.floor(e.y/T)*W+Math.floor(e.x/T);if(distances&&distances[k]>2){let best=k;for(const n of [k-W,k+W,k-1,k+1])if(distances[n]>=0&&distances[n]<distances[best])best=n;if(best!==k){x=(best%W+.5)*T;y=(Math.floor(best/W)+.5)*T}}return Math.atan2(y-e.y,x-e.x)}
@@ -408,7 +408,6 @@ function render(){
    ctx.fillStyle=theme.floor;ctx.fillRect(px,py,T,T);if(floorImage.complete&&floorImage.naturalWidth)ctx.drawImage(floorImage,px,py,T,T);
    ctx.globalAlpha=.48;ctx.fillStyle=theme.floor;ctx.fillRect(px,py,T,T);ctx.globalAlpha=1;
    ctx.fillStyle='rgba(12,22,21,'+((x*13+y*7)%5)*.022+')';ctx.fillRect(px,py,T,T);
-   ctx.strokeStyle=theme.accent+'38';ctx.lineWidth=1;ctx.strokeRect(px+1,py+1,T-2,T-2);
   }
   else if([k-W,k+W,k-1,k+1].some(n=>world.tiles[n])){
    ctx.fillStyle=theme.wall;ctx.fillRect(px,py,T,T);if(wallImage.complete&&wallImage.naturalWidth)ctx.drawImage(wallImage,px,py,T,T);
@@ -837,7 +836,7 @@ loadFloor=function(floor,s){
  }:null;
  if(world.merchant)props=props.filter(p=>!pointInRoom(p,world.rooms[0],0));
  configureHazards();configureRoomDetails();
- selectedWorldItem=null;selectionChoices=[];lastGearDelete=null;refreshSelectionPanel();
+ selectedWorldItem=null;selectionChoices=[];refreshSelectionPanel();
  idleThreat.elapsed=0;idleThreat.triggered=false;idleThreat.markers=[];
  $('threatStatus').hidden=true;$('roomName').textContent=world.rooms[0].name;
  $('area').textContent=chapters[realm-1];
@@ -952,12 +951,15 @@ function deleteSelectedGear(){
   if(state==='playing')log('Select a nearby loose weapon or armor before deleting.');return false;
  }
  const item=selectedWorldItem;lastGearDelete={item,world};loot.splice(loot.indexOf(item),1);selectedWorldItem=null;
- log('Deleted '+worldTargetName(item)+'. Undo last delete can restore it on this floor.');refreshSelectionPanel();return true;
+ log('Deleted '+worldTargetName(item)+'. Undo last delete can restore it during this run.');refreshSelectionPanel();return true;
 }
 function undoGearDelete(){
- if(!['playing','paused'].includes(state)||!lastGearDelete||lastGearDelete.world!==world)return false;
- const {item}=lastGearDelete;lastGearDelete=null;
- if(!loot.includes(item))loot.push(item);
+ if(!['playing','paused'].includes(state)||!lastGearDelete)return false;
+ const {item,world:originalWorld}=lastGearDelete;lastGearDelete=null;
+ if(!loot.includes(item)){
+  if(originalWorld!==world){item.x=player.x;item.y=player.y}
+  loot.push(item);
+ }
  log('Restored '+worldTargetName(item)+'.');refreshSelectionPanel();return true;
 }
 $('useSelected').onclick=()=>{interact();canvas.focus()};

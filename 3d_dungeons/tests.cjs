@@ -547,7 +547,7 @@ check('returning boomerangs can leave an impact but cannot cross that intact tar
     assert.ok(run('blocker.hp>0'));
   }
 });
-check('repeated floor motifs and expired trap overlays are absent but active hazards remain drawn', () => {
+check('repeated floor motifs, tile outlines, and expired overlays are absent but textures, walls, and hazards remain', () => {
   assert.ok(!html.includes("const mark=(x*17+y*31+depth*7)%19"));
   assert.ok(!html.includes("FISSURE: DOWN 1 FLOOR"));
   run("loadFloor(1,604);world.traps=[{x:player.x,y:player.y,kind:'fire',triggered:true,active:0,revealed:true}];heroShots=[]");
@@ -558,6 +558,15 @@ check('repeated floor motifs and expired trap overlays are absent but active haz
   run("world.traps[0].active=3;drawHazardsAndLighting()");
   assert.ok(labels.includes('FIRE'));
   context.fillText = original;
+  run('world.traps=[];enemies=[];loot=[];floatingTexts=[];heroShots=[]');
+  const originalStroke = context.strokeRect, originalImage = context.drawImage, rectangles = [], images = [];
+  context.strokeRect = (...args) => rectangles.push(args);
+  context.drawImage = (...args) => images.push(args);
+  run('render()');
+  assert.ok(!rectangles.some(r=>r[2]===38&&r[3]===38),'repeated floor-tile outlines were drawn');
+  assert.ok(rectangles.some(r=>r[2]===36&&r[3]===36),'wall edges disappeared');
+  assert.ok(images.some(args=>args[0]===run('floorImage')),'supplied floor texture disappeared');
+  context.strokeRect = originalStroke;context.drawImage = originalImage;
 });
 check('exactly overlapping weapon armor and torch cycle individually without attacking or equipping', () => {
   run(`loadFloor(1,604);state='playing';enemies=[];props=[];world.traps=[];world.torches=[];
@@ -597,14 +606,23 @@ check('delete and one-use undo restore the precise selected overlapping item wit
   assert.equal(run("player[armorSlot(b.armor)]===b.armor&&!loot.includes(b)"),true);
   assert.equal(run("undoGearDelete()"),false);
 });
-check('delete protects nongear and pause state; latest undo expires on floors and new runs', () => {
+check('delete protects nongear and pause state; latest undo survives descent but clears on new runs', () => {
   run("loadFloor(1,604);state='playing';var one={x:player.x+40,y:player.y,type:'weapon',weapon:makeWeapon()},two={x:player.x+40,y:player.y,type:'armor',armor:makeArmor()};loot=[one,two];selectedWorldItem=one");
   run("state='paused'");assert.equal(run("deleteSelectedGear()"),false);
   run("state='playing';selectedWorldItem=world.torches[0]");assert.equal(run("deleteSelectedGear()"),false);
   run("selectedWorldItem=one;deleteSelectedGear();selectedWorldItem=two;deleteSelectedGear();undoGearDelete()");
   assert.equal(run("!loot.includes(one)&&loot.includes(two)&&loot.length===1"),true);
   run("selectedWorldItem=two;deleteSelectedGear();loadFloor(2,604)");
-  assert.equal(run("lastGearDelete===null&&selectedWorldItem===null&&!undoGearDelete()"),true);
+  assert.equal(run("lastGearDelete.item===two&&selectedWorldItem===null&&undoGearDelete()"),true);
+  assert.equal(run("loot.filter(o=>o===two).length===1&&distance(two,player)===0&&free(two.x,two.y,12)&&!undoGearDelete()"),true);
+  for(const descent of ['trapdoor','fissure']){
+    run(`loadFloor(3,604);state='playing';var fallingGear={x:player.x+30,y:player.y,type:'weapon',weapon:makeWeapon()};loot=[fallingGear];selectedWorldItem=fallingGear;deleteSelectedGear()`);
+    if(descent==='trapdoor')run("var hole={x:player.x,y:player.y,kind:'trapdoor',triggered:false,revealed:false};triggerTrap(hole,player)");
+    else run("world.cracks=[{x:player.x,y:player.y,angle:0,length:100,forming:0,grace:0}];updateEarthquakes(.01,player)");
+    assert.ok(run("depth>3&&lastGearDelete.item===fallingGear"));
+    run("state='paused';undoGearDelete()");
+    assert.equal(run("loot.filter(o=>o===fallingGear).length===1&&distance(fallingGear,player)===0&&free(fallingGear.x,fallingGear.y,12)&&!undoGearDelete()"),true,descent);
+  }
   run("state='playing';loot=[{x:player.x+30,y:player.y,type:'weapon',weapon:makeWeapon()}];selectedWorldItem=loot[0];deleteSelectedGear();begin()");
   assert.equal(run("lastGearDelete===null&&!undoGearDelete()"),true);
 });

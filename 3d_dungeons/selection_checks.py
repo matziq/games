@@ -121,6 +121,20 @@ with sync_playwright() as p:
         assert page.evaluate("selectedWorldItem===stand&&!stand.open")
         button("#touchInteract") if mobile else page.keyboard.press("e")
         assert page.evaluate("stand.broken&&loot.length===1&&loot[0].type==='gold'&&[1,2].includes(loot[0].value)")
+        # A real stairs interaction must retain Undo and restore the same gear safely on the new floor.
+        page.evaluate("""() => {
+          window.overlap={x:player.x-35,y:player.y};
+          window.travelGear={...overlap,type:'armor',armor:makeArmor('boots')};
+          loot=[travelGear];world.torches=[];selectedWorldItem=null;selectionChoices=[];refreshSelectionPanel();
+        }""")
+        tap_world()
+        button("#deleteSelected") if mobile else page.keyboard.press("x")
+        assert page.evaluate("lastGearDelete.item===travelGear&&!loot.includes(travelGear)")
+        page.evaluate("player.x=world.end.x;player.y=world.end.y;selectedWorldItem=null;world.traps=[];world.cracks=[]")
+        button("#touchInteract") if mobile else page.keyboard.press("e")
+        assert page.evaluate("depth===6&&lastGearDelete.item===travelGear")
+        button("#undoDelete")
+        assert page.evaluate("loot.filter(o=>o===travelGear).length===1&&distance(travelGear,player)===0&&free(travelGear.x,travelGear.y,12)&&!undoGearDelete()")
         # Clean abandoned room fixture retains a real fissure and omits spent overlays.
         page.evaluate("""() => {
           loadFloor(5,604);state='playing';enemies=[];shots=[];heroShots=[];world.seen.fill(1);
@@ -143,7 +157,7 @@ with sync_playwright() as p:
         report["layouts"].append({"name": mode, "size": [width, height], "exact_overlap": True,
                                    "world_cycle_unobscured": unobscured, "no_selection_attack": True,
                                    "torch_under_loot": True, "delete_correct_identity": True, "undo_once": True,
-                                   "use_selected": True, "decor_coins": True, "no_overflow": True, "errors": errors,
+                                   "use_selected": True, "decor_coins": True, "undo_after_descent": True, "no_overflow": True, "errors": errors,
                                    "screenshots": [shot, undo_shot, clean_shot]})
         context.close()
     browser.close()
