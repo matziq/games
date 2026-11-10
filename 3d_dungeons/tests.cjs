@@ -156,15 +156,15 @@ check('floating combat and pickup feedback reports actual values without duplica
   run('floatingTexts=[];player.hp=10;player.potions=1;potion()');
   assert.equal(sandbox.window.emberkeep.snapshot().floatingTexts[0].text,'+65 HP');
 });
-check('seven coherent melee and ranged weapon types drop with valid stats', () => {
+check('ten coherent melee and ranged weapon types drop with valid stats', () => {
   const kinds = new Set();
   for (let i=0;i<200;i++) {
     const w=run('makeWeapon()'); kinds.add(w.kind);
-    assert.ok(w.damage>0&&w.range>=68&&w.range<=498&&w.cooldown>=.36&&w.cooldown<=.8);
+    assert.ok(w.damage>0&&w.range>=68&&w.range<=498&&w.cooldown>=.3&&w.cooldown<=.8);
     run(`heroShots=[];player.weapon=${JSON.stringify(w)};player.cool=0;attack()`);
     assert.equal(run('player.cool'),w.cooldown);
   }
-  assert.equal(kinds.size,7);
+  assert.equal(kinds.size,10);
 });
 check('armor drops from all loot sources, equips, swaps and reduces damage with a cap', () => {
   for (const type of ['slime','barrel','crate','chest']) {
@@ -357,10 +357,124 @@ check('ranged projectiles hit monsters and containers, stop at stone, and do not
     assert.equal(run('enemies[0].hp'),hp);assert.equal(run('heroShots.length'),0);
   }
 });
-check('boomerangs return to the knight and can hit once on each leg only', () => {
+check('boomerangs turn at the first monster without piercing and return to the knight', () => {
   run("loadFloor(1,604);props=[];loot=[];world.traps=[];enemies=[makeEnemy('slime',{x:player.x+70,y:player.y})];enemies[0].hp=400;player.angle=0;player.weapon={...weaponTypes.boomerang,kind:'boomerang',damage:25,color:'#ddd'};player.cool=0;attack();player.cool=0;attack()");
   assert.equal(run('heroShots.length'),1);
   for(let i=0;i<240;i++)run('updateHeroShots(.01)');
-  assert.equal(run('enemies[0].hp'),346);assert.equal(run('heroShots.length'),0);
+  assert.equal(run('enemies[0].hp'),373);assert.equal(run('heroShots.length'),0);
+});
+check('all armor slots drop, equip independently, swap deliberately, persist and cap combined defense', () => {
+  run('begin();loadFloor(1,604);props=[];loot=[];enemies=[];world.traps=[]');
+  for(const slot of ['armor','boots','gloves','helmet']){
+    const kinds=new Set();
+    for(let i=0;i<300;i++)kinds.add(run('armorSlot(makeArmor())'));
+    assert.equal(kinds.size,4);
+    run(`loot=[{x:player.x,y:player.y,type:'armor',armor:{...makeArmor('${slot}'),name:'First ${slot}',reduction:.1}}];interact()`);
+    assert.equal(run(`player.${slot}.name`),'First '+slot);
+  }
+  assert.equal(run('reduction()'),.4);
+  run("loot=[{x:player.x,y:player.y,type:'armor',armor:{...makeArmor('boots'),name:'New boots',reduction:.12}}];interact()");
+  assert.equal(run('player.armor.name'),'First armor');
+  assert.equal(run('player.helmet.name'),'First helmet');
+  assert.equal(run('loot[0].armor.name'),'First boots');
+  run('player.hp=120;player.inv=0;damagePlayer(20)');assert.equal(run('player.hp'),108);
+  run('loadFloor(2,604);state="playing";player.gold=2000;openShop()');
+  for(const slot of ['armor','boots','gloves','helmet']){
+    assert.equal(run(`armorSlot(world.merchant.stock.${slot}.item)`),slot);
+    const price=run(`world.merchant.stock.${slot}.price`),gold=run('player.gold');
+    assert.equal(run(`buyProduct('${slot}')`),true);
+    assert.equal(run('player.gold'),gold-price);
+    assert.equal(run(`loot.some(l=>l.type==='armor'&&armorSlot(l.armor)==='${slot}')`),true);
+    assert.equal(run(`buyProduct('${slot}')`),false);
+  }
+  run('closeShop();loadFloor(3,604)');
+  assert.equal(run('player.boots.name'),'New boots');
+  run('begin()');assert.equal(run('armorSlots.every(slot=>!player[slot])'),true);
+});
+check('glints fully disappear between shines and require the owning torch, never the player halo', () => {
+  run('loadFloor(1,604);enemies=[];world.torches.forEach(t=>t.lit=false);var r=world.rooms[1];var glintTrap={x:(r.x+2)*T,y:(r.y+2)*T};player.x=glintTrap.x;player.y=glintTrap.y');
+  assert.ok(run('lightAt(glintTrap)')>.1,'personal navigation halo missing');
+  for(let i=0;i<72;i++)assert.equal(run(`trapGlint(glintTrap,${i/20})`),0);
+  run('roomTorch(glintTrap).lit=true');
+  const values=Array.from({length:72},(_,i)=>run(`trapGlint(glintTrap,${i/20})`));
+  assert.ok(values.some(v=>v>.9));assert.ok(values.filter(v=>v===0).length>=50);
+  run('roomTorch(glintTrap).lit=false;world.torches.find(t=>t.room===1&&t!==roomTorch(glintTrap)).lit=true');
+  assert.equal(run('trapGlint(glintTrap,1)'),0);
+});
+check('one, two, three and four sconces illuminate exactly proportional quarters of a room', () => {
+  run('loadFloor(1,604);enemies=[];player.x=world.start.x;player.y=world.start.y;var lightRoom=world.rooms[1];var sconces=world.torches.filter(t=>t.room===1);sconces.forEach(t=>t.lit=false)');
+  for(let n=0;n<=4;n++){
+    run(`sconces.forEach((t,i)=>t.lit=i<${n})`);
+    const fraction=run(`(()=>{let lit=0;for(let y=0;y<40;y++)for(let x=0;x<40;x++)if(torchIllumination({x:(lightRoom.x+(x+.5)/40*lightRoom.w)*T,y:(lightRoom.y+(y+.5)/40*lightRoom.h)*T})>.2)lit++;return lit/1600})()`);
+    assert.equal(fraction,n/4);
+  }
+});
+check('hidden-trap prompts disappear with the glint unless inspection is already underway', () => {
+  run("loadFloor(1,604);props=[];loot=[];enemies=[];var hintTrap={x:player.x+45,y:player.y,kind:'fire',inspect:0};world.traps=[hintTrap];roomTorch(hintTrap).lit=true;clock=((.45-hintTrap.x*.013-hintTrap.y*.007)%3.6+3.6)%3.6");
+  assert.match(run('interactionPrompt(null)'),/Floor glint/);
+  run('clock+=1.5');assert.equal(run('interactionPrompt(null)'),'');
+  run('hintTrap.inspect=.8');assert.match(run('interactionPrompt(null)'),/Inspecting floor glint: 40%/);
+  run('roomTorch(hintTrap).lit=false');assert.equal(run('interactionPrompt(null)'),'');
+});
+check('safe traps activate only by deliberate Use, after exactly two seconds, then catch arriving monsters', () => {
+  run("loadFloor(1,604);state='playing';enemies=[];props=[];loot=[];world.traps=[{x:player.x+45,y:player.y,kind:'fire',revealed:true,active:0}];player.hp=120;player.inv=0;world.end.x=2500;world.end.y=1900");
+  assert.equal(run('nearby().type'),'trap');
+  run('player.x=world.traps[0].x;updateTraps(.1,false)');
+  assert.equal(run('player.hp'),120);assert.ok(!run('world.traps[0].triggered'));
+  run('player.x-=45;interact();updateTraps(1.99,false)');
+  assert.ok(!run('world.traps[0].triggered'));assert.ok(run('world.traps[0].arming>0'));
+  run('interact();updateTraps(.01,false)');
+  assert.equal(run('world.traps[0].triggered'),true);assert.equal(run('world.traps[0].arming'),0);
+  assert.equal(run('player.hp'),120,'trap hit a player outside the danger radius');
+  run("enemies=[makeEnemy('slime',{x:world.traps[0].x,y:world.traps[0].y})];var victim=enemies[0];updateTraps(.1,false)");
+  assert.ok(run('victim.burn>0'));const hp=run('victim.hp');
+  run('updateTraps(.5,false)');assert.ok(run('victim.hp')<hp,'monster did not burn over time');
+  run('updateTraps(6,false);var oldhp=player.hp;player.x=world.traps[0].x;updateTraps(.1,false)');
+  assert.equal(run('player.hp'),run('oldhp'),'spent trap kept damaging entrants');
+});
+check('all trap types affect monsters; swarms attack nearby monsters and players; falling removes a monster', () => {
+  for(const kind of ['poison','fire','explosion','quicksand','trapdoor','bugs','bats']){
+    run(`loadFloor(1,604);state='playing';props=[];loot=[];world.traps=[];player.x=world.start.x-100;enemies=[makeEnemy('slime',world.start)];var monster=enemies[0];monster.hp=300;var monsterTrap={...world.start,kind:'${kind}',revealed:true};triggerTrap(monsterTrap,true)`);
+    if(kind==='poison')assert.ok(run('monster.poison>0&&monster.hp<300'));
+    if(kind==='fire')assert.ok(run('monster.burn>0&&monster.hp<300'));
+    if(kind==='explosion')assert.equal(run('monster.hp'),268);
+    if(kind==='quicksand'){
+      const x=run('monster.x');run('move(monster,20,0)');assert.equal(run('monster.x'),x+7);
+    }
+    if(kind==='trapdoor'){assert.equal(run('monster.hp'),0);assert.equal(run('depth'),1)}
+    if(kind==='bugs'||kind==='bats'){
+      run("var swarm=enemies.find(e=>e.trapSwarm);swarm.x=monster.x+20;swarm.y=monster.y;swarm.emerge=0;swarm.cool=0;updateTraps(.01,false)");
+      assert.ok(run('monster.hp')<300);
+      run('monster.hp=0;player.x=swarm.x-20;player.y=swarm.y;player.hp=120;player.inv=0;swarm.cool=0;updateTraps(.01,false)');
+      assert.ok(run('player.hp')<120);
+    }
+  }
+});
+check('every projectile stops at the first intact collider even on a killing hit; later shots pass debris', () => {
+  for(const kind of ['bow','javelin','knife','throwing_axe','boomerang']){
+    for(const prop of ['crate','barrel']){
+      run(`loadFloor(1,604);state='playing';world.traps=[];player.level=1;player.angle=0;player.weapon={...weaponTypes.${kind},kind:'${kind}',damage:25,color:'#ddd'};props=[{x:player.x+65,y:player.y,type:'${prop}',hp:60,open:false}];enemies=[makeEnemy('slime',{x:player.x+110,y:player.y})];var behind=enemies[0];behind.hp=300;player.cool=0;attack();updateHeroShots(.25)`);
+      assert.equal(run('props[0].hp'),33);assert.equal(run('behind.hp'),300);
+      run('heroShots=[];props[0].hp=1;player.cool=0;attack();updateHeroShots(.25)');
+      assert.equal(run('props[0].broken'),true);assert.equal(run('behind.hp'),300);
+      run('heroShots=[];player.cool=0;attack();updateHeroShots(.35)');
+      assert.ok(run('behind.hp')<300);
+    }
+    run(`loadFloor(1,604);state='playing';world.traps=[];props=[];player.angle=0;player.weapon={...weaponTypes.${kind},kind:'${kind}',damage:25,color:'#ddd'};enemies=[makeEnemy('slime',{x:player.x+110,y:player.y}),makeEnemy('slime',{x:player.x+60,y:player.y})];enemies[0].hp=300;enemies[1].hp=1;var far=enemies[0];player.cool=0;attack();updateHeroShots(.35)`);
+    assert.equal(run('far.hp'),300,'projectile penetrated a killed monster or used array ordering');
+  }
+  run("loadFloor(1,604);state='playing';enemies=[];world.traps=[];props=[{x:player.x+65,y:player.y,type:'barrel',hp:1,open:false}];player.inv=0;var oldhp=player.hp;shots=[{x:player.x+130,y:player.y,vx:-400,vy:0,life:2,damage:12}];update(.4)");
+  assert.equal(run('player.hp'),run('oldhp'));assert.equal(run('props[0].broken'),true);
+});
+check('returning boomerangs can leave an impact but cannot cross that intact target toward a relocated player', () => {
+  for(const type of ['crate','monster']){
+    run(`loadFloor(1,604);state='playing';world.traps=[];props=[];enemies=[];player.angle=0;player.weapon={...weaponTypes.boomerang,kind:'boomerang',damage:25,color:'#ddd'};
+      var blocker=${type==='crate'?"{x:player.x+80,y:player.y,type:'crate',hp:300,open:false}":"makeEnemy('slime',{x:player.x+80,y:player.y})"};
+      blocker.hp=300;${type==='crate'?'props':'enemies'}=[blocker];player.cool=0;attack();updateHeroShots(.2)`);
+    assert.equal(run('heroShots[0].returning'),true);
+    run('player.x=blocker.x+70;updateHeroShots(.2)');
+    assert.equal(run('heroShots.length'),0,'boomerang passed through its still-intact impact target');
+    assert.ok(run('blocker.hp>0'));
+  }
 });
 console.log(`${count} checks passed.`);

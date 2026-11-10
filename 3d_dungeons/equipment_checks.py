@@ -36,7 +36,7 @@ with sync_playwright() as p:
     box = page.locator("#game").bounding_box()
     cx, cy = box["x"] + box["width"]/2, box["y"] + box["height"]/2
     pictures, weapon_hashes, armor_hashes = [], {}, {}
-    for kind in ["sword", "axe", "mace", "spear", "bow", "boomerang", "javelin"]:
+    for kind in ["sword", "axe", "mace", "spear", "bow", "boomerang", "javelin", "halberd", "knife", "throwing_axe"]:
         page.evaluate("""kind => {
           const t=weaponTypes[kind];
           player.weapon={kind,name:t.label,color:'#c5d4d4',damage:24,...t};
@@ -50,7 +50,7 @@ with sync_playwright() as p:
         for label, image in [(kind+" equipped", hero), (kind+" ground loot", ground)]:
             pictures.append((label, image))
     for column in (0, 1):
-        assert len({hashes[column] for hashes in weapon_hashes.values()}) == 7
+        assert len({hashes[column] for hashes in weapon_hashes.values()}) == 10
     for index, kind in enumerate(["leather", "chain", "plate"]):
         page.evaluate("""({index,kind}) => {
           player.weapon={kind:'sword',name:'Longsword',color:'#c5d4d4',damage:24,range:82};
@@ -100,12 +100,12 @@ with sync_playwright() as p:
     page.keyboard.press("e")
     assert page.evaluate("loot.some(l=>l.type==='armor')"), "Chest has no armor"
     page.evaluate("""() => {
-      const item=loot.find(l=>l.type==='armor');
+      const item=loot.find(l=>l.type==='armor');item.armor.slot='armor';
       player.x=item.x;player.y=item.y;loot=loot.filter(l=>l.type==='armor');props=[];
     }""")
     page.keyboard.press("e")
     assert page.evaluate("player.armor!==null")
-    assert page.locator("#armor").inner_text() == page.evaluate("player.armor.name")
+    assert page.evaluate("player.armor.name") in page.locator("#armor").inner_text()
     armor = page.evaluate("player.armor")
     received = page.evaluate("""() => {
       player.hp=120;player.inv=0;damagePlayer(20);return 120-player.hp;
@@ -119,7 +119,7 @@ with sync_playwright() as p:
     assert page.evaluate("loot.some(l=>l.type==='armor'&&l.armor.name!=='Replacement Plate')")
     page.evaluate("player.inv=0;player.hp=120;damagePlayer(20)")
     assert page.evaluate("player.hp") == 108
-    assert page.locator("#defense").inner_text() == "40%"
+    assert page.locator("#defense").inner_text() == "40% (40% cap)"
     # Isolate gameplay while keeping its normal audio update loop running.
     page.evaluate("enemies=[];props=[];loot=[];player.inv=0;player.hp=120")
     diag = lambda: page.evaluate("DungeonAudio.diagnostic()")
@@ -142,13 +142,13 @@ with sync_playwright() as p:
         combinations.append(d)
     page.locator("#mute").click()
     profiles = {}
-    for kind in ["sword", "axe", "mace", "spear", "bow", "boomerang", "javelin"]:
+    for kind in ["sword", "axe", "mace", "spear", "bow", "boomerang", "javelin", "halberd", "knife", "throwing_axe"]:
         profiles[kind] = page.evaluate("""kind => {
           soundProfiles.length=0;const random=Math.random;Math.random=()=>.5;
           try{DungeonAudio.play('strike',kind);return [...soundProfiles]}
           finally{Math.random=random}
         }""", kind)
-    assert len({round(values[0]) for values in profiles.values()}) == 7
+    assert len({round(values[0]) for values in profiles.values()}) == 10
     enemy_profiles, material_profiles = {}, {}
     enemies = ["slime", "goblin", "bog_wraith", "cave_spider", "thornling", "wolf", "vine_archer",
                "skeleton", "bone_archer", "wraith", "gargoyle", "iron_knight",
@@ -201,7 +201,7 @@ with sync_playwright() as p:
               "armor_render_hashes": armor_hashes, "armor_received_damage": received, "armor": armor,
               "audio_combinations": combinations, "weapon_audio_profiles": profiles,
               "enemy_audio_profiles": enemy_profiles, "material_audio_profiles": material_profiles, "varied_coin_pitches": varied,
-              "checks": ["7 equipped and ground weapon silhouettes", "3 worn and ground armor silhouettes",
+              "checks": ["10 equipped and ground weapon silhouettes", "3 worn and ground body armor silhouettes",
                          "plate armor rendered on all four facings", "domed chest distinct from cross-braced crate",
                          "open chest distinct from broken crate",
                          "E chest armor loot/equip/swap", "visible equipment stats", "damage reduction",

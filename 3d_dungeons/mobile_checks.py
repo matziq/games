@@ -88,7 +88,7 @@ with sync_playwright() as p:
         page.wait_for_timeout(80)
         page.locator("#touchInteract").tap()
         assert page.locator("#shopDialog").is_visible()
-        page.locator("#shopProducts article").nth(2).locator("button").tap()
+        page.locator("#shopProducts article").filter(has=page.get_by_role("heading", name="Healing potion", exact=True)).locator("button").tap()
         assert page.evaluate("player.gold") == 274
         page.screenshot(path=str(OUTPUT / f"Emberkeep-mobile-{name}-shop.png"))
         page.locator("#closeShop").tap()
