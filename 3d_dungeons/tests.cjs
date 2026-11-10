@@ -685,6 +685,19 @@ check('delete protects nongear and pause state; latest undo survives descent but
   run("state='playing';loot=[{x:player.x+30,y:player.y,type:'weapon',weapon:makeWeapon()}];selectedWorldItem=loot[0];deleteSelectedGear();begin()");
   assert.equal(run("lastGearDelete===null&&!undoGearDelete()"),true);
 });
+check('decor is attack-only, absent from selection nearby Use and overlap choices', () => {
+  run(`loadFloor(1,604);state='playing';enemies=[];loot=[];world.traps=[];world.torches=[];
+    var obstacle={x:player.x+40,y:player.y,type:'decor',label:'Overgrown rubble',hp:24,open:false};
+    props=[obstacle];selectedWorldItem=obstacle;selectionChoices=[obstacle];refreshSelectionPanel();
+    var obstacleEvent={clientX:(obstacle.x-camera.x)/vw*1000,clientY:(obstacle.y-camera.y)/vh*700,preventDefault(){}};
+    var obstacleCool=player.cool;interact();`);
+  assert.ok(run('!worldTargets().includes(obstacle)&&!isWorldTarget(obstacle)&&selectedWorldItem===null&&selectionChoices.length===0&&nearby()!==obstacle'));
+  assert.equal(run('selectWorldPointer(obstacleEvent)'),false);
+  assert.ok(run('obstacle.hp===24&&!obstacle.open&&player.cool===obstacleCool&&interactionPrompt(nearby())===""'));
+  assert.equal(elements.get('selectionPanel').hidden,true);
+  run(`var obstacleGear={x:obstacle.x,y:obstacle.y,type:'weapon',weapon:makeWeapon()};loot=[obstacleGear];selectWorldPointer(obstacleEvent)`);
+  assert.ok(run('selectedWorldItem===obstacleGear&&selectionChoices.length===1&&!selectionChoices.includes(obstacle)'));
+});
 check('all room decor breaks once for exactly 1-2 coins only and destroys its own web patch', () => {
   run("loadFloor(9,604);state='playing';loot=[]");
   const kinds = run("JSON.stringify(world.rooms.filter(r=>r.decor.length).map(r=>r.kind))");

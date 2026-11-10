@@ -111,15 +111,18 @@ with sync_playwright() as p:
             assert page.evaluate("strikes===0")
             button("#touchAttack")
         assert page.evaluate("strikes>0")
-        # Real attacks break a selected armor stand, yielding exactly 1-2 gold only, once.
+        # Decor is never selectable/usable; clicks attack, touch aims then Attack breaks it.
         page.evaluate("""() => {
           loot=[];window.overlap={x:player.x-40,y:player.y+15};
           window.stand={...overlap,type:'decor',label:'Armor stand',hp:1,open:false};
           props=[stand];selectedWorldItem=null;player.cool=0;mouse.down=false;
         }""")
         tap_world()
-        assert page.evaluate("selectedWorldItem===stand&&!stand.open")
-        button("#touchInteract") if mobile else page.keyboard.press("e")
+        assert page.evaluate("selectedWorldItem===null&&!selectionChoices.includes(stand)&&!worldTargets().includes(stand)")
+        if mobile:
+            button("#touchInteract")
+            assert page.evaluate("!stand.open")
+            button("#touchAttack")
         assert page.evaluate("stand.broken&&loot.length===1&&loot[0].type==='gold'&&[1,2].includes(loot[0].value)")
         # A real stairs interaction must retain Undo and restore the same gear safely on the new floor.
         page.evaluate("""() => {

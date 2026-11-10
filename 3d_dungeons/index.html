@@ -757,7 +757,6 @@ function interactionPrompt(o){
  }
  if(o.type==='trap')return o.arming>0?'Activating '+o.kind+' trap in '+o.arming.toFixed(1)+'s - stand clear!':'[E / Use] Activate safe '+o.kind+' trap (2-second delay; affects everyone)';
  if(o.type==='torch')return '[E / Use or F / Torch] '+(o.lit?'Extinguish':'Light')+' torch';
- if(o.type==='decor')return '[E / Use or Attack] Break '+o.label+' (1-2 coins)';
  if(o.type==='merchant')return '[E / Use] Trade with the merchant';
  if(o.type==='stairs')return depth===MAX_FLOOR?'Defeat the dragon to claim the crown':'[E / Use] Descend to Floor '+(depth+1)+' / restore vitality';
  if(o.type==='chest')return '[E / Use] Open treasure chest';
@@ -1000,14 +999,14 @@ function worldTargets(){
  world.end.type='stairs';
  if(world.merchant)world.merchant.type='merchant';
  for(const trap of world.traps)trap.type='trap';
- return [...loot.filter(o=>o.type==='weapon'||o.type==='armor'),...props.filter(p=>!p.open&&(p.type==='chest'||p.type==='decor')),...world.torches,...world.traps.filter(t=>t.revealed&&!t.triggered),...(world.merchant?[world.merchant]:[]),world.end];
+ return [...loot.filter(o=>o.type==='weapon'||o.type==='armor'),...props.filter(p=>!p.open&&p.type==='chest'),...world.torches,...world.traps.filter(t=>t.revealed&&!t.triggered),...(world.merchant?[world.merchant]:[]),world.end];
 }
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Rubble and furnishings are attack-only obstacles, not selectable items. Click to strike them; on touch, tap to aim then use Attack. E / Use does not break them.');
 function isWorldTarget(target){return worldTargets().includes(target)}
 function targetReachable(target){return distance(target,player)<72&&clearLine(player,target)}
 function worldTargetName(target){
  if(target.type==='weapon'||target.type==='armor')return target[target.type].name;
  if(target.type==='torch')return (target.lit?'Lit':'Unlit')+' torch';
- if(target.type==='decor')return target.label;
  if(target.type==='trap')return 'Safe '+target.kind+' trap';
  return target.type==='stairs'?'Stairway':target.type==='merchant'?'Merchant':'Treasure chest';
 }
@@ -1098,7 +1097,6 @@ if(target?.type==='trap'){
 if(target?.type==='torch'){
  toggleTorch(target);return;
 }
-if(target?.type==='decor'){player.angle=Math.atan2(target.y-player.y,target.x-player.x);mouse.active=false;attack();refreshSelectionPanel();return}
 if(target?.type==='stairs'){
  if(depth<MAX_FLOOR)loadFloor(depth+1,crypto.getRandomValues(new Uint32Array(1))[0]);
  else log('Defeat the Cinder King to claim the crown.');
