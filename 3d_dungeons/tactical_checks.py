@@ -52,7 +52,7 @@ with sync_playwright() as p:
         fixture(page, """var room=world.rooms[1];player.x=(room.x+room.w/2)*T;
           player.y=(room.y+room.h/2)*T;world.seen.fill(1);
           var glint={x:(room.x+2)*T,y:(room.y+2)*T,kind:'fire',inspect:0,active:0};
-          world.traps=[glint];world.torches.filter(t=>t.room===1).forEach(t=>t.lit=false);
+          world.traps=[glint];world.torches.forEach(t=>t.lit=false);
           var peakClock=((.45-glint.x*.013-glint.y*.007)%3.6+3.6)%3.6;
           state='paused';overlay.hidden=true;clock=peakClock;render()""")
         dark = picture(page, label+"-dark")
@@ -78,7 +78,8 @@ with sync_playwright() as p:
             fractions.push(lit/1600);
           }return fractions;
         }""")
-        assert coverage == [0, .25, .5, .75, 1]
+        assert coverage[0] == 0 and coverage[-1] > .8
+        assert all(coverage[i] < coverage[i+1] <= min(1, (i+1)*.4) for i in range(4)), coverage
         picture(page, label+"-fully-lit")
         report["checks"].append({"device": label, "torch_coverage": coverage, "intermittent_glint_pixel_change": ImageStat.Stat(difference).sum})
         page.evaluate("""player.x=glint.x+45;player.y=glint.y;glint.inspect=0;clock=peakClock;render()""")

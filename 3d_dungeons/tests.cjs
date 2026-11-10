@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const { webcrypto } = require('node:crypto');
 const elements = new Map();
-const context = new Proxy({}, { get: (target, key) => Object.hasOwn(target,key) ? target[key] : key === 'createRadialGradient' ? () => ({ addColorStop() {} }) : () => {} });
+const context = new Proxy({createImageData(width,height){return {width,height,data:new Uint8ClampedArray(width*height*4)}}}, { get: (target, key) => Object.hasOwn(target,key) ? target[key] : key === 'createRadialGradient' ? () => ({ addColorStop() {} }) : () => {} });
 function element() {
   return { style: {}, hidden: false, textContent: '', open: false, children: [], getContext: () => context,
     getBoundingClientRect: () => ({ left: 0, top: 0, width: 1000, height: 700 }), focus() {}, addEventListener() {},
@@ -461,30 +461,58 @@ check('all armor slots drop, equip independently, swap deliberately, persist and
   assert.equal(run('player.boots.name'),'New boots');
   run('begin()');assert.equal(run('armorSlots.every(slot=>!player[slot])'),true);
 });
-check('glints fully disappear between shines and require the owning torch, never the player halo', () => {
+check('glints fully disappear between shines and require radial torchlight, never the player halo', () => {
   run('loadFloor(1,604);enemies=[];world.torches.forEach(t=>t.lit=false);var r=world.rooms[1];var glintTrap={x:(r.x+2)*T,y:(r.y+2)*T};player.x=glintTrap.x;player.y=glintTrap.y');
   assert.ok(run('lightAt(glintTrap)')>.1,'personal navigation halo missing');
   for(let i=0;i<72;i++)assert.equal(run(`trapGlint(glintTrap,${i/20})`),0);
   run('roomTorch(glintTrap).lit=true');
   const values=Array.from({length:72},(_,i)=>run(`trapGlint(glintTrap,${i/20})`));
   assert.ok(values.some(v=>v>.9));assert.ok(values.filter(v=>v===0).length>=50);
-  run('roomTorch(glintTrap).lit=false;world.torches.find(t=>t.room===1&&t!==roomTorch(glintTrap)).lit=true');
+  run('world.torches.forEach(t=>t.lit=false);var farTorch=world.torches.find(t=>distance(t,glintTrap)>torchRadius(t)*2);farTorch.lit=true');
   assert.equal(run('trapGlint(glintTrap,1)'),0);
 });
-check('one, two, three and four sconces illuminate exactly proportional quarters of a room', () => {
-  run('loadFloor(1,604);enemies=[];player.x=world.start.x;player.y=world.start.y;var lightRoom=world.rooms[1];var sconces=world.torches.filter(t=>t.room===1);sconces.forEach(t=>t.lit=false)');
+check('circular torchlight fades smoothly, combines naturally, and scales with room area and torch count', () => {
+  run('loadFloor(1,604);enemies=[];player.x=world.start.x;player.y=world.start.y;var lightRoom=world.rooms[1];var sconces=world.torches.filter(t=>t.room===1);world.torches.forEach(t=>t.lit=false)');
+  let prior=0;
   for(let n=0;n<=4;n++){
     run(`sconces.forEach((t,i)=>t.lit=i<${n})`);
     const fraction=run(`(()=>{let lit=0;for(let y=0;y<40;y++)for(let x=0;x<40;x++)if(torchIllumination({x:(lightRoom.x+(x+.5)/40*lightRoom.w)*T,y:(lightRoom.y+(y+.5)/40*lightRoom.h)*T})>.2)lit++;return lit/1600})()`);
-    assert.equal(fraction,n/4);
+    if(n===0)assert.equal(fraction,0);
+    else assert.ok(fraction>prior&&fraction<=Math.min(1,n*.4),`coverage ${n}: ${fraction}`);
+    if(n===4)assert.ok(fraction>.8);
+    prior=fraction;
   }
+  run('world.tiles.fill(1);world.torches.forEach(t=>{t.lit=false;torchVisibilityCache.delete(t)});var roundTorch=sconces[0];roundTorch.lit=true;var radius=torchRadius(roundTorch)');
+  for(const fraction of [.1,.3,.5,.75,.99,1,1.1]){
+    const axis=run(`torchIllumination({x:roundTorch.x+radius*${fraction},y:roundTorch.y})`);
+    const diagonal=run(`torchIllumination({x:roundTorch.x+radius*${fraction}/Math.SQRT2,y:roundTorch.y+radius*${fraction}/Math.SQRT2})`);
+    assert.ok(Math.abs(axis-diagonal)<1e-12,'light is not circular');
+    assert.ok(Math.abs(axis-run(`radialLight(${fraction})`))<1e-12,'render and gameplay falloff disagree');
+  }
+  for(const edge of [.18,.45,.7,1])assert.ok(run(`Math.abs(radialLight(${edge}-.00001)-radialLight(${edge}+.00001))`)<.001,'falloff jumps at a gradient stop');
+  assert.equal(run('radialLight(1.01)'),0);
+  run('var outside={x:roundTorch.x+radius*1.01,y:roundTorch.y};player.x=outside.x;player.y=outside.y;clock=((.45-outside.x*.013-outside.y*.007)%3.6+3.6)%3.6');
+  assert.ok(run('lightAt(outside)')>.4);
+  assert.equal(run('trapGlint(outside)'),0,'personal halo exposed an unlit trap');
+  assert.ok(run('!lightStops.some(([offset])=>offset<0||offset>1)'));
 });
 check('hidden-trap prompts disappear with the glint unless inspection is already underway', () => {
-  run("loadFloor(1,604);props=[];loot=[];enemies=[];var hintTrap={x:player.x+45,y:player.y,kind:'fire',inspect:0};world.traps=[hintTrap];roomTorch(hintTrap).lit=true;clock=((.45-hintTrap.x*.013-hintTrap.y*.007)%3.6+3.6)%3.6");
+  run("loadFloor(1,604);props=[];loot=[];enemies=[];world.torches.forEach(t=>t.lit=false);var hintTrap={x:player.x+45,y:player.y,kind:'fire',inspect:0};world.traps=[hintTrap];roomTorch(hintTrap).lit=true;clock=((.45-hintTrap.x*.013-hintTrap.y*.007)%3.6+3.6)%3.6");
   assert.match(run('interactionPrompt(null)'),/Floor glint/);
   run('clock+=1.5');assert.equal(run('interactionPrompt(null)'),'');
   run('hintTrap.inspect=.8');assert.match(run('interactionPrompt(null)'),/Inspecting floor glint: 40%/);
   run('roomTorch(hintTrap).lit=false');assert.equal(run('interactionPrompt(null)'),'');
+});
+check('corridors retain soft ambient light and stone walls block radial light and hidden glints', () => {
+  run("loadFloor(1,604);world.torches.forEach(t=>t.lit=false);prepareAmbient();var corridorIndex=corridorTiles.findIndex(Boolean);var corridorPoint={x:(corridorIndex%W+.5)*T,y:(Math.floor(corridorIndex/W)+.5)*T}");
+  assert.ok(Math.abs(run('ambientAt(corridorPoint)')-.42)<1e-12);
+  assert.ok(run('world.rooms.some(r=>ambientAt({x:(r.x+r.w/2)*T,y:(r.y+r.h/2)*T})<.1)'));
+  run("world.tiles.fill(1);world.rooms=[{x:3,y:3,w:12,h:12}];world.torches=[{x:7.5*T,y:7.5*T,room:0,lit:true}];var occludedTorch=world.torches[0];for(let y=0;y<H;y++)world.tiles[y*W+9]=0;var behindWall={x:10.5*T,y:7.5*T}");
+  assert.ok(run('radialLight(distance(behindWall,occludedTorch)/torchRadius(occludedTorch))')>.2);
+  assert.equal(run('torchIllumination(behindWall)'),0);
+  assert.equal(run('trapGlint(behindWall,((.45-behindWall.x*.013-behindWall.y*.007)%3.6+3.6)%3.6)'),0);
+  assert.ok(run('torchIllumination({x:8.5*T,y:7.5*T})')>.5);
+  run("loadFloor(1,604)");
 });
 check('safe traps activate only by deliberate Use, after exactly two seconds, then catch arriving monsters', () => {
   run("loadFloor(1,604);state='playing';enemies=[];props=[];loot=[];world.traps=[{x:player.x+45,y:player.y,kind:'fire',revealed:true,active:0}];player.hp=120;player.inv=0;world.end.x=2500;world.end.y=1900");

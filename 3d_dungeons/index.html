@@ -637,14 +637,113 @@ function updateHeroShots(dt){
 function roomTorch(p){
  const roomIndex=world.rooms.findIndex(r=>pointInRoom(p,r));
  if(roomIndex<0)return null;
- // Nearest-sconce cells partition a room: four corner sconces each own one quarter.
  return world.torches.filter(t=>t.room===roomIndex).sort((a,b)=>distance(p,a)-distance(p,b))[0]||null;
 }
-function torchIllumination(p){return roomTorch(p)?.lit ? .9 : 0}
+const lightStops=[[0,.94],[.18,.88],[.45,.64],[.7,.28],[1,0]];
+const darknessCanvas=document.createElement('canvas'),darknessContext=darknessCanvas.getContext('2d');
+const ambientCanvas=document.createElement('canvas'),ambientContext=ambientCanvas.getContext('2d');
+const torchVisibilityCache=new WeakMap();
+let ambientWorld=null,corridorTiles;
+function torchRadius(torch){
+ const room=world.rooms[torch.room],count=world.torches.filter(t=>t.room===torch.room).length;
+ return room?Math.sqrt(room.w*room.h*T*T/Math.max(1,count))*1.3:180;
+}
+function radialLight(fraction){
+ if(fraction>=1)return 0;
+ for(let i=1;i<lightStops.length;i++)if(fraction<=lightStops[i][0]){
+  const [start,a]=lightStops[i-1],[end,b]=lightStops[i];
+  return a+(b-a)*(fraction-start)/(end-start);
+ }
+ return 0;
+}
+function prepareAmbient(){
+ if(ambientWorld===world)return;
+ ambientWorld=world;corridorTiles=new Uint8Array(W*H);
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(world.tiles[y*W+x]&&!world.rooms.some(r=>pointInRoom({x:(x+.5)*T,y:(y+.5)*T},r)))corridorTiles[y*W+x]=1;
+ ambientCanvas.width=W*T/8;ambientCanvas.height=H*T/8;
+ const image=ambientContext.createImageData(ambientCanvas.width,ambientCanvas.height);
+ for(let y=0;y<image.height;y++)for(let x=0;x<image.width;x++){
+  const i=(y*image.width+x)*4;image.data[i]=2;image.data[i+1]=5;image.data[i+2]=12;
+  image.data[i+3]=Math.round((1-ambientAt({x:(x+.5)*8,y:(y+.5)*8}))*255);
+ }
+ ambientContext.putImageData(image,0,0);
+}
+function ambientAt(p){
+ if(ambientWorld!==world)prepareAmbient();
+ const tx=Math.floor(p.x/T),ty=Math.floor(p.y/T);
+ let nearest=60;
+ for(let y=Math.max(0,ty-2);y<=Math.min(H-1,ty+2);y++)for(let x=Math.max(0,tx-2);x<=Math.min(W-1,tx+2);x++)if(corridorTiles[y*W+x]){
+  const dx=Math.max(x*T-p.x,0,p.x-(x+1)*T),dy=Math.max(y*T-p.y,0,p.y-(y+1)*T);
+  nearest=Math.min(nearest,Math.hypot(dx,dy));
+ }
+ const amount=1-nearest/60;
+ return .06+.36*amount*amount*(3-2*amount);
+}
+function torchVisibility(torch){
+ const radius=torchRadius(torch),cached=torchVisibilityCache.get(torch);
+ if(cached?.world===world&&cached.x===torch.x&&cached.y===torch.y&&cached.radius===radius)return cached.points;
+ const points=[];
+ for(let i=0;i<256;i++){
+  const angle=i/256*TAU,dx=Math.cos(angle),dy=Math.sin(angle);
+  let x=Math.floor(torch.x/T),y=Math.floor(torch.y/T),travel=0;
+  const sx=dx<0?-1:1,sy=dy<0?-1:1,stepX=Math.abs(T/dx),stepY=Math.abs(T/dy);
+  let nextX=dx===0?Infinity:((dx>0?(x+1)*T:x*T)-torch.x)/dx;
+  let nextY=dy===0?Infinity:((dy>0?(y+1)*T:y*T)-torch.y)/dy;
+  while(travel<radius){
+   if(nextX<nextY){travel=nextX;nextX+=stepX;x+=sx}else{travel=nextY;nextY+=stepY;y+=sy}
+   if(x<0||y<0||x>=W||y>=H||!world.tiles[y*W+x])break;
+  }
+  const reach=Math.min(radius,travel);
+  points.push({x:torch.x+dx*reach,y:torch.y+dy*reach});
+ }
+ torchVisibilityCache.set(torch,{world,x:torch.x,y:torch.y,radius,points});return points;
+}
+function withinTorchLight(point,torch){
+ const points=torchVisibility(torch);
+ let inside=false;
+ for(let i=0,j=points.length-1;i<points.length;j=i++){
+  const a=points[i],b=points[j];
+  if((a.y>point.y)!==(b.y>point.y)&&point.x<(b.x-a.x)*(point.y-a.y)/(b.y-a.y)+a.x)inside=!inside;
+ }
+ return inside;
+}
+function torchIllumination(p){
+ let darkness=1;
+ for(const torch of world.torches)if(torch.lit){
+  const strength=radialLight(distance(p,torch)/torchRadius(torch));
+  if(strength>0&&withinTorchLight(p,torch))darkness*=1-strength;
+ }
+ return 1-darkness;
+}
 function lightAt(p){
- const room=world.rooms.find(r=>pointInRoom(p,r));
- const light=room?.06:.42,halo=.5*Math.max(0,1-distance(p,player)/85);
- return Math.max(light,halo,torchIllumination(p));
+ const halo=.5*Math.max(0,1-distance(p,player)/85);
+ return 1-(1-ambientAt(p))*(1-halo)*(1-torchIllumination(p));
+}
+function drawDarkness(){
+ if(darknessCanvas.width!==vw||darknessCanvas.height!==vh){darknessCanvas.width=vw;darknessCanvas.height=vh}
+ const mask=darknessContext;
+ mask.globalCompositeOperation='source-over';mask.clearRect(0,0,vw,vh);
+ prepareAmbient();mask.fillStyle='rgba(2,5,12,.94)';mask.fillRect(0,0,vw,vh);
+ mask.clearRect(-camera.x,-camera.y,W*T,H*T);
+ mask.drawImage(ambientCanvas,-camera.x,-camera.y,W*T,H*T);
+ mask.globalCompositeOperation='destination-out';
+ function illuminate(x,y,radius,stops){
+  x-=camera.x;y-=camera.y;
+  if(x+radius<0||y+radius<0||x-radius>vw||y-radius>vh)return;
+  const gradient=mask.createRadialGradient(x,y,0,x,y,radius);
+  for(const [offset,strength] of stops)gradient.addColorStop(offset,'rgba(0,0,0,'+strength+')');
+  mask.fillStyle=gradient;mask.fillRect(x-radius,y-radius,radius*2,radius*2);
+ }
+ for(const torch of world.torches)if(torch.lit){
+  if(Math.abs(torch.x-player.x)>vw/2+torchRadius(torch)||Math.abs(torch.y-player.y)>vh/2+torchRadius(torch))continue;
+  const points=torchVisibility(torch);
+  mask.save();mask.beginPath();mask.moveTo(points[0].x-camera.x,points[0].y-camera.y);
+  for(let i=1;i<points.length;i++)mask.lineTo(points[i].x-camera.x,points[i].y-camera.y);
+  mask.closePath();mask.clip();illuminate(torch.x,torch.y,torchRadius(torch),lightStops);mask.restore();
+ }
+ illuminate(player.x,player.y,85,[[0,.5],[1,0]]);
+ mask.globalCompositeOperation='source-over';
+ ctx.drawImage(darknessCanvas,camera.x,camera.y);
 }
 function trapGlint(t,time=clock){
  if(t.revealed||t.triggered||torchIllumination(t)<=.2)return 0;
@@ -672,9 +771,7 @@ function drawHazardsAndLighting(){
   else{ctx.strokeStyle=s.kind==='bow'?'#e7d4a0':'#b49162';ctx.lineWidth=s.kind==='bow'?2:3;ctx.beginPath();ctx.moveTo(-20,0);ctx.lineTo(9,0);ctx.stroke();polygon([[7,-4],[17,0],[7,4]],s.color);if(s.kind==='bow'){ctx.strokeStyle='#e2b275';ctx.beginPath();ctx.moveTo(-20,-4);ctx.lineTo(-14,0);ctx.lineTo(-20,4);ctx.stroke()}}
   ctx.restore();
  }
- for(let y=Math.floor(camera.y/20)*20;y<camera.y+vh;y+=20)for(let x=Math.floor(camera.x/20)*20;x<camera.x+vw;x+=20){
-  ctx.fillStyle='rgba(2,5,12,'+(1-lightAt({x:x+10,y:y+10})).toFixed(2)+')';ctx.fillRect(x,y,20,20);
- }
+ drawDarkness();
  for(const t of world.traps){
   if(!world.seen[Math.floor(t.y/T)*W+Math.floor(t.x/T)]||distance(t,player)>Math.max(vw,vh))continue;
   if(t.triggered&&t.active<=0)continue;
