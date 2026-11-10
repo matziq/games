@@ -208,6 +208,76 @@ check('stillness telegraphs zombie emergence; movement resets the timer, not com
   run('move(enemies.find(e=>e.type==="zombie"),10,0)');
   assert.equal(run('enemies.find(e=>e.type==="zombie").x'),x,'emerging zombies moved before surfacing');
 });
+check('idle undead emerge locally, extinguish only their room, then approach and actually damage the knight', () => {
+  for(let seed=0;seed<100;seed++){
+    run(`loadFloor(1,${seed});state="playing";player.dash=0;player.hp=120;player.inv=0;keys.clear();`);
+    const points=run('findIdlePoints()');
+    assert.ok(points.length>0,`no local emergence points for seed ${seed}`);
+    assert.ok(run('findIdlePoints().every(p=>distance(p,player)>=90&&distance(p,player)<=150&&clearLine(player,p)&&free(p.x,p.y,18))'));
+  }
+  run('loadFloor(1,42);state="playing";enemies=[];props=[];loot=[];player.hp=120;player.inv=0;player.armor=null;player.boots=null;player.gloves=null;player.helmet=null;player.dash=0;keys.clear();mouse.active=false;');
+  const otherTorches=run('world.torches.filter(t=>t.room!==0).map(t=>t.lit)');
+  run('for(let i=0;i<301;i++)update(.04)');
+  assert.ok(run('enemies.length===2&&enemies.every(e=>e.idleRisen&&distance(e,player)<=150&&e.emerge>0&&e.wind===0)'));
+  assert.ok(run('world.torches.filter(t=>t.room===0).every(t=>!t.lit)'),'arrival failed to extinguish the entire room');
+  assert.deepEqual(run('world.torches.filter(t=>t.room!==0).map(t=>t.lit)'),otherTorches,'arrival blacked out another room');
+  run('for(let i=0;i<34;i++)update(.04)');
+  assert.equal(run('player.hp'),120,'emerging zombies dealt unfair immediate damage');
+  run('for(let i=0;i<140;i++)update(.04)');
+  assert.ok(run('enemies.some(e=>distance(e,player)<55)'),'undead did not approach');
+  assert.ok(run('player.hp<120'),'local undead never attacked');
+});
+check('merchant sanctuary suppresses stillness threats and earthquake timers', () => {
+  run('loadFloor(2,42);state="playing";keys.clear();player.dash=0;world.quake.next=.1;for(let i=0;i<1000;i++)update(.04)');
+  assert.equal(run('idleThreat.elapsed'),0);
+  assert.equal(run('idleThreat.markers.length'),0);
+  assert.ok(run('!enemies.some(e=>e.idleRisen)&&world.quake.elapsed===0&&world.cracks.length===0'));
+});
+check('room identities, graves casks racks webs eggs and ruins preserve floor geometry and safe passages', () => {
+  for(let floor=1;floor<=10;floor++){
+    run(`loadFloor(${floor},42)`);
+    assert.equal(run('new Set(world.rooms.slice(1,11).map(r=>r.kind)).size'),8);
+    assert.ok(run('roomKinds.every(kind=>world.rooms.some(r=>r.kind===kind.id&&r.decor.length===6))'));
+    assert.ok(run('world.rooms[0].decor.length===0&&world.rooms[11].decor.length===0'));
+    assert.ok(run('world.webs.length>=3&&world.webs.every(w=>free(w.x,w.y,18)&&world.rooms.some(r=>r.kind==="spider"&&pointInRoom(w,r)))'));
+    const original=sandbox.window.emberkeep.generate(42,Math.ceil(floor/2));
+    assert.deepEqual(Array.from(run('world.tiles')),Array.from(original.tiles),'decor modified traversable geometry');
+  }
+  run('loadFloor(1,42);state="playing";enemies=[];world.traps=[];const web=world.webs[0];player.x=web.x;player.y=web.y;player.dash=0;keys.clear();update(.04)');
+  assert.ok(run('player.webbed&&player.slow>0'),'spider webs are only decorative, not a real slowing hazard');
+});
+check('upright facing mirrors the body while attacks retain their actual aim in every direction', () => {
+  for(const [angle,facing] of [[0,1],[Math.PI,-1],[Math.PI/2,1],[-Math.PI/2,1]]){
+    assert.equal(run(`heroFacing(${angle})`),facing);
+    run(`loadFloor(1,42);state="playing";props=[];enemies=[];player.angle=${angle};player.cool=0;player.dash=0;player.weapon={kind:"sword",damage:16,range:76,cooldown:.36};enemies=[makeEnemy("skeleton",{x:player.x+Math.cos(player.angle)*42,y:player.y+Math.sin(player.angle)*42})];attack()`);
+    assert.ok(run('enemies[0].hp<enemies[0].max'),'body mirroring changed the combat aim');
+  }
+  const body=run('baseDrawActor.toString()').split('if(hero){')[1].split('else if')[0];
+  assert.ok(body.indexOf('ctx.scale(heroFacing(player.angle),1)')<body.indexOf('circle(0,-15'));
+  assert.ok(body.indexOf('ctx.rotate(player.angle')>body.indexOf('ctx.restore();ctx.save()'),'body is still rotating with aim');
+});
+check('earthquakes telegraph three seconds, open traversable cracks, and sweep entry down exactly one floor', () => {
+  run('loadFloor(3,42);state="playing";enemies=[];props=[];world.traps=[];world.quake.next=.1;updateEarthquakes(.11,player)');
+  assert.equal(run('world.quake.warning'),3);
+  assert.equal(run('world.cracks.length'),0);
+  run('updateEarthquakes(2.99,player)');
+  assert.equal(run('world.cracks.length'),0);
+  run('updateEarthquakes(.01,player)');
+  assert.equal(run('world.cracks.length'),1);
+  assert.ok(run('free(world.cracks[0].x,world.cracks[0].y,18)'));
+  assert.equal(run('crossesCrack({x:1000,y:1000},{x:1000,y:1000},{x:0,y:0})'),false);
+  assert.equal(run('crossesCrack({x:-90,y:-21},{x:-90,y:-21},{x:0,y:0})'),false,'a collinear point outside a crack triggered a fall');
+  run('const fissure=world.cracks[0];fissure.grace=0;const prior={x:fissure.x-70,y:fissure.y};player.x=fissure.x+70;player.y=fissure.y;keys.add("d");updateEarthquakes(.04,prior)');
+  assert.equal(run('depth'),4,'crack did not descend exactly one floor');
+  assert.ok(run('world.merchant&&player.hp===player.max&&keys.size===0&&world.cracks.length===0'));
+  assert.equal(run('fallToFloor(11,"invalid")'),false);
+  run('loadFloor(9,42);state="playing";world.cracks=[{x:player.x,y:player.y,grace:0}];updateEarthquakes(.04,player)');
+  assert.equal(run('depth'),10);
+  assert.equal(run('enemies.filter(e=>e.type==="dragon").length'),1);
+  run('world.quake.next=.01;updateEarthquakes(200,player)');
+  assert.equal(run('depth'),10);assert.equal(run('world.cracks.length'),0);
+  assert.ok(run('state==="playing"'),'a crack bypassed the final boss');
+});
 check('merchant schedule, safe room and weapon armor potion transactions work on floors 2 and 4', () => {
   for(const floor of [1,3,5,7,9,10]){
     run(`loadFloor(${floor},42)`);
