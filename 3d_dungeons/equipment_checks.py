@@ -36,7 +36,7 @@ with sync_playwright() as p:
     box = page.locator("#game").bounding_box()
     cx, cy = box["x"] + box["width"]/2, box["y"] + box["height"]/2
     pictures, weapon_hashes, armor_hashes = [], {}, {}
-    for kind in ["sword", "axe", "mace", "spear"]:
+    for kind in ["sword", "axe", "mace", "spear", "bow", "boomerang", "javelin"]:
         page.evaluate("""kind => {
           const t=weaponTypes[kind];
           player.weapon={kind,name:t.label,color:'#c5d4d4',damage:24,...t};
@@ -49,6 +49,8 @@ with sync_playwright() as p:
         weapon_hashes[kind] = [hashlib.sha256(hero).hexdigest(), hashlib.sha256(ground).hexdigest()]
         for label, image in [(kind+" equipped", hero), (kind+" ground loot", ground)]:
             pictures.append((label, image))
+    for column in (0, 1):
+        assert len({hashes[column] for hashes in weapon_hashes.values()}) == 7
     for index, kind in enumerate(["leather", "chain", "plate"]):
         page.evaluate("""({index,kind}) => {
           player.weapon={kind:'sword',name:'Longsword',color:'#c5d4d4',damage:24,range:82};
@@ -140,11 +142,13 @@ with sync_playwright() as p:
         combinations.append(d)
     page.locator("#mute").click()
     profiles = {}
-    for kind in ["sword", "axe", "mace", "spear"]:
+    for kind in ["sword", "axe", "mace", "spear", "bow", "boomerang", "javelin"]:
         profiles[kind] = page.evaluate("""kind => {
-          soundProfiles.length=0;DungeonAudio.play('strike',kind);return [...soundProfiles];
+          soundProfiles.length=0;const random=Math.random;Math.random=()=>.5;
+          try{DungeonAudio.play('strike',kind);return [...soundProfiles]}
+          finally{Math.random=random}
         }""", kind)
-    assert len({round(values[0]) for values in profiles.values()}) == 4
+    assert len({round(values[0]) for values in profiles.values()}) == 7
     enemy_profiles, material_profiles = {}, {}
     enemies = ["slime", "goblin", "bog_wraith", "cave_spider", "thornling", "wolf", "vine_archer",
                "skeleton", "bone_archer", "wraith", "gargoyle", "iron_knight",
@@ -197,7 +201,7 @@ with sync_playwright() as p:
               "armor_render_hashes": armor_hashes, "armor_received_damage": received, "armor": armor,
               "audio_combinations": combinations, "weapon_audio_profiles": profiles,
               "enemy_audio_profiles": enemy_profiles, "material_audio_profiles": material_profiles, "varied_coin_pitches": varied,
-              "checks": ["4 equipped and ground weapon silhouettes", "3 worn and ground armor silhouettes",
+              "checks": ["7 equipped and ground weapon silhouettes", "3 worn and ground armor silhouettes",
                          "plate armor rendered on all four facings", "domed chest distinct from cross-braced crate",
                          "open chest distinct from broken crate",
                          "E chest armor loot/equip/swap", "visible equipment stats", "damage reduction",
