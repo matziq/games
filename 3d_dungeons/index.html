@@ -6,6 +6,9 @@
 <meta name="description" content="An offline overhead medieval action RPG. Explore procedural dungeons, plunder castles, and challenge an ancient dragon.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23141c20'/%3E%3Cpath d='M9 30L30 9M23 9h7v7M9 22l9 9' stroke='%23edbf72' stroke-width='4'/%3E%3C/svg%3E">
 <style>
+@media(max-width:650px),(max-height:500px){#scrollPanel[open]~#selectionPanel{display:none}}
+@media(max-height:650px){#scrollStatus{display:none}}
+@media(max-width:650px) and (max-height:650px){.viewport #scrollPanel{position:fixed;top:76px;bottom:auto;left:156px;width:154px;font-size:12px;padding:6px}}
 :root{color-scheme:dark;--gold:#edbf72;--muted:#92a4a8;--line:#2e3c40}*{box-sizing:border-box}body{margin:0;background:#080e11;color:#e6e9e3;font-family:Segoe UI,Arial,sans-serif}button{font:inherit;cursor:pointer;color:inherit;border:1px solid #506063;background:#233034;padding:10px 17px;border-radius:5px}button:hover,button:focus-visible{background:#394743;outline:2px solid var(--gold)}button.primary{background:var(--gold);color:#231b10;border-color:var(--gold);font-weight:700}header{height:76px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-bottom:1px solid var(--line);background:#10191d}h1{font-family:Georgia,serif;color:var(--gold);font-size:25px;letter-spacing:5px;margin:0}header small{font-size:10px;letter-spacing:3px;color:var(--muted)}header nav{display:flex;gap:9px}main{display:grid;grid-template-columns:minmax(0,1fr) 265px;height:calc(100vh - 110px);min-height:440px}.viewport{position:relative;overflow:hidden;background:#070c0f}canvas#game{display:block;width:100%;height:100%;touch-action:none;outline:none}.hud{position:absolute;left:22px;top:17px;width:245px;pointer-events:none;text-shadow:0 2px 3px #000}.label{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--muted)}bar{display:block;height:9px;background:#293438;border-radius:3px;margin:7px 0 12px;overflow:hidden}bar i{display:block;height:100%;background:#d26756;width:100%}#stamina{background:#68a6aa}#xp{background:var(--gold)}.area{position:absolute;right:22px;top:21px;text-align:right;color:var(--gold);font-family:Georgia,serif;font-size:20px}.area small{display:block;font:11px Segoe UI,sans-serif;color:var(--muted);margin-top:6px}.prompt{position:absolute;bottom:25px;left:50%;transform:translateX(-50%);background:#10191ee8;border:1px solid #6b674e;padding:11px 20px;border-radius:5px;white-space:nowrap;font-size:13px;color:var(--gold);pointer-events:none}.prompt:empty{display:none}aside{padding:22px 19px;border-left:1px solid var(--line);background:linear-gradient(#142025,#0d161b);overflow-y:auto}aside h2{font:18px Georgia,serif;margin:8px 0 18px;color:var(--gold)}#map{width:225px;height:174px;border:1px solid #3a4747;background:#080e11}section.panel{padding:18px 0;border-bottom:1px solid var(--line)}.stat{display:flex;justify-content:space-between;margin:10px 0;font-size:13px}.stat span{color:var(--muted)}#weapon{font:17px Georgia,serif;color:var(--gold);margin:12px 0 8px}.logs{font-size:12px;line-height:1.6;color:#a9b8b6}.logs p{margin:8px 0;border-left:2px solid #635c40;padding-left:9px}footer{height:34px;padding:9px 24px;font-size:10px;letter-spacing:1px;color:var(--muted);border-top:1px solid var(--line)}kbd{font-family:inherit;color:#e5d9bc}.overlay{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,#172126e8,#050a0ff5);display:flex;align-items:center;justify-content:center;padding:24px;z-index:5}.overlay[hidden],dialog:not([open]){display:none}.intro{max-width:610px;text-align:center}.eyebrow{font-size:11px;letter-spacing:4px;color:var(--gold)}.intro h2{font:clamp(38px,5vw,64px) Georgia,serif;line-height:1.1;margin:20px 0;color:#f1e6ca}.intro p{color:#a9b9bb;line-height:1.8;font-size:15px}.intro .controls{font-size:12px;margin:22px 0;line-height:2;color:#c5c9bf}.intro button{padding:13px 30px}.boss{position:absolute;bottom:65px;left:25%;width:50%;text-align:center;pointer-events:none;color:#edbf72;font:15px Georgia,serif}.boss bar i{background:#bd4d3c}dialog{background:#142025;color:#dce3de;border:1px solid #867147;border-radius:8px;max-width:900px;width:90%;max-height:85vh}dialog::backdrop{background:#000c}.gallery{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.gallery img{width:100%;border-radius:3px}dialog p{line-height:1.7;color:#aabbbd}#error{color:#ffb8a6;font-size:13px}@media(max-width:850px){main{grid-template-columns:minmax(0,1fr) 205px}aside{padding:15px 12px}#map{width:180px;height:140px}header{padding:0 15px}h1{font-size:20px}.hud{width:190px}.area{font-size:16px}}@media(max-width:620px){main{grid-template-columns:1fr;height:calc(100vh - 100px)}aside{display:none}header{height:66px}header small{display:none}header button{padding:8px;font-size:11px}.area{top:85px;left:22px;right:auto;text-align:left}.gallery{grid-template-columns:repeat(3,1fr)}footer{font-size:9px;padding:9px}.intro .controls{font-size:11px}}
 .logs p{border-left:0;padding-left:0}.gallery img{max-height:145px;object-fit:contain;background:#070e12}
 .audio-controls{display:flex;align-items:center;gap:7px}.audio-controls input{width:75px;accent-color:var(--gold)}#audioStatus{position:absolute;bottom:43px;left:22px;font-size:10px;color:#b1c5c7;pointer-events:none}@media(max-width:850px){header nav{gap:5px}.audio-controls input{width:48px}header button{padding:8px;font-size:11px}}@media(max-width:620px){header{height:auto;min-height:100px;flex-wrap:wrap;gap:7px;padding:10px 15px}main{height:calc(100vh - 134px)}.audio-controls input{width:55px}#audioStatus{bottom:8px}}
@@ -18,6 +21,7 @@
 <div class="hud"><div class="label">Knight <span id="level">I</span> <span id="health"></span></div><bar><i id="hp"></i></bar><div class="label">Resolve / dodge</div><bar><i id="stamina"></i></bar><bar style="height:3px"><i id="xp"></i></bar></div>
 <div class="area"><span id="area">The Sunken Halls</span><small id="floor">CHAPTER I / V</small><small id="roomName"></small></div>
 <div id="audioStatus" role="status" aria-live="polite">Sound starts when you enter the halls.</div><div id="threatStatus" role="status" aria-live="polite" hidden></div><div class="prompt" id="prompt"></div><div class="boss" id="boss" hidden>VARKHOS, THE CINDER KING<bar><i id="bosshp"></i></bar></div>
+<details id="scrollPanel" aria-label="Single-use scrolls" hidden><summary id="scrollSummary">Scrolls / right-click or R</summary><div class="scroll-choices"><button id="scroll-fireball" aria-pressed="true">Fireball</button><button id="scroll-light" aria-pressed="false">Light</button><button id="scroll-poison" aria-pressed="false">Poison</button><button id="scroll-lightning" aria-pressed="false">Lightning</button></div><button id="castScroll">Cast Fireball [R]</button><div id="scrollStatus" role="status" aria-live="polite"></div></details>
 <section id="selectionPanel" aria-label="World item selection" hidden><div id="selectionStatus" role="status" aria-live="polite"></div><div id="selectionChoices" aria-label="Overlapping items"></div><div class="selection-actions"><button id="useSelected">Use [E]</button><button id="deleteSelected" disabled>Delete gear [X]</button><button id="clearSelected">Clear</button></div><button id="undoDelete" disabled>Undo last delete</button></section>
 <div class="overlay" id="overlay"><div class="intro"><div class="eyebrow">A PROCEDURAL MEDIEVAL ADVENTURE</div><h2 id="title">Steel. Stone.<br>Something beneath.</h2><p id="story">Below Emberkeep, a dragon guards the Ashen Crown. Descend through five distinct realms: drowned halls, a thornbound castle, a moonlit crypt, a fallen keep, and a volcanic throne. Each has its own creatures and atmosphere. Break forgotten stores, claim better steel and armor, and survive the fire.</p><div class="controls"><kbd>WASD / ARROWS</kbd> move &nbsp; <kbd>MOUSE</kbd> aim<br><kbd>CLICK / SPACE</kbd> attack &nbsp; <kbd>SHIFT</kbd> dodge &nbsp; <kbd>Q</kbd> potion<br><kbd>E</kbd> open / equip weapons &amp; armor / descend &nbsp; <kbd>P</kbd> pause<br>Gold and potions collect on approach. Every realm has distinct monsters and scenery.<br>Watch for spider venom and wizard spell markers; dodge before they strike.<br>Music includes evolving chapter motifs. Sound effects and Music toggle independently.</div><button class="primary" id="start">Enter the halls</button><p id="error"></p></div></div>
 </div>
@@ -26,6 +30,7 @@
 <dialog id="artDialog"><h2 style="font-family:Georgia;color:#edbf72">The stones that inspired Emberkeep</h2><p>All 15 supplied images are full overhead room renders, not sprite sheets. Their torchlit masonry, geometric halls, and throne rooms guide this game's art direction. Cropped floor and wall samples from NoLoRA_0008 and NoLoRA_0015 texture the actual procedural world below; the original layouts are shown here as references, not collision maps.</p><div class="gallery" id="gallery"></div><p id="assetStatus"></p><button id="closeArt">Return to the halls</button></dialog>
 <dialog id="shopDialog" aria-labelledby="shopTitle"><h2 id="shopTitle" style="font-family:Georgia;color:#edbf72">The Roadside Merchant</h2><p id="shopDescription">A safe room for trade. Your current equipment stays equipped; purchased gear is placed nearby for you to equip with E.</p><p class="shop-gold">Your gold: <b id="shopGold">0</b></p><div id="shopProducts" class="shop-products"></div><button id="closeShop">Leave the shop</button></dialog>
 <style>
+#scrollPanel{position:absolute;left:12px;top:110px;width:190px;padding:8px;background:#101b23e8;border:1px solid #70654c;border-radius:6px;z-index:2}#scrollPanel[hidden]{display:none}#scrollPanel .label{font-size:9px;letter-spacing:.6px}.scroll-choices{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:6px 0}#scrollPanel button{font-size:11px;padding:6px;min-height:32px}#scrollPanel button[aria-pressed=true]{border-color:#ffe1a0;background:#66512e}#castScroll{width:100%}#scrollStatus{font-size:10px;color:#c3d0c7;margin-top:5px}@media(pointer:coarse){#scrollPanel{top:80px;width:176px}#scrollPanel button{min-height:40px}}@media(max-height:500px){#scrollPanel{top:75px;width:155px}#scrollPanel button{min-height:28px;padding:3px}}
 .shop-products{display:grid;grid-template-columns:repeat(3,minmax(150px,1fr));gap:12px;margin:18px 0}.shop-products article{border:1px solid #5b654e;background:#111b1d;padding:13px;border-radius:6px}.shop-products h3{font:16px Georgia,serif;color:#edbf72;margin:0 0 8px}.shop-products p{min-height:42px;font-size:12px;margin:6px 0 12px}.shop-products button{width:100%;font-size:12px}.shop-gold{color:#edbf72}@media(max-width:620px){.shop-products{grid-template-columns:1fr}}
 #threatStatus{position:absolute;top:82px;left:50%;transform:translateX(-50%);background:#351916e8;border:1px solid #df7653;padding:9px 16px;border-radius:5px;color:#ffd2a3;font-size:13px;font-weight:700;letter-spacing:1px;z-index:2;pointer-events:none;text-align:center}
 #selectionPanel{position:absolute;right:12px;bottom:65px;width:min(290px,calc(100% - 24px));padding:10px;background:#101b23ee;border:1px solid #d5b672;border-radius:7px;z-index:3;font-size:12px;pointer-events:auto}#selectionPanel[hidden]{display:none}#selectionChoices{display:flex;flex-wrap:wrap;gap:4px;max-height:105px;overflow:auto;margin:7px 0}#selectionPanel button{padding:7px;font-size:11px;min-height:32px}#selectionChoices button[aria-pressed=true]{border-color:#ffe1a0;background:#66512e}#selectionStatus{color:#ffe1a0}.selection-actions{display:flex;flex-wrap:wrap;gap:4px}#undoDelete{margin-top:7px;width:100%}button:disabled{opacity:.45}
@@ -433,7 +438,7 @@ function render(){
   }else if(p.broken){polygon([[-16,9],[-8,-7],[-3,8],[6,-13],[11,8],[17,11]],'#997044');ctx.strokeStyle='#593e2c';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-16,9);ctx.lineTo(-8,-7);ctx.lineTo(-3,8);ctx.lineTo(6,-13);ctx.lineTo(11,8);ctx.lineTo(17,11);ctx.stroke()}
   else{ctx.fillStyle='#815b39';ctx.fillRect(-15,-11,30,23);ctx.strokeStyle='#aa8357';ctx.lineWidth=2;ctx.strokeRect(-14,-10,28,21);ctx.fillStyle='#99734b';for(let x of [-9,-3,3,9])ctx.fillRect(x-1,-9,2,19);ctx.strokeStyle='#c09a65';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-14,-10);ctx.lineTo(14,10);ctx.moveTo(14,-10);ctx.lineTo(-14,10);ctx.stroke();ctx.fillStyle='#d5b17a';for(const x of [-11,11])for(const y of [-7,7])circle(x,y,1.3,'#d5b17a')}
   ctx.restore()}
- for(const l of loot)if(world.seen[Math.floor(l.y/T)*W+Math.floor(l.x/T)]){const c=l.type==='weapon'?l.weapon.color:l.type==='armor'?l.armor.color:l.type==='gold'?'#edbf72':'#76d9ac';glow(l.x,l.y,24,c+'44');if(l.type==='gold'){circle(l.x,l.y,5,c);circle(l.x-5,l.y+4,4,'#a78041')}else if(l.type==='potion'){ctx.fillStyle=c;ctx.fillRect(l.x-5,l.y-3,10,12);ctx.fillStyle='#d9d6ba';ctx.fillRect(l.x-3,l.y-7,6,4)}else{ctx.save();ctx.translate(l.x,l.y);if(l.type==='armor')drawArmor(l.armor);else{ctx.rotate(-.8);ctx.scale(.8,.8);ctx.translate(-15,0);drawWeapon(l.weapon)}ctx.restore()}}
+ for(const l of loot)if(world.seen[Math.floor(l.y/T)*W+Math.floor(l.x/T)]){const c=l.type==='scroll'?scrollTypes[l.scroll].color:l.type==='weapon'?l.weapon.color:l.type==='armor'?l.armor.color:l.type==='gold'?'#edbf72':'#76d9ac';glow(l.x,l.y,24,c+'44');if(l.type==='gold'){circle(l.x,l.y,5,c);circle(l.x-5,l.y+4,4,'#a78041')}else if(l.type==='scroll'){ctx.fillStyle='#ecd6a5';ctx.fillRect(l.x-7,l.y-9,14,18);ctx.strokeStyle=c;ctx.lineWidth=3;ctx.strokeRect(l.x-8,l.y-9,16,18);ctx.fillStyle=c;ctx.font='bold 11px Georgia';ctx.textAlign='center';ctx.fillText(l.scroll[0].toUpperCase(),l.x,l.y+4)}else if(l.type==='potion'){ctx.fillStyle=c;ctx.fillRect(l.x-5,l.y-3,10,12);ctx.fillStyle='#d9d6ba';ctx.fillRect(l.x-3,l.y-7,6,4)}else{ctx.save();ctx.translate(l.x,l.y);if(l.type==='armor')drawArmor(l.armor);else{ctx.rotate(-.8);ctx.scale(.8,.8);ctx.translate(-15,0);drawWeapon(l.weapon)}ctx.restore()}}
  for(const e of enemies)if(distance(e,player)<440&&world.seen[Math.floor(e.y/T)*W+Math.floor(e.x/T)]){
   if(e.wind>0){const spell=e.attack==='venom'||e.attack==='fire'||e.attack==='lightning',color=e.type==='dragon'?'#f28b57':e.attack==='venom'?'#9be05c':e.attack==='fire'?'#ff713c':e.attack==='lightning'?'#bbc5ff':e.color;ctx.fillStyle=color+'38';ctx.strokeStyle=color;ctx.lineWidth=2;
    if(e.attack==='lightning'&&e.attackTarget){const tx=e.attackTarget.x,ty=e.attackTarget.y;ctx.setLineDash([5,5]);ctx.beginPath();ctx.arc(tx,ty,24+Math.sin(clock*10)*3,0,TAU);ctx.fill();ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.moveTo(e.x,e.y);for(let i=1;i<=6;i++){const f=i/7,offset=(i%2?1:-1)*10;ctx.lineTo(e.x+(tx-e.x)*f+offset,e.y+(ty-e.y)*f-offset)}ctx.lineTo(tx,ty);ctx.stroke()}
@@ -645,6 +650,7 @@ const ambientCanvas=document.createElement('canvas'),ambientContext=ambientCanva
 const torchVisibilityCache=new WeakMap();
 let ambientWorld=null,corridorTiles;
 function torchRadius(torch){
+ if(torch.magicRadius)return torch.magicRadius;
  const room=world.rooms[torch.room],count=world.torches.filter(t=>t.room===torch.room).length;
  return room?Math.sqrt(room.w*room.h*T*T/Math.max(1,count))*1.3:180;
 }
@@ -709,7 +715,7 @@ function withinTorchLight(point,torch){
 }
 function torchIllumination(p){
  let darkness=1;
- for(const torch of world.torches)if(torch.lit){
+ for(const torch of [...world.torches,...(world.scrollLights||[])])if(torch.lit){
   const strength=radialLight(distance(p,torch)/torchRadius(torch));
   if(strength>0&&withinTorchLight(p,torch))darkness*=1-strength;
  }
@@ -734,7 +740,7 @@ function drawDarkness(){
   for(const [offset,strength] of stops)gradient.addColorStop(offset,'rgba(0,0,0,'+strength+')');
   mask.fillStyle=gradient;mask.fillRect(x-radius,y-radius,radius*2,radius*2);
  }
- for(const torch of world.torches)if(torch.lit){
+ for(const torch of [...world.torches,...(world.scrollLights||[])])if(torch.lit){
   if(Math.abs(torch.x-player.x)>vw/2+torchRadius(torch)||Math.abs(torch.y-player.y)>vh/2+torchRadius(torch))continue;
   const points=torchVisibility(torch);
   mask.save();mask.beginPath();mask.moveTo(points[0].x-camera.x,points[0].y-camera.y);
@@ -942,6 +948,8 @@ loadFloor=function(floor,s){
  }:null;
  if(world.merchant)props=props.filter(p=>!pointInRoom(p,world.rooms[0],0));
  configureHazards();configureRoomDetails();
+ if(!player.scrolls){player.scrolls={fireball:1,light:1,poison:1,lightning:1};player.selectedScroll='fireball';player.scrollCooldown=0}
+ world.scrollLights=[];world.scrollZones=[];world.scrollFlashes=[];
  selectedWorldItem=null;selectionChoices=[];refreshSelectionPanel();
  idleThreat.elapsed=0;idleThreat.triggered=false;idleThreat.markers=[];
  $('threatStatus').hidden=true;$('roomName').textContent=world.rooms[0].name;
@@ -994,6 +1002,125 @@ function buyProduct(id){
  window.DungeonAudio.play(id==='potion'?'bottle':'gold');
  updateHUD();updateShop();return true;
 }
+const scrollTypes={
+ fireball:{name:'Fireball',color:'#ff954d',description:'Blasts the first target ahead; burns nearby foes.'},
+ light:{name:'Light',color:'#ffe5a0',description:'A wall-bounded light beacon for 25 seconds; reveals glints.'},
+ poison:{name:'Poison',color:'#a9e56c',description:'A six-second cloud ahead poisons enemies.'},
+ lightning:{name:'Lightning',color:'#b8ccff',description:'Strikes the first target ahead for heavy damage.'}
+};
+const baseScrollDrops=drops,baseScrollHUD=updateHUD;
+drops=function(source,chest=false){
+ baseScrollDrops(source,chest);
+ if(!source.trapSwarm&&(chest||rng()<.12)){
+  const kinds=Object.keys(scrollTypes),kind=kinds[integer(0,kinds.length-1)];
+  loot.push({x:source.x+12,y:source.y-28,type:'scroll',scroll:kind});
+ }
+};
+updateHUD=function(){baseScrollHUD();refreshScrollHUD()};
+function refreshScrollHUD(){
+ $('scrollPanel').hidden=!player||!['playing','paused','shop'].includes(state);
+ if(!player?.scrolls)return;
+ for(const [kind,spell] of Object.entries(scrollTypes)){
+  const button=$('scroll-'+kind);button.textContent=spell.name+' ('+player.scrolls[kind]+')';
+  button.setAttribute('aria-pressed',String(player.selectedScroll===kind));
+ }
+ const spell=scrollTypes[player.selectedScroll];
+ $('scrollSummary').textContent='Scrolls: '+spell.name+' ('+player.scrolls[player.selectedScroll]+')';
+ $('castScroll').textContent='Cast '+spell.name+' [R]';
+ $('castScroll').disabled=state!=='playing'||player.scrolls[player.selectedScroll]<=0||player.scrollCooldown>0;
+ $('scrollStatus').textContent=spell.description;
+}
+function scrollAimPoint(){
+ const direction={x:Math.cos(player.angle),y:Math.sin(player.angle)};
+ let point={x:player.x,y:player.y};
+ for(let travel=8;travel<=240;travel+=8){
+  const next={x:player.x+direction.x*travel,y:player.y+direction.y*travel};
+  if(!floorAt(next.x,next.y))break;
+  point=next;
+  if(props.some(p=>!p.open&&distance(p,point)<22)||enemies.some(e=>e.hp>0&&distance(e,point)<e.radius+8))break;
+ }
+ return point;
+}
+function castScroll(){
+ if(state!=='playing'||!player.scrolls||player.scrollCooldown>0)return false;
+ const kind=player.selectedScroll,spell=scrollTypes[kind];
+ if(!spell||player.scrolls[kind]<=0){log('No '+(spell?.name||'selected')+' scrolls left. Find scrolls in chests and monster loot.');return false}
+ const point=kind==='light'?{x:player.x,y:player.y}:scrollAimPoint();
+ if(kind!=='light'&&distance(point,player)<8){log('No room to cast: aim away from the wall.');return false}
+ player.scrolls[kind]--;player.scrollCooldown=.45;
+ if(kind==='light')world.scrollLights.push({...point,lit:true,magicRadius:220,life:25});
+ else if(kind==='poison')world.scrollZones.push({...point,life:6,tick:0,radius:76,magicRadius:76});
+ else{
+  const radius=kind==='fireball'?82:36;
+  for(const enemy of [...enemies])if(enemy.hp>0&&distance(point,enemy)<radius+enemy.radius&&clearLine(point,enemy)){
+   if(kind==='fireball'){enemy.burn=3;enemy.burnTick=.4}
+   hurtEnemy(enemy,kind==='fireball'?55:100);
+  }
+  for(const prop of props)if(!prop.open&&prop.type!=='chest'&&distance(point,prop)<radius+15&&clearLine(point,prop))breakProp(prop,80);
+ }
+ world.scrollFlashes.push({...point,from:{x:player.x,y:player.y},kind,life:.45});
+ particle(point.x,point.y,spell.color,24);window.DungeonAudio.play(kind==='light'?'magic':kind==='fireball'?'fire':kind==='poison'?'poison':'lightning');
+ floatText(point.x,point.y-20,spell.name.toUpperCase()+' SCROLL','treasure');
+ log(spell.name+' scroll consumed.');$('scrollPanel').open=false;refreshScrollHUD();return true;
+}
+function updateScrolls(dt){
+ player.scrollCooldown=Math.max(0,player.scrollCooldown-dt);
+ for(const item of loot)if(item.type==='scroll'&&!item.taken&&distance(item,player)<32){
+  player.scrolls[item.scroll]++;item.taken=true;
+  floatText(item.x,item.y-12,'+1 '+scrollTypes[item.scroll].name.toUpperCase()+' SCROLL','treasure');
+  window.DungeonAudio.play('magic');log('Found a '+scrollTypes[item.scroll].name+' scroll.');
+ }
+ loot=loot.filter(item=>!item.taken);
+ for(const light of world.scrollLights)light.life-=dt;
+ world.scrollLights=world.scrollLights.filter(light=>light.life>0);
+ for(const zone of world.scrollZones){
+  zone.life-=dt;zone.tick-=dt;
+  if(zone.life>0&&zone.tick<=0){
+   zone.tick+=.5;
+   for(const enemy of enemies)if(enemy.hp>0&&distance(zone,enemy)<zone.radius+enemy.radius&&clearLine(zone,enemy)){
+    enemy.poison=3;enemy.poisonTick=.4;hurtEnemy(enemy,7);
+   }
+  }
+ }
+ world.scrollZones=world.scrollZones.filter(zone=>zone.life>0);
+ for(const flash of world.scrollFlashes)flash.life-=dt;
+ world.scrollFlashes=world.scrollFlashes.filter(flash=>flash.life>0);
+ refreshScrollHUD();
+}
+function drawScrollMagic(){
+ for(const zone of world.scrollZones){
+  ctx.save();const bounds=torchVisibility(zone);ctx.beginPath();
+  bounds.forEach((point,index)=>index?ctx.lineTo(point.x,point.y):ctx.moveTo(point.x,point.y));ctx.closePath();ctx.clip();
+  ctx.globalAlpha=.16+Math.sin(clock*5)*.035;
+  ctx.fillStyle=scrollTypes.poison.color;ctx.beginPath();ctx.arc(zone.x,zone.y,zone.radius,0,TAU);ctx.fill();ctx.restore();
+ }
+ for(const flash of world.scrollFlashes){
+  ctx.save();ctx.globalAlpha=flash.life/.45;ctx.strokeStyle=scrollTypes[flash.kind].color;ctx.lineWidth=4;
+  ctx.beginPath();
+  if(flash.kind==='lightning'){
+   ctx.moveTo(flash.from.x,flash.from.y);
+   for(let i=1;i<8;i++){const f=i/8;ctx.lineTo(flash.from.x+(flash.x-flash.from.x)*f+(i%2?7:-7),flash.from.y+(flash.y-flash.from.y)*f)}
+   ctx.lineTo(flash.x,flash.y);
+  }else ctx.arc(flash.x,flash.y,(1-flash.life/.45)*65+8,0,TAU);
+  ctx.stroke();ctx.restore();
+ }
+}
+for(const kind of Object.keys(scrollTypes))$('scroll-'+kind).onclick=()=>{player.selectedScroll=kind;refreshScrollHUD();canvas.focus()};
+$('castScroll').onclick=()=>{castScroll();canvas.focus()};
+canvas.addEventListener('contextmenu',event=>event.preventDefault());
+canvas.addEventListener('pointerdown',event=>{
+ if(event.pointerType!=='mouse'||event.button!==2)return;
+ event.preventDefault();
+ const rect=canvas.getBoundingClientRect();
+ if(player)player.angle=Math.atan2(event.clientY-rect.top+camera.y-player.y,event.clientX-rect.left+camera.x-player.x);
+ castScroll();canvas.focus();
+});
+window.addEventListener('keydown',event=>{
+ if(event.key.toLowerCase()!=='r'||event.repeat||$('artDialog').open)return;
+ if(event.target?.matches?.('input,textarea,select'))return;
+ event.preventDefault();castScroll();
+});
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Single-use scrolls: select Fireball, Light, Poison or Lightning in the scroll panel. Right-click the game to aim and cast, or press R / tap Cast using your current facing. Start with one of each; collect more from chests and monsters. Light lasts 25 seconds; poison clouds last 6 seconds. Scrolls persist between floors; paused or blocked casts do not consume them.');
 function worldTargets(){
  if(!world)return [];
  world.end.type='stairs';
@@ -1158,6 +1285,8 @@ update=function(dt){
  const before={x:player.x,y:player.y};
  baseUpdate(dt);
  if(state!=='playing')return;
+ updateScrolls(dt);
+ if(state!=='playing')return;
  const moved=Math.hypot(player.x-before.x,player.y-before.y)>.25;
  updateHeroShots(dt);
  if(updateTraps(dt,moved))return;
@@ -1198,7 +1327,7 @@ render=function(){
   const pulse=1+Math.sin(clock*9)*.12;ctx.save();ctx.translate(p.x,p.y);ctx.scale(pulse,pulse);ctx.fillStyle='#b84e4160';ctx.strokeStyle='#ff9b72';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,2,23,11,0,0,TAU);ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(-14,-8);ctx.lineTo(-6,-15);ctx.lineTo(1,-8);ctx.lineTo(10,-16);ctx.lineTo(16,-9);ctx.stroke();ctx.restore();
  }
  for(const e of enemies)if(e.type==='zombie'&&e.emerge>0){ctx.strokeStyle='#b69a69';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(e.x,e.y+3,18,8,0,0,TAU);ctx.stroke();ctx.fillStyle='#433e34';ctx.beginPath();ctx.ellipse(e.x,e.y+5,13,5,0,0,TAU);ctx.fill()}
- drawHazardsAndLighting();
+ drawScrollMagic();drawHazardsAndLighting();
  if(selectedWorldItem&&isWorldTarget(selectedWorldItem)&&targetReachable(selectedWorldItem)){
   ctx.save();ctx.strokeStyle='#fff0a8';ctx.lineWidth=2;ctx.setLineDash([5,3]);ctx.beginPath();ctx.ellipse(selectedWorldItem.x,selectedWorldItem.y,25,24,0,0,TAU);ctx.stroke();ctx.restore();
  }

@@ -31,7 +31,7 @@ $apk = Join-Path $OutputDirectory 'Emberkeep-Android.apk'
 $resources = Join-Path $build 'resources.zip'
 Run "$tools\aapt2.exe" @('compile','--dir',"$PSScriptRoot\res",'-o',$resources)
 Run "$tools\aapt2.exe" @('link','-o',$unsigned,'-I',$platform,'--manifest',"$PSScriptRoot\AndroidManifest.xml",
-    '-R',$resources,'-A',$assets,'--min-sdk-version','26','--target-sdk-version','36','--version-code','9','--version-name','1.8-attack-only-obstacles')
+    '-R',$resources,'-A',$assets,'--min-sdk-version','26','--target-sdk-version','36','--version-code','10','--version-name','1.9-arcane-scrolls')
 Run "$JavaHome\bin\javac.exe" @('--release','8','-classpath',$platform,'-d',$classes,
     "$PSScriptRoot\src\org\matziq\emberkeep\MainActivity.java")
 $classFiles = @(Get-ChildItem $classes -Filter '*.class' -Recurse | ForEach-Object { $_.FullName })

@@ -24,6 +24,66 @@ scripts.forEach(script => vm.runInContext(script, sandbox));
 const run = code => vm.runInContext(code, sandbox);
 let count = 0;
 function check(name, fn) { fn(); count++; console.log('PASS ' + name); }
+check('scroll inventory starts fresh, persists between floors, and every kind is obtainable', () => {
+  run('begin()');
+  assert.equal(run('Object.values(player.scrolls).every(count=>count===1)'),true);
+  run("player.scrolls.fireball=3;world.scrollLights.push({life:25});world.scrollZones.push({life:6});loadFloor(3,604)");
+  assert.equal(run('player.scrolls.fireball'),3);
+  assert.equal(run('world.scrollLights.length+world.scrollZones.length'),0);
+  run("loot=[];for(let i=0;i<80;i++)drops(player,true)");
+  assert.equal(run("Object.keys(scrollTypes).every(kind=>loot.some(item=>item.type==='scroll'&&item.scroll===kind))"),true);
+  run("loot=[{x:player.x,y:player.y,type:'scroll',scroll:'fireball'}];updateScrolls(.01);updateScrolls(.01)");
+  assert.equal(run('player.scrolls.fireball'),4);
+  run("loot=[];drops({...player,trapSwarm:true},true)");
+  assert.equal(run('loot.length'),0);
+  run('begin()');
+  assert.equal(run('Object.values(player.scrolls).every(count=>count===1)'),true);
+});
+check('scroll casts consume exactly once, reject pause walls cooldown and empty inventory', () => {
+  run("loadFloor(1,604);state='paused';player.selectedScroll='fireball'");
+  assert.equal(run('castScroll()'),false);
+  assert.equal(run('player.scrolls.fireball'),1);
+  run("state='playing';props=[];enemies=[];world.tiles.fill(1);player.angle=0;world.tiles[Math.floor(player.y/T)*W+Math.floor((player.x+8)/T)]=0");
+  assert.equal(run('castScroll()'),false);
+  assert.equal(run('player.scrolls.fireball'),1);
+  run('world.tiles.fill(1);player.scrolls.fireball=2');
+  assert.equal(run('castScroll()'),true);
+  assert.equal(run('castScroll()'),false);
+  assert.equal(run('player.scrolls.fireball'),1);
+  run('updateScrolls(.5)');
+  assert.equal(run('castScroll()'),true);
+  run('updateScrolls(.5)');
+  assert.equal(run('castScroll()'),false);
+  assert.equal(run('player.scrolls.fireball'),0);
+});
+check('fireball burns and lightning strikes actual targets without crossing walls or intact obstacles', () => {
+  for(const kind of ['fireball','lightning']){
+    run(`loadFloor(1,604);state='playing';world.tiles.fill(1);props=[];loot=[];player.angle=0;player.scrolls.${kind}=2;player.scrollCooldown=0;player.selectedScroll='${kind}';
+      var scrollTarget=makeEnemy('slime',{x:player.x+100,y:player.y});scrollTarget.hp=500;enemies=[scrollTarget];castScroll()`);
+    assert.equal(run('scrollTarget.hp'),kind==='fireball'?445:400);
+    if(kind==='fireball')assert.equal(run('scrollTarget.burn'),3);
+    run(`player.scrollCooldown=0;scrollTarget.hp=500;var shieldBox={x:player.x+35,y:player.y,type:'crate',hp:100,open:false};props=[shieldBox];castScroll()`);
+    if(kind==='lightning')assert.equal(run('scrollTarget.hp'),500);
+    assert.ok(run('shieldBox.hp<100'));
+    run(`player.scrolls.${kind}=1;player.scrollCooldown=0;props=[];scrollTarget.x=player.x+120;scrollTarget.hp=500;world.tiles[Math.floor(player.y/T)*W+Math.floor((player.x+60)/T)]=0;castScroll()`);
+    assert.equal(run('scrollTarget.hp'),500);
+  }
+});
+check('poison scroll lingers and poisons late-arriving foes then expires', () => {
+  run("loadFloor(1,604);state='playing';world.tiles.fill(1);props=[];enemies=[];player.angle=0;player.scrolls.poison=1;player.selectedScroll='poison';player.scrollCooldown=0;castScroll();updateScrolls(1);var cloud=world.scrollZones[0];var poisoned=makeEnemy('slime',{x:cloud.x,y:cloud.y});enemies=[poisoned];var poisonBefore=poisoned.hp;updateScrolls(.5)");
+  assert.equal(run('poisoned.poison'),3);
+  assert.equal(run('poisoned.hp===poisonBefore-7&&player.scrolls.poison===0'),true);
+  run('updateScrolls(6)');
+  assert.equal(run('world.scrollZones.length'),0);
+});
+check('light scroll shares wall-bounded radial glint lighting and expires without toggling torches', () => {
+  run("loadFloor(1,604);state='playing';props=[];enemies=[];world.torches.forEach(t=>t.lit=false);player.selectedScroll='light';player.scrolls.light=1;player.scrollCooldown=0;castScroll()");
+  assert.ok(run('torchIllumination(player)>.9&&world.scrollLights.length===1&&world.torches.every(t=>!t.lit)'));
+  run('updateScrolls(25)');
+  assert.equal(run('torchIllumination(player)'),0);
+  assert.equal(run('world.scrollLights.length'),0);
+  run('begin()');
+});
 check('2,500 seeded floors have connected, bounded rooms and exits', () => {
   for (let chapter = 1; chapter <= 5; chapter++) for (let seed = 0; seed < 500; seed++) {
     const w = sandbox.window.emberkeep.generate(seed, chapter);
