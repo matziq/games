@@ -157,6 +157,20 @@
             font-weight: 700;
         }
 
+        #btn-music {
+            min-height: 32px;
+            padding: 0 9px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        #storage-status {
+            color: #ffd180;
+            font-size: 12px;
+            text-align: center;
+        }
+
         .toggle-track {
             position: relative;
             width: 30px;
@@ -603,6 +617,19 @@
 
         #game.shake {
             animation: screenShake 0.4s ease-in-out;
+        }
+
+        @keyframes blastPunch {
+            0% { transform: scale(1); filter: brightness(1); }
+            24% { transform: scale(1.09); filter: brightness(1.45); }
+            52% { transform: scale(0.98); filter: brightness(1.1); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+
+        #board.blast-punch {
+            position: relative;
+            z-index: 2;
+            animation: blastPunch 0.55s cubic-bezier(.16, 1, .3, 1);
         }
 
         @keyframes sixChargeShake {
@@ -1399,6 +1426,9 @@
         }
 
         @media (prefers-reduced-motion: reduce) {
+            #board.blast-punch {
+                animation: none;
+            }
             *,
             *::before,
             *::after {
@@ -1431,7 +1461,9 @@
             </button>
             <button class="quick-control-btn" id="btn-fullscreen" type="button" aria-label="Enter full screen"
                 title="Enter full screen">&#9974;</button>
+            <button id="btn-music" type="button">Music: Off</button>
         </div>
+        <div id="storage-status" role="status" aria-live="polite"></div>
         <div class="game-stage">
             <div id="board"></div>
             <div class="piece-dock">

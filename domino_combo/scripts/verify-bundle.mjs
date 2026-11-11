@@ -35,7 +35,27 @@ try {
   document.getElementById('hs-name').dispatchEvent(enter);
   assert.equal(enter.defaultPrevented, true, 'Enter must submit the high-score name');
   assert.equal(entry.style.display, 'none');
-  console.log('Bundled game verified: one unnamed game, fixed 5x5 board, Remix, Enter submission.');
+  const saved = JSON.parse(window.localStorage.getItem('dcRunV1'));
+  assert.equal(saved.phase, 'settled', 'Bundled game must save an active run');
+  saved.board[0][0] = 4;
+  saved.score = 123;
+  const restored = new JSDOM(html, {
+    url: 'https://localhost/', runScripts: 'outside-only', pretendToBeVisual: true,
+  });
+  try {
+    restored.window.localStorage.setItem('dcRunV1', JSON.stringify(saved));
+    restored.window.localStorage.setItem('dcMusic', '2');
+    restored.window.matchMedia = () => ({ matches: false });
+    for (const script of restored.window.document.querySelectorAll('script')) {
+      restored.window.eval(script.textContent);
+    }
+    assert.equal(restored.window.document.getElementById('score-display').textContent, '123');
+    assert(restored.window.document.querySelector('.cell[data-r="0"][data-c="0"] .die'));
+    assert.equal(restored.window.document.getElementById('btn-music').textContent, 'Music: Pop');
+  } finally {
+    restored.window.close();
+  }
+  console.log('Bundled game verified: fixed 5x5 board, Remix, score entry, run and music restoration.');
 } finally {
   dom.window.close();
 }
