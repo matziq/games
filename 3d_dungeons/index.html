@@ -370,10 +370,10 @@ function update(dt){
  for(const status of ['poison','burn'])if(player[status]>0){player[status]=Math.max(0,player[status]-dt);player[status+'Tick']-=dt;if(player[status]>0&&player[status+'Tick']<=0){player[status+'Tick']=status==='poison'?.75:.65;damagePlayer(status==='poison'?3:4,status);particle(player.x,player.y,status==='poison'?'#9be05c':'#ff793c',4)}}
  shots=shots.filter(s=>s.life>0);enemies=enemies.filter(e=>e.hp>0);
  for(const l of loot){
-  if(['weapon','armor','potion'].includes(l.type)){l.age=(l.age||0)+dt;if(l.age>=20){l.taken=true;continue}}
-  if((l.type==='gold'||l.type==='scroll')&&!l.taken){
+  if(['weapon','armor','potion'].includes(l.type)){l.age=(l.age||0)+dt;if(l.age>=(l.type==='potion'?20:60)){l.taken=true;continue}}
+  if(['gold','scroll','potion','ammo'].includes(l.type)&&!l.taken){
    const gap=distance(l,player);
-   if(gap<=3*T&&gap>0){const step=Math.min(gap,360*dt);l.x+=(player.x-l.x)/gap*step;l.y+=(player.y-l.y)/gap*step}
+   if(gap<=3.75*T&&gap>0){const step=Math.min(gap,360*dt);l.x+=(player.x-l.x)/gap*step;l.y+=(player.y-l.y)/gap*step}
   }
   if(!l.taken&&(l.type==='gold'||l.type==='potion')&&distance(l,player)<32){window.DungeonAudio.play(l.type==='gold'?'gold':'bottle');if(l.type==='gold'){player.gold+=l.value;floatText(l.x,l.y-10,'+'+l.value+' GOLD','gold')}else{player.potions++;floatText(l.x,l.y-10,'+1 HEALING POTION','heal')}l.taken=true;particle(l.x,l.y,l.type==='gold'?'#edbf72':'#7ae4ba',5)}
  }
@@ -1252,7 +1252,7 @@ function updateScrolls(dt){
  world.webStrikes=world.webStrikes.filter(strike=>strike.life>0);
  refreshScrollHUD();
 }
-function lootVisible(item){return !['weapon','armor','potion'].includes(item.type)||(item.age||0)<10||Math.floor(((item.age||0)-10)*5)%2===0}
+function lootVisible(item){const blinkAt=item.type==='potion'?10:30;return !['weapon','armor','potion'].includes(item.type)||(item.age||0)<blinkAt||Math.floor(((item.age||0)-blinkAt)*5)%2===0}
 function drawScrollMagic(){
  for(const strike of world.webStrikes){
   ctx.save();ctx.globalAlpha=strike.life/.18;ctx.strokeStyle='#e2ecd2';ctx.lineWidth=2;ctx.beginPath();
@@ -1312,8 +1312,8 @@ function worldTargets(){
 }
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Rubble and furnishings are attack-only obstacles, not selectable items. Click to strike them; on touch, tap to aim then use Attack. E / Use does not break them.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Inspect torchlit floor glints: a rare 8% chance reveals a hidden-hoard weapon with +5 power over its normal floor-level roll instead of a trap. Select and equip it with E / Use. Stepping on an uninspected glint still triggers its trap.');
-document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Silken nests: entering starts a 4-second egg countdown. Attack the sacs before three very fast spiderlings hatch from each! After a warning, adult spider webs strike instantly and root you for 1 second. Weapon strikes and projectiles toggle torches, including relighting them.<br>Find 5-shot Fire, Poison, Explosive, and Light arrow/bolt packs. Bow uses arrows; Crossbow uses bolts. C or Ammo in the Scrolls panel cycles available types. Special ammo returns to unlimited regular shots when empty. Rare unstable rooms mark a tile for 2 seconds before it becomes a pit down exactly one floor (never on floor 10).<br>Gold and scrolls vacuum within 3 tiles. Loose gear and potions blink after 10 seconds and vanish at 20 seconds. Hit broken barrels/boxes or opened chests again to clear them, without extra loot. Monsters never spring hidden traps; deliberately activated traps catch approaching foes, including trap creatures.');
-document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Dropped gold automatically flies to you within 3 tiles (120 world units). Potions still collect on close approach; equipment remains selectable.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Silken nests: entering starts a 4-second egg countdown. Attack the sacs before three very fast spiderlings hatch from each! After a warning, adult spider webs strike instantly and root you for 1 second. Weapon strikes and projectiles toggle torches, including relighting them.<br>Find 5-shot Fire, Poison, Explosive, and Light arrow/bolt packs. Bow uses arrows; Crossbow uses bolts. C or Ammo in the Scrolls panel cycles available types. Special ammo returns to unlimited regular shots when empty. Rare unstable rooms mark a tile for 2 seconds before it becomes a pit down exactly one floor (never on floor 10).<br>Gold, scrolls, potions and ammo packs vacuum within 3.75 tiles. Loose weapons and armor blink after 30 seconds and vanish at 60; potions blink after 10 seconds and vanish at 20. Hit broken barrels/boxes or opened chests again to clear them, without extra loot. Monsters never spring hidden traps; deliberately activated traps catch approaching foes, including trap creatures.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Equipment remains manually selectable and does not vacuum.');
 function isWorldTarget(target){return worldTargets().includes(target)}
 function targetReachable(target){return distance(target,player)<72&&clearLine(player,target)}
 function worldTargetName(target){
