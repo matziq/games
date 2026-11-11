@@ -32,8 +32,8 @@ an interrupted cascade resumes from its last complete resolution step. New
 Game and game over clear the run. The game reports storage errors; cleared site
 or app data removes saves, and browser and Android saves are separate.
 
-The Music button cycles original synthesized Funky, Pop, Dance, and 8-bit Arcade
-loops, plus Off. The choice is saved locally, independent of sound effects.
+The Music button cycles five original synthesized loops: Funky, Pop, Dance,
+8-bit Retro, and Arcade, plus Off. The choice is saved locally, independent of sound effects.
 Music starts after a user gesture and stops when the app is backgrounded;
 interact with the game to resume it. A sixes blast punches the board toward the
 viewer, except when the device requests reduced motion.
@@ -97,7 +97,7 @@ checked-in file.
 
 The canonical gameplay source is
 [`matziq/domino-combo`](https://github.com/matziq/domino-combo). This copy was
-synchronized through revision `4e1d0f2` on November 11, 2026. It uses one unnamed game, a fixed 5×5 board, the original
+synchronized through revision `642250a` on November 11, 2026. It uses one unnamed game, a fixed 5×5 board, the original
 Regular-style piece mix, remix tokens, directional cascades, and
 Enter-to-submit high scores.
 
@@ -106,7 +106,7 @@ and its regression tests into this folder, run tests/lint/build, and publish
 both `dist/` and the APK. Keep this repository's shared Android packaging and
 package ID `com.matziq.dominocombo`. The APK workflow compares gameplay inputs
 with canonical `main` and fails on divergence instead of silently shipping an
-older copy. APK version 1.3 (code 4) identifies the save and music update.
+older copy. APK version 1.4 (code 5) includes the distinct Arcade music track.
 The checked-in APK is a debug build; installing over an older build requires
 the same signing key. An APK signed by a different debug key cannot upgrade the
 existing app. Uninstalling the old app removes its locally saved data.

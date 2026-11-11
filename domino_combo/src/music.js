@@ -3,7 +3,8 @@ const tracks = [
   { name: 'Funky', bpm: 112, wave: 'triangle', notes: [40, null, 47, 50, null, 47, 52, 50, 40, null, 45, 47, 50, 47, 45, null] },
   { name: 'Pop', bpm: 120, wave: 'sine', notes: [60, 64, 67, 64, 62, 65, 69, 65, 57, 60, 64, 60, 59, 62, 67, 62] },
   { name: 'Dance', bpm: 128, wave: 'sawtooth', notes: [45, 57, 52, 57, 48, 60, 55, 60, 43, 55, 50, 55, 40, 52, 47, 52] },
-  { name: '8-bit Arcade', bpm: 144, wave: 'square', notes: [72, 76, 79, 76, 74, 77, 81, 77, 69, 72, 76, 72, 71, 74, 79, 74] },
+  { name: '8-bit Retro', bpm: 144, wave: 'square', notes: [72, 76, 79, 76, 74, 77, 81, 77, 69, 72, 76, 72, 71, 74, 79, 74] },
+  { name: 'Arcade', bpm: 156, wave: 'triangle', notes: [64, 67, 72, null, 71, 67, 76, 74, 69, 72, 77, null, 76, 72, 79, 76] },
 ];
 
 export const musicNames = ['Off', ...tracks.map((track) => track.name)];
