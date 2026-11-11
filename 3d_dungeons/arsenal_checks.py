@@ -74,21 +74,21 @@ with sync_playwright() as p:
         }""")
         page.wait_for_function("player.root>0")
         assert page.evaluate("!shots.some(s=>s.type==='web')")
-        page.screenshot(path=str(OUT / f"{PREFIX}-{name}-web.png"))
         page.keyboard.down("d")
-        page.wait_for_timeout(300)
+        page.wait_for_timeout(150)
         assert page.evaluate("Math.abs(player.x-webX)<.01")
+        page.screenshot(path=str(OUT / f"{PREFIX}-{name}-web.png"))
         page.wait_for_function("player.x>webX+5")
         page.keyboard.up("d")
         page.evaluate("""() => {
           enemies=[];props=[];world.traps=[];heroShots=[];player.root=0;player.dash=0;player.inv=1000;
           window.scrollBefore=player.scrolls.light;window.lootX=player.x;
-          window.fadingGear={x:player.x+95,y:player.y,type:'weapon',weapon:makeWeapon(),age:9.7};
+          window.fadingGear={x:player.x+95,y:player.y,type:'weapon',weapon:makeWeapon(),age:29.7};
           loot=[fadingGear,{x:player.x+120,y:player.y,type:'scroll',scroll:'light'}];
         }""")
         page.wait_for_function("player.scrolls.light===scrollBefore+1")
         assert page.evaluate("fadingGear.x===lootX+95")
-        page.wait_for_function("fadingGear.age>10")
+        page.wait_for_function("fadingGear.age>30")
         page.keyboard.press("p")
         paused_age = page.evaluate("fadingGear.age")
         page.wait_for_timeout(350)
@@ -96,7 +96,7 @@ with sync_playwright() as p:
         page.keyboard.press("p")
         page.wait_for_function("lootVisible(fadingGear)")
         page.screenshot(path=str(OUT / f"{PREFIX}-{name}-fading-loot.png"))
-        page.evaluate("fadingGear.age=19.8")
+        page.evaluate("fadingGear.age=59.8")
         page.wait_for_function("!loot.includes(fadingGear)")
         for container in ["barrel", "crate", "chest"]:
             page.evaluate("""type => {

@@ -78,30 +78,33 @@ check('giant web strikes inflict tripled base damage and root; normal webs remai
   run('player.root=0;player.inv=.3;var hpAfterWeb=player.hp;strikeWeb(giantStriker)');
   assert.equal(run('player.hp===hpAfterWeb&&player.root===0'),true);
 });
-check('scrolls vacuum at three tiles and collect exactly once; gear potions and ammunition stay put', () => {
-  run("begin();loadFloor(1,604);enemies=[];props=[];world.traps=[];player.dash=0;var scrollX=player.x;var scrollCount=player.scrolls.light;var nearScroll={x:player.x+3*T,y:player.y,type:'scroll',scroll:'light'};var farScroll={x:player.x+3*T+.01,y:player.y,type:'scroll',scroll:'light'};var stillLoot=['weapon','armor','potion','ammo'].map(type=>({x:player.x+100,y:player.y,type}));loot=[nearScroll,farScroll,...stillLoot];baseUpdate(.04)");
-  assert.ok(run('nearScroll.x<scrollX+3*T'));
-  assert.equal(run('farScroll.x'),run('scrollX+3*T+.01'));
-  assert.equal(run('stillLoot.every(item=>item.x===scrollX+100)'),true);
+check('gold scrolls potions and every ammo pack vacuum at 150 units but gear stays manual', () => {
+  run("begin();loadFloor(1,604);enemies=[];props=[];world.traps=[];player.dash=0;var pickupX=player.x;var startGold=player.gold;var startPotions=player.potions;var startScroll=player.scrolls.light;var kinds=[{type:'gold',value:17},{type:'scroll',scroll:'light'},{type:'potion'},...['bow','crossbow'].flatMap(ammoKind=>['fire','poison','explosive','light'].map(special=>({type:'ammo',ammoKind,special})))];var nearPickups=kinds.map(k=>({...k,x:player.x+3.75*T,y:player.y}));var farPickups=kinds.map(k=>({...k,x:player.x+3.75*T+.01,y:player.y}));var manualGear=['weapon','armor'].map(type=>({x:player.x+100,y:player.y,type}));loot=[...nearPickups,...farPickups,...manualGear];baseUpdate(.04)");
+  assert.equal(run('nearPickups.every(item=>item.x<pickupX+150)&&farPickups.every(item=>item.x===pickupX+150.01)&&manualGear.every(item=>item.x===pickupX+100)'),true);
   run('for(let i=0;i<30;i++){baseUpdate(.04);updateScrolls(.04)}');
-  assert.equal(run('player.scrolls.light'),run('scrollCount+1'));
-  assert.equal(run('loot.includes(nearScroll)'),false);
-  assert.equal(run('loot.includes(farScroll)'),true);
+  assert.equal(run('player.gold===startGold+17&&player.potions===startPotions+1&&player.scrolls.light===startScroll+1'),true);
+  assert.equal(run("['bow','crossbow'].every(k=>['fire','poison','explosive','light'].every(s=>player.ammo[k][s]===5))"),true);
+  assert.equal(run('nearPickups.every(item=>!loot.includes(item))&&farPickups.every(item=>loot.includes(item))&&manualGear.every(item=>loot.includes(item))'),true);
 });
-check('only loose gear and potions blink at ten seconds and expire at twenty, with no duplicate undo', () => {
-  run("loadFloor(1,604);enemies=[];props=[];world.traps=[];var timed=['weapon','armor','potion'].map(type=>({x:player.x+200,y:player.y,type}));var permanent=['gold','scroll','ammo'].map(type=>({x:player.x+240,y:player.y,type}));loot=[...timed,...permanent];baseUpdate(9.99)");
-  assert.equal(run('timed.every(item=>lootVisible(item)&&item.age===9.99)'),true);
+check('gear blinks at 30 and expires at 60 while potion timing stays 10 and 20; undo preserves age', () => {
+  run("loadFloor(1,604);enemies=[];props=[];world.traps=[];var gear=['weapon','armor'].map(type=>({x:player.x+200,y:player.y,type}));var timedPotion={x:player.x+200,y:player.y,type:'potion'};var permanent=['gold','scroll','ammo'].map(type=>({x:player.x+240,y:player.y,type}));loot=[...gear,timedPotion,...permanent];baseUpdate(9.99)");
+  assert.equal(run('lootVisible(timedPotion)&&gear.every(lootVisible)'),true);
+  run('baseUpdate(.22)');
+  assert.equal(run('!lootVisible(timedPotion)&&gear.every(lootVisible)'),true);
+  run('baseUpdate(9.78)');
+  assert.equal(run('loot.includes(timedPotion)'),true);
   run('baseUpdate(.02)');
-  assert.equal(run('timed.every(item=>item.age>10&&lootVisible(item))'),true);
-  run('baseUpdate(.21)');
-  assert.equal(run('timed.every(item=>!lootVisible(item))'),true);
-  run('baseUpdate(9.77)');
-  assert.equal(run('loot.length'),6);
+  assert.equal(run('!loot.includes(timedPotion)&&gear.every(item=>loot.includes(item))'),true);
+  run('baseUpdate(9.98)');
+  assert.equal(run('gear.every(item=>item.age<30&&lootVisible(item))'),true);
+  run('baseUpdate(.22)');
+  assert.equal(run('gear.every(item=>!lootVisible(item))'),true);
+  run('baseUpdate(29.78)');
+  assert.equal(run('gear.every(item=>loot.includes(item))'),true);
   run('baseUpdate(.02)');
-  assert.equal(run('loot.length'),3);
-  assert.equal(run('permanent.every(item=>loot.includes(item)&&lootVisible(item))'),true);
-  run("var timedGear={x:player.x+40,y:player.y,type:'weapon',weapon:makeWeapon(),age:19};loot=[timedGear];selectedWorldItem=timedGear;deleteSelectedGear();baseUpdate(5);undoGearDelete();undoGearDelete()");
-  assert.equal(run('loot.length===1&&loot[0]===timedGear&&timedGear.age===19'),true);
+  assert.equal(run('gear.every(item=>!loot.includes(item))&&permanent.every(item=>loot.includes(item)&&lootVisible(item))'),true);
+  run("var timedGear={x:player.x+40,y:player.y,type:'weapon',weapon:makeWeapon(),age:59};loot=[timedGear];selectedWorldItem=timedGear;deleteSelectedGear();baseUpdate(5);undoGearDelete();undoGearDelete()");
+  assert.equal(run('loot.length===1&&loot[0]===timedGear&&timedGear.age===59'),true);
   run('baseUpdate(1.01)');
   assert.equal(run('loot.length'),0);
 });
@@ -323,18 +326,6 @@ check('hidden hoards use small seeded odds and grant exactly one boosted floor w
   assert.equal(run('player.weapon===hoardWeapon'),true);
   run("loadFloor(10,604);enemies=[];props=[];loot=[];player.inv=0;var forfeited={x:player.x,y:player.y,kind:'explosion',rewardWeapon:hoardWeapon,inspect:0,active:0};world.traps=[forfeited];updateTraps(.04,true)");
   assert.equal(run('forfeited.triggered&&loot.length===0&&depth===10'),true);
-  run('begin()');
-});
-check('gold vacuums within exactly three tiles and collects once without attracting other loot', () => {
-  run("begin();enemies=[];props=[];world.traps=[];world.quake.next=Infinity;player.inv=1000;var vacuumStart=player.x;var vacuumGold=player.gold;var nearGold={x:player.x+3*T,y:player.y,type:'gold',value:17};var farGold={x:player.x+3*T+.01,y:player.y,type:'gold',value:29};var farPotion={x:player.x+80,y:player.y,type:'potion'};loot=[nearGold,farGold,farPotion];baseUpdate(.04)");
-  assert.ok(run('nearGold.x<vacuumStart+3*T'));
-  assert.equal(run('farGold.x'),run('vacuumStart+3*T+.01'));
-  assert.equal(run('farPotion.x'),run('vacuumStart+80'));
-  run('for(let n=0;n<20;n++)baseUpdate(.04)');
-  assert.equal(run('player.gold'),run('vacuumGold+17'));
-  assert.equal(run('loot.includes(nearGold)'),false);
-  run('baseUpdate(.04)');
-  assert.equal(run('player.gold'),run('vacuumGold+17'));
   run('begin()');
 });
 check('2,500 seeded floors have connected, bounded rooms and exits', () => {

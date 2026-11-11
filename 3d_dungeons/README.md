@@ -44,7 +44,7 @@ Longswords, war axes, flanged maces, spears, and halberds have distinct silhouet
 
 Player and enemy projectiles stop at the first living creature or container, including closed chests and container remains. A shot that breaks a crate/barrel or kills a creature still stops there. A **second hit** clears broken barrels and boxes completely; opened chests can likewise be destroyed by a hit. Clearing remains gives no additional loot. Closed chests remain protected and must first be opened with E / Use. Melee, projectiles, and offensive scrolls can clear remains; later shots pass the cleared spot. Boomerangs turn back on their first outbound impact rather than piercing, can leave the impact surface, and stop if their return path crosses a target. Stone stops projectiles. All eleven weapon types appear in ordinary loot and merchant stock, with distinct held and ground silhouettes. Aim with the mouse on desktop or face/tap the target on touch; Attack uses the equipped weapon. Rarity and chapter improve power; the equipment panel displays total strike power, reach, and recovery.
 
-Loose, uncollected **weapons, armor, and potions** begin blinking after **10 active seconds** and disappear at **20 seconds**. This includes swapped and merchant-dropped gear; collect or equip it before it fades. Equipped gear, carried potions, gold, scrolls, and ammunition do not expire. Pause and shopping freeze the timer. Delete/Undo preserves the item's remaining lifetime instead of granting a fresh timer.
+Loose, uncollected **weapons and armor** begin blinking after **30 active seconds** and disappear at **60 seconds**. Loose potions still blink after **10 seconds** and disappear at **20 seconds**. This includes swapped and merchant-dropped gear; collect or equip it before it fades. Equipped gear, carried potions, gold, scrolls, and ammunition do not expire. Pause and shopping freeze the timer. Delete/Undo preserves the item's remaining lifetime instead of granting a fresh timer.
 
 ## Living nests and unstable chambers
 
@@ -58,7 +58,9 @@ Run `python 3d_dungeons\arsenal_checks.py` for actual Edge desktop, phone, small
 
 ## Single-use scrolls
 
-The start/pause overlay keeps its action button visible while long instructions scroll within the panel, including short desktop and phone layouts. Dropped **gold and scrolls** automatically move toward the knight at 360 world units/second whenever they are within three tiles (120 units), then use the usual close-range collection, audio, and pickup feedback. Other loot retains its existing pickup/selection behavior.
+The start/pause overlay keeps its action button visible while long instructions scroll within the panel, including short desktop and phone layouts. Dropped **gold, scrolls, potions, and arrow/bolt packs** automatically move toward the knight at 360 world units/second whenever they are within 3.75 tiles (150 units), then use the usual close-range collection and pickup feedback. Weapons and armor remain manually selectable.
+
+Run `python 3d_dungeons\loot_tuning_checks.py` for desktop and phone browser checks of pickup boundaries, collection, item lifetimes, and pause/shop timer protection. It accepts a deployed `?test` URL.
 
 Open the **Scrolls** panel, choose a spell, then **right-click the game canvas** to aim and cast. **R** casts in the current facing direction; the panel's **Cast** button provides the same action on touch/Android. The browser context menu is suppressed only on the canvas. A new run starts with one Fireball, Light, Poison, and Lightning scroll. Chests always add a random scroll; ordinary monsters/containers have a 12% chance. Scrolls collect on approach and persist between floors. Trap swarms and decor do not drop scrolls.
 
