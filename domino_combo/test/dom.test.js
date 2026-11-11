@@ -136,4 +136,110 @@ describe('game bootstrap (jsdom)', () => {
       delete document.documentElement.requestFullscreen;
     }
   });
+
+  it('restores a settled run and its piece without changing the board', async () => {
+    const board = Array.from({ length: 5 }, () => Array(5).fill(null));
+    board[1][2] = 4;
+    const saved = { version: 1, matchCount: 3, board, score: 42, remixTokens: 2,
+      maxSpawnVal: 4, chainDepth: 0, lastPlacedCells: [], phase: 'settled', cascade: false,
+      piece: { type: 'double', vals: [1, 2], ori: 'v', rot: 90 } };
+    localStorage.setItem('dcRunV1', JSON.stringify(saved));
+    await start();
+    expect(document.getElementById('score-display').textContent).toBe('42');
+    expect(document.getElementById('remix-badge').textContent).toBe('2');
+    expect(document.querySelector('[data-r="1"][data-c="2"] .die')).not.toBeNull();
+    expect(JSON.parse(localStorage.getItem('dcRunV1'))).toEqual(saved);
+  });
+
+  it('recovers a pending cascade without awarding a match twice', async () => {
+    vi.useFakeTimers();
+    try {
+      const board = Array.from({ length: 5 }, () => Array(5).fill(null));
+      board[0][0] = board[0][1] = board[0][2] = 1;
+      localStorage.setItem('dcRunV1', JSON.stringify({ version: 1, matchCount: 3, board,
+        score: 10, remixTokens: 0, maxSpawnVal: 3, chainDepth: 0,
+        lastPlacedCells: [{ r: 0, c: 1 }], phase: 'resolving', cascade: false, piece: null }));
+      await start();
+      await vi.advanceTimersByTimeAsync(1000);
+      const result = JSON.parse(localStorage.getItem('dcRunV1'));
+      expect(result.phase).toBe('settled');
+      expect(result.board[0][1]).toBe(2);
+      expect(result.score).toBeGreaterThan(10);
+      const score = result.score;
+      vi.resetModules();
+      document.body.innerHTML = bodyInner;
+      await start();
+      expect(Number(document.getElementById('score-display').textContent)).toBe(score);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('discards an invalid run with an explanation and starts a new game', async () => {
+    localStorage.setItem('dcRunV1', '{"version":1,"board":"bad"}');
+    await start();
+    expect(document.getElementById('storage-status').textContent).toMatch(/invalid/i);
+    expect(JSON.parse(localStorage.getItem('dcRunV1')).board).toHaveLength(5);
+  });
+
+  it('replaces the saved run on New Game', async () => {
+    await start();
+    const original = JSON.parse(localStorage.getItem('dcRunV1'));
+    original.score = 123;
+    localStorage.setItem('dcRunV1', JSON.stringify(original));
+    document.getElementById('btn-new-game').click();
+    expect(JSON.parse(localStorage.getItem('dcRunV1')).score).toBe(0);
+  });
+
+  it('persists and cycles music choices independently of sound', async () => {
+    localStorage.setItem('dcMusic', '2');
+    await start();
+    const button = document.getElementById('btn-music');
+    expect(button.textContent).toBe('Music: Pop');
+    document.getElementById('btn-sound').click();
+    expect(button.textContent).toBe('Music: Pop');
+    button.click();
+    expect(button.textContent).toBe('Music: Dance');
+    expect(localStorage.getItem('dcMusic')).toBe('3');
+  });
+
+  it('punches the board only for an actual four-sixes blast', async () => {
+    vi.useFakeTimers();
+    try {
+      const board = Array.from({ length: 5 }, () => Array(5).fill(null));
+      board[0][0] = board[0][1] = board[0][2] = board[0][3] = 6;
+      localStorage.setItem('dcRunV1', JSON.stringify({ version: 1, matchCount: 3, board,
+        score: 0, remixTokens: 0, maxSpawnVal: 6, chainDepth: 0,
+        lastPlacedCells: [], phase: 'resolving', cascade: false, piece: null }));
+      await start();
+      expect(document.getElementById('board').classList.contains('blast-punch')).toBe(false);
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(document.getElementById('board').classList.contains('blast-punch')).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('reports unavailable local storage without stopping play', async () => {
+    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('blocked'); });
+    try {
+      await start();
+      expect(document.getElementById('storage-status').textContent).toMatch(/unavailable/i);
+      expect(document.querySelectorAll('#board .cell')).toHaveLength(25);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('clears a finished run instead of restoring it after game over', async () => {
+    const board = Array.from({ length: 5 }, (_, r) =>
+      Array.from({ length: 5 }, (_, c) => (r + c) % 2 + 1));
+    localStorage.setItem('dcRunV1', JSON.stringify({ version: 1, matchCount: 3, board,
+      score: 20, remixTokens: 0, maxSpawnVal: 3, chainDepth: 0,
+      lastPlacedCells: [], phase: 'settled', cascade: false,
+      piece: { type: 'single', vals: [1], ori: 'h', rot: 0 } }));
+    await start();
+    expect(document.getElementById('game-over').classList.contains('show')).toBe(true);
+    expect(localStorage.getItem('dcRunV1')).toBeNull();
+  });
 });

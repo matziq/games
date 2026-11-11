@@ -27,6 +27,8 @@ import {
   randValExcluding,
   spawnType,
 } from './logic.js';
+import { RUN_KEY, validRun } from './save.js';
+import { createMusic, musicNames } from './music.js';
 
 // ── State ──────────────────────────────────────────────────
 const gridSize = 5;
@@ -38,9 +40,33 @@ let board = [];
 let score = 0;
 // Per-config high scores: keyed by "gridSize_matchCount".
 // Each entry: { score: number, name: string }
-let allHighScores = JSON.parse(localStorage.getItem('dcHighScores') || '{}');
-// Clear legacy single high score
-localStorage.removeItem('dcHighScore');
+let storageMessage = '';
+function storageError(message, error) {
+  storageMessage = message;
+  console.warn(message, error);
+  const status = document.getElementById('storage-status');
+  if (status) status.textContent = message;
+}
+function readStorage(key) {
+  try { return localStorage.getItem(key); }
+  catch (error) { storageError('Local storage is unavailable; your run may not be saved.', error); return null; }
+}
+function writeStorage(key, value) {
+  try { localStorage.setItem(key, value); }
+  catch (error) { storageError('Local storage is unavailable; your run may not be saved.', error); }
+}
+function removeStorage(key) {
+  try { localStorage.removeItem(key); }
+  catch (error) { storageError('Local storage is unavailable; an old run may remain.', error); }
+}
+let allHighScores = {};
+try {
+  const savedScores = JSON.parse(readStorage('dcHighScores') || '{}');
+  if (savedScores && typeof savedScores === 'object' && !Array.isArray(savedScores)) allHighScores = savedScores;
+  else throw new Error('Invalid score data');
+} catch (error) {
+  storageError('Saved scores could not be read; new scores may replace them.', error);
+}
 
 function getHighScore() {
   const entry = allHighScores[hsKey(matchCount)];
@@ -55,7 +81,7 @@ function setHighScore(s, name) {
     score: s,
     name: name || '',
   };
-  localStorage.setItem('dcHighScores', JSON.stringify(allHighScores));
+  writeStorage('dcHighScores', JSON.stringify(allHighScores));
 }
 
 let highScore = 0;
@@ -66,6 +92,68 @@ let lastPlacedCells = []; // track where pieces were placed for merge targeting
 let maxSpawnVal = 1; // highest value that can appear in spawned pieces
 let chainDepth = 0; // tracks successive chain reactions
 let gameVersion = 0; // invalidates delayed match effects when a new game starts
+const music = createMusic();
+const musicText = readStorage('dcMusic');
+const storedMusic = Number(musicText);
+let musicChoice = Number.isInteger(storedMusic) && storedMusic >= 0 && storedMusic < musicNames.length ? storedMusic : 0;
+if (musicText !== null && (!Number.isInteger(storedMusic) || storedMusic < 0 || storedMusic >= musicNames.length)) {
+  storageError('Saved music choice is invalid; music is off.', new Error('Invalid music choice'));
+}
+let musicStarted = false;
+
+function updateMusicControl() {
+  const button = document.getElementById('btn-music');
+  button.textContent = `Music: ${musicNames[musicChoice]}`;
+  button.setAttribute('aria-label', `Music: ${musicNames[musicChoice]}. Choose next track`);
+}
+
+function startMusic() {
+  if (!musicChoice || musicStarted || document.hidden) return;
+  musicStarted = true;
+  music.start(musicChoice).catch((error) => {
+    musicStarted = false;
+    storageError('Music could not start on this device.', error);
+  });
+}
+
+function stopMusic() {
+  music.stop();
+  musicStarted = false;
+}
+
+function saveRun(phase = 'settled', cascade = false) {
+  const run = { version: 1, matchCount, board, score, remixTokens, maxSpawnVal, chainDepth,
+    lastPlacedCells, piece, phase, cascade };
+  if (!validRun(run)) {
+    storageError('This run could not be saved.', new Error('Invalid run state'));
+    return;
+  }
+  writeStorage(RUN_KEY, JSON.stringify(run));
+}
+
+function restoreRun() {
+  const text = readStorage(RUN_KEY);
+  if (!text) return false;
+  let run;
+  try {
+    run = JSON.parse(text);
+    if (!validRun(run)) throw new Error('Invalid saved run');
+  } catch (error) {
+    storageError('Saved run is invalid; a new game was started.', error);
+    removeStorage(RUN_KEY);
+    return false;
+  }
+  ({ matchCount, board, score, remixTokens, maxSpawnVal, chainDepth, lastPlacedCells, piece } = run);
+  highScore = Math.max(score, getHighScore());
+  processing = run.phase === 'resolving';
+  updateScore();
+  updateRemixButton();
+  renderBoard();
+  renderPiece(true);
+  if (processing) processMatches(run.cascade);
+  else if (!canPlaceAnywhere(board, gridSize, piece)) gameOver();
+  return true;
+}
 
 // ── Audio (Web Audio API – no files needed) ────────────────
 let _actx = null;
@@ -188,6 +276,9 @@ function init() {
   processing = false;
   maxSpawnVal = 3;
   remixTokens = 0;
+  chainDepth = 0;
+  lastPlacedCells = [];
+  piece = null;
   highScore = getHighScore();
   board = createBoard(gridSize);
   updateScore();
@@ -228,6 +319,7 @@ function triggerRemix() {
   renderBoard();
   lastPlacedCells = [];
   chainDepth = 0;
+  saveRun('resolving');
   const activeVer = gameVersion;
   setTimeout(() => {
     if (activeVer === gameVersion) {
@@ -317,7 +409,10 @@ function spawnPiece() {
 
   if (!canPlaceAnywhere(board, gridSize, piece)) {
     processing = true;
-    setTimeout(gameOver, 350);
+    const activeVersion = gameVersion;
+    setTimeout(() => { if (activeVersion === gameVersion) gameOver(); }, 350);
+  } else {
+    saveRun();
   }
 }
 
@@ -454,6 +549,7 @@ function ptrUp(e) {
       sfx('flip');
       const el = document.getElementById('current-piece');
       if (el) el.style.transform = `rotate(${piece.rot}deg)`;
+      saveRun();
     }
     drag = null;
     return;
@@ -488,6 +584,7 @@ function ptrUp(e) {
     processing = true;
     updateRemixButton();
     chainDepth = 0;
+    saveRun('resolving');
     const placedGameVersion = gameVersion;
     setTimeout(() => {
       if (placedGameVersion === gameVersion) processMatches(false);
@@ -571,6 +668,8 @@ function processMatches(isCascadeFromCollapse = false) {
       spawnPiece();
     } else if (!canPlaceAnywhere(board, gridSize, piece)) {
       gameOver();
+    } else {
+      saveRun();
     }
     return;
   }
@@ -690,6 +789,7 @@ function processMatches(isCascadeFromCollapse = false) {
         spawnParticles(el);
       });
       sfx('explode6');
+      screenPunch();
 
       const blastPoints = blastTargets.reduce((total, target) => total + target.val, 0);
       if (blastPoints > 0) {
@@ -745,16 +845,26 @@ function processMatches(isCascadeFromCollapse = false) {
         moved.map((m) => ({ r: m.r1, c: m.c1 })),
         collapseDirection,
       );
+      saveRun('resolving', true);
       setTimeout(() => {
         if (activeGameVersion === gameVersion) processMatches(true);
       }, 250);
     } else {
       renderBoard(null, newPlaced);
+      saveRun('resolving');
       setTimeout(() => {
         if (activeGameVersion === gameVersion) processMatches(false);
       }, 250);
     }
   }, resolutionDelay);
+}
+
+function screenPunch() {
+  const el = document.getElementById('board');
+  el.classList.remove('blast-punch');
+  void el.offsetWidth;
+  el.classList.add('blast-punch');
+  setTimeout(() => el.classList.remove('blast-punch'), 550);
 }
 
 // Brief screen shake, used when a Chaos-mode collapse happens.
@@ -786,6 +896,7 @@ function showPopup(pts, comboN, isChain, offsetY, suffix) {
 
 // ── Game Over ──────────────────────────────────────────────
 function gameOver() {
+  removeStorage(RUN_KEY);
   sfx('over');
   document.getElementById('final-score').textContent = score;
   const hs = document.getElementById('go-hs');
@@ -824,6 +935,7 @@ function submitHighScore() {
 // ── Controls ───────────────────────────────────────────────
 function restartGame() {
   gameVersion++;
+  removeStorage(RUN_KEY);
   piece = null;
   document.getElementById('game-over').classList.remove('show');
   document.getElementById('settings-modal').classList.remove('show');
@@ -901,6 +1013,17 @@ function wireControls() {
   if (btnRemix) btnRemix.addEventListener('click', triggerRemix);
   const btnSound = document.getElementById('btn-sound');
   if (btnSound) btnSound.addEventListener('click', toggleSound);
+  document.getElementById('btn-music').addEventListener('click', () => {
+    stopMusic();
+    musicChoice = (musicChoice + 1) % musicNames.length;
+    writeStorage('dcMusic', String(musicChoice));
+    updateMusicControl();
+    startMusic();
+  });
+  document.getElementById('game').addEventListener('pointerdown', startMusic);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stopMusic(); });
+  window.addEventListener('blur', stopMusic);
+  window.addEventListener('pagehide', stopMusic);
   const btnFullscreen = document.getElementById('btn-fullscreen');
   if (btnFullscreen) btnFullscreen.addEventListener('click', toggleFullscreen);
   const btnHelp = document.getElementById('btn-help');
@@ -937,4 +1060,6 @@ function wireControls() {
 
 // ── Start ──────────────────────────────────────────────────
 wireControls();
-init();
+updateMusicControl();
+document.getElementById('storage-status').textContent = storageMessage;
+if (!restoreRun()) init();

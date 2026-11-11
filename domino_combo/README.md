@@ -27,6 +27,17 @@ Sound can be toggled without restarting from the switch above the board.
 Full-screen mode is never automatic; use the adjacent full-screen button when
 you want it.
 
+Active runs save locally and resume after browser reload or Android app restart;
+an interrupted cascade resumes from its last complete resolution step. New
+Game and game over clear the run. The game reports storage errors; cleared site
+or app data removes saves, and browser and Android saves are separate.
+
+The Music button cycles original synthesized Funky, Pop, Dance, and 8-bit Arcade
+loops, plus Off. The choice is saved locally, independent of sound effects.
+Music starts after a user gesture and stops when the app is backgrounded;
+interact with the game to resume it. A sixes blast punches the board toward the
+viewer, except when the device requests reduced motion.
+
 ## Project structure
 
 ```
@@ -86,8 +97,7 @@ checked-in file.
 
 The canonical gameplay source is
 [`matziq/domino-combo`](https://github.com/matziq/domino-combo). This copy was
-synchronized through revision `57977cb6c2f7666bacc6f1ce4f47e62a22ca1c8a` on
-October 22, 2026. It uses one unnamed game, a fixed 5×5 board, the original
+synchronized through revision `4e1d0f2` on November 11, 2026. It uses one unnamed game, a fixed 5×5 board, the original
 Regular-style piece mix, remix tokens, directional cascades, and
 Enter-to-submit high scores.
 
