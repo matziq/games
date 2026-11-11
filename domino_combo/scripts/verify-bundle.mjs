@@ -44,14 +44,14 @@ try {
   });
   try {
     restored.window.localStorage.setItem('dcRunV1', JSON.stringify(saved));
-    restored.window.localStorage.setItem('dcMusic', '2');
+    restored.window.localStorage.setItem('dcMusic', '5');
     restored.window.matchMedia = () => ({ matches: false });
     for (const script of restored.window.document.querySelectorAll('script')) {
       restored.window.eval(script.textContent);
     }
     assert.equal(restored.window.document.getElementById('score-display').textContent, '123');
     assert(restored.window.document.querySelector('.cell[data-r="0"][data-c="0"] .die'));
-    assert.equal(restored.window.document.getElementById('btn-music').textContent, 'Music: Pop');
+    assert.equal(restored.window.document.getElementById('btn-music').textContent, 'Music: Arcade');
   } finally {
     restored.window.close();
   }

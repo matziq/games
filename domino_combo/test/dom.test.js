@@ -203,6 +203,22 @@ describe('game bootstrap (jsdom)', () => {
     expect(localStorage.getItem('dcMusic')).toBe('3');
   });
 
+  it('cycles 8-bit Retro and Arcade separately and restores Arcade', async () => {
+    localStorage.setItem('dcMusic', '4');
+    await start();
+    const button = document.getElementById('btn-music');
+    expect(button.textContent).toBe('Music: 8-bit Retro');
+    button.click();
+    expect(button.textContent).toBe('Music: Arcade');
+    expect(localStorage.getItem('dcMusic')).toBe('5');
+    vi.resetModules();
+    document.body.innerHTML = bodyInner;
+    await start();
+    expect(document.getElementById('btn-music').textContent).toBe('Music: Arcade');
+    document.getElementById('btn-music').click();
+    expect(document.getElementById('btn-music').textContent).toBe('Music: Off');
+  });
+
   it('punches the board only for an actual four-sixes blast', async () => {
     vi.useFakeTimers();
     try {
