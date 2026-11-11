@@ -106,4 +106,7 @@ and its regression tests into this folder, run tests/lint/build, and publish
 both `dist/` and the APK. Keep this repository's shared Android packaging and
 package ID `com.matziq.dominocombo`. The APK workflow compares gameplay inputs
 with canonical `main` and fails on divergence instead of silently shipping an
-older copy. APK version 1.2 (code 3) identifies the simplified game.
+older copy. APK version 1.3 (code 4) identifies the save and music update.
+The checked-in APK is a debug build; installing over an older build requires
+the same signing key. An APK signed by a different debug key cannot upgrade the
+existing app. Uninstalling the old app removes its locally saved data.
