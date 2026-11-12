@@ -25,7 +25,8 @@ built `dist/index.html`.
 
 Sound can be toggled without restarting from the switch above the board.
 Full-screen mode is never automatic; use the adjacent full-screen button when
-you want it.
+you want it. The game adapts to portrait and short landscape windows, retaining
+space for device safe areas; very short windows can be scrolled.
 
 Active runs save locally and resume after browser reload or Android app restart;
 an interrupted cascade resumes from its last complete resolution step. New
@@ -97,7 +98,7 @@ checked-in file.
 
 The canonical gameplay source is
 [`matziq/domino-combo`](https://github.com/matziq/domino-combo). This copy was
-synchronized through revision `642250a` on November 11, 2026. It uses one unnamed game, a fixed 5×5 board, the original
+synchronized through revision `08eefad` on November 12, 2026. It uses one unnamed game, a fixed 5×5 board, the original
 Regular-style piece mix, remix tokens, directional cascades, and
 Enter-to-submit high scores.
 
@@ -106,7 +107,7 @@ and its regression tests into this folder, run tests/lint/build, and publish
 both `dist/` and the APK. Keep this repository's shared Android packaging and
 package ID `com.matziq.dominocombo`. The APK workflow compares gameplay inputs
 with canonical `main` and fails on divergence instead of silently shipping an
-older copy. APK version 1.4 (code 5) includes the distinct Arcade music track.
+older copy. APK version 1.5 (code 6) improves compact and landscape layouts.
 The checked-in APK is a debug build; installing over an older build requires
 the same signing key. An APK signed by a different debug key cannot upgrade the
 existing app. Uninstalling the old app removes its locally saved data.

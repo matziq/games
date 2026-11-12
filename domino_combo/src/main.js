@@ -981,13 +981,6 @@ async function toggleFullscreen() {
       await document.exitFullscreen();
     } else if (root.requestFullscreen) {
       await root.requestFullscreen();
-      if (screen.orientation && screen.orientation.lock) {
-        try {
-          await screen.orientation.lock('portrait');
-        } catch (error) {
-          console.warn('Portrait orientation lock was not available.', error);
-        }
-      }
     }
   } catch (error) {
     console.warn('Full screen request was not completed.', error);
