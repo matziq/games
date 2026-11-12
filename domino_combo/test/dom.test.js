@@ -120,9 +120,14 @@ describe('game bootstrap (jsdom)', () => {
 
   it('requests full screen only from the dedicated button', async () => {
     const requestFullscreen = vi.fn().mockResolvedValue();
+    const lockOrientation = vi.fn().mockResolvedValue();
     Object.defineProperty(document.documentElement, 'requestFullscreen', {
       configurable: true,
       value: requestFullscreen,
+    });
+    Object.defineProperty(screen, 'orientation', {
+      configurable: true,
+      value: { lock: lockOrientation },
     });
 
     try {
@@ -132,8 +137,10 @@ describe('game bootstrap (jsdom)', () => {
 
       document.getElementById('btn-fullscreen').click();
       await vi.waitFor(() => expect(requestFullscreen).toHaveBeenCalledOnce());
+      expect(lockOrientation).not.toHaveBeenCalled();
     } finally {
       delete document.documentElement.requestFullscreen;
+      delete screen.orientation;
     }
   });
 
