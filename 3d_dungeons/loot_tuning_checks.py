@@ -70,9 +70,42 @@ with sync_playwright() as p:
         page.locator("#closeShop").click()
         page.evaluate("gear.age=59.7")
         page.wait_for_function("!loot.includes(gear)")
+        if touch:
+            page.locator("#inventoryToggle").click()
+        page.locator("#autoEquip").check()
+        page.locator("#preferWeapon").select_option("ranged")
+        if touch:
+            page.locator("#closeInventory").click()
+            page.keyboard.press("p")
+        page.evaluate("""() => {
+          world.tiles.fill(1);props=[];enemies=[];world.traps=[];
+          window.oldWeapon=player.weapon;window.autoWeapon={...oldWeapon,kind:'bow',name:'Better Bow',damage:oldWeapon.damage+10};
+          loot=[{x:player.x+100,y:player.y,type:'weapon',weapon:autoWeapon}];
+        }""")
+        page.wait_for_function("player.weapon===autoWeapon")
+        assert page.evaluate("loot.some(i=>i.weapon===oldWeapon)")
+        if touch:
+            page.locator("#inventoryToggle").click()
+        page.locator("#preferWeapon").select_option("melee")
+        if touch:
+            page.locator("#closeInventory").click()
+            page.keyboard.press("p")
+        page.evaluate("window.manualWeapon={...autoWeapon,kind:'sword',name:'Better Sword',damage:autoWeapon.damage+1};loot=[{x:player.x+100,y:player.y,type:'weapon',weapon:manualWeapon}]")
+        page.wait_for_function("player.weapon===manualWeapon")
+        if touch:
+            page.locator("#inventoryToggle").click()
+        page.screenshot(path=str(OUT / f"{PREFIX}-{name}-auto-equipment.png"))
+        page.locator("#autoEquip").uncheck()
+        if touch:
+            page.locator("#closeInventory").click()
+            page.keyboard.press("p")
+        page.evaluate("loot=[{x:player.x+100,y:player.y,type:'weapon',weapon:{...manualWeapon,damage:999}}]")
+        page.wait_for_timeout(200)
+        assert page.evaluate("player.weapon===manualWeapon")
         assert not errors, errors
         report["layouts"].append({"name": name, "exact_radius_and_manual_gear": True,
-                                  "natural_pickups": True, "lifetime_and_pause": True, "errors": errors})
+                                  "natural_pickups": True, "lifetime_and_pause": True,
+                                  "auto_equipment_ui_and_preferences": True, "errors": errors})
         context.close()
     browser.close()
 

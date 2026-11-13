@@ -24,6 +24,39 @@ scripts.forEach(script => vm.runInContext(script, sandbox));
 const run = code => vm.runInContext(code, sandbox);
 let count = 0;
 function check(name, fn) { fn(); count++; console.log('PASS ' + name); }
+check('automatic equipment is opt-in, respects preference, distance and sight, upgrades slots without oscillation', () => {
+  run("begin();loadFloor(1,604);enemies=[];props=[];world.tiles.fill(1);var original=player.weapon;var upgrade={x:player.x+150,y:player.y,type:'weapon',weapon:{...original,damage:original.damage+5}};loot=[upgrade];updateAutoGear()");
+  assert.equal(run('player.weapon===original&&loot.includes(upgrade)'),true);
+  run("gearPreferences.enabled=true;gearPreferences.prefer='ranged';updateAutoGear()");
+  assert.equal(run('player.weapon===original'),true);
+  run("gearPreferences.prefer='melee';upgrade.x+=.01;updateAutoGear()");
+  assert.equal(run('player.weapon===original'),true);
+  run('upgrade.x-=.01;updateAutoGear();updateAutoGear()');
+  assert.equal(run('player.weapon===upgrade.weapon&&loot.length===1&&loot[0].weapon===original'),true);
+  run("gearPreferences.prefer='ranged';var ranged={x:player.x+100,y:player.y,type:'weapon',weapon:{...weaponTypes.bow,kind:'bow',name:'Bow',damage:original.damage}};loot=[ranged];updateAutoGear()");
+  assert.equal(run('player.weapon===upgrade.weapon'),true);
+  run('ranged.weapon.damage=upgrade.weapon.damage+1;updateAutoGear()');
+  assert.equal(run('player.weapon===ranged.weapon'),true);
+  run("var armor={x:player.x+100,y:player.y,type:'armor',armor:makeArmor('boots')};loot=[armor];state='paused';updateAutoGear()");
+  assert.equal(run('!player.boots'),true);
+  run("state='playing';updateAutoGear();updateAutoGear()");
+  assert.equal(run('player.boots===armor.armor&&loot.length===0'),true);
+  run("var downgrade={...armor,armor:{...armor.armor,reduction:armor.armor.reduction-.01}};loot=[downgrade];updateAutoGear()");
+  assert.equal(run('loot.includes(downgrade)'),true);
+  run("loot=[{...upgrade,x:player.x+100,weapon:{...upgrade.weapon,damage:999}}];gearPreferences.prefer='melee';var blockX=Math.floor((player.x+40)/T),blockY=Math.floor(player.y/T);world.tiles[blockY*W+blockX]=0;updateAutoGear()");
+  assert.equal(run('player.weapon===ranged.weapon'),true);
+  run("world.tiles.fill(1);gearPreferences.enabled=false;begin()");
+});
+check('automatic weapon comparison favors power then recovery and reach, never equal gear', () => {
+  run("var baseline=player.weapon;var candidate={type:'weapon',weapon:{...baseline}};gearPreferences.prefer='melee'");
+  assert.equal(run('betterAutoGear(candidate)'),false);
+  run('candidate.weapon.cooldown=baseline.cooldown-.01');
+  assert.equal(run('betterAutoGear(candidate)'),true);
+  run('candidate.weapon.damage=baseline.damage-1');
+  assert.equal(run('betterAutoGear(candidate)'),false);
+  run('candidate.weapon={...baseline,range:baseline.range+1}');
+  assert.equal(run('betterAutoGear(candidate)'),true);
+});
 check('only Entrance Hall has a room label in the HUD or world renderer', () => {
   run("begin();loadFloor(1,604);enemies=[];world.traps=[];update(.01)");
   assert.equal(elements.get('roomName').textContent,'Entrance Hall');

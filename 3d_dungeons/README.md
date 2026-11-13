@@ -58,7 +58,9 @@ Run `python 3d_dungeons\arsenal_checks.py` for actual Edge desktop, phone, small
 
 ## Single-use scrolls
 
-The start/pause overlay keeps its action button visible while long instructions scroll within the panel, including short desktop and phone layouts. Dropped **gold, scrolls, potions, and arrow/bolt packs** automatically move toward the knight at 360 world units/second whenever they are within 3.75 tiles (150 units), then use the usual close-range collection and pickup feedback. Weapons and armor remain manually selectable.
+**Gear / Map** includes an opt-in **Auto-pickup and equip better gear** checkbox and **Prefer Melee / Ranged** selector. Eligible gear within 3.75 tiles and clear sight equips automatically, leaving the old item on the floor. Weapons must match the preference and improve strike power; ties favor faster recovery, then longer reach. Changing preference never downgrades your current weapon to switch styles. Armor upgrades each slot by reduction, independent of weapon preference. Equal or weaker gear stays available for manual selection. Settings survive new runs/floors for the current page session, like audio settings, but reset on reload. Pause and shopping suspend auto-equipping.
+
+The start/pause overlay keeps its action button visible while long instructions scroll within the panel, including short desktop and phone layouts. Dropped **gold, scrolls, potions, and arrow/bolt packs** automatically move toward the knight at 360 world units/second whenever they are within 3.75 tiles (150 units), then use the usual close-range collection and pickup feedback. Weapons and armor remain manually selectable; automatic upgrades are optional.
 
 Run `python 3d_dungeons\loot_tuning_checks.py` for desktop and phone browser checks of pickup boundaries, collection, item lifetimes, and pause/shop timer protection. It accepts a deployed `?test` URL.
 
