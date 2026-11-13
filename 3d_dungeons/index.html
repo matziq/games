@@ -302,7 +302,8 @@ function attack(){
  for(const torch of world.torches)if(distance(torch,player)<w.range&&clearLine(player,torch)&&Math.abs(angleDiff(Math.atan2(torch.y-player.y,torch.x-player.x),player.angle))<1.3)strikeTorch(torch);
 }
 function nearby(){const candidates=[...props.filter(p=>p.type==='chest'&&!p.open),...loot.filter(l=>l.type==='weapon'||l.type==='armor'),{...world.end,type:'stairs'}].filter(o=>distance(o,player)<70&&clearLine(player,o));return candidates.sort((a,b)=>distance(a,player)-distance(b,player))[0]}
-function interact(){if(state!=='playing')return;const o=nearby();if(!o)return;if(o.type==='chest'){o.open=true;drops(o,true);floatText(o.x,o.y-18,'CHEST OPENED','treasure');log('Treasure chest opened.')}if(o.type==='weapon'||o.type==='armor'){const slot=o.type==='armor'?armorSlot(o.armor):'weapon',old=player[slot];player[slot]=o[o.type];loot.splice(loot.indexOf(o),1);if(old)loot.push({x:o.x,y:o.y,type:o.type,[o.type]:old});floatText(o.x,o.y-18,'+ '+player[slot].name,'loot');log('Equipped '+player[slot].name+'.');if(o.type==='armor')window.DungeonAudio.play('armor');updateHUD()}if(o.type==='stairs'){if(depth<5)loadFloor(depth+1,crypto.getRandomValues(new Uint32Array(1))[0]);else log('Defeat the Cinder King to claim the crown.');}}
+function equipLoot(o){const slot=o.type==='armor'?armorSlot(o.armor):'weapon',old=player[slot];player[slot]=o[o.type];loot.splice(loot.indexOf(o),1);if(old)loot.push({x:o.x,y:o.y,type:o.type,[o.type]:old});floatText(o.x,o.y-18,'+ '+player[slot].name,'loot');log('Equipped '+player[slot].name+'.');if(o.type==='armor')window.DungeonAudio.play('armor');updateHUD()}
+function interact(){if(state!=='playing')return;const o=nearby();if(!o)return;if(o.type==='chest'){o.open=true;drops(o,true);floatText(o.x,o.y-18,'CHEST OPENED','treasure');log('Treasure chest opened.')}if(o.type==='weapon'||o.type==='armor')equipLoot(o);if(o.type==='stairs'){if(depth<5)loadFloor(depth+1,crypto.getRandomValues(new Uint32Array(1))[0]);else log('Defeat the Cinder King to claim the crown.');}}
 function potion(){if(state!=='playing')return;if(player.potions>0&&player.hp<player.max){const restored=Math.min(65,player.max-player.hp);player.potions--;player.hp+=restored;floatText(player.x,player.y-15,'+'+Math.ceil(restored)+' HP','heal');particle(player.x,player.y,'#81dab5',20);log('Healing draught restores 65 vitality.')}else log(player.potions?'Already at full vitality.':'No potions left.')}
 function dodge(){if(state!=='playing'||player.stamina<35||player.dash>0)return;window.DungeonAudio.play('dodge');player.stamina-=35;player.dash=.18;player.inv=.3;let x=(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0),y=(keys.has('s')||keys.has('arrowdown')?1:0)-(keys.has('w')||keys.has('arrowup')?1:0);const a=x||y?Math.atan2(y,x):player.angle;player.dashX=Math.cos(a);player.dashY=Math.sin(a)}
 function shoot(e,a,speed=180,spell=''){const type=spell||e.attack;if(type==='web'){strikeWeb(e);return}else if(type==='venom'||type==='fire'||type==='lightning')window.DungeonAudio.play(type);else if(e.type!=='dragon')window.DungeonAudio.play('magic');shots.push({x:e.x,y:e.y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,life:3,damage:e.damage,color:e.projectile||'#bd90ed',type,owner:e})}
@@ -1253,6 +1254,24 @@ function updateScrolls(dt){
  refreshScrollHUD();
 }
 function lootVisible(item){const blinkAt=item.type==='potion'?10:30;return !['weapon','armor','potion'].includes(item.type)||(item.age||0)<blinkAt||Math.floor(((item.age||0)-blinkAt)*5)%2===0}
+const gearPreferences={enabled:false,prefer:'melee'};
+document.querySelector('aside').insertAdjacentHTML('afterbegin','<section class="panel" aria-label="Automatic equipment"><div class="label">Automatic equipment</div><label><input id="autoEquip" type="checkbox"> Auto-pickup and equip better gear</label><p><label for="preferWeapon">Prefer</label> <select id="preferWeapon"><option value="melee">Melee</option><option value="ranged">Ranged</option></select></p><p style="font-size:12px">Within 3.75 tiles and clear sight. Weapons: higher power, then faster recovery, then reach. Armor: higher reduction per slot. Never downgrades to switch styles. Settings last this page session.</p></section>');
+$('autoEquip').onchange=()=>{gearPreferences.enabled=$('autoEquip').checked};
+$('preferWeapon').onchange=()=>{gearPreferences.prefer=$('preferWeapon').value};
+function betterAutoGear(item){
+ if(item.type==='armor')return item.armor.reduction>(player[armorSlot(item.armor)]?.reduction||0);
+ if(item.type!=='weapon')return false;
+ const next=item.weapon,current=player.weapon;
+ if((rangedKinds.includes(weaponKind(next))?'ranged':'melee')!==gearPreferences.prefer)return false;
+ if(next.damage!==current.damage)return next.damage>current.damage;
+ if((next.cooldown||.36)!==(current.cooldown||.36))return (next.cooldown||.36)<(current.cooldown||.36);
+ return next.range>current.range;
+}
+function updateAutoGear(){
+ if(!gearPreferences.enabled||state!=='playing')return;
+ for(const item of [...loot])if(!item.taken&&(item.type==='weapon'||item.type==='armor')&&distance(item,player)<=3.75*T&&clearLine(player,item)&&betterAutoGear(item))equipLoot(item);
+ refreshSelectionPanel();
+}
 function drawScrollMagic(){
  for(const strike of world.webStrikes){
   ctx.save();ctx.globalAlpha=strike.life/.18;ctx.strokeStyle='#e2ecd2';ctx.lineWidth=2;ctx.beginPath();
@@ -1313,7 +1332,7 @@ function worldTargets(){
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Rubble and furnishings are attack-only obstacles, not selectable items. Click to strike them; on touch, tap to aim then use Attack. E / Use does not break them.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Inspect torchlit floor glints: a rare 8% chance reveals a hidden-hoard weapon with +5 power over its normal floor-level roll instead of a trap. Select and equip it with E / Use. Stepping on an uninspected glint still triggers its trap.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Silken nests: entering starts a 4-second egg countdown. Attack the sacs before three very fast spiderlings hatch from each! After a warning, adult spider webs strike instantly and root you for 1 second. Weapon strikes and projectiles toggle torches, including relighting them.<br>Find 5-shot Fire, Poison, Explosive, and Light arrow/bolt packs. Bow uses arrows; Crossbow uses bolts. C or Ammo in the Scrolls panel cycles available types. Special ammo returns to unlimited regular shots when empty. Rare unstable rooms mark a tile for 2 seconds before it becomes a pit down exactly one floor (never on floor 10).<br>Gold, scrolls, potions and ammo packs vacuum within 3.75 tiles. Loose weapons and armor blink after 30 seconds and vanish at 60; potions blink after 10 seconds and vanish at 20. Hit broken barrels/boxes or opened chests again to clear them, without extra loot. Monsters never spring hidden traps; deliberately activated traps catch approaching foes, including trap creatures.');
-document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Equipment remains manually selectable and does not vacuum.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Equipment stays manual by default. Gear / Map offers Auto-pickup better gear and Prefer Melee / Ranged; only upgrades in your preferred style equip automatically.');
 function isWorldTarget(target){return worldTargets().includes(target)}
 function targetReachable(target){return distance(target,player)<72&&clearLine(player,target)}
 function worldTargetName(target){
@@ -1456,6 +1475,7 @@ update=function(dt){
  baseUpdate(dt);
  if(state!=='playing')return;
  updateScrolls(dt);
+ updateAutoGear();
  if(updateNestsAndPits(dt,before))return;
  if(state!=='playing')return;
  const moved=Math.hypot(player.x-before.x,player.y-before.y)>.25;
