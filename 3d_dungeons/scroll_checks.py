@@ -22,6 +22,35 @@ with sync_playwright() as p:
         page.on("pageerror", lambda error: errors.append(str(error)))
         page.goto(URL)
         page.get_by_role("button", name="Enter the halls").click()
+        page.evaluate("player.scrolls={fireball:0,light:2,poison:0,lightning:1};player.selectedScroll='fireball';window.cycleShotCount=heroShots.length")
+        page.keyboard.press("t")
+        assert page.evaluate("player.selectedScroll==='light'")
+        page.keyboard.press("t")
+        assert page.evaluate("player.selectedScroll==='lightning'")
+        page.keyboard.press("t")
+        assert page.evaluate("player.selectedScroll==='light'&&player.scrolls.light===2&&player.scrolls.lightning===1&&heroShots.length===cycleShotCount")
+        page.evaluate("window.dispatchEvent(new KeyboardEvent('keydown',{key:'t',repeat:true}))")
+        assert page.evaluate("player.selectedScroll==='light'")
+        page.locator("#volume").focus()
+        page.keyboard.press("t")
+        assert page.evaluate("player.selectedScroll==='light'")
+        page.locator("#game").focus()
+        page.evaluate("player.weapon.kind='crossbow';player.ammo.crossbow={fire:0,poison:5,explosive:0,light:5};player.ammoChoice.crossbow='regular'")
+        for expected in ["poison", "light", "regular"]:
+            page.keyboard.press("c")
+            assert page.evaluate("player.ammoChoice.crossbow") == expected
+        assert page.evaluate("player.ammo.crossbow.poison===5&&player.ammo.crossbow.light===5&&heroShots.length===cycleShotCount")
+        page.keyboard.press("p")
+        page.keyboard.press("t")
+        assert page.evaluate("player.selectedScroll==='light'")
+        page.keyboard.press("p")
+        page.locator("#scrollSummary").click()
+        if touch:
+            page.locator("#cycleScroll").tap()
+        else:
+            page.locator("#cycleScroll").click()
+        assert page.evaluate("player.selectedScroll==='lightning'&&player.scrolls.lightning===1")
+        page.locator("#scrollSummary").click()
         page.evaluate("""() => {
           loadFloor(3,604);state='playing';enemies=[];props=[];loot=[];world.traps=[];
           world.quake.next=Infinity;world.torches.forEach(t=>t.lit=false);
@@ -125,7 +154,8 @@ with sync_playwright() as p:
                                   "touch_cast": touch, "all_four_effects": True, "single_use": True,
                                   "pickup": True, "paused_cast_preserves_inventory": True,
                                   "context_menu_only_canvas": True, "no_primary_attack": True,
-                                  "key_repeat_ignored": True, "spell_choice_while_gear_selected": True,
+                                  "key_repeat_ignored": True, "scroll_T_and_ammo_C_cycle": True,
+                                  "spell_choice_while_gear_selected": True,
                                   "natural_inspection_hidden_hoard_once_no_trap": True,
                                   "no_overflow": True, "errors": errors})
         context.close()

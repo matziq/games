@@ -7,7 +7,7 @@ const context = new Proxy({createImageData(width,height){return {width,height,da
 function element() {
   return { style: {}, hidden: false, textContent: '', open: false, children: [], getContext: () => context,
     getBoundingClientRect: () => ({ left: 0, top: 0, width: 1000, height: 700 }), focus() {}, addEventListener() {},
-    append(e) { this.children.push(e); }, prepend(e) { this.children.unshift(e); }, replaceChildren(...e) { this.children = e; },
+    append(e) { this.children.push(e); }, before() {}, prepend(e) { this.children.unshift(e); }, replaceChildren(...e) { this.children = e; },
     setAttribute() {}, insertAdjacentHTML() {}, classList: { toggle() {}, remove() {}, add() {}, contains() { return false; } },
     showModal() { this.open = true; }, close() { this.open = false; } };
 }
@@ -24,6 +24,25 @@ scripts.forEach(script => vm.runInContext(script, sandbox));
 const run = code => vm.runInContext(code, sandbox);
 let count = 0;
 function check(name, fn) { fn(); count++; console.log('PASS ' + name); }
+check('scroll and ammunition cycling skip empty types, wrap without consumption, and reject pause', () => {
+  run("begin();player.scrolls={fireball:0,light:2,poison:0,lightning:1};player.selectedScroll='fireball';cycleScroll()");
+  assert.equal(run('player.selectedScroll'),'light');
+  run('cycleScroll()');assert.equal(run('player.selectedScroll'),'lightning');
+  run('cycleScroll()');assert.equal(run('player.selectedScroll'),'light');
+  assert.equal(run('JSON.stringify(player.scrolls)'),JSON.stringify({fireball:0,light:2,poison:0,lightning:1}));
+  run("player.scrolls.light=player.scrolls.lightning=0;cycleScroll()");
+  assert.equal(run('player.selectedScroll'),'light');
+  run("player.scrolls.lightning=1;state='paused';cycleScroll()");
+  assert.equal(run('player.selectedScroll'),'light');
+  for(const kind of ['bow','crossbow']){
+    run(`state='playing';player.weapon.kind='${kind}';player.ammo.${kind}={fire:0,poison:5,explosive:0,light:5};player.ammoChoice.${kind}='regular';cycleAmmo()`);
+    assert.equal(run(`player.ammoChoice.${kind}`),'poison');
+    run('cycleAmmo()');assert.equal(run(`player.ammoChoice.${kind}`),'light');
+    run('cycleAmmo()');assert.equal(run(`player.ammoChoice.${kind}`),'regular');
+    assert.equal(run(`player.ammo.${kind}.poison+player.ammo.${kind}.light`),10);
+  }
+  run('begin()');
+});
 check('automatic equipment is opt-in, respects preference, distance and sight, upgrades slots without oscillation', () => {
   run("begin();loadFloor(1,604);enemies=[];props=[];world.tiles.fill(1);var original=player.weapon;var upgrade={x:player.x+150,y:player.y,type:'weapon',weapon:{...original,damage:original.damage+5}};loot=[upgrade];updateAutoGear()");
   assert.equal(run('player.weapon===original&&loot.includes(upgrade)'),true);
