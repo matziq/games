@@ -1100,6 +1100,12 @@ function cycleAmmo(){
 }
 $('cycleAmmo').onclick=()=>{cycleAmmo();canvas.focus()};
 window.addEventListener('keydown',event=>{if(event.key.toLowerCase()==='c'&&!event.repeat&&!$('artDialog').open&&!event.target?.matches?.('input,textarea,select')){event.preventDefault();cycleAmmo()}});
+function cycleScroll(){
+ if(state!=='playing')return;
+ const choices=Object.keys(scrollTypes).filter(kind=>player.scrolls[kind]>0);
+ if(!choices.length)return;
+ player.selectedScroll=choices[(choices.indexOf(player.selectedScroll)+1)%choices.length];refreshScrollHUD();
+}
 function impactAmmo(shot,target){
  if(!shot.special||shot.specialDone)return;shot.specialDone=true;
  if((shot.special==='fire'||shot.special==='poison')&&target&&enemies.includes(target)&&target.hp>0){
@@ -1307,6 +1313,14 @@ function drawScrollMagic(){
  }
 }
 for(const kind of Object.keys(scrollTypes))$('scroll-'+kind).onclick=()=>{player.selectedScroll=kind;refreshScrollHUD();canvas.focus()};
+const cycleScrollButton=document.createElement('button');
+cycleScrollButton.id='cycleScroll';cycleScrollButton.textContent='Next available scroll [T]';
+$('castScroll').before(cycleScrollButton);
+cycleScrollButton.onclick=()=>{cycleScroll();canvas.focus()};
+window.addEventListener('keydown',event=>{
+ if(event.key.toLowerCase()!=='t'||event.repeat||$('artDialog').open||event.target?.matches?.('input,textarea,select'))return;
+ event.preventDefault();cycleScroll();
+});
 $('castScroll').onclick=()=>{castScroll();canvas.focus()};
 canvas.addEventListener('contextmenu',event=>event.preventDefault());
 canvas.addEventListener('pointerdown',event=>{
@@ -1321,7 +1335,7 @@ window.addEventListener('keydown',event=>{
  if(event.target?.matches?.('input,textarea,select'))return;
  event.preventDefault();castScroll();
 });
-document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Single-use scrolls: select Fireball, Light, Poison or Lightning in the scroll panel. Right-click the game to aim and cast, or press R / tap Cast using your current facing. Start with one of each; collect more from chests and monsters. Light lasts 25 seconds; poison clouds last 6 seconds. Scrolls persist between floors; paused or blocked casts do not consume them.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Single-use scrolls: T / Next available scroll cycles stocked spells; C / Ammo cycles arrows or bolts for your current weapon (regular ammo is unlimited). Neither cycles empty types or consumes items. Right-click the game to aim and cast, or press R / tap Cast using your current facing. Start with one of each; collect more from chests and monsters. Light lasts 25 seconds; poison clouds last 6 seconds. Scrolls persist between floors; paused or blocked casts do not consume them.');
 function worldTargets(){
  if(!world)return [];
  world.end.type='stairs';
