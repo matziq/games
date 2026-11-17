@@ -991,13 +991,14 @@ check('overlapping gear cycles without selecting the underlying torch', () => {
     var overlap={x:player.x+40,y:player.y}, sword={...overlap,type:'weapon',weapon:makeWeapon()}, mail={...overlap,type:'armor',armor:makeArmor()}, sconce={...overlap,type:'torch',lit:false};
     loot=[sword,mail];world.torches=[sconce];world.seen.fill(1);
     var selectEvent={clientX:(overlap.x-camera.x)/vw*1000,clientY:(overlap.y-camera.y)/vh*700,preventDefault(){}};
-    var oldWeapon=player.weapon;var oldCool=player.cool;var oldAngle=player.angle`);
+    var oldWeapon=player.weapon;var oldCool=player.cool;var oldAngle=player.angle;mouse.down=true`);
   assert.equal(run("selectWorldPointer(selectEvent)"),true);
   assert.equal(run("selectedWorldItem===sword&&nearby()===sword"),true);
   assert.equal(run("selectionChoices.length"),2);
   run("selectWorldPointer(selectEvent)");assert.equal(run("selectedWorldItem===mail"),true);
   run("selectWorldPointer(selectEvent)");assert.equal(run("selectedWorldItem===sword"),true);
-  assert.equal(run("player.weapon===oldWeapon&&player.cool===oldCool&&player.angle===oldAngle&&!mouse.down&&!sconce.lit"),true);
+  assert.equal(run("player.weapon===oldWeapon&&player.cool===oldCool&&player.angle===oldAngle&&mouse.down&&!sconce.lit"),true);
+  run('mouse.down=false');
   run("interact()");
   assert.equal(run("player.weapon===sword.weapon&&!loot.includes(sword)"),true);
   assert.equal(run("selectedWorldItem"),null);
