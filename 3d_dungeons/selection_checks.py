@@ -44,7 +44,7 @@ with sync_playwright() as p:
         page.evaluate("""() => {
           loadFloor(5,604);state='playing';keys.clear();enemies=[];props=[];loot=[];shots=[];heroShots=[];effects=[];
           world.traps=[];world.quake.next=Infinity;world.seen.fill(1);player.inv=1000;player.angle=0;mouse.active=false;
-          player.weapon={...weaponTypes.sword,kind:'sword',name:'Test longsword',damage:20,color:'#dddddd'};
+          player.weapon={...weaponTypes.sword,kind:'sword',name:'Test longsword',damage:20,color:'#dddddd'};player.cool=1000;
           world.torches.forEach(t=>t.lit=true);
           window.overlap={x:player.x-42,y:player.y+20};
           window.floorWeapon={...overlap,type:'weapon',weapon:{...weaponTypes.halberd,kind:'halberd',name:'Selected Halberd',damage:26,color:'#dddddd'}};
@@ -66,7 +66,8 @@ with sync_playwright() as p:
             page.locator(selector).tap() if mobile else page.locator(selector).click()
 
         tap_world()
-        assert page.evaluate("selectedWorldItem===floorWeapon&&strikes===0&&player.weapon===beforeWeapon&&!floorTorch.lit"), page.evaluate("({mode:innerWidth,state,selected:selectedWorldItem,choices:selectionChoices.map(worldTargetName),strikes,lit:floorTorch.lit,point:overlap,camera:{...camera},vw,vh,trace:pointerTrace,player:{x:player.x,y:player.y}})")
+        assert page.evaluate("selectedWorldItem===floorWeapon&&player.weapon===beforeWeapon&&!floorTorch.lit"), page.evaluate("({mode:innerWidth,state,selected:selectedWorldItem,choices:selectionChoices.map(worldTargetName),strikes,lit:floorTorch.lit,point:overlap,camera:{...camera},vw,vh,trace:pointerTrace,player:{x:player.x,y:player.y}})")
+        assert page.evaluate("strikes===0" if mobile else "strikes>0")
         assert page.locator("#selectionChoices button").count() == 2
         # Repeated world taps cycle when unobscured. Named choices also work on small screens.
         button("#clearSelected")
@@ -79,7 +80,7 @@ with sync_playwright() as p:
             tap_world()
             assert page.evaluate("selectedWorldItem===floorWeapon")
         button("#selectionChoices button:has-text('Selected Helmet')")
-        assert page.evaluate("selectedWorldItem===floorArmor&&strikes===0&&loot.includes(floorArmor)")
+        assert page.evaluate("selectedWorldItem===floorArmor&&loot.includes(floorArmor)")
         page.keyboard.press("f")
         assert page.evaluate("!floorTorch.lit&&selectedWorldItem===floorArmor&&loot.includes(floorWeapon)")
         shot = picture(page, mode + "-selected-overlap")
@@ -97,7 +98,7 @@ with sync_playwright() as p:
         tap_world()
         button("#selectionChoices button:has-text('Selected Helmet')")
         button("#touchInteract") if mobile else page.keyboard.press("e")
-        assert page.evaluate("player.helmet===floorArmor.armor&&!loot.includes(floorArmor)&&!undoGearDelete()&&strikes===0")
+        assert page.evaluate("player.helmet===floorArmor.armor&&!loot.includes(floorArmor)&&!undoGearDelete()")
         # The torch never enters the chooser, even beneath the remaining weapon.
         tap_world()
         assert page.locator("#selectionChoices button").count() == 1
@@ -158,7 +159,7 @@ with sync_playwright() as p:
                 assert 0 <= box["y"] and box["y"] + box["height"] <= height
         assert not errors, errors
         report["layouts"].append({"name": mode, "size": [width, height], "exact_overlap": True,
-                                   "world_cycle_unobscured": unobscured, "no_selection_attack": True,
+                                   "world_cycle_unobscured": unobscured, "selection_allows_combat": True,
                                    "torch_under_loot": True, "delete_correct_identity": True, "undo_once": True,
                                    "use_selected": True, "decor_coins": True, "undo_after_descent": True, "no_overflow": True, "errors": errors,
                                    "screenshots": [shot, undo_shot, clean_shot]})
