@@ -24,6 +24,41 @@ scripts.forEach(script => vm.runInContext(script, sandbox));
 const run = code => vm.runInContext(code, sandbox);
 let count = 0;
 function check(name, fn) { fn(); count++; console.log('PASS ' + name); }
+check('enemy projectiles and direct sources cannot harm allies or apply status, but still harm player', () => {
+  for(const spell of ['ranged','fire','venom']){
+    run(`begin();loadFloor(1,604);world.tiles.fill(1);world.traps=[];props=[];player.inv=0;var shooter=makeEnemy('cinder_wizard',{x:player.x+180,y:player.y});var ally=makeEnemy('slime',{x:player.x+80,y:player.y});shooter.cool=ally.cool=1000;shooter.speed=ally.speed=0;enemies=[shooter,ally];var allyHP=ally.hp;var heroHP=player.hp;shoot(shooter,Math.PI,400,'${spell}');baseUpdate(.4)`);
+    assert.equal(run('ally.hp===allyHP&&!ally.burn&&!ally.poison&&player.hp===heroHP&&shots.length===0'),true);
+    run(`enemies=[shooter];shoot(shooter,Math.PI,400,'${spell}');baseUpdate(.5)`);
+    assert.ok(run('player.hp<heroHP'));
+  }
+  run("var ally=makeEnemy('slime',player);enemies=[ally];var hpBeforeAlly=ally.hp;hurtEnemy(ally,100,shooter)");
+  assert.equal(run('ally.hp===hpBeforeAlly'),true);
+  run('hurtEnemy(ally,1,player)');assert.equal(run('ally.hp'),run('hpBeforeAlly-1'));
+  run('begin()');
+});
+check('ordinary swarm creatures target only player while activated trap creatures still harm enemies', () => {
+  run("loadFloor(1,604);world.tiles.fill(1);world.traps=[];props=[];player.x+=300;var friendly=makeEnemy('slime',{x:player.x-200,y:player.y});var mob=makeEnemy('bug',{x:friendly.x+15,y:friendly.y});Object.assign(mob,{trapSwarm:true,swarmLife:10,emerge:0,cool:0});enemies=[mob,friendly];var friendlyHP=friendly.hp;updateTraps(.01,false)");
+  assert.equal(run('friendly.hp===friendlyHP'),true);
+  run('mob.trapSource={};mob.cool=0;updateTraps(.01,false)');
+  assert.ok(run('friendly.hp<friendlyHP'));
+  run('begin()');
+});
+check('boss victory preserves spoils and continues into repeatable stronger cycles without resetting progression', () => {
+  run("begin();loadFloor(10,604);world.traps=[];props=[];var dragon=enemies.find(e=>e.type==='dragon');player.gold=100;var keptWeapon=player.weapon;var keptScrolls=JSON.stringify(player.scrolls);hurtEnemy(dragon,10000);var goldAfterBoss=player.gold;var killsAfterBoss=kills;var rankAfterBoss=player.level;var spoils=loot.slice()");
+  assert.equal(run("state==='victory'&&player.crowns===1&&bossDefeated&&player.gold>=600"),true);
+  run('hurtEnemy(dragon,10000)');
+  assert.equal(run('player.crowns===1&&player.gold===goldAfterBoss&&kills===killsAfterBoss'),true);
+  run('continueAfterVictory()');
+  assert.equal(run("state==='playing'&&depth===10&&loot.length===spoils.length&&spoils.every(i=>loot.includes(i))&&player.weapon===keptWeapon"),true);
+  run("selectedWorldItem=null;player.x=world.end.x;player.y=world.end.y;interact()");
+  assert.equal(run("runCycle===2&&depth===1&&state==='playing'&&!bossDefeated&&player.weapon===keptWeapon&&player.gold===goldAfterBoss&&player.level===rankAfterBoss&&player.crowns===1&&JSON.stringify(player.scrolls)===keptScrolls"),true);
+  assert.equal(run("makeEnemy('slime',player).damage"),run('creatures.slime.damage*1.25'));
+  run("loadFloor(10,604);var secondDragon=enemies.find(e=>e.type==='dragon')");
+  assert.equal(run('secondDragon.max'),run('creatures.dragon.hp*1.25'));
+  run("hurtEnemy(secondDragon,10000);continueAfterVictory();selectedWorldItem=null;player.x=world.end.x;player.y=world.end.y;interact()");
+  assert.equal(run("player.crowns===2&&runCycle===3&&depth===1&&state==='playing'"),true);
+  run('begin()');assert.equal(run('runCycle===1&&!player.crowns&&player.gold===0'),true);
+});
 check('scroll and ammunition cycling skip empty types, wrap without consumption, and reject pause', () => {
   run("begin();player.scrolls={fireball:0,light:2,poison:0,lightning:1};player.selectedScroll='fireball';cycleScroll()");
   assert.equal(run('player.selectedScroll'),'light');
@@ -718,7 +753,8 @@ check('dragon alternates telegraphed cone and radial attacks', () => {
   run('shots=[];enemies[0].cool=0;update(.01);for(let i=0;i<29;i++)update(.04)'); assert.equal(run('shots.length'), 12); assert.equal(run('enemies[0].phase'), 2);
 });
 check('boss victory, death, restart and pause transitions', () => {
-  run('hurtEnemy(enemies[0],10000)'); assert.equal(run('state'), 'won'); assert.ok(run('player.gold>=500'));
+  run('hurtEnemy(enemies[0],10000)'); assert.equal(run('state'), 'victory'); assert.ok(run('player.gold>=500'));
+  run('continueAfterVictory()');assert.equal(run('state'),'playing');
   run('begin();player.inv=0;damagePlayer(10000)'); assert.equal(run('state'), 'dead');
   run('begin();togglePause()'); assert.equal(run('state'), 'paused'); run('togglePause()'); assert.equal(run('state'), 'playing');
 });

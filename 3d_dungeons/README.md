@@ -56,6 +56,14 @@ On floors 1-9, each ordinary room has a seeded **4%** chance to be unstable. Ent
 
 Run `python 3d_dungeons\arsenal_checks.py` for actual Edge desktop, phone, small-phone, and landscape checks of natural hatching, destroyed eggs, five-round pickup, C/touch ammunition selection, actual firing and torch ignition, web-root expiry, and one-floor pits. It accepts an optional deployed `?test` URL. The Node suite additionally checks all eight weapon/ammunition combinations, effect damage, automatic regular fallback, pause/cooldown guards, no duplicate hatching, lootless spiderlings, rare room frequency, and floor-10 exclusions.
 
+## Enemy factions and crowned cycles
+
+Ordinary enemies cannot damage or poison/burn other enemies. Enemy shots are still blocked by creatures and intact containers, but an allied creature takes no damage/status from the impact. Enemy melee, charge, lightning, web and dragon attacks target the knight. Player attacks, spells, and activated environmental traps retain their effects on enemies; trap-summoned bugs/bats remain hazards that can attack approaching enemies rather than ordinary faction members.
+
+Defeating Varkhos pauses on a victory message with **Continue exploring**, not a new-run reset. The 500-gold reward, XP, crown, dropped spoils, equipment and inventory remain yours. Resume to collect loot and explore Floor 10, then **E / Use** the final stairway to begin the next randomized ten-floor cycle. Each additional cycle adds 25% of base enemy vitality/damage and +5 weapon power; speed/timing stay unchanged. Health refills on floor arrival as usual. Equipment, gold, inventory, rank, kills and accumulated crowns carry forward; floor objects do not. New run explicitly resets cycles/crowns. Runs remain in-memory only, with no reload save.
+
+Run `python 3d_dungeons\crown_checks.py` for desktop/phone friendly-fire, activated-trap, actual boss-kill and victory/continue/next-cycle controls. It accepts a deployed `?test` URL. Fixtures isolate mechanics rather than claiming an unassisted full playthrough.
+
 ## Single-use scrolls
 
 **Gear / Map** includes an opt-in **Auto-pickup and equip better gear** checkbox and **Prefer Melee / Ranged** selector. Eligible gear within 3.75 tiles and clear sight equips automatically, leaving the old item on the floor. Weapons must match the preference and improve strike power; ties favor faster recovery, then longer reach. Changing preference never downgrades your current weapon to switch styles. Armor upgrades each slot by reduction, independent of weapon preference. Equal or weaker gear stays available for manual selection. Settings survive new runs/floors for the current page session, like audio settings, but reset on reload. Pause and shopping suspend auto-equipping.

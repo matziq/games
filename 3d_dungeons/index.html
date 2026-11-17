@@ -245,7 +245,8 @@ function free(x,y,r){return floorAt(x-r,y-r)&&floorAt(x+r,y-r)&&floorAt(x-r,y+r)
 function clearLine(a,b){const steps=Math.ceil(distance(a,b)/8);for(let i=1;i<steps;i++)if(!floorAt(a.x+(b.x-a.x)*i/steps,a.y+(b.y-a.y)*i/steps))return false;return true}
 function move(e,dx,dy){const r=e.radius||12;if(free(e.x+dx,e.y,r))e.x+=dx;if(free(e.x,e.y+dy,r))e.y+=dy}
 function roomSpot(r){return {x:(integer(r.x+1,r.x+r.w-2)+.5)*T,y:(integer(r.y+1,r.y+r.h-2)+.5)*T}}
-function makeEnemy(type,p){const base=creatures[type];if(!base)throw new Error('Unknown creature: '+type);return {...p,...base,type,hp:base.hp+(type==='dragon'?0:depth*6),max:base.hp+(type==='dragon'?0:depth*6),radius:type==='dragon'?25:12,cool:random(.5,2),hit:0,wind:0,lunge:0,attackAngle:0,phase:0}}
+let runCycle=1;
+function makeEnemy(type,p){const base=creatures[type];if(!base)throw new Error('Unknown creature: '+type);const scale=1+(runCycle-1)*.25,hp=(base.hp+(type==='dragon'?0:depth*6))*scale;return {...p,...base,type,hp,max:hp,damage:base.damage*scale,radius:type==='dragon'?25:12,cool:random(.5,2),hit:0,wind:0,lunge:0,attackAngle:0,phase:0}}
 function loadFloor(d,s){
  depth=d;world=generate(s,d);enemies=[];props=[];loot=[];shots=[];effects=[];floatingTexts=[];distances=null;bossDefeated=false;
  player.x=world.start.x;player.y=world.start.y;player.hp=player.max;player.inv=1;player.stamina=100;player.poison=player.burn=player.poisonTick=player.burnTick=0;
@@ -259,7 +260,7 @@ function loadFloor(d,s){
  $('objective').textContent=d===5?'Defeat Varkhos. The red cones warn of flame; dodge out before they ignite. Claim the Ashen Crown. '+world.theme.description:world.theme.description+' Find the blue stairway to a new realm and a different monster brood.';
  log('Entered '+chapters[d-1]+'.');updateHUD();
 }
-function begin(){kills=0;messages=[];lastGearDelete=null;player={x:0,y:0,hp:120,max:120,stamina:100,gold:0,potions:3,xp:0,level:1,weapon:{name:'Worn Longsword',kind:'sword',damage:16,range:76,cooldown:.36,color:'#d5d9d0'},armor:null,angle:0,cool:0,inv:0,dash:0,swing:0,poison:0,poisonTick:0,burn:0,burnTick:0};loadFloor(1,crypto.getRandomValues(new Uint32Array(1))[0]);state='playing';$('overlay').hidden=true;canvas.focus()}
+function begin(){runCycle=1;kills=0;messages=[];lastGearDelete=null;player={x:0,y:0,hp:120,max:120,stamina:100,gold:0,potions:3,xp:0,level:1,weapon:{name:'Worn Longsword',kind:'sword',damage:16,range:76,cooldown:.36,color:'#d5d9d0'},armor:null,angle:0,cool:0,inv:0,dash:0,swing:0,poison:0,poisonTick:0,burn:0,burnTick:0};loadFloor(1,crypto.getRandomValues(new Uint32Array(1))[0]);state='playing';$('overlay').hidden=true;canvas.focus()}
 function reveal(){const px=Math.floor(player.x/T),py=Math.floor(player.y/T);for(let y=Math.max(0,py-8);y<Math.min(H,py+9);y++)for(let x=Math.max(0,px-8);x<Math.min(W,px+9);x++)if(Math.hypot(x-px,y-py)<8)world.seen[y*W+x]=1}
 function buildPaths(){distances=new Int16Array(W*H).fill(-1);const start=Math.floor(player.y/T)*W+Math.floor(player.x/T),queue=[start];distances[start]=0;for(let i=0;i<queue.length;i++){const k=queue[i];for(const n of [k-1,k+1,k-W,k+W])if(n>=0&&n<W*H&&world.tiles[n]&&distances[n]<0){distances[n]=distances[k]+1;queue.push(n)}}}
 function targetDirection(e){let x=player.x,y=player.y;const k=Math.floor(e.y/T)*W+Math.floor(e.x/T);if(distances&&distances[k]>2){let best=k;for(const n of [k-W,k+W,k-1,k+1])if(distances[n]>=0&&distances[n]<distances[best])best=n;if(best!==k){x=(best%W+.5)*T;y=(Math.floor(best/W)+.5)*T}}return Math.atan2(y-e.y,x-e.x)}
@@ -274,10 +275,20 @@ const weaponTypes={sword:{label:'Longsword',range:82,cooldown:.36,bonus:0},axe:{
 weaponTypes.crossbow={label:'Crossbow',range:560,cooldown:.85,bonus:10};
 const rangedKinds=['bow','crossbow','boomerang','javelin','knife','throwing_axe'];
 function weaponKind(w){return w.kind||(w.name.includes('Axe')?'axe':w.name.includes('Spear')?'spear':w.name.includes('Mace')?'mace':'sword')}
-function makeWeapon(){const tier=integer(0,99),rarity=tier>88?2:tier>55?1:0,kinds=Object.keys(weaponTypes),kind=kinds[integer(0,kinds.length-1)],type=weaponTypes[kind];return {name:['Tempered','Knight\'s','Runed'][rarity]+' '+type.label,kind,damage:15+depth*5+rarity*9+type.bonus,range:type.range+rarity*4,cooldown:type.cooldown,color:['#c5d4d4','#78c8e0','#c6a0ed'][rarity]}}
+function makeWeapon(){const tier=integer(0,99),rarity=tier>88?2:tier>55?1:0,kinds=Object.keys(weaponTypes),kind=kinds[integer(0,kinds.length-1)],type=weaponTypes[kind];return {name:['Tempered','Knight\'s','Runed'][rarity]+' '+type.label,kind,damage:15+depth*5+rarity*9+type.bonus+(runCycle-1)*5,range:type.range+rarity*4,cooldown:type.cooldown,color:['#c5d4d4','#78c8e0','#c6a0ed'][rarity]}}
 function makeArmor(slot=armorSlots[integer(0,armorSlots.length-1)]){const tier=integer(0,2),kind=['leather','chain','plate'][tier];return {name:slot==='armor'?['Hardened Leather','Riveted Chainmail','Knight\'s Plate'][tier]:['Leather','Chain','Plate'][tier]+' '+{boots:'Boots',gloves:'Gloves',helmet:'Helmet'}[slot],kind,slot,reduction:slot==='armor'?Math.min(.4,.08+tier*.08+depth*.025):Math.min(.12,.025+tier*.025+depth*.006),color:['#ad7951','#91adb4','#c8cddd'][tier]}}
 function drops(e,chest=false){if(e.trapSwarm)return;loot.push({x:e.x-12,y:e.y,type:'gold',value:chest?integer(20,40)*depth:integer(3,10)*depth});if(chest||rng()<.25)loot.push({x:e.x+22,y:e.y+12,type:'weapon',weapon:makeWeapon()});if(chest||rng()<.16)loot.push({x:e.x-24,y:e.y+25,type:'armor',armor:makeArmor()});if(rng()<(chest?.65:.14))loot.push({x:e.x,y:e.y-22,type:'potion'})}
-function hurtEnemy(e,amount){if(e.hp<=0)return;window.DungeonAudio.play('hit',e.type);window.DungeonAudio.play('voice',e.type);const actual=Math.min(Math.max(0,e.hp),amount);e.hp-=amount;e.hit=.15;if(actual>0)floatText(e.x,e.y-25,'-'+Math.ceil(actual),'strike');particle(e.x,e.y,e.type==='slime'?'#74b788':'#d4a873');if(e.hp<=0){kills++;drops(e);player.xp+=e.type==='dragon'?250:18+depth*3;log(e.type==='dragon'?'Varkhos has fallen! The crown is yours.':e.type[0].toUpperCase()+e.type.slice(1)+' defeated.');while(player.xp>=player.level*65){player.xp-=player.level*65;player.level++;player.max+=15;player.hp=Math.min(player.max,player.hp+40);log('Knight rank '+player.level+'. Vitality increased.')}if(e.type==='dragon'){bossDefeated=true;player.gold+=500;floatText(player.x,player.y-25,'+500 GOLD','gold');state='won';showOverlay('The Ashen Crown is yours.','Varkhos falls beneath your steel. Five chapters conquered. '+player.gold+' gold recovered, '+kills+' foes defeated. Every new adventure reshapes the keep.','Adventure again')}}}
+function hurtEnemy(e,amount){if(e.hp<=0)return;window.DungeonAudio.play('hit',e.type);window.DungeonAudio.play('voice',e.type);const actual=Math.min(Math.max(0,e.hp),amount);e.hp-=amount;e.hit=.15;if(actual>0)floatText(e.x,e.y-25,'-'+Math.ceil(actual),'strike');particle(e.x,e.y,e.type==='slime'?'#74b788':'#d4a873');if(e.hp<=0){kills++;drops(e);player.xp+=e.type==='dragon'?250:18+depth*3;log(e.type==='dragon'?'Varkhos has fallen! The crown is yours.':e.type[0].toUpperCase()+e.type.slice(1)+' defeated.');while(player.xp>=player.level*65){player.xp-=player.level*65;player.level++;player.max+=15;player.hp=Math.min(player.max,player.hp+40);log('Knight rank '+player.level+'. Vitality increased.')}if(e.type==='dragon'){bossDefeated=true;player.gold+=500;floatText(player.x,player.y-25,'+500 GOLD','gold');showBossVictory()}}}
+function showBossVictory(){
+ player.crowns=(player.crowns||0)+1;state='victory';keys.clear();mouse.down=false;releaseTouchControls();
+ $('objective').textContent='Crown claimed! Collect your spoils, then use the final stairway to begin Cycle '+(runCycle+1)+' with your gear and rewards.';
+ showOverlay('The Ashen Crown is yours.','Cycle '+runCycle+' conquered! +500 gold and dragon spoils are yours. Continue exploring to collect them, then use the final stairway for a harder ten-floor cycle. Your equipment, inventory, rank, gold and crowns carry forward.','Continue exploring');
+}
+function continueAfterVictory(){
+ if(state!=='victory')return false;
+ state='playing';keys.clear();mouse.down=false;player.inv=Math.max(player.inv,2);$('overlay').hidden=true;canvas.focus();return true;
+}
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Enemies cannot hurt other enemies. Activated traps and their summoned creatures still affect approaching enemies. Defeat Varkhos to claim a crown and 500 gold, continue exploring for spoils, then use the final stairway to start a harder cycle with your equipment and rewards.');
 function canStrikeProp(p){return !p.destroyed&&(p.type==='chest'?p.open:!p.open||p.type==='barrel'||p.type==='crate')}
 function blocksShot(p){return !p.destroyed&&(!p.open||canStrikeProp(p))}
 function breakProp(p,amount){
@@ -358,7 +369,8 @@ function update(dt){
    if(collision.prop)breakProp(target,s.damage);
    else{
     const dodging=target===player&&player.inv>0;
-    if(s.damage>0){if(target===player)damagePlayer(s.damage);else hurtEnemy(target,s.damage)}
+    if(target!==player){s.life=0;continue}
+    if(s.damage>0)damagePlayer(s.damage);
     if(!dodging&&s.type==='web'&&target===player&&!inMerchantSanctuary()){player.root=1;floatText(player.x,player.y-15,'WEBBED - STUCK 1s','damage')}
     if(!dodging&&(s.type==='venom'||s.type==='fire')){
      const status=s.type==='venom'?'poison':'burn';target[status]=Math.max(target[status]||0,s.type==='venom'?2.4:2);target[status+'Tick']=.4;
@@ -496,7 +508,7 @@ function togglePause(){if(state==='playing'){state='paused';keys.clear();mouse.d
 window.addEventListener('keydown',e=>{if($('artDialog').open)return;const k=e.key.toLowerCase();if(e.target?.closest?.('#selectionPanel')&&[' ','enter'].includes(k))return;if([' ','arrowup','arrowdown','arrowleft','arrowright','shift'].includes(k))e.preventDefault();keys.add(k);if(e.repeat)return;if(k==='p'||k==='escape')togglePause();if(k==='e')interact();if(k==='x')deleteSelectedGear();if(k==='q')potion();if(k==='shift')dodge();if(k===' ')attack()});
 window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{keys.clear();mouse.down=false;if(state==='playing')togglePause()});document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='playing')togglePause()});
 canvas.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;const r=canvas.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;mouse.active=true});canvas.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse')return;if(e.button===0){selectWorldPointer(e);mouse.down=true;const r=canvas.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;mouse.active=true;player&&(player.angle=Math.atan2(mouse.y+camera.y-player.y,mouse.x+camera.x-player.x));canvas.focus();attack()}});window.addEventListener('pointerup',()=>mouse.down=false);canvas.addEventListener('pointerleave',()=>{mouse.active=false;mouse.down=false});
-$('start').onclick=()=>state==='paused'?togglePause():begin();$('pause').onclick=togglePause;$('restart').onclick=()=>{if(state==='title'||state==='dead'||state==='won')begin();else{state='confirm';keys.clear();mouse.down=false;showOverlay('Begin a new journey?','This replaces your current run. Press Escape to keep your adventure, or begin again below.','Start a new run')}};
+$('start').onclick=()=>state==='victory'?continueAfterVictory():state==='paused'?togglePause():begin();$('pause').onclick=togglePause;$('restart').onclick=()=>{if(state==='title'||state==='dead'||state==='won')begin();else{state='confirm';keys.clear();mouse.down=false;showOverlay('Begin a new journey?','This replaces your current run. Press Escape to keep your adventure, or begin again below.','Start a new run')}};
 window.addEventListener('keydown',e=>{if(e.key==='Escape'&&state==='confirm'){state='playing';$('overlay').hidden=true;canvas.focus()}});
 let artWasPlaying=false;$('art').onclick=()=>{artWasPlaying=state==='playing';if(artWasPlaying)togglePause();$('artDialog').showModal();$('artDialog').scrollTop=0};$('closeArt').onclick=()=>$('artDialog').close();$('artDialog').addEventListener('close',()=>{if(artWasPlaying&&state==='paused')togglePause()});
 function frame(t){const dt=Math.min((t-last)/1000,.04);last=t;try{window.DungeonAudio.update(state==='playing');if(state==='playing')update(dt);else tickFloatingTexts(dt);render()}catch(e){state='error';console.error(e);showOverlay('The halls encountered an error.','Restart the adventure to recover.','Restart');$('error').textContent=e.message}requestAnimationFrame(frame)}requestAnimationFrame(frame);
@@ -602,11 +614,11 @@ function updateTraps(dt,moved){
   if(e.trapSwarm&&e.hp>0){
    e.swarmLife-=dt;if(e.swarmLife<=0){e.hp=0;particle(e.x,e.y,e.color);continue}
    if(e.emerge>0)continue;
-   const target=[player,...(e.baby?[]:enemies.filter(other=>other!==e&&other.hp>0&&(!e.trapSource||other.trapSource!==e.trapSource)))].filter(a=>!inMerchantSanctuary(a)&&clearLine(e,a)).sort((a,b)=>distance(e,a)-distance(e,b))[0];
+   const target=[player,...(e.trapSource?enemies.filter(other=>other!==e&&other.hp>0&&other.trapSource!==e.trapSource):[])].filter(a=>!inMerchantSanctuary(a)&&clearLine(e,a)).sort((a,b)=>distance(e,a)-distance(e,b))[0];
    if(!target)continue;
    e.cool-=dt;const a=Math.atan2(target.y-e.y,target.x-e.x);e.attackAngle=a;
    if(distance(e,target)>25)move(e,Math.cos(a)*e.speed*dt,Math.sin(a)*e.speed*dt);
-   if(distance(e,target)<38&&e.cool<=0){e.cool=1;window.DungeonAudio.play('voice',e.type);if(target===player)damagePlayer(e.damage);else hurtEnemy(target,e.damage)}
+   if(distance(e,target)<38&&e.cool<=0){e.cool=1;window.DungeonAudio.play('voice',e.type);if(target===player)damagePlayer(e.damage);else hurtEnemy(target,e.damage,e)}
   }
  }
  for(const t of world.traps){
@@ -812,7 +824,7 @@ function interactionPrompt(o){
  }
  if(o.type==='trap')return o.arming>0?'Activating '+o.kind+' trap in '+o.arming.toFixed(1)+'s - stand clear!':'[E / Use] Activate safe '+o.kind+' trap (2-second delay; affects everyone)';
  if(o.type==='merchant')return '[E / Use] Trade with the merchant';
- if(o.type==='stairs')return depth===MAX_FLOOR?'Defeat the dragon to claim the crown':'[E / Use] Descend to Floor '+(depth+1)+' / restore vitality';
+ if(o.type==='stairs')return depth===MAX_FLOOR?(bossDefeated?'[E / Use] Begin Cycle '+(runCycle+1)+' / keep gear and rewards':'Defeat the dragon to claim the crown'):'[E / Use] Descend to Floor '+(depth+1)+' / restore vitality';
  if(o.type==='chest')return '[E / Use] Open treasure chest';
  if(o.type==='armor'){const slot=armorSlot(o.armor);return '[E / Use] Equip '+o.armor.name+' ('+Math.round(o.armor.reduction*100)+'% / slot currently '+Math.round((player[slot]?.reduction||0)*100)+'%; total cap 40%)'}
  return '[E / Use] Equip '+o.weapon.name+' ('+(o.weapon.damage+player.level*2)+' power / current '+(player.weapon.damage+player.level*2)+')';
@@ -849,7 +861,7 @@ function withRealmDepth(fn,...args){
  try{return fn(...args)}finally{depth=floor}
 }
 drops=function(entity,chest=false){return withRealmDepth(baseDrops,entity,chest)};
-hurtEnemy=function(enemy,amount){return withRealmDepth(baseHurtEnemy,enemy,amount)};
+hurtEnemy=function(enemy,amount,source=null){if(source&&source!==player&&!source.trapSource)return;return withRealmDepth(baseHurtEnemy,enemy,amount)};
 function pointInRoom(point,room,padding=0){
  return !!room&&point.x>=room.x*T+padding&&point.x<(room.x+room.w)*T-padding&&point.y>=room.y*T+padding&&point.y<(room.y+room.h)*T-padding;
 }
@@ -1008,7 +1020,7 @@ loadFloor=function(floor,s){
  $('threatStatus').hidden=true;$('roomName').textContent=world.rooms[0].name;
  $('area').textContent=chapters[realm-1];
  $('area').style.color=world.theme.accent;
- $('floor').textContent='FLOOR '+floor+' / '+MAX_FLOOR+'  |  '+world.theme.name.toUpperCase();
+ $('floor').textContent='CYCLE '+runCycle+'  |  FLOOR '+floor+' / '+MAX_FLOOR+'  |  '+world.theme.name.toUpperCase();
  $('objective').textContent=floor===MAX_FLOOR
   ?'Varkhos waits in the final chamber of Floor 10, at the marked exit. Follow the halls to him. The red cones warn of flame; dodge before they ignite. Claim the Ashen Crown. '+world.theme.description
   :'Varkhos guards the final chamber of Floor 10. '+world.theme.description+(world.merchant?' A traveling merchant waits in the safe entrance chamber. ':' ')+(floor===MAX_FLOOR-1?'Find the blue stairway to the final floor.':'Find the blue stairway to descend one floor and face a new brood.')+(floor>=3?' Tremors herald the dragon below.':' Earthquakes begin on Floor 3.');
@@ -1131,7 +1143,8 @@ function updateNestsAndPits(dt,before){
      const angle=i*TAU/3,spot={x:egg.x+Math.cos(angle)*26,y:egg.y+Math.sin(angle)*26};
      if(!free(spot.x,spot.y,8)){spot.x=egg.x;spot.y=egg.y}
      const baby=withRealmDepth(baseMakeEnemy,'cave_spider',spot);
-     Object.assign(baby,{hp:10,max:10,radius:8,speed:245,damage:4,trapSwarm:true,swarmLife:Infinity,emerge:.4,cool:.6,baby:true,nest:world.rooms.indexOf(room)});
+     const scale=1+(runCycle-1)*.25;
+     Object.assign(baby,{hp:10*scale,max:10*scale,radius:8,speed:245,damage:4*scale,trapSwarm:true,swarmLife:Infinity,emerge:.4,cool:.6,baby:true,nest:world.rooms.indexOf(room)});
      enemies.push(baby);
     }
     particle(egg.x,egg.y,'#d4dfb6',18);
@@ -1429,6 +1442,7 @@ if(target?.type==='trap'){
 }
 if(target?.type==='stairs'){
  if(depth<MAX_FLOOR)loadFloor(depth+1,crypto.getRandomValues(new Uint32Array(1))[0]);
+ else if(bossDefeated){runCycle++;loadFloor(1,crypto.getRandomValues(new Uint32Array(1))[0]);log('Cycle '+runCycle+' begins. Your crowns and equipment endure; enemies are stronger.')}
  else log('Defeat the Cinder King to claim the crown.');
  return;
 }
