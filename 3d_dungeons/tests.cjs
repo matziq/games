@@ -283,10 +283,29 @@ check('elemental projectiles apply fire poison splash and expiring wall-bounded 
     if(special==='fire'||special==='poison')assert.equal(run(`ammoVictim.${special==='fire'?'burn':'poison'}`),4);
     if(special==='explosive')assert.ok(run('ammoVictim.hp<450'));
     if(special==='light'){
-      assert.equal(run('world.scrollLights.length===1&&world.scrollLights[0].life===15'),true);
-      run('updateScrolls(16)');assert.equal(run('world.scrollLights.length'),0);
+      assert.equal(run('world.scrollLights.length===1&&world.scrollLights[0].life===5'),true);
+      run('updateScrolls(4.99)');assert.equal(run('world.scrollLights.length'),1);
+      run('updateScrolls(.02)');assert.equal(run('world.scrollLights.length'),0);
     }
     assert.equal(run('heroShots.length'),0);
+  }
+});
+check('light arrows and bolts illuminate in flight and leave one wall-bounded light on the impact surface', () => {
+  for(const kind of ['bow','crossbow'])for(const hit of ['wall','enemy','crate','range']){
+    run(`loadFloor(1,604);world.tiles.fill(1);world.torches=[];enemies=[];props=[];
+      player.x=420;player.y=420;player.angle=0;player.cool=0;state='playing';
+      player.weapon={...weaponTypes.${kind},kind:'${kind}',damage:20,range:230};
+      player.ammo.${kind}.light=1;player.ammoChoice.${kind}='light';
+      if('${hit}'==='wall')for(let y=0;y<H;y++)world.tiles[y*W+15]=0;
+      if('${hit}'==='enemy'){var impactEnemy=makeEnemy('slime',{x:600,y:420});impactEnemy.hp=300;enemies=[impactEnemy]}
+      if('${hit}'==='crate')props=[{x:600,y:420,type:'crate',hp:100,open:false}];
+      attack();var lightRound=heroShots[0];updateHeroShots(.08)`);
+    assert.ok(run('lightRound.x>player.x&&torchIllumination({x:lightRound.x,y:lightRound.y+30})>.3&&world.scrollLights.length===0'));
+    run('updateHeroShots(.6);updateHeroShots(.1)');
+    assert.ok(run('heroShots.length===0&&world.scrollLights.length===1&&world.scrollLights[0].x===lightRound.x&&world.scrollLights[0].y===420'));
+    if(hit==='wall')assert.ok(run('lightRound.x>599.99&&lightRound.x<600&&torchIllumination({x:660,y:420})===0'));
+    if(hit==='enemy')assert.ok(run('lightRound.x===600-impactEnemy.radius-5&&impactEnemy.hp<300'));
+    if(hit==='crate')assert.ok(run('lightRound.x===580&&props[0].hp<100'));
   }
 });
 check('melee and projectiles can extinguish and relight a torch exactly once per shot', () => {
