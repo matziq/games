@@ -6,7 +6,8 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-ROOT = Path(r"D:\OneDrive\Scripts\games\emberkeep")
+ROOT = Path(r"D:\AI_Output\Emberkeep\checks")
+ROOT.mkdir(parents=True, exist_ok=True)
 URL = Path(__file__).with_name("index.html").resolve().as_uri() + "?test"
 CHAPTERS = [
     ("The Sunken Halls", "flooded-limestone"),
@@ -47,7 +48,7 @@ with sync_playwright() as p:
         assert snapshot["realm"] == chapter
         assert theme["id"] == theme_id, (chapter, theme)
         assert page.locator("#area").inner_text() == title
-        assert page.locator("#floor").inner_text().startswith(f"FLOOR {floor} / 10")
+        assert f"FLOOR {floor} / 16" in page.locator("#floor").inner_text()
         assert theme["name"].upper() in page.locator("#floor").inner_text()
         assert theme["description"] in page.locator("#objective").inner_text()
         assert set(roster).issubset(snapshot["enemyTypes"])
@@ -64,15 +65,17 @@ with sync_playwright() as p:
     assert len({item["theme"]["id"] for item in report}) == 5
     assert len({item["screenshot_sha256"] for item in report}) == 5
     page.evaluate("""() => {loadFloor(1,777);state='playing';props=[];loot=[];enemies=[];}""")
-    for floor in range(2, 11):
-        page.evaluate("""() => {player.x=world.end.x;player.y=world.end.y;props=[];loot=[];player.inv=10;}""")
+    for floor in range(2, 17):
+        page.evaluate("""() => {if(depth%8===0)bossDefeated=true;player.x=world.end.x;player.y=world.end.y;props=[];loot=[];player.inv=10;}""")
         page.keyboard.press("e")
         page.wait_for_function(f"emberkeep.snapshot().depth==={floor}")
         state = page.evaluate("emberkeep.snapshot()")
-        assert state["realm"] == (floor + 1) // 2
-        assert state["merchant"] is not None if floor in (2, 4, 6, 8) else state["merchant"] is None
-    assert "dragon" in page.evaluate("emberkeep.snapshot().enemyTypes")
-    report.append({"progression_floors": list(range(1, 11)), "merchant_floors": [2, 4, 6, 8], "dragon_floor": 10})
+        assert state["realm"] == min(5, (floor + 1) // 2)
+        assert state["merchant"] is not None if floor in (2, 4, 6, 8, 10, 12, 14) else state["merchant"] is None
+    boss = page.evaluate("emberkeepExpansion.snapshot()")
+    assert boss["floor"] == 16 and boss["bossFloor"] and boss["bossName"] == "The Grave Necromancer"
+    report.append({"progression_floors": list(range(1, 17)), "merchant_floors": [2, 4, 6, 8, 10, 12, 14],
+                   "boss_floors": [8, 16], "final_boss": boss["bossName"]})
     assert not errors, errors
 
     cards = "".join(
@@ -93,7 +96,7 @@ with sync_playwright() as p:
         "browser": "Microsoft Edge (isolated headless)",
         "url": URL,
         "chapters": report,
-        "progression": "E activated the actual stairs between all ten floors; every two floors retain one distinct realm.",
+        "progression": "E activated the actual stairs between all sixteen floors; every two floors retain one distinct realm.",
         "theme_colors_distinct": True,
         "browser_errors": errors,
         "contact_sheet": str(ROOT / "emberkeep-chapter-contact-sheet.png"),
