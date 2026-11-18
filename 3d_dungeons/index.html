@@ -305,7 +305,7 @@ function attack(){
  if(rangedKinds.includes(kind)){
   const speed=kind==='crossbow'?720:kind==='bow'?570:kind==='knife'?620:kind==='javelin'?460:360;
   const special=(kind==='bow'||kind==='crossbow')?takeAmmo(kind):null;
-  heroShots.push({x:player.x,y:player.y,vx:Math.cos(player.angle)*speed,vy:Math.sin(player.angle)*speed,kind,special,age:0,travel:0,range:w.range,damage:w.damage+player.level*2,color:special?ammoColors[special]:w.color,returning:false,hits:new Set(),life:4});
+  heroShots.push({x:player.x,y:player.y,vx:Math.cos(player.angle)*speed,vy:Math.sin(player.angle)*speed,kind,special,age:0,travel:0,range:w.range,damage:w.damage+player.level*2,color:special?ammoColors[special]:w.color,returning:false,hits:new Set(),life:4,lit:special==='light',magicRadius:special==='light'?105:0});
   return;
  }
  enemies.filter(e=>e.hp>0&&distance(e,player)<w.range+e.radius&&clearLine(player,e)&&Math.abs(angleDiff(Math.atan2(e.y-player.y,e.x-player.x),player.angle))<1.2).forEach(e=>hurtEnemy(e,w.damage+player.level*2));
@@ -457,7 +457,11 @@ function render(){
  const shake=world.quake?.warning>0?Math.min(3,world.quake.warning):0;
  camera.x=player.x-vw/2+Math.sin(clock*49)*shake;camera.y=player.y-vh/2+Math.cos(clock*57)*shake;ctx.save();ctx.translate(-camera.x,-camera.y);
  const x0=Math.max(0,Math.floor(camera.x/T)-1),x1=Math.min(W,Math.ceil((camera.x+vw)/T)+1),y0=Math.max(0,Math.floor(camera.y/T)-1),y1=Math.min(H,Math.ceil((camera.y+vh)/T)+1);
- for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const k=y*W+x,px=x*T,py=y*T,theme=world.theme;if(!world.seen[k])continue;
+ const ammoLights=lightSources().filter(s=>s.ammoLight||s.special==='light');
+ for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const k=y*W+x,px=x*T,py=y*T,theme=world.theme;
+  if(!world.seen[k]&&(!world.tiles[k]||!ammoLights.some(s=>{
+   const center={x:px+T/2,y:py+T/2};return distance(s,center)<torchRadius(s)&&withinTorchLight(center,s);
+  })))continue;
   if(world.tiles[k]){
    ctx.fillStyle=theme.floor;ctx.fillRect(px,py,T,T);if(floorImage.complete&&floorImage.naturalWidth)ctx.drawImage(floorImage,px,py,T,T);
    ctx.globalAlpha=.48;ctx.fillStyle=theme.floor;ctx.fillRect(px,py,T,T);ctx.globalAlpha=1;
@@ -683,7 +687,18 @@ function updateHeroShots(dt){
    ].map(c=>({...c,at:segmentHit(s,next,c.object,c.radius)})).filter(c=>c.at!==null).sort((a,b)=>a.at-b.at);
    const collision=colliders[0],fraction=collision?.at??1;
    s.x+=(next.x-s.x)*fraction;s.y+=(next.y-s.y)*fraction;s.travel+=Math.hypot(s.vx,s.vy)*step*fraction;
-   if(!floorAt(s.x,s.y)){s.life=0;s.x-=s.vx*step*fraction;s.y-=s.vy*step*fraction;impactAmmo(s,null);particle(s.x,s.y,'#bba780',4);break}
+   if(!floorAt(s.x,s.y)){
+    s.life=0;
+    const dx=s.vx*step*fraction,dy=s.vy*step*fraction,x=s.x-dx,y=s.y-dy;
+    s.x=x;s.y=y;
+    if(s.special==='light'){
+     // Keep the light origin just on the floor side of the impact surface.
+     let floor=0,wall=1;
+     for(let n=0;n<12;n++){const mid=(floor+wall)/2;if(floorAt(x+dx*mid,y+dy*mid))floor=mid;else wall=mid}
+     s.x=x+dx*floor;s.y=y+dy*floor;
+    }
+    impactAmmo(s,null);particle(s.x,s.y,'#bba780',4);break;
+   }
    if(collision){
     s.hits.add(collision.object);
     if(collision.torch)strikeTorch(collision.object);
@@ -774,9 +789,10 @@ function withinTorchLight(point,torch){
  }
  return inside;
 }
+function lightSources(){return [...world.torches,...(world.scrollLights||[]),...heroShots.filter(s=>s.lit&&s.life>0)]}
 function torchIllumination(p){
  let darkness=1;
- for(const torch of [...world.torches,...(world.scrollLights||[])])if(torch.lit){
+ for(const torch of lightSources())if(torch.lit){
   const strength=radialLight(distance(p,torch)/torchRadius(torch));
   if(strength>0&&withinTorchLight(p,torch))darkness*=1-strength;
  }
@@ -801,7 +817,7 @@ function drawDarkness(){
   for(const [offset,strength] of stops)gradient.addColorStop(offset,'rgba(0,0,0,'+strength+')');
   mask.fillStyle=gradient;mask.fillRect(x-radius,y-radius,radius*2,radius*2);
  }
- for(const torch of [...world.torches,...(world.scrollLights||[])])if(torch.lit){
+ for(const torch of lightSources())if(torch.lit){
   if(Math.abs(torch.x-player.x)>vw/2+torchRadius(torch)||Math.abs(torch.y-player.y)>vh/2+torchRadius(torch))continue;
   const points=torchVisibility(torch);
   mask.save();mask.beginPath();mask.moveTo(points[0].x-camera.x,points[0].y-camera.y);
@@ -1128,7 +1144,7 @@ function impactAmmo(shot,target){
   for(const enemy of [...enemies])if(enemy.hp>0&&distance(shot,enemy)<75&&clearLine(shot,enemy))hurtEnemy(enemy,35);
   for(const prop of props)if(canStrikeProp(prop)&&prop!==target&&distance(shot,prop)<75&&clearLine(shot,prop))breakProp(prop,35);
  }
- if(shot.special==='light')world.scrollLights.push({x:shot.x,y:shot.y,lit:true,magicRadius:170,life:15});
+ if(shot.special==='light')world.scrollLights.push({x:shot.x,y:shot.y,lit:true,ammoLight:true,magicRadius:170,life:5});
 }
 function updateNestsAndPits(dt,before){
  for(const room of world.rooms){
@@ -1361,6 +1377,7 @@ document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>R
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Inspect torchlit floor glints: a rare 8% chance reveals a hidden-hoard weapon with +5 power over its normal floor-level roll instead of a trap. Select and equip it with E / Use. Stepping on an uninspected glint still triggers its trap.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Silken nests: entering starts a 4-second egg countdown. Attack the sacs before three very fast spiderlings hatch from each! After a warning, adult spider webs strike instantly and root you for 1 second. Weapon strikes and projectiles toggle torches, including relighting them.<br>Find 5-shot Fire, Poison, Explosive, and Light arrow/bolt packs. Bow uses arrows; Crossbow uses bolts. C or Ammo in the Scrolls panel cycles available types. Special ammo returns to unlimited regular shots when empty. Rare unstable rooms mark a tile for 2 seconds before it becomes a pit down exactly one floor (never on floor 10).<br>Gold, scrolls, potions and ammo packs vacuum within 3.75 tiles. Loose weapons and armor blink after 30 seconds and vanish at 60; potions blink after 10 seconds and vanish at 20. Hit broken barrels/boxes or opened chests again to clear them, without extra loot. Monsters never spring hidden traps; deliberately activated traps catch approaching foes, including trap creatures.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Equipment stays manual by default. Gear / Map offers Auto-pickup better gear and Prefer Melee / Ranged; only upgrades in your preferred style equip automatically.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Light arrows and bolts light the way in flight and illuminate their landing spot for 5 seconds.');
 function isWorldTarget(target){return worldTargets().includes(target)}
 function targetReachable(target){return distance(target,player)<72&&clearLine(player,target)}
 function worldTargetName(target){

@@ -51,12 +51,32 @@ with sync_playwright() as p:
         assert page.evaluate("player.ammoChoice.crossbow==='light'")
         page.screenshot(path=str(OUT / f"{PREFIX}-{name}-ammo.png"))
         page.locator("#scrollSummary").click()
+        page.evaluate("window.normalUpdate=update;update=()=>{};render()")
         if touch:
             page.locator("#touchAttack").tap()
         else:
             page.keyboard.press("Space")
-        page.wait_for_function("player.ammo.crossbow.light===4&&world.scrollLights.length===1")
-        assert page.evaluate("world.scrollLights[0].magicRadius===170")
+        # Step the real fired bolt so the brief in-flight state can be captured reliably.
+        brightness = page.evaluate("""() => {
+          const bolt=heroShots[0];updateHeroShots(.15);render();
+          const x=Math.floor(bolt.x-camera.x),y=Math.floor(bolt.y+26-camera.y);
+          const lit=darknessContext.getImageData(x,y,1,1).data[3];
+          bolt.lit=false;render();const unlit=darknessContext.getImageData(x,y,1,1).data[3];
+          bolt.lit=true;render();return unlit-lit;
+        }""")
+        assert brightness > 60 and page.evaluate("player.ammo.crossbow.light===4&&world.scrollLights.length===0")
+        page.screenshot(path=str(OUT / f"{PREFIX}-{name}-light-flight.png"))
+        page.evaluate("props=[{x:player.x+115,y:player.y,type:'crate',hp:100,open:false}];updateHeroShots(.2);render()")
+        assert page.evaluate("world.scrollLights.length===1&&world.scrollLights[0].life===5&&heroShots.length===0")
+        page.screenshot(path=str(OUT / f"{PREFIX}-{name}-light-impact.png"))
+        page.keyboard.press("p")
+        page.wait_for_timeout(150)
+        assert page.evaluate("state==='paused'&&world.scrollLights[0].life===5")
+        page.keyboard.press("p")
+        page.evaluate("updateScrolls(4.99)")
+        assert page.evaluate("world.scrollLights.length===1")
+        page.evaluate("updateScrolls(.02);update=normalUpdate;props=[]")
+        assert page.evaluate("world.scrollLights.length===0")
         page.evaluate("""() => {
           heroShots=[];player.cool=0;player.angle=0;mouse.active=false;canvas.focus();
           window.testTorch={x:player.x+40,y:player.y,lit:false,room:0,type:'torch'};world.torches=[testTorch];
