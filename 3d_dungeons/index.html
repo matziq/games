@@ -26,9 +26,9 @@
 <div id="audioStatus" role="status" aria-live="polite">Sound starts when you enter the halls.</div><div id="threatStatus" role="status" aria-live="polite" hidden></div><div class="prompt" id="prompt"></div><div class="boss" id="boss" hidden>VARKHOS, THE CINDER KING<bar><i id="bosshp"></i></bar></div>
 <details id="scrollPanel" aria-label="Single-use scrolls" hidden><summary id="scrollSummary">Scrolls / right-click or R</summary><div class="scroll-choices"><button id="scroll-fireball" aria-pressed="true">Fireball</button><button id="scroll-light" aria-pressed="false">Light</button><button id="scroll-poison" aria-pressed="false">Poison</button><button id="scroll-lightning" aria-pressed="false">Lightning</button></div><button id="castScroll">Cast Fireball [R]</button><div id="scrollStatus" role="status" aria-live="polite"></div><button id="cycleAmmo">Ammo: Regular [C]</button></details>
 <section id="selectionPanel" aria-label="World item selection" hidden><div id="selectionStatus" role="status" aria-live="polite"></div><div id="selectionChoices" aria-label="Overlapping items"></div><div class="selection-actions"><button id="useSelected">Use [E]</button><button id="deleteSelected" disabled>Delete gear [X]</button><button id="clearSelected">Clear</button></div><button id="undoDelete" disabled>Undo last delete</button></section>
-<div class="overlay" id="overlay"><div class="intro"><div class="eyebrow">A PROCEDURAL MEDIEVAL ADVENTURE</div><h2 id="title">Steel. Stone.<br>Something beneath.</h2><p id="story">Below Emberkeep, a dragon guards the Ashen Crown. Descend through five distinct realms: drowned halls, a thornbound castle, a moonlit crypt, a fallen keep, and a volcanic throne. Each has its own creatures and atmosphere. Break forgotten stores, claim better steel and armor, and survive the fire.</p><div class="controls"><kbd>WASD / ARROWS</kbd> move &nbsp; <kbd>MOUSE</kbd> aim<br><kbd>CLICK / SPACE</kbd> attack &nbsp; <kbd>SHIFT</kbd> dodge &nbsp; <kbd>Q</kbd> potion<br><kbd>E</kbd> open / equip weapons &amp; armor / descend &nbsp; <kbd>P</kbd> pause<br>Gold and potions collect on approach. Every realm has distinct monsters and scenery.<br>Watch for fast spider webs and wizard spell markers; dodge before they strike.<br>Music includes evolving chapter motifs. Sound effects and Music toggle independently.</div><button class="primary" id="start">Enter the halls</button><p id="error"></p></div></div>
+<div class="overlay" id="overlay"><div class="intro"><div class="eyebrow">A PROCEDURAL MEDIEVAL ADVENTURE</div><h2 id="title">Steel. Stone.<br>Something beneath.</h2><p id="story">Descend through five changing medieval realms and survive sixteen floors of monsters, traps, treasure, and rotating bosses. Defeat the guardians on Floors 8 and 16 to open every route down; claim their spoils and carry your progress into a harder cycle.</p><div class="controls"><kbd>WASD / ARROWS</kbd> move &nbsp; <kbd>MOUSE</kbd> aim<br><kbd>CLICK / SPACE</kbd> attack &nbsp; <kbd>SHIFT</kbd> dodge &nbsp; <kbd>Q</kbd> potion<br><kbd>E</kbd> loot / disarm and activate / descend &nbsp; <kbd>T</kbd> scrolls &nbsp; <kbd>C</kbd> ammo &nbsp; <kbd>P</kbd> pause<br>Gold and consumables vacuum toward you; gear remains available for deliberate pickup unless Auto-equip is enabled.<br>Spider webs strike instantly; a webbed knight is rooted, then rushed by the spider's follow-up melee attack.<br>Use light, fire, explosion, poison, lightning, web, and charm ammo with every ranged weapon.</div><button class="primary" id="start">Enter the halls</button><p id="error"></p></div></div>
 </div>
-<aside><div class="label">Cartographer</div><h2>The path unfolds</h2><canvas id="map" width="225" height="174" aria-label="Explored dungeon minimap"></canvas><section class="panel"><div class="label">Equipment</div><div id="weapon">Worn Longsword</div><div class="stat"><span>Strike power</span><b id="damage">16</b></div><div class="stat"><span>Reach / recovery</span><b id="weaponStats">76 / 0.36s</b></div><div id="armor">No armor</div><div class="stat"><span>Damage reduction</span><b id="defense">0%</b></div><div class="stat"><span>Gold recovered</span><b id="gold">0</b></div><div class="stat"><span>Healing potions [Q]</span><b id="potions">3</b></div><div class="stat"><span>Monsters slain</span><b id="kills">0</b></div></section><section class="panel"><div class="label">Your objective</div><p id="objective" style="font-size:13px;line-height:1.7">Find the blue stairway. Loot the halls to prepare for the dragon in Chapter V.</p></section><section class="panel"><div class="label">Chronicle</div><div class="logs" id="logs" aria-live="polite"></div></section><p class="label" style="line-height:1.8">[E] Equip weapons &amp; armor<br>Music includes ambience<br>Randomized every run<br>No network required<br>Desktop keyboard + mouse</p></aside>
+<aside><div class="label">Cartographer</div><h2>The path unfolds</h2><canvas id="map" width="225" height="174" aria-label="Explored dungeon minimap"></canvas><section class="panel"><div class="label">Equipment</div><div id="weapon">Worn Longsword</div><div class="stat"><span>Strike power</span><b id="damage">16</b></div><div class="stat"><span>Reach / recovery</span><b id="weaponStats">76 / 0.36s</b></div><div id="armor">No armor</div><div class="stat"><span>Damage reduction</span><b id="defense">0%</b></div><div class="stat"><span>Gold recovered</span><b id="gold">0</b></div><div class="stat"><span>Healing potions [Q]</span><b id="potions">3</b></div><div class="stat"><span>Monsters slain</span><b id="kills">0</b></div></section><section class="panel"><div class="label">Your objective</div><p id="objective" style="font-size:13px;line-height:1.7">Find the blue stairway and prepare for the next eighth-floor boss.</p></section><section class="panel"><div class="label">Chronicle</div><div class="logs" id="logs" aria-live="polite"></div></section><p class="label" style="line-height:1.8">[E] Equip weapons &amp; armor<br>Music includes ambience<br>Randomized every run<br>No network required<br>Desktop keyboard + mouse</p></aside>
 </main><footer>WASD MOVE &nbsp; / &nbsp; SPACE STRIKE &nbsp; / &nbsp; E INTERACT &nbsp; / &nbsp; SHIFT DODGE &nbsp; / &nbsp; Q HEAL</footer>
 <dialog id="artDialog"><h2 style="font-family:Georgia;color:#edbf72">The stones that inspired Emberkeep</h2><p>All 15 supplied images are full overhead room renders, not sprite sheets. Their torchlit masonry, geometric halls, and throne rooms guide this game's art direction. Cropped floor and wall samples from NoLoRA_0008 and NoLoRA_0015 texture the actual procedural world below; the original layouts are shown here as references, not collision maps.</p><div class="gallery" id="gallery"></div><p id="assetStatus"></p><button id="closeArt">Return to the halls</button></dialog>
 <dialog id="shopDialog" aria-labelledby="shopTitle"><h2 id="shopTitle" style="font-family:Georgia;color:#edbf72">The Roadside Merchant</h2><p id="shopDescription">A safe room for trade. Your current equipment stays equipped; purchased gear is placed nearby for you to equip with E. Scroll down to sell carried potions and scrolls, one at a time.</p><p class="shop-gold">Your gold: <b id="shopGold">0</b></p><div id="shopProducts" class="shop-products"></div><button id="closeShop">Leave the shop</button></dialog>
@@ -288,7 +288,7 @@ function continueAfterVictory(){
  if(state!=='victory')return false;
  state='playing';keys.clear();mouse.down=false;player.inv=Math.max(player.inv,2);$('overlay').hidden=true;canvas.focus();return true;
 }
-document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Enemies cannot hurt other enemies. Activated traps and their summoned creatures still affect approaching enemies. Defeat Varkhos to claim a crown and 500 gold, continue exploring for spoils, then use the final stairway to start a harder cycle with your equipment and rewards.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Enemies cannot harm other enemies. Activated traps and their summoned creatures still affect approaching enemies. Every eighth-floor boss summons weaker kin and drops about 1,000 gold, powerful gear, spells, and ammo; continue exploring after the victory message, then take the opened stairs.');
 function canStrikeProp(p){return !p.destroyed&&(p.type==='chest'?p.open:!p.open||p.type==='barrel'||p.type==='crate')}
 function blocksShot(p){return !p.destroyed&&(!p.open||canStrikeProp(p))}
 function breakProp(p,amount){
@@ -304,7 +304,7 @@ function attack(){
  window.DungeonAudio.play('strike',kind);player.cool=w.cooldown||.36;player.swing=.2;
  if(rangedKinds.includes(kind)){
   const speed=kind==='crossbow'?720:kind==='bow'?570:kind==='knife'?620:kind==='javelin'?460:360;
-  const special=(kind==='bow'||kind==='crossbow')?takeAmmo(kind):null;
+  const special=takeAmmo(kind);
   heroShots.push({x:player.x,y:player.y,vx:Math.cos(player.angle)*speed,vy:Math.sin(player.angle)*speed,kind,special,age:0,travel:0,range:w.range,damage:w.damage+player.level*2,color:special?ammoColors[special]:w.color,returning:false,hits:new Set(),life:4,lit:special==='light',magicRadius:special==='light'?105:0});
   return;
  }
@@ -328,7 +328,10 @@ function strikeWeb(spider){
  const at=collision?.at??1,point={x:spider.x+(player.x-spider.x)*at,y:spider.y+(player.y-spider.y)*at};
  world.webStrikes.push({...point,from:{x:spider.x,y:spider.y},life:.18});
  if(collision?.object===player&&player.inv<=0&&!inMerchantSanctuary()){
-  player.root=1;if(spider.giant)damagePlayer(spider.damage);
+  player.root=1;
+  spider.attackAngle=Math.atan2(player.y-spider.y,player.x-spider.x);
+  spider.webLunge=true;spider.lunge=Math.min(.65,Math.max(.12,(distance(spider,player)-30)/720));
+  if(spider.giant)damagePlayer(spider.damage);
   floatText(player.x,player.y-15,'WEBBED - STUCK 1s','damage');
  }
 }
@@ -340,7 +343,7 @@ function update(dt){
  if(player.dash>0){player.dash-=dt;move(player,player.dashX*560*dt,player.dashY*560*dt)}else move(player,dx*175*dt,dy*175*dt);
  if(keys.has(' ')||mouse.down)attack();reveal();pathTimer-=dt;if(pathTimer<=0){buildPaths();pathTimer=.35}
  for(const e of enemies){if(e.hp<=0||e.trapSwarm||e.emerge>0)continue;e.hit=Math.max(0,e.hit-dt);const d=distance(e,player);e.cool-=dt;
-  if(e.lunge>0){const step=Math.min(dt,e.lunge);move(e,Math.cos(e.attackAngle)*420*step,Math.sin(e.attackAngle)*420*step);e.lunge-=step;if(distance(e,player)<30)damagePlayer(e.damage);continue}
+  if(e.lunge>0){const step=Math.min(dt,e.lunge),webLunge=!!e.webLunge;move(e,Math.cos(e.attackAngle)*(webLunge?720:420)*step,Math.sin(e.attackAngle)*(webLunge?720:420)*step);e.lunge-=step;if(distance(e,player)<36){damagePlayer(e.damage);e.lunge=0;e.webLunge=false}else if(e.lunge<=0){if(webLunge&&distance(e,player)<48)damagePlayer(e.damage);e.webLunge=false}continue}
   if(e.wind>0){e.wind-=dt;if(e.wind<=0){
   if(e.type==='dragon'){window.DungeonAudio.play('dragon');if(e.phase%2===0){for(let a=-.5;a<=.5;a+=.1)shoot(e,e.attackAngle+a,260)}else{for(let a=0;a<TAU;a+=TAU/12)shoot(e,a,180)}e.phase++;e.cool=2.6}
   else if(e.attack==='lightning'){const target=e.attackTarget||player;window.DungeonAudio.play('lightning');particle(target.x,target.y,'#c7c8ff',18);if(distance(player,target)<38&&clearLine(e,target))damagePlayer(e.damage);e.cool=e.cooldown}
@@ -521,11 +524,11 @@ if(new URLSearchParams(location.search).has('test'))window.emberkeep={generate,c
 </script>
 <script id="floor-progression">
 'use strict';
-const MAX_FLOOR=10,IDLE_WARNING_SECONDS=9,IDLE_SPAWN_SECONDS=12;
+const MAX_FLOOR=16,IDLE_WARNING_SECONDS=9,IDLE_SPAWN_SECONDS=12;
 const realmForFloor=floor=>Math.min(5,Math.ceil(floor/2));
 const hasMerchant=floor=>floor>1&&floor<MAX_FLOOR&&floor%2===0;
 const idleThreat={elapsed:0,triggered:false,markers:[]};
-const TRAP_REVEAL_SECONDS=2,TRAP_ARM_SECONDS=2,trapKinds=['poison','fire','explosion','quicksand','bugs','bats','trapdoor'];
+const TRAP_REVEAL_SECONDS=2,TRAP_ARM_SECONDS=2,trapKinds=['poison','fire','explosion','quicksand','bugs','bats','trapdoor','crossfire'];
 const roomKinds=[
  {id:'graveyard',name:'Forgotten Graveyard',color:'#a7b3a5'},
  {id:'storage',name:'Provision Stores',color:'#c6a378'},
@@ -1109,7 +1112,8 @@ const scrollTypes={
  lightning:{name:'Lightning',color:'#b8ccff',description:'Strikes the first target ahead for heavy damage.'}
 };
 const baseScrollDrops=drops,baseScrollHUD=updateHUD;
-const ammoColors={fire:'#ff954d',poison:'#a9e56c',explosive:'#ffcd65',light:'#e5efff'};
+const ammoColors={fire:'#ff954d',poison:'#a9e56c',explosion:'#ffcd65',light:'#e5efff',lightning:'#b8ccff',web:'#e4e6d3',charm:'#e0a9ef'};
+Object.defineProperty(ammoColors,'explosive',{configurable:true,get(){return this.explosion},enumerable:false});
 function strikeTorch(torch){
  torch.lit=!torch.lit;particle(torch.x,torch.y,torch.lit?'#ffe5a0':'#89939b',8);
  floatText(torch.x,torch.y-15,torch.lit?'TORCH LIT':'TORCH OUT','treasure');
@@ -1205,7 +1209,7 @@ drops=function(source,chest=false){
   loot.push({x:source.x+12,y:source.y-28,type:'scroll',scroll:kind});
  }
  if(!source.trapSwarm&&(chest||rng()<.18)){
-  const kinds=Object.keys(ammoColors),special=kinds[integer(0,3)],ammoKind=rng()<.5?'bow':'crossbow';
+  const kinds=Object.keys(ammoColors),special=kinds[integer(0,kinds.length-1)],ammoKind=rng()<.5?'bow':'crossbow';
   loot.push({x:source.x-18,y:source.y-30,type:'ammo',special,ammoKind,value:5});
  }
 };
@@ -1364,7 +1368,7 @@ window.addEventListener('keydown',event=>{
  if(event.target?.matches?.('input,textarea,select'))return;
  event.preventDefault();castScroll();
 });
-document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Single-use scrolls: T / Next available scroll cycles stocked spells; C / Ammo cycles arrows or bolts for your current weapon (regular ammo is unlimited). Neither cycles empty types or consumes items. Right-click the game to aim and cast, or press R / tap Cast using your current facing. Start with one of each; collect more from chests and monsters. Light lasts 25 seconds; poison clouds last 6 seconds. Scrolls persist between floors; paused or blocked casts do not consume them.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Single-use scrolls: T / Next available scroll cycles stocked spells; C / Ammo cycles seven special-ammo types shared by all ranged weapons (regular ammo is unlimited). Cycling never consumes items. Right-click the game to aim and cast, or press R / tap Cast using your current facing. Start with one of each; collect more from chests and monsters. Light lasts 25 seconds; poison clouds last 6 seconds. Scrolls persist between floors; paused or blocked casts do not consume them.');
 function worldTargets(){
  if(!world)return [];
  world.end.type='stairs';
@@ -1375,7 +1379,7 @@ function worldTargets(){
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Mouse clicks select nearby objects AND attack/fire; hold to keep attacking across loot. Highlighting never blocks combat. Touch taps select and aim; hold Attack to strike/fire. Only E / Use activates selected items.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Rubble and furnishings are attack-only obstacles, not selectable items. Click to strike them; on touch, tap to aim then use Attack. E / Use does not break them.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Inspect torchlit floor glints: a rare 8% chance reveals a hidden-hoard weapon with +5 power over its normal floor-level roll instead of a trap. Select and equip it with E / Use. Stepping on an uninspected glint still triggers its trap.');
-document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Silken nests: entering starts a 4-second egg countdown. Attack the sacs before three very fast spiderlings hatch from each! After a warning, adult spider webs strike instantly and root you for 1 second. Weapon strikes and projectiles toggle torches, including relighting them.<br>Find 5-shot Fire, Poison, Explosive, and Light arrow/bolt packs. Bow uses arrows; Crossbow uses bolts. C or Ammo in the Scrolls panel cycles available types. Special ammo returns to unlimited regular shots when empty. Rare unstable rooms mark a tile for 2 seconds before it becomes a pit down exactly one floor (never on floor 10).<br>Gold, scrolls, potions and ammo packs vacuum within 3.75 tiles. Loose weapons and armor blink after 30 seconds and vanish at 60; potions blink after 10 seconds and vanish at 20. Hit broken barrels/boxes or opened chests again to clear them, without extra loot. Monsters never spring hidden traps; deliberately activated traps catch approaching foes, including trap creatures.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Silken nests: entering starts a 4-second egg countdown. Attack the sacs before three very fast spiderlings hatch from each! Adult spider webs strike instantly and root you for 1 second; a hit sends the spider rushing in for an immediate melee attack. Weapon strikes and projectiles toggle torches, including relighting them.<br>Find five-shot Light, Fire, Explosion, Poison, Lightning, Web, and Charm ammo packs for every ranged weapon. Special ammo returns to unlimited regular shots when empty. Rare unstable rooms mark a tile for 2 seconds before it becomes a pit down exactly one floor (never on boss floors 8 or 16).<br>Gold, scrolls, potions and ammo packs vacuum within 3.75 tiles. Loose weapons and armor blink after 30 seconds and vanish at 60; potions blink after 10 seconds and vanish at 20. Hit broken barrels/boxes or opened chests again to clear them, without extra loot. Monsters never spring hidden traps; deliberately activated traps catch approaching foes, including trap creatures.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Equipment stays manual by default. Gear / Map offers Auto-pickup better gear and Prefer Melee / Ranged; only upgrades in your preferred style equip automatically.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Light arrows and bolts light the way in flight and illuminate their landing spot for 5 seconds.');
 function isWorldTarget(target){return worldTargets().includes(target)}
@@ -1675,6 +1679,367 @@ window.addEventListener('blur',resetTouch);document.addEventListener('visibility
 const touchUpdate=update;
 update=function(dt){touchUpdate(dt);if(state!=='playing')resetTouch()};
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Touch: drag MOVE to walk and face; hold Attack. Tap Use / Equip, Dodge or Heal. Tap an item to select (not attack); tap again to cycle overlaps or choose its name. E / Use acts on your selection; Clear restores nearby interaction. Empty hall taps aim; empty clicks attack.<br>Torches are attack-only: hit with any weapon to switch them off or on, no fire needed. E / Use cannot toggle or select them. X / Delete gear removes only selected loose weapons or armor. Undo last delete restores one item during this run, even after descent. Break furnishings for 1-2 coins; trap swarms never drop loot.<br>Leaving a nest with living spiderlings combines its brood into a giant parent with 3x normal vitality and damage. If the parent was slain, the surviving brood forms a new giant. Kill the brood before leaving to prevent this.<br>Merchants buy carried potions for 8 gold and each scroll for 12 gold; use the Sell buttons in the shop.<br>Traps glint intermittently only in torchlight. Stop beside one for 2 seconds to make it safe. E / Use beside a SAFE trap activates it after 2 seconds: stand clear and lure monsters into it! Each torch lights its share of the room.<br>Find body armor, boots, gloves, helmets, halberds, bows, boomerangs, throwing spears, knives and axes. Projectiles stop at the first creature or intact container.');
+</script>
+<script id="rpg-expansion">
+'use strict';
+const ammoKinds=['light','fire','explosion','poison','lightning','web','charm'];
+const ammoLabels={light:'Light',fire:'Fire',explosion:'Explosion',poison:'Poison',lightning:'Lightning',web:'Web',charm:'Charm'};
+Object.defineProperty(ammoColors,'explosive',{configurable:true,get(){return this.explosion},set(value){this.explosion=value},enumerable:false});
+Object.assign(weaponTypes,{
+ rifle:{label:'Black Powder Rifle',range:690,cooldown:.92,bonus:16},
+ pistol:{label:'Black Powder Pistol',range:475,cooldown:.58,bonus:10},
+ spiked_whip:{label:'Spiked Whip',range:142,cooldown:.48,bonus:8}
+});
+rangedKinds.push('rifle','pistol');
+const expansionLoadFloor=loadFloor,expansionAttack=attack,expansionInteract=interact;
+const expansionImpactAmmo=impactAmmo,expansionUpdate=update,expansionRender=render;
+const expansionTakeAmmo=takeAmmo,expansionCycleAmmo=cycleAmmo,expansionRefreshScrollHUD=refreshScrollHUD;
+const expansionUpdateHUD=updateHUD,expansionDrawWeapon=drawWeapon,expansionFall=fallToFloor;
+const expansionUpdateEarthquakes=updateEarthquakes,expansionConfigureHazards=configureHazards;
+const expansionTriggerTrap=triggerTrap,expansionHurtEnemy=hurtEnemy,expansionPrompt=interactionPrompt;
+const expansionWorldTargets=worldTargets,expansionNearby=nearby,expansionShowBossVictory=showBossVictory;
+const BOSS_FORMS=[
+ {type:'dragon',name:'The Ember Wyrm',minion:'emberling',attack:'dragon',color:'#ff9d44'},
+ {type:'crypt_wizard',name:'The Grave Necromancer',minion:'skeleton',attack:'lightning',color:'#b8ccff'},
+ {type:'cave_spider',name:'The Brood Matriarch',minion:'cave_spider',attack:'web',color:'#b4e878'},
+ {type:'bone_archer',name:'The Ossuary King',minion:'skeleton',attack:'ranged',color:'#eadca4'},
+ {type:'cinder_wizard',name:'The Ashen Sorcerer',minion:'emberling',attack:'fire',color:'#ff7049'},
+ {type:'iron_knight',name:'The Iron Colossus',minion:'skeleton',attack:'ranged',color:'#d2c5a2'},
+ {type:'ash_wraith',name:'The Hollow Revenant',minion:'ash_wraith',attack:'ranged',color:'#ff7049'},
+ {type:'wolf',name:'The Dire Alpha',minion:'wolf',attack:'ranged',color:'#cfaa7b'}
+];
+let selectedAmmo='regular',activeBossName='';
+function bossFloor(floor=depth){return floor%8===0}
+function installSharedAmmo(){
+ const prior=player.ammo||{};
+ const shared=player.ammoShared||Object.fromEntries(ammoKinds.map(kind=>
+  [kind,Number(prior.bow?.[kind]||0)+Number(prior.crossbow?.[kind]||0)+
+   (kind==='explosion'?Number(prior.bow?.explosive||0)+Number(prior.crossbow?.explosive||0):0)]));
+ player.ammoShared=shared;
+ Object.defineProperty(shared,'explosive',{configurable:true,get(){return this.explosion},set(value){this.explosion=value},enumerable:false});
+ player.ammo={...prior,bow:shared,crossbow:shared};
+ const choices=player.ammoChoice||{};
+ if(!Object.getOwnPropertyDescriptor(choices,'bow')?.get){
+  selectedAmmo=choices.bow||choices.crossbow||'regular';
+  Object.defineProperties(choices,{
+   bow:{configurable:true,enumerable:true,get(){return selectedAmmo},set(value){selectedAmmo=value}},
+   crossbow:{configurable:true,enumerable:true,get(){return selectedAmmo},set(value){selectedAmmo=value}}
+  });
+ }
+ player.ammoChoice=choices;
+}
+function createFloorBoss(floor){
+ const form=BOSS_FORMS[(Math.floor(floor/8)-1+runCycle-1)%BOSS_FORMS.length];
+ const boss=withRealmDepth(baseMakeEnemy,form.type,{x:world.end.x,y:world.end.y});
+ const scale=1+Math.floor(floor/8)*.16+(runCycle-1)*.25;
+ boss.hp*=3.2*scale;boss.max=boss.hp;boss.damage*=1.6*scale;boss.radius=Math.ceil(boss.radius*1.45);
+ boss.giant=['cave_spider','wolf','iron_knight'].includes(form.type);
+ boss.boss=true;boss.bossName=form.name;boss.bossMinionType=form.minion;boss.attack=form.attack;
+ boss.projectile=form.color;boss.reach=Math.max(boss.reach,270);boss.shotSpeed=Math.max(boss.shotSpeed||0,230);
+ boss.windup=.72;boss.cooldown=2.1;boss.summonTimer=5.5;boss.meleeCooldown=1.2;boss.meleeWind=0;
+ enemies.push(boss);world.boss=boss;activeBossName=form.name;
+}
+function dropBossRewards(boss){
+ const {x,y}=boss;
+ loot.push({x:x-22,y,type:'gold',value:1000});
+ const weapon=makeWeapon();weapon.damage+=35+depth*2;weapon.range+=20;weapon.name='Bossforged '+weapon.name;
+ loot.push({x:x+24,y:y+8,type:'weapon',weapon});
+ const armor=makeArmor();armor.reduction=Math.min(.38,armor.reduction+.12);armor.name='Warlord\'s '+armor.name;
+ loot.push({x:x-20,y:y+24,type:'armor',armor});
+ const spells=Object.keys(scrollTypes);
+ for(let i=0;i<3;i++)loot.push({x:x-12+i*14,y:y-30,type:'scroll',scroll:spells[integer(0,spells.length-1)]});
+ for(let i=0;i<2;i++)loot.push({x:x+12+i*16,y:y-28,type:'ammo',special:ammoKinds[integer(0,ammoKinds.length-1)],ammoKind:'bow',value:5});
+ floatText(x,y-48,'BOSS SPOILS: 1,000 GOLD','gold');
+ log('The boss drops 1,000 gold, war-forged equipment, spells and special ammunition.');
+}
+loadFloor=function(floor,seed){
+ expansionLoadFloor(floor,seed);installSharedAmmo();
+ world.crossfireShots=[];world.boulder=null;world.pedestals=[];
+ if(bossFloor(floor)){
+  enemies=enemies.filter(enemy=>enemy.type!=='dragon');
+  world.rooms.forEach(room=>room.collapse=null);world.pits=[];world.cracks=[];
+  world.quake.warning=0;world.quake.pending=null;createFloorBoss(floor);
+ }else{
+  world.boss=null;activeBossName='';
+  for(let i=1;i<world.rooms.length-1;i++){
+   const room=world.rooms[i];if(rng()>=.09)continue;
+   const spot=roomSpot(room);if(props.some(prop=>distance(prop,spot)<40))continue;
+   world.pedestals.push({...spot,room:room.id,relic:['sun idol','moon statue','ember crystal','ancient weapon'][integer(0,3)],opened:false});
+  }
+ }
+ world.end.type='stairs';world.end.sealed=bossFloor(floor);
+ $('floor').textContent='CYCLE '+runCycle+'  |  FLOOR '+floor+' / '+MAX_FLOOR+'  |  '+world.theme.name.toUpperCase();
+ $('objective').textContent=bossFloor(floor)
+  ?activeBossName+' blocks the only descent. Slay the boss to unseal the stairway. No pits or fissures can bypass this floor. '+world.theme.description
+  :'Find the stairway to descend one floor. Powerful bosses guard Floors 8 and 16. '+world.theme.description;
+ updateHUD();
+};
+configureHazards=function(){
+ expansionConfigureHazards();
+ for(const trap of world.traps){
+  trap.room=world.rooms.findIndex(room=>pointInRoom(trap,room));
+  if(bossFloor()&&trap.kind==='trapdoor')trap.kind='explosion';
+ }
+};
+fallToFloor=function(destination,message){
+ if(bossFloor()&&!bossDefeated){log('The boss seals every descent. Defeat it to open the stairway.');return false}
+ return expansionFall(destination,message);
+};
+updateEarthquakes=function(dt,before){
+ if(bossFloor()&&!bossDefeated){world.cracks=[];world.pits=[];world.quake.warning=0;world.quake.pending=null;return false}
+ return expansionUpdateEarthquakes(dt,before);
+};
+takeAmmo=function(){
+ const type=selectedAmmo;
+ if(type==='regular'||!player.ammoShared?.[type])return null;
+ player.ammoShared[type]--;
+ if(player.ammoShared[type]===0){selectedAmmo='regular';log(ammoLabels[type]+' ammunition depleted. Using regular shots.')}
+ return type;
+};
+cycleAmmo=function(){
+ if(state!=='playing')return;
+ const types=['regular',...ammoKinds.filter(type=>(player.ammoShared?.[type]||0)>0)];
+ selectedAmmo=types[(types.indexOf(selectedAmmo)+1+types.length)%types.length];refreshScrollHUD();
+};
+refreshScrollHUD=function(){
+ expansionRefreshScrollHUD();
+ const amount=player.ammoShared?.[selectedAmmo]||0;
+ $('cycleAmmo').textContent='Ammo for all ranged: '+(selectedAmmo==='regular'?'Regular':ammoLabels[selectedAmmo]+' ('+amount+')')+' [C]';
+};
+impactAmmo=function(shot,target){
+ if(!shot.special||shot.specialDone)return;
+ const type=shot.special==='explosive'?'explosion':shot.special;
+ if(['fire','poison','light'].includes(type)){
+  const saved=shot.special;expansionImpactAmmo(shot,target);shot.special=type==='explosion'?'explosive':saved;return;
+ }
+ if(type==='explosion'){shot.special='explosive';expansionImpactAmmo(shot,target);shot.special='explosion';return}
+ shot.specialDone=true;
+ if(type==='lightning'){
+  particle(shot.x,shot.y,ammoColors.lightning,18);window.DungeonAudio.play('lightning');
+  for(const enemy of [...enemies])if(enemy.hp>0&&distance(shot,enemy)<105&&clearLine(shot,enemy))
+   hurtEnemy(enemy,enemy===target?28:18);
+ }else if(type==='web'&&target&&enemies.includes(target)&&target.hp>0){
+  target.rooted=Math.max(target.rooted||0,1.6);floatText(target.x,target.y-20,'SNARED','damage');
+ }else if(type==='charm'&&target&&enemies.includes(target)&&target.hp>0){
+  target.charmed=Math.max(target.charmed||0,4);floatText(target.x,target.y-20,'CHARMED','treasure');
+ }
+ particle(shot.x,shot.y,ammoColors[type]||'#e4e6d3',12);
+};
+function fireWeapon(kind){
+ const weapon=player.weapon,special=takeAmmo();
+ const speed=kind==='rifle'?850:kind==='pistol'?720:kind==='crossbow'?720:kind==='bow'?570:kind==='knife'?620:kind==='javelin'?460:kind==='throwing_axe'?410:360;
+ heroShots.push({x:player.x,y:player.y,vx:Math.cos(player.angle)*speed,vy:Math.sin(player.angle)*speed,kind,special,age:0,travel:0,range:weapon.range,damage:weapon.damage+player.level*2,color:special?ammoColors[special]||weapon.color:weapon.color,returning:false,hits:new Set(),life:4,lit:special==='light',magicRadius:special==='light'?105:0});
+}
+attack=function(){
+ if(state!=='playing'||player.cool>0)return;
+ const kind=weaponKind(player.weapon);
+ if(!rangedKinds.includes(kind)){expansionAttack();return}
+ if(kind==='boomerang'&&heroShots.some(shot=>shot.kind==='boomerang'))return;
+ window.DungeonAudio.play('strike',kind);player.cool=player.weapon.cooldown||.36;player.swing=.2;fireWeapon(kind);
+};
+const baseWeaponKind=weaponKind;
+weaponKind=function(weapon){
+ if(weapon?.name?.includes('Spiked Whip')&&!weapon.kind)return 'spiked_whip';
+ if(weapon?.name?.includes('Rifle')&&!weapon.kind)return 'rifle';
+ if(weapon?.name?.includes('Pistol')&&!weapon.kind)return 'pistol';
+ return baseWeaponKind(weapon);
+};
+drawWeapon=function(weapon){
+ const kind=weaponKind(weapon);
+ if(kind==='spiked_whip'){
+  ctx.strokeStyle=weapon.color;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(22,-12,44,2);ctx.quadraticCurveTo(72,20,112,-4);ctx.stroke();
+  for(let i=0;i<4;i++){const x=40+i*18;polygon([[x,-2],[x+5,-11],[x+8,1]],'#d5d9d0')}return;
+ }
+ if(kind==='rifle'||kind==='pistol'){
+  const length=kind==='rifle'?50:32;ctx.fillStyle='#805b3d';ctx.fillRect(-3,-3,length,7);ctx.fillStyle='#bdc4b8';ctx.fillRect(length-7,-2,kind==='rifle'?24:13,4);
+  ctx.fillStyle='#4a352c';ctx.fillRect(7,3,7,15);ctx.fillStyle='#cf9d5c';ctx.fillRect(length-12,-6,5,4);return;
+ }
+ expansionDrawWeapon(weapon);
+};
+function spawnBossMinions(boss){
+ const active=enemies.filter(enemy=>enemy.bossMinion&&enemy.hp>0).length;
+ for(let i=active;i<Math.min(4,active+2);i++){
+  const angle=i*Math.PI+random(-.3,.3),spot={x:boss.x+Math.cos(angle)*48,y:boss.y+Math.sin(angle)*48};
+  if(!free(spot.x,spot.y,10))continue;
+  const minion=withRealmDepth(baseMakeEnemy,boss.bossMinionType,spot);
+  minion.hp*=.48;minion.max=minion.hp;minion.damage*=.55;minion.bossMinion=true;minion.emerge=.6;minion.cool=1;enemies.push(minion);
+ }
+ particle(boss.x,boss.y,boss.projectile,18);window.DungeonAudio.play('zombieRise');
+}
+function updateBossCombat(dt){
+ for(const boss of enemies.filter(enemy=>enemy.boss&&enemy.hp>0)){
+  boss.summonTimer-=dt;boss.meleeCooldown-=dt;
+  if(boss.summonTimer<=0){boss.summonTimer=6.5;spawnBossMinions(boss)}
+  if(boss.charmed>0||boss.rooted>0)continue;
+  if(boss.meleeWind>0){
+   boss.meleeWind-=dt;
+   if(boss.meleeWind<=0&&distance(boss,player)<boss.radius+25&&clearLine(boss,player))damagePlayer(boss.damage*1.5);
+  }else if(distance(boss,player)<boss.radius+34&&boss.meleeCooldown<=0){
+   boss.meleeCooldown=2.7;boss.meleeWind=.42;boss.attackAngle=Math.atan2(player.y-boss.y,player.x-boss.x);
+   floatText(boss.x,boss.y-30,'MELEE WINDUP','damage');
+  }
+ }
+}
+function spawnCrossfire(trap){
+ const room=world.rooms[trap.room];if(!room)return;
+ const offsets=[-48,-16,16,48],styles=['arrow','fire','poison','lightning'];
+ for(const side of ['left','right'])for(let i=0;i<4;i++){
+  const start={x:(side==='left'?room.x+1:room.x+room.w-2)*T+T/2,y:trap.y+offsets[i]};
+  const angle=Math.atan2(trap.y-start.y,trap.x-start.x),speed=630;
+  world.crossfireShots.push({x:start.x,y:start.y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,life:1.5,trap,style:styles[i]});
+ }
+}
+triggerTrap=function(trap,manual=false){
+ if(trap.kind!=='crossfire')return expansionTriggerTrap(trap,manual);
+ if((trap.revealed&&!manual)||trap.triggered)return false;
+ trap.triggered=true;trap.inspect=0;trap.arming=0;trap.active=1.5;trap.hit=false;trap.victims=new Set();
+ spawnCrossfire(trap);window.DungeonAudio.play('warning');particle(trap.x,trap.y,'#d9c998',12);
+ floatText(trap.x,trap.y-12,'CROSSFIRE! DODGE!','damage');log('Floor arrows fire from both sides! Dodge the volley.');return false;
+};
+function updateCrossfire(dt){
+ for(const arrow of world.crossfireShots||[]){
+  arrow.life-=dt;const steps=Math.max(1,Math.ceil(Math.hypot(arrow.vx,arrow.vy)*dt/8)),step=dt/steps;
+  for(let i=0;i<steps&&arrow.life>0;i++){
+   const next={x:arrow.x+arrow.vx*step,y:arrow.y+arrow.vy*step};
+   if(!floorAt(next.x,next.y)){arrow.life=0;break}
+   if(segmentHit(arrow,next,player,12)!==null){
+    if(!arrow.trap.hit&&player.inv<=0){
+     arrow.trap.hit=true;damagePlayer(player.max*.5/Math.max(.01,1-reduction()));
+     if(arrow.style==='poison')player.poison=Math.max(player.poison||0,1.5);
+     if(arrow.style==='fire')player.burn=Math.max(player.burn||0,1.5);
+    }
+    arrow.life=0;break;
+   }
+   arrow.x=next.x;arrow.y=next.y;
+   if(distance(arrow,arrow.trap)<13){arrow.life=0;break}
+  }
+ }
+ world.crossfireShots=(world.crossfireShots||[]).filter(arrow=>arrow.life>0);
+}
+function spawnBoulder(pedestal){
+ const room=world.rooms.find(candidate=>pointInRoom(pedestal,candidate))||world.rooms[1];
+ const side=['top','right','bottom','left'][integer(0,3)];
+ const start={x:side==='left'?(room.x+.5)*T:side==='right'?(room.x+room.w-.5)*T:pedestal.x,
+  y:side==='top'?(room.y+.5)*T:side==='bottom'?(room.y+room.h-.5)*T:pedestal.y};
+ const angle=Math.atan2(player.y-start.y,player.x-start.x),speed=690;
+ world.boulder={...start,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,life:3.5,hit:false};
+}
+function collectPedestal(pedestal){
+ if(pedestal.opened)return false;pedestal.opened=true;
+ if(pedestal.relic==='ancient weapon'){
+  const weapon=makeWeapon();weapon.damage+=22;weapon.name='Pedestal '+weapon.name;
+  loot.push({x:pedestal.x,y:pedestal.y,type:'weapon',weapon});
+ }else if(pedestal.relic==='sun idol'){
+  player.gold+=integer(75,150);floatText(pedestal.x,pedestal.y-18,'ANCIENT IDOL + GOLD','gold');
+ }else{
+  player.gold+=integer(55,125);player.potions++;floatText(pedestal.x,pedestal.y-18,'RELIC + GOLD + POTION','treasure');
+ }
+ spawnBoulder(pedestal);window.DungeonAudio.play('chest');
+ log('The pedestal treasure is yours—but a giant stone ball thunders into the room!');
+ refreshSelectionPanel();updateHUD();return true;
+}
+function updateBoulder(dt){
+ const ball=world.boulder;if(!ball)return;ball.life-=dt;
+ const steps=Math.max(1,Math.ceil(Math.hypot(ball.vx,ball.vy)*dt/10)),step=dt/steps;
+ for(let i=0;i<steps;i++){
+  const next={x:ball.x+ball.vx*step,y:ball.y+ball.vy*step};
+  if(!floorAt(next.x,next.y)){ball.life=0;break}
+  if(!ball.hit&&segmentHit(ball,next,player,25)!==null){
+   ball.hit=true;if(player.inv<=0)damagePlayer(player.max*.75/Math.max(.01,1-reduction()));
+   floatText(player.x,player.y-28,'BOULDER STRIKE','damage');ball.life=0;break;
+  }
+  ball.x=next.x;ball.y=next.y;
+ }
+ if(ball.life<=0)world.boulder=null;
+}
+worldTargets=function(){return [...expansionWorldTargets(),...(world?.pedestals||[]).filter(item=>!item.opened)]};
+nearby=function(){
+ const pedestal=world?.pedestals?.filter(item=>!item.opened&&distance(item,player)<70&&clearLine(player,item)).sort((a,b)=>distance(a,player)-distance(b,player))[0];
+ return pedestal||expansionNearby();
+};
+interactionPrompt=function(target){
+ if(target?.relic&&!target.opened)return '[E / Use] Claim the glowing '+target.relic+' (beware the boulder!)';
+ if(!target&&bossFloor()&&!bossDefeated)return 'Boss gate sealed: defeat '+activeBossName+' to open the only way down.';
+ return expansionPrompt(target);
+};
+interact=function(){
+ const target=nearby();
+ if(target?.relic&&!target.opened){collectPedestal(target);return}
+ if(target?.type==='stairs'&&bossFloor()&&!bossDefeated){log('The boss seals the only way down. Defeat it to unseal the stairway.');return}
+ expansionInteract();
+};
+fallToFloor=function(destination,message){
+ if(!Number.isInteger(destination)||destination<=depth||destination>MAX_FLOOR)return expansionFall(destination,message);
+ if(bossFloor()&&!bossDefeated){log('The boss seals every descent. Defeat it to open the stairway.');return false}
+ const nextBoss=Math.ceil((depth+1)/8)*8;
+ if(!bossDefeated&&depth<nextBoss&&destination>nextBoss&&nextBoss<=MAX_FLOOR)destination=nextBoss;
+ return expansionFall(destination,message);
+};
+hurtEnemy=function(enemy,amount,source=null){
+ const wasBoss=enemy?.boss&&enemy.hp>0,originalType=enemy?.type;
+ if(wasBoss&&originalType==='dragon')enemy.type='boss_dragon';
+ expansionHurtEnemy(enemy,amount,source);
+ if(wasBoss&&originalType==='dragon')enemy.type=originalType;
+ if(wasBoss&&enemy.hp<=0&&!enemy.bossRewardDone){
+  enemy.bossRewardDone=true;bossDefeated=true;world.end.sealed=false;
+  dropBossRewards(enemy);player.crowns=(player.crowns||0)+1;
+  floatText(enemy.x,enemy.y-34,'BOSS DEFEATED — DESCENT OPEN','treasure');showBossVictory();
+ }
+};
+showBossVictory=function(){
+ if(!world?.boss)return expansionShowBossVictory();
+ state='victory';keys.clear();mouse.down=false;releaseTouchControls();
+ $('objective').textContent='The stairway is open. Gather the boss spoils, then descend.';
+ showOverlay(activeBossName+' has fallen!','The only way down is now open. The boss left 1,000 gold, powerful equipment, spells, and special ammunition. Continue exploring to gather it.','Continue adventuring');
+};
+update=function(dt){
+ for(const enemy of enemies){
+  enemy.rooted=Math.max(0,(enemy.rooted||0)-dt);enemy.charmed=Math.max(0,(enemy.charmed||0)-dt);
+  if(enemy.rooted>0||enemy.charmed>0)enemy.emerge=Math.max(enemy.emerge||0,dt+.002);
+ }
+ expansionUpdate(dt);if(state!=='playing')return;
+ updateBossCombat(dt);updateCrossfire(dt);
+ if(world.boulder){const ball=world.boulder;ball.life-=dt;const steps=Math.max(1,Math.ceil(Math.hypot(ball.vx,ball.vy)*dt/10)),step=dt/steps;
+  for(let i=0;i<steps;i++){const next={x:ball.x+ball.vx*step,y:ball.y+ball.vy*step};if(!floorAt(next.x,next.y)){ball.life=0;break}
+   if(!ball.hit&&segmentHit(ball,next,player,25)!==null){ball.hit=true;if(player.inv<=0)damagePlayer(player.max*.75/Math.max(.01,1-reduction()));floatText(player.x,player.y-28,'BOULDER STRIKE','damage');ball.life=0;break}
+   ball.x=next.x;ball.y=next.y}
+  if(ball.life<=0)world.boulder=null;
+ }
+ for(const pedestal of world.pedestals||[])if(!pedestal.opened&&distance(pedestal,player)<24)collectPedestal(pedestal);
+ if(world.boss)world.end.sealed=!bossDefeated;
+};
+updateHUD=function(){
+ expansionUpdateHUD();const boss=world?.boss?.hp>0?world.boss:null;$('boss').hidden=!boss;
+ if(boss){if($('boss').firstChild)$('boss').firstChild.textContent=boss.bossName.toUpperCase()+' ';$('bosshp').style.width=Math.max(0,boss.hp/boss.max*100)+'%'}
+};
+render=function(){
+ expansionRender();if(!world)return;ctx.save();ctx.translate(-camera.x,-camera.y);
+ for(const trap of world.traps)if(trap.kind==='crossfire'&&!trap.triggered&&world.seen[Math.floor(trap.y/T)*W+Math.floor(trap.x/T)]){
+  ctx.fillStyle='#d7cfbb0d';ctx.fillRect(Math.floor(trap.x/T)*T,Math.floor(trap.y/T)*T,T,T);
+  ctx.strokeStyle='#c9b99126';ctx.lineWidth=1;ctx.strokeRect(Math.floor(trap.x/T)*T+2,Math.floor(trap.y/T)*T+2,T-4,T-4);
+ }
+ for(const item of world.pedestals||[])if(!item.opened&&world.seen[Math.floor(item.y/T)*W+Math.floor(item.x/T)]){
+  glow(item.x,item.y,42,'#edc76488');ctx.fillStyle='#6b6251';ctx.fillRect(item.x-13,item.y+3,26,13);
+  polygon([[item.x-17,item.y+3],[item.x-12,item.y-8],[item.x+12,item.y-8],[item.x+17,item.y+3]],'#b9a784');
+  const color=item.relic==='ancient weapon'?'#dce9ff':item.relic==='sun idol'?'#f1cb6d':'#9ee3ed';
+  glow(item.x,item.y-15,19,color+'88');circle(item.x,item.y-15,7,color);
+ }
+ for(const arrow of world.crossfireShots||[]){
+  const color=({fire:'#ff824b',poison:'#a9e56c',lightning:'#b8ccff'})[arrow.style]||'#d8d0bc';
+  ctx.strokeStyle=color;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(arrow.x,arrow.y);ctx.lineTo(arrow.x-arrow.vx*.025,arrow.y-arrow.vy*.025);ctx.stroke();circle(arrow.x,arrow.y,3,color);
+ }
+ const ball=world.boulder;if(ball){glow(ball.x,ball.y,49,'#ffb44c66');circle(ball.x+4,ball.y+6,25,'#0009');circle(ball.x,ball.y,25,'#7d7568');ctx.strokeStyle='#bbb09b';ctx.lineWidth=4;ctx.beginPath();ctx.arc(ball.x,ball.y,19,.3,2.4);ctx.stroke()}
+ if(world.boss){
+  ctx.strokeStyle=bossDefeated?'#8be2bc':'#ff845f';ctx.lineWidth=4;ctx.beginPath();ctx.arc(world.end.x,world.end.y,28,-Math.PI/2,Math.PI*1.5);ctx.stroke();
+  if(!bossDefeated){ctx.strokeStyle='#ffb17d';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(world.end.x-11,world.end.y-11);ctx.lineTo(world.end.x+11,world.end.y+11);ctx.moveTo(world.end.x+11,world.end.y-11);ctx.lineTo(world.end.x-11,world.end.y+11);ctx.stroke()}
+  ctx.font='bold 11px Segoe UI';ctx.textAlign='center';ctx.fillStyle=bossDefeated?'#a7f2ce':'#ffc38a';ctx.fillText(bossDefeated?'WAY OPEN':'SEALED — DEFEAT BOSS',world.end.x,world.end.y+45);
+ }
+ ctx.restore();
+};
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Choose one stocked ammo type for every ranged weapon with C / Ammo: Light, Fire, Explosion, Poison, Lightning, Web or Charm. Bow, crossbow, throwing knives, axes, spears, boomerangs, pistols and rifles share their ammo stock; empty packs revert to unlimited regular shots. The Spiked Whip is melee.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>A boss waits every 8 floors. Each boss has ranged and melee attacks, calls weaker kin to help, and drops about 1,000 gold, powerful gear, spells and ammo. Floors 8 and 16 seal every pit, fissure and trapdoor until the boss dies; then the stairway opens.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Watch for subtly mismatched tiles: crossfire sends eight mixed arrows from both sides. Glowing pedestal relics are collectible, but claiming one releases a fast boulder from a random side—move or dodge out of its path.');
+window.emberkeepExpansion={ammoKinds,bossForms:BOSS_FORMS,isBossFloor:bossFloor,snapshot:()=>({floor:depth,bossFloor:bossFloor(),bossName:world?.boss?.bossName||'',bossDefeated,ammo:{...player.ammoShared},selectedAmmo,pedestals:world?.pedestals?.length||0,crossfireShots:world?.crossfireShots?.length||0,boulder:!!world?.boulder})};
 </script>
 </body>
 </html>

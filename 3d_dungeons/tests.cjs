@@ -43,21 +43,30 @@ check('ordinary swarm creatures target only player while activated trap creature
   assert.ok(run('friendly.hp<friendlyHP'));
   run('begin()');
 });
-check('boss victory preserves spoils and continues into repeatable stronger cycles without resetting progression', () => {
-  run("begin();loadFloor(10,604);world.traps=[];props=[];var dragon=enemies.find(e=>e.type==='dragon');player.gold=100;var keptWeapon=player.weapon;var keptScrolls=JSON.stringify(player.scrolls);hurtEnemy(dragon,10000);var goldAfterBoss=player.gold;var killsAfterBoss=kills;var rankAfterBoss=player.level;var spoils=loot.slice()");
-  assert.equal(run("state==='victory'&&player.crowns===1&&bossDefeated&&player.gold>=600"),true);
+check('eighth-floor boss locks descent, drops a full reward cache, and later boss cycle preserves progression', () => {
+  run("begin();loadFloor(8,604);world.traps=[];props=[];var dragon=enemies.find(e=>e.boss);player.gold=100;var keptWeapon=player.weapon;var keptScrolls=JSON.stringify(player.scrolls);var sealedFall=fallToFloor(9,'test');hurtEnemy(dragon,10000);var goldAfterBoss=player.gold;var killsAfterBoss=kills;var rankAfterBoss=player.level;var spoils=loot.slice()");
+  assert.equal(run("sealedFall===false&&state==='victory'&&player.crowns===1&&bossDefeated&&loot.some(i=>i.type==='gold'&&i.value===1000)&&loot.some(i=>i.type==='weapon')&&loot.some(i=>i.type==='armor')&&loot.some(i=>i.type==='scroll')&&loot.some(i=>i.type==='ammo')"),true);
   run('hurtEnemy(dragon,10000)');
   assert.equal(run('player.crowns===1&&player.gold===goldAfterBoss&&kills===killsAfterBoss'),true);
   run('continueAfterVictory()');
-  assert.equal(run("state==='playing'&&depth===10&&loot.length===spoils.length&&spoils.every(i=>loot.includes(i))&&player.weapon===keptWeapon"),true);
+  assert.equal(run("state==='playing'&&depth===8&&loot.length===spoils.length&&spoils.every(i=>loot.includes(i))&&player.weapon===keptWeapon"),true);
   run("selectedWorldItem=null;player.x=world.end.x;player.y=world.end.y;interact()");
-  assert.equal(run("runCycle===2&&depth===1&&state==='playing'&&!bossDefeated&&player.weapon===keptWeapon&&player.gold===goldAfterBoss&&player.level===rankAfterBoss&&player.crowns===1&&JSON.stringify(player.scrolls)===keptScrolls"),true);
+  assert.equal(run("depth===9&&state==='playing'&&!bossDefeated"),true);
+  run("loadFloor(16,604);var secondDragon=enemies.find(e=>e.boss)");
+  assert.equal(run("secondDragon&&secondDragon.bossName==='The Grave Necromancer'&&world.rooms.every(r=>!r.collapse)&&world.pits.length===0"),true);
+  run('hurtEnemy(secondDragon,10000);continueAfterVictory();selectedWorldItem=null;player.x=world.end.x;player.y=world.end.y;interact()');
+  assert.equal(run("runCycle===2&&depth===1&&state==='playing'&&!bossDefeated&&player.weapon===keptWeapon&&player.gold===goldAfterBoss&&player.level===rankAfterBoss&&player.crowns===2&&JSON.stringify(player.scrolls)===keptScrolls"),true);
   assert.equal(run("makeEnemy('slime',player).damage"),run('creatures.slime.damage*1.25'));
-  run("loadFloor(10,604);var secondDragon=enemies.find(e=>e.type==='dragon')");
-  assert.equal(run('secondDragon.max'),run('creatures.dragon.hp*1.25'));
-  run("hurtEnemy(secondDragon,10000);continueAfterVictory();selectedWorldItem=null;player.x=world.end.x;player.y=world.end.y;interact()");
-  assert.equal(run("player.crowns===2&&runCycle===3&&depth===1&&state==='playing'"),true);
   run('begin()');assert.equal(run('runCycle===1&&!player.crowns&&player.gold===0'),true);
+});
+check('all rotating eighth-floor bosses have ranged attacks, melee pressure, and weaker related summons', () => {
+  for(let cycle=1;cycle<=8;cycle++){
+    run(`runCycle=${cycle};loadFloor(8,604);world.tiles.fill(1);state='playing';var rotatingBoss=world.boss;rotatingBoss.summonTimer=0;updateBossCombat(.01)`);
+    assert.equal(run('rotatingBoss.bossName'),run(`BOSS_FORMS[${cycle-1}].name`));
+    assert.equal(run("!!rotatingBoss.attack&&rotatingBoss.reach>=270&&rotatingBoss.shotSpeed>=230&&rotatingBoss.meleeCooldown>0"),true);
+    assert.ok(run("enemies.some(e=>e.bossMinion&&e.hp<rotatingBoss.hp&&e.damage<rotatingBoss.damage)"),`cycle ${cycle} boss did not summon weaker allies`);
+  }
+  run('begin()');
 });
 check('scroll and ammunition cycling skip empty types, wrap without consumption, and reject pause', () => {
   run("begin();player.scrolls={fireball:0,light:2,poison:0,lightning:1};player.selectedScroll='fireball';cycleScroll()");
@@ -69,13 +78,12 @@ check('scroll and ammunition cycling skip empty types, wrap without consumption,
   assert.equal(run('player.selectedScroll'),'light');
   run("player.scrolls.lightning=1;state='paused';cycleScroll()");
   assert.equal(run('player.selectedScroll'),'light');
-  for(const kind of ['bow','crossbow']){
-    run(`state='playing';player.weapon.kind='${kind}';player.ammo.${kind}={fire:0,poison:5,explosive:0,light:5};player.ammoChoice.${kind}='regular';cycleAmmo()`);
-    assert.equal(run(`player.ammoChoice.${kind}`),'poison');
-    run('cycleAmmo()');assert.equal(run(`player.ammoChoice.${kind}`),'light');
-    run('cycleAmmo()');assert.equal(run(`player.ammoChoice.${kind}`),'regular');
-    assert.equal(run(`player.ammo.${kind}.poison+player.ammo.${kind}.light`),10);
-  }
+  run("state='playing';player.ammoShared={light:5,fire:0,explosion:0,poison:5,lightning:0,web:0,charm:0};player.ammo.bow=player.ammo.crossbow=player.ammoShared;player.weapon.kind='bow';cycleAmmo()");
+  assert.equal(run("selectedAmmo==='light'&&player.ammoChoice.bow==='light'&&player.ammoChoice.crossbow==='light'"),true);
+  run("player.weapon.kind='rifle';cycleAmmo()");
+  assert.equal(run("selectedAmmo==='poison'&&player.ammoChoice.crossbow==='poison'"),true);
+  run("player.weapon.kind='boomerang';cycleAmmo()");
+  assert.equal(run("selectedAmmo==='regular'&&player.ammoShared.poison+player.ammoShared.light===10"),true);
   run('begin()');
 });
 check('automatic equipment is opt-in, respects preference, distance and sight, upgrades slots without oscillation', () => {
@@ -165,12 +173,18 @@ check('giant web strikes inflict tripled base damage and root; normal webs remai
   run('player.root=0;player.inv=.3;var hpAfterWeb=player.hp;strikeWeb(giantStriker)');
   assert.equal(run('player.hp===hpAfterWeb&&player.root===0'),true);
 });
+check('a direct spider web hit roots the knight then drives the spider into an immediate fast melee attack', () => {
+  run("loadFloor(1,604);world.tiles.fill(1);props=[];world.traps=[];player.armor=player.boots=player.gloves=player.helmet=null;player.hp=120;player.inv=0;state='playing';var webStriker=makeEnemy('cave_spider',{x:player.x+120,y:player.y});webStriker.cool=10;enemies=[webStriker];strikeWeb(webStriker)");
+  assert.equal(run('player.root===1&&webStriker.webLunge&&webStriker.lunge>0'),true);
+  run('update(.2)');
+  assert.equal(run('player.hp===120-creatures.cave_spider.damage&&player.root>0&&webStriker.lunge===0&&!webStriker.webLunge'),true);
+});
 check('gold scrolls potions and every ammo pack vacuum at 150 units but gear stays manual', () => {
-  run("begin();loadFloor(1,604);enemies=[];props=[];world.traps=[];player.dash=0;var pickupX=player.x;var startGold=player.gold;var startPotions=player.potions;var startScroll=player.scrolls.light;var kinds=[{type:'gold',value:17},{type:'scroll',scroll:'light'},{type:'potion'},...['bow','crossbow'].flatMap(ammoKind=>['fire','poison','explosive','light'].map(special=>({type:'ammo',ammoKind,special})))];var nearPickups=kinds.map(k=>({...k,x:player.x+3.75*T,y:player.y}));var farPickups=kinds.map(k=>({...k,x:player.x+3.75*T+.01,y:player.y}));var manualGear=['weapon','armor'].map(type=>({x:player.x+100,y:player.y,type}));loot=[...nearPickups,...farPickups,...manualGear];baseUpdate(.04)");
+  run("begin();loadFloor(1,604);enemies=[];props=[];world.traps=[];player.dash=0;var pickupX=player.x;var startGold=player.gold;var startPotions=player.potions;var startScroll=player.scrolls.light;var kinds=[{type:'gold',value:17},{type:'scroll',scroll:'light'},{type:'potion'},...['bow','crossbow'].flatMap(ammoKind=>['fire','poison','explosion','light','lightning','web','charm'].map(special=>({type:'ammo',ammoKind,special})))];var nearPickups=kinds.map(k=>({...k,x:player.x+3.75*T,y:player.y}));var farPickups=kinds.map(k=>({...k,x:player.x+3.75*T+.01,y:player.y}));var manualGear=['weapon','armor'].map(type=>({x:player.x+100,y:player.y,type}));loot=[...nearPickups,...farPickups,...manualGear];baseUpdate(.04)");
   assert.equal(run('nearPickups.every(item=>item.x<pickupX+150)&&farPickups.every(item=>item.x===pickupX+150.01)&&manualGear.every(item=>item.x===pickupX+100)'),true);
   run('for(let i=0;i<30;i++){baseUpdate(.04);updateScrolls(.04)}');
   assert.equal(run('player.gold===startGold+17&&player.potions===startPotions+1&&player.scrolls.light===startScroll+1'),true);
-  assert.equal(run("['bow','crossbow'].every(k=>['fire','poison','explosive','light'].every(s=>player.ammo[k][s]===5))"),true);
+  assert.equal(run("['bow','crossbow'].every(k=>['fire','poison','explosion','light','lightning','web','charm'].every(s=>player.ammo[k][s]===10))"),true);
   assert.equal(run('nearPickups.every(item=>!loot.includes(item))&&farPickups.every(item=>loot.includes(item))&&manualGear.every(item=>loot.includes(item))'),true);
 });
 check('gear blinks at 30 and expires at 60 while potion timing stays 10 and 20; undo preserves age', () => {
@@ -267,26 +281,30 @@ check('elemental packs grant exactly five, preserve inventories on descent, rese
   run('loadFloor(2,604)');assert.equal(run('player.ammo.bow.fire'),5);
   run('begin()');assert.equal(run('player.ammo.bow.fire'),0);
 });
-check('bows and crossbows consume one special round per successful shot then fall back to regular', () => {
-  for(const kind of ['bow','crossbow'])for(const special of ['fire','poison','explosive','light']){
-    run(`loadFloor(1,604);world.tiles.fill(1);world.torches=[];enemies=[];props=[];player.weapon={...weaponTypes.${kind},kind:'${kind}',damage:20};player.ammo.${kind}.${special}=5;player.ammoChoice.${kind}='${special}';heroShots=[];player.cool=0;state='playing';attack();attack()`);
-    assert.equal(run(`heroShots.length===1&&heroShots[0].special==='${special}'&&player.ammo.${kind}.${special}===4`),true);
-    run("for(let i=0;i<5;i++){player.cool=0;attack()}");
-    assert.equal(run(`player.ammo.${kind}.${special}===0&&player.ammoChoice.${kind}==='regular'&&heroShots.at(-1).special===null`),true);
+check('all ranged weapons share every special-ammo type and fall back to regular when depleted', () => {
+  for(const kind of ['bow','crossbow','boomerang','javelin','knife','throwing_axe','rifle','pistol'])
+   for(const special of ['light','fire','explosion','poison','lightning','web','charm']){
+    run(`loadFloor(1,604);world.tiles.fill(1);world.torches=[];enemies=[];props=[];player.weapon={...weaponTypes.${kind},kind:'${kind}',damage:20};player.ammoShared.${special}=5;selectedAmmo='${special}';heroShots=[];player.cool=0;state='playing';attack();attack();var shotCount=heroShots.length`);
+    assert.equal(run(`heroShots.length===1&&heroShots[0].special==='${special}'&&player.ammoShared.${special}===4`),true,`${kind} failed to spend ${special}`);
+    run(`for(let i=0;i<5;i++){player.cool=0;if('${kind}'==='boomerang')heroShots=[];var beforeShots=heroShots.length;attack();if(heroShots.length>beforeShots)shotCount++}`);
+    assert.equal(run(`player.ammoShared.${special}===0&&selectedAmmo==='regular'&&heroShots.at(-1).special===null`),true,`${kind} did not return to regular ammunition`);
     run("state='paused';player.cool=0;attack()");
-    assert.equal(run('heroShots.length'),6);
+    assert.equal(run(`heroShots.length===('${kind}'==='boomerang'?1:6)&&shotCount===6`),true,`${kind}/${special} shot-count check`);
   }
 });
-check('elemental projectiles apply fire poison splash and expiring wall-bounded light on actual impact', () => {
-  for(const special of ['fire','poison','explosive','light']){
-    run(`loadFloor(1,604);world.tiles.fill(1);world.torches=[];props=[];player.angle=0;player.cool=0;state='playing';player.weapon={...weaponTypes.crossbow,kind:'crossbow',damage:20};player.ammo.crossbow.${special}=1;player.ammoChoice.crossbow='${special}';var ammoVictim=makeEnemy('slime',{x:player.x+100,y:player.y});ammoVictim.hp=500;enemies=[ammoVictim];attack();updateHeroShots(.3)`);
+check('all seven ammunition effects resolve on projectile impact', () => {
+  for(const special of ['light','fire','explosion','poison','lightning','web','charm']){
+    run(`loadFloor(1,604);world.tiles.fill(1);world.torches=[];props=[];player.angle=0;player.cool=0;state='playing';player.weapon={...weaponTypes.rifle,kind:'rifle',damage:20};player.ammoShared.${special}=1;selectedAmmo='${special}';var ammoVictim=makeEnemy('slime',{x:player.x+100,y:player.y});ammoVictim.hp=500;enemies=[ammoVictim];attack();updateHeroShots(.3)`);
     if(special==='fire'||special==='poison')assert.equal(run(`ammoVictim.${special==='fire'?'burn':'poison'}`),4);
-    if(special==='explosive')assert.ok(run('ammoVictim.hp<450'));
+    if(special==='explosion')assert.ok(run('ammoVictim.hp<450'));
     if(special==='light'){
       assert.equal(run('world.scrollLights.length===1&&world.scrollLights[0].life===5'),true);
       run('updateScrolls(4.99)');assert.equal(run('world.scrollLights.length'),1);
       run('updateScrolls(.02)');assert.equal(run('world.scrollLights.length'),0);
     }
+    if(special==='lightning')assert.ok(run('ammoVictim.hp<500'));
+    if(special==='web')assert.ok(run('ammoVictim.rooted>0'));
+    if(special==='charm')assert.ok(run('ammoVictim.charmed>0'));
     assert.equal(run('heroShots.length'),0);
   }
 });
@@ -430,8 +448,8 @@ check('hidden hoards use small seeded odds and grant exactly one boosted floor w
   assert.equal(run('player.hp===beforeHoardHP&&depth===beforeHoardDepth&&!triggerTrap(hoard,true)&&!worldTargets().includes(hoard)'),true);
   run("selectedWorldItem=loot[0];interact()");
   assert.equal(run('player.weapon===hoardWeapon'),true);
-  run("loadFloor(10,604);enemies=[];props=[];loot=[];player.inv=0;var forfeited={x:player.x,y:player.y,kind:'explosion',rewardWeapon:hoardWeapon,inspect:0,active:0};world.traps=[forfeited];updateTraps(.04,true)");
-  assert.equal(run('forfeited.triggered&&loot.length===0&&depth===10'),true);
+  run("loadFloor(16,604);enemies=[];props=[];loot=[];player.inv=0;var forfeited={x:player.x,y:player.y,kind:'explosion',rewardWeapon:hoardWeapon,inspect:0,active:0};world.traps=[forfeited];updateTraps(.04,true)");
+  assert.equal(run('forfeited.triggered&&loot.length===0&&depth===16'),true);
   run('begin()');
 });
 check('2,500 seeded floors have connected, bounded rooms and exits', () => {
@@ -458,7 +476,7 @@ check('five chapter themes and monster rosters stay distinct across generated fl
   assert.equal(new Set(api.chapterThemes.map(t=>t.id)).size,5);
   assert.equal(new Set(api.chapterThemes.map(t=>t.floor)).size,5);
   assert.equal(new Set(api.chapterRosters.flat()).size,api.chapterRosters.flat().length);
-  assert.equal(api.MAX_FLOOR,10);
+  assert.equal(api.MAX_FLOOR,16);
   for(let chapter=1;chapter<=5;chapter++){
     const themes=new Set(),rosters=[];
     for(const floor of [chapter*2-1,chapter*2]){
@@ -468,14 +486,14 @@ check('five chapter themes and monster rosters stay distinct across generated fl
         const snapshot=api.snapshot(),present=new Set(snapshot.enemyTypes);
         assert.equal(snapshot.realm,chapter);
         for(const type of api.chapterRosters[chapter-1])assert.ok(present.has(type),`missing ${type} on floor ${floor}`);
-        if(floor===10)assert.ok(present.has('dragon'));
-        else assert.ok(!present.has('dragon'),`dragon appeared before floor 10`);
-        for(const type of present)assert.ok(type==='cave_spider'||type==='dragon'&&floor===10||api.chapterRosters[chapter-1].includes(type),`wrong creature ${type}`);
+        if(floor===8)assert.ok(present.has('dragon'));
+        else assert.ok(!present.has('dragon'),`dragon appeared outside its eighth-floor boss cycle`);
+        for(const type of present)assert.ok(type==='cave_spider'||type==='dragon'&&floor===8||api.chapterRosters[chapter-1].includes(type),`wrong creature ${type}`);
         rosters.push([...present].sort().join(','));
       }
     }
     assert.deepEqual([...themes],[api.chapterThemes[chapter-1].id]);
-    assert.equal(new Set(rosters).size,chapter===5?2:1);
+    assert.equal(new Set(rosters).size,chapter===4?2:1);
   }
   assert.equal(new Set(api.chapterRosters.map(r=>r.join(','))).size,5);
   for(const attacks of api.chapterAttacks){
@@ -568,15 +586,15 @@ check('floating combat and pickup feedback reports actual values without duplica
   run('floatingTexts=[];player.hp=10;player.potions=1;potion()');
   assert.equal(sandbox.window.emberkeep.snapshot().floatingTexts[0].text,'+65 HP');
 });
-check('eleven coherent melee and ranged weapon types drop with valid stats', () => {
+check('fourteen coherent melee and ranged weapon types drop with valid stats', () => {
   const kinds = new Set();
   for (let i=0;i<200;i++) {
     const w=run('makeWeapon()'); kinds.add(w.kind);
-    assert.ok(w.damage>0&&w.range>=68&&w.range<=568&&w.cooldown>=.3&&w.cooldown<=.85);
+    assert.ok(w.damage>0&&w.range>=68&&w.range<=700&&w.cooldown>=.3&&w.cooldown<=.95);
     run(`heroShots=[];player.weapon=${JSON.stringify(w)};player.cool=0;attack()`);
     assert.equal(run('player.cool'),w.cooldown);
   }
-  assert.equal(kinds.size,11);
+  assert.equal(kinds.size,14);
 });
 check('armor drops from all loot sources, equips, swaps and reduces damage with a cap', () => {
   for (const type of ['slime','barrel','crate','chest']) {
@@ -646,13 +664,13 @@ check('merchant sanctuary suppresses stillness threats and earthquake timers', (
   assert.ok(run('!enemies.some(e=>e.idleRisen)&&world.quake.elapsed===0&&world.cracks.length===0'));
 });
 check('room identities, graves casks racks webs eggs and ruins preserve floor geometry and safe passages', () => {
-  for(let floor=1;floor<=10;floor++){
+  for(let floor=1;floor<=16;floor++){
     run(`loadFloor(${floor},42)`);
     assert.equal(run('new Set(world.rooms.slice(1,11).map(r=>r.kind)).size'),8);
     assert.ok(run('roomKinds.every(kind=>world.rooms.some(r=>r.kind===kind.id&&r.decor.length===6))'));
     assert.ok(run('world.rooms[0].decor.length===0&&world.rooms[11].decor.length===0'));
     assert.ok(run('world.webs.length>=3&&world.webs.every(w=>free(w.x,w.y,18)&&world.rooms.some(r=>r.kind==="spider"&&pointInRoom(w,r)))'));
-    const original=sandbox.window.emberkeep.generate(42,Math.ceil(floor/2));
+    const original=sandbox.window.emberkeep.generate(42,Math.min(5,Math.ceil(floor/2)));
     assert.deepEqual(Array.from(run('world.tiles')),Array.from(original.tiles),'decor modified traversable geometry');
   }
   run('loadFloor(1,42);state="playing";enemies=[];world.traps=[];const web=world.webs[0];player.x=web.x;player.y=web.y;player.dash=0;keys.clear();update(.04)');
@@ -674,11 +692,11 @@ check('earthquakes begin on floor 3, not floors 1 or 2 even outside the sanctuar
     assert.ok(run('!inMerchantSanctuary()&&world.quake.elapsed===0&&world.quake.warning===0&&world.cracks.length===0'));
   }
 });
-check('Varkhos spawns once in the reachable final room on 100 seeded floor-10 layouts', () => {
-  for(let seed=0;seed<100;seed++){
-    run(`loadFloor(10,${seed})`);
+check('eighth-floor bosses spawn once in reachable final rooms on seeded layouts', () => {
+  for(const floor of [8,16])for(let seed=0;seed<50;seed++){
+    run(`loadFloor(${floor},${seed})`);
     assert.ok(run(`(() => {
-      const bosses=enemies.filter(e=>e.type==='dragon'),boss=bosses[0];
+      const bosses=enemies.filter(e=>e.boss),boss=bosses[0];
       if(bosses.length!==1||distance(boss,world.end)!==0||!pointInRoom(boss,world.rooms.at(-1))||!free(boss.x,boss.y,boss.radius))return false;
       const start=Math.floor(world.start.y/T)*W+Math.floor(world.start.x/T),goal=Math.floor(boss.y/T)*W+Math.floor(boss.x/T);
       const visited=new Set([start]),queue=[start];
@@ -687,7 +705,7 @@ check('Varkhos spawns once in the reachable final room on 100 seeded floor-10 la
         visited.add(n);queue.push(n);
       }
       return visited.has(goal);
-    })()`),`boss unreachable on seed ${seed}`);
+    })()`),`boss unreachable on floor ${floor}, seed ${seed}`);
   }
 });
 check('earthquakes telegraph three seconds, open traversable cracks, and sweep entry down exactly one floor', () => {
@@ -704,23 +722,23 @@ check('earthquakes telegraph three seconds, open traversable cracks, and sweep e
   run('const fissure=world.cracks[0];fissure.grace=0;const prior={x:fissure.x-70,y:fissure.y};player.x=fissure.x+70;player.y=fissure.y;keys.add("d");updateEarthquakes(.04,prior)');
   assert.equal(run('depth'),4,'crack did not descend exactly one floor');
   assert.ok(run('world.merchant&&player.hp===player.max&&keys.size===0&&world.cracks.length===0'));
-  assert.equal(run('fallToFloor(11,"invalid")'),false);
-  run('loadFloor(9,42);state="playing";world.cracks=[{x:player.x,y:player.y,grace:0}];updateEarthquakes(.04,player)');
-  assert.equal(run('depth'),10);
-  assert.equal(run('enemies.filter(e=>e.type==="dragon").length'),1);
+  assert.equal(run('fallToFloor(17,"invalid")'),false);
+  run('loadFloor(15,42);state="playing";world.cracks=[{x:player.x,y:player.y,grace:0}];updateEarthquakes(.04,player)');
+  assert.equal(run('depth'),16);
+  assert.equal(run('enemies.filter(e=>e.boss).length'),1);
   run('world.quake.next=.01;updateEarthquakes(200,player)');
-  assert.equal(run('world.quake.warning'),3);
-  assert.equal(run('world.quake.pending'),null,'final floor advertised a descending fissure');
+  assert.equal(run('world.quake.warning'),0,'boss floor started a quake warning');
+  assert.equal(run('world.quake.pending'),null,'boss floor advertised a descending fissure');
   run('updateEarthquakes(3,player)');
   assert.equal(run('world.quake.warning'),0);
   assert.equal(run('world.quake.elapsed'),0);
   run('world.quake.next=.01;updateEarthquakes(.02,player)');
-  assert.equal(run('world.quake.warning'),3,'final floor tremors did not recur');
-  assert.equal(run('depth'),10);assert.equal(run('world.cracks.length'),0);
-  assert.ok(run('state==="playing"'),'a crack bypassed the final boss');
+  assert.equal(run('world.quake.warning'),0,'boss floor triggered a bypass fissure');
+  assert.equal(run('depth'),16);assert.equal(run('world.cracks.length'),0);
+  assert.ok(run('state==="playing"'),'a crack bypassed the boss');
 });
 check('merchant schedule, safe room and weapon armor potion transactions work on floors 2 and 4', () => {
-  for(const floor of [1,3,5,7,9,10]){
+  for(const floor of [1,3,5,7,9,11,13,15,16]){
     run(`loadFloor(${floor},42)`);
     assert.equal(sandbox.window.emberkeep.snapshot().merchant,null,`unexpected merchant on floor ${floor}`);
   }
@@ -752,14 +770,17 @@ check('merchant schedule, safe room and weapon armor potion transactions work on
     assert.equal(run('player.gold'),0);
   }
 });
-check('stairs advance all chapters and restore health', () => {
+check('stairs advance the sixteen-floor cycle and restore health after each descent', () => {
   run('begin()');
-  for (let d = 2; d <= 10; d++) {
+  for (let d = 2; d <= 16; d++) {
+    run('if(depth%8===0){bossDefeated=true;world.end.sealed=false}');
     run('player.x=world.end.x;player.y=world.end.y;props=[];loot=[];player.hp=10;interact()');
     assert.equal(run('depth'), d); assert.equal(run('player.hp'), run('player.max'));
-    assert.equal(run('world.theme.id'),run(`chapterThemes[${Math.ceil(d/2)-1}].id`));
+    assert.equal(run('world.theme.id'),run(`chapterThemes[Math.min(4,${Math.ceil(d/2)-1})].id`));
   }
-  assert.equal(run('enemies.filter(e=>e.type==="dragon").length'), 1);
+  assert.equal(run('enemies.filter(e=>e.boss).length'),1);
+  run('bossDefeated=true;player.x=world.end.x;player.y=world.end.y;interact()');
+  assert.equal(run('depth'),1,'cleared final boss did not continue into a new cycle');
 });
 check('chapter archer telegraphs and fires; shots collide with walls', () => {
   run("player.x=world.start.x;player.y=world.start.y;player.inv=0;props=[];enemies=[makeEnemy('vine_archer',{x:player.x+220,y:player.y})];enemies[0].cool=0;update(.01)");
@@ -820,20 +841,39 @@ check('poison, fire, explosion, quicksand, bugs and bats have distinct real effe
     }
   }
 });
-check('trapdoors fall two to four floors without bypassing the floor-ten finale', () => {
-  for(let floor=1;floor<=8;floor++)for(let seed=0;seed<12;seed++){
+check('trapdoors respect the next eighth-floor boss gate and never bypass it', () => {
+  for(let floor=1;floor<=14;floor++)for(let seed=0;seed<12;seed++){
+    if(floor===8)continue;
     run(`loadFloor(${floor},${seed});state='playing';triggerTrap({x:player.x,y:player.y,kind:'trapdoor'})`);
-    assert.ok(run('depth')>=floor+2&&run('depth')<=Math.min(10,floor+4));
-    if(run('depth')===10)assert.equal(run("enemies.some(e=>e.type==='dragon')"),true);
+    assert.ok(run('depth')>=floor+1&&run('depth')<=Math.min(16,floor+4));
+    if(run('depth')===8||run('depth')===16)assert.equal(run('enemies.some(e=>e.boss)'),true);
   }
-  for(let floor=9;floor<=10;floor++){
+  run("loadFloor(8,60);state='playing';triggerTrap({x:player.x,y:player.y,kind:'trapdoor'})");
+  assert.equal(run('depth'),8,'trapdoor bypassed the active boss');
+  for(let floor=15;floor<=16;floor++){
     run(`loadFloor(${floor},60)`);
     assert.equal(run("world.traps.some(t=>t.kind==='trapdoor')"),false);
   }
 });
+check('crossfire traps fire eight arrows, deal one half-health volley, and can be dodged', () => {
+  run("loadFloor(1,604);world.tiles.fill(1);enemies=[];props=[];state='playing';player.armor=player.boots=player.gloves=player.helmet=null;player.max=120;player.hp=120;player.inv=0;var room=world.rooms[1];player.x=(room.x+room.w/2)*T;player.y=(room.y+room.h/2)*T;var crossTrap={x:player.x,y:player.y,kind:'crossfire',room:world.rooms.indexOf(room),revealed:false,triggered:false};world.traps=[crossTrap];triggerTrap(crossTrap,true)");
+  assert.equal(run("world.crossfireShots.length===8&&new Set(world.crossfireShots.map(a=>a.style)).size===4"),true);
+  run('updateCrossfire(.8)');
+  assert.equal(run('player.hp===60&&crossTrap.hit&&world.crossfireShots.length===0'),true);
+  run("player.hp=120;player.inv=1;player.x=(room.x+room.w/2)*T;player.y=(room.y+room.h/2)*T;crossTrap={x:player.x,y:player.y,kind:'crossfire',room:world.rooms.indexOf(room),revealed:false,triggered:false};world.traps=[crossTrap];triggerTrap(crossTrap,true);updateCrossfire(.8)");
+  assert.equal(run('player.hp===120&&!crossTrap.hit'),true);
+});
+check('pedestal relics are collectible once and release a directional boulder with 75-percent-hit damage', () => {
+  run("loadFloor(1,604);world.tiles.fill(1);enemies=[];props=[];state='playing';player.armor=player.boots=player.gloves=player.helmet=null;player.max=120;player.hp=120;player.inv=0;var room=world.rooms[1];player.x=(room.x+room.w/2)*T;player.y=(room.y+room.h/2)*T;var relic={x:player.x,y:player.y,room:room.id,relic:'ancient weapon',opened:false};world.pedestals=[relic];var lootCount=loot.length;var firstClaim=collectPedestal(relic);var firstBall={...world.boulder};var repeatClaim=collectPedestal(relic)");
+  assert.equal(run("firstClaim&&!repeatClaim&&relic.opened&&loot.length===lootCount+1&&Math.abs(Math.hypot(firstBall.vx,firstBall.vy)-690)<.01"),true);
+  run("world.boulder={x:player.x-80,y:player.y,vx:690,vy:0,life:3,hit:false};updateBoulder(.2)");
+  assert.equal(run('player.hp===30&&world.boulder===null'),true);
+  run("player.hp=120;player.inv=0;var missedRelic={x:player.x,y:player.y,room:room.id,relic:'sun idol',opened:false};collectPedestal(missedRelic);world.boulder={x:player.x-80,y:player.y,vx:690,vy:0,life:3,hit:false};player.y+=80;updateBoulder(.2)");
+  assert.equal(run('player.hp===120&&world.boulder!==null'),true);
+});
 check('room lighting, reachable torches and hazard placement preserve safe entrances and finale', () => {
   const kinds=new Set();
-  for(let floor=1;floor<=10;floor++)for(let seed=0;seed<20;seed++){
+  for(let floor=1;floor<=16;floor++)for(let seed=0;seed<20;seed++){
     run(`loadFloor(${floor},${seed})`);
     assert.equal(run("world.rooms[0].lighting==='lit'&&world.rooms[11].lighting==='lit'"),true);
     assert.equal(run("world.rooms.some(r=>r.lighting==='dark')&&world.rooms.some(r=>r.lighting==='partial')"),true);
@@ -841,7 +881,7 @@ check('room lighting, reachable torches and hazard placement preserve safe entra
     assert.equal(run('world.traps.every(t=>!pointInRoom(t,world.rooms[0])&&distance(t,world.end)>90&&free(t.x,t.y,12))'),true);
     for(const kind of run('world.traps.map(t=>t.kind)'))kinds.add(kind);
   }
-  assert.equal(kinds.size,7);
+  assert.equal(kinds.size,8);
   run("loadFloor(1,604);enemies=[];props=[];loot=[];const torch=world.torches.find(t=>!t.lit);player.x=torch.x;player.y=torch.y+35;world.end.x=2500;world.end.y=1900");
   const before=run('lightAt({x:torch.x+70,y:torch.y+70})');
   run('interact()');assert.equal(run('torch.lit'),false);

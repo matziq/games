@@ -4,7 +4,8 @@ import sys
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
-OUT = Path(r"D:\OneDrive\Scripts\games\emberkeep")
+OUT = Path(r"D:\AI_Output\Emberkeep\checks")
+OUT.mkdir(parents=True, exist_ok=True)
 URL = sys.argv[1] if len(sys.argv) > 1 else Path(__file__).with_name("index.html").resolve().as_uri() + "?test"
 PREFIX = "Emberkeep-crowns-live" if URL.startswith("https:") else "Emberkeep-crowns"
 report = {"url": URL, "layouts": [], "native_android_launch": False}
@@ -40,9 +41,9 @@ with sync_playwright() as p:
           triggerTrap(trap,true);return ally.hp<hp;
         }""")
         page.evaluate("""() => {
-          loadFloor(10,604);props=[];world.traps=[];world.quake.next=Infinity;world.seen.fill(1);
-          window.dragon=enemies.find(e=>e.type==='dragon');enemies=[dragon];dragon.hp=1;dragon.cool=1000;
-          player.x=dragon.x-60;player.y=dragon.y;player.angle=0;player.cool=0;player.inv=1000;
+          loadFloor(16,604);props=[];world.traps=[];world.quake.next=Infinity;world.seen.fill(1);
+          window.boss=world.boss;enemies=[boss];boss.hp=1;boss.cool=1000;
+          player.x=boss.x-60;player.y=boss.y;player.angle=0;player.cool=0;player.inv=1000;
           player.weapon={...weaponTypes.sword,kind:'sword',name:'Crowned sword',damage:30,color:'#ddd'};
           window.keptWeapon=player.weapon;window.goldBeforeBoss=player.gold;window.keptScrolls=JSON.stringify(player.scrolls);
           window.keptAmmo=JSON.stringify(player.ammo);mouse.active=false;
@@ -52,12 +53,12 @@ with sync_playwright() as p:
         else:
             page.keyboard.press("Space")
         page.wait_for_function("state==='victory'&&player.crowns===1")
-        assert page.locator("#start").inner_text() == "Continue exploring"
-        assert page.evaluate("player.gold>=goldBeforeBoss+500&&bossDefeated")
+        assert page.locator("#start").inner_text() == "Continue adventuring"
+        assert page.evaluate("loot.some(item=>item.type==='gold'&&item.value===1000)&&bossDefeated")
         page.screenshot(path=str(OUT / f"{PREFIX}-{name}-victory.png"))
         page.evaluate("window.spoils=loot.slice();window.goldAfterBoss=player.gold;window.bossKills=kills;window.bossRank=player.level")
         page.locator("#start").click()
-        assert page.evaluate("state==='playing'&&depth===10&&player.weapon===keptWeapon&&spoils.every(i=>loot.includes(i)||i.taken)")
+        assert page.evaluate("state==='playing'&&depth===16&&player.weapon===keptWeapon&&spoils.every(i=>loot.includes(i)||i.taken)")
         page.evaluate("player.x=world.end.x;player.y=world.end.y;selectedWorldItem=null;loot=[];player.cool=0")
         if touch:
             page.locator("#touchInteract").tap()
@@ -72,7 +73,7 @@ with sync_playwright() as p:
         assert not errors, errors
         report["layouts"].append({"name": name, "enemy_shots_no_friendly_damage_or_status": True,
                                   "player_and_activated_trap_damage_preserved": True,
-                                  "real_boss_kill_continue_and_next_cycle": True, "progression_preserved": True, "errors": errors})
+                                  "floor_16_boss_kill_continue_and_next_cycle": True, "progression_preserved": True, "errors": errors})
         context.close()
     browser.close()
 (OUT / f"{PREFIX}-checks.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
