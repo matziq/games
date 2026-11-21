@@ -13,7 +13,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Alabama"
         ]
       },
-      "limitation": "newer reusable standard unavailable"
+      "limitation": "newer reusable standard unavailable",
+      "recentPhotos": 1,
+      "historicExamples": 26,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Alaska": {
       "count": 28,
@@ -26,7 +30,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Alaska"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 26,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Arizona": {
       "count": 28,
@@ -39,7 +47,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Arizona"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 0,
+      "historicExamples": 26,
+      "recentPhotoShortfall": 10,
+      "historicShortfall": 0
     },
     "Arkansas": {
       "count": 24,
@@ -52,11 +64,15 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Arkansas"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 23,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "California": {
-      "count": 16,
-      "shortfall": 4,
+      "count": 21,
+      "shortfall": 0,
       "default": {
         "id": "california-modern.jpg",
         "label": "Standard passenger, red script base (2024 photograph)",
@@ -65,7 +81,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_California"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 7,
+      "historicExamples": 14,
+      "recentPhotoShortfall": 3,
+      "historicShortfall": 0
     },
     "Colorado": {
       "count": 29,
@@ -78,7 +98,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Colorado"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 28,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Connecticut": {
       "count": 14,
@@ -91,7 +115,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Connecticut"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 0,
+      "historicExamples": 12,
+      "recentPhotoShortfall": 10,
+      "historicShortfall": 0
     },
     "Delaware": {
       "count": 11,
@@ -104,10 +132,14 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Delaware"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 9,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Florida": {
-      "count": 30,
+      "count": 40,
       "shortfall": 0,
       "default": {
         "id": "florida-modern.jpg",
@@ -117,7 +149,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Florida"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 13,
+      "historicExamples": 27,
+      "recentPhotoShortfall": 0,
+      "historicShortfall": 0
     },
     "Georgia": {
       "count": 29,
@@ -130,7 +166,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Georgia"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 2,
+      "historicExamples": 26,
+      "recentPhotoShortfall": 8,
+      "historicShortfall": 0
     },
     "Hawaii": {
       "count": 8,
@@ -143,7 +183,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Hawaii"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 7,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Idaho": {
       "count": 19,
@@ -156,7 +200,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Idaho"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 18,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Illinois": {
       "count": 30,
@@ -169,7 +217,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Illinois"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 2,
+      "historicExamples": 27,
+      "recentPhotoShortfall": 8,
+      "historicShortfall": 0
     },
     "Indiana": {
       "count": 30,
@@ -182,7 +234,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Indiana"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 28,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Iowa": {
       "count": 27,
@@ -195,10 +251,14 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Iowa"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 26,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Kansas": {
-      "count": 28,
+      "count": 31,
       "shortfall": 0,
       "default": {
         "id": "kansas-modern.jpg",
@@ -208,7 +268,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Kansas"
         ]
       },
-      "limitation": "newer reusable standard unavailable"
+      "limitation": "newer reusable standard unavailable",
+      "recentPhotos": 4,
+      "historicExamples": 25,
+      "recentPhotoShortfall": 6,
+      "historicShortfall": 0
     },
     "Kentucky": {
       "count": 30,
@@ -221,7 +285,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Kentucky"
         ]
       },
-      "limitation": "newer reusable standard unavailable"
+      "limitation": "newer reusable standard unavailable",
+      "recentPhotos": 1,
+      "historicExamples": 29,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Louisiana": {
       "count": 29,
@@ -234,7 +302,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Louisiana"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 28,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Maine": {
       "count": 19,
@@ -247,7 +319,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Maine"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 18,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Maryland": {
       "count": 26,
@@ -260,7 +336,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Maryland"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 23,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Massachusetts": {
       "count": 30,
@@ -273,7 +353,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Massachusetts"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 28,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Michigan": {
       "count": 28,
@@ -286,7 +370,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Michigan"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 24,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Minnesota": {
       "count": 28,
@@ -299,7 +387,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Minnesota"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 27,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Mississippi": {
       "count": 30,
@@ -312,7 +404,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Mississippi"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 3,
+      "historicExamples": 27,
+      "recentPhotoShortfall": 7,
+      "historicShortfall": 0
     },
     "Missouri": {
       "count": 28,
@@ -325,7 +421,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Missouri"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 26,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Montana": {
       "count": 22,
@@ -338,10 +438,14 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Montana"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 21,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Nebraska": {
-      "count": 30,
+      "count": 31,
       "shortfall": 0,
       "default": {
         "id": "nebraska-modern.jpg",
@@ -351,7 +455,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Nebraska"
         ]
       },
-      "limitation": "2023 standard not available with verified reuse"
+      "limitation": "2023 standard not available with verified reuse",
+      "recentPhotos": 6,
+      "historicExamples": 24,
+      "recentPhotoShortfall": 4,
+      "historicShortfall": 0
     },
     "Nevada": {
       "count": 15,
@@ -364,7 +472,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Nevada"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 13,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "New Hampshire": {
       "count": 23,
@@ -377,7 +489,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_New_Hampshire"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 22,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "New Jersey": {
       "count": 21,
@@ -390,11 +506,15 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_New_Jersey"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 20,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "New Mexico": {
-      "count": 17,
-      "shortfall": 3,
+      "count": 18,
+      "shortfall": 2,
       "default": {
         "id": "new-mexico-modern.jpg",
         "label": "Standard passenger, turquoise Land of Enchantment base (2019 photograph)",
@@ -403,7 +523,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_New_Mexico"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 4,
+      "historicExamples": 14,
+      "recentPhotoShortfall": 6,
+      "historicShortfall": 0
     },
     "New York": {
       "count": 16,
@@ -416,7 +540,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_New_York"
         ]
       },
-      "limitation": "newer reusable standard unavailable"
+      "limitation": "newer reusable standard unavailable",
+      "recentPhotos": 1,
+      "historicExamples": 14,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "North Carolina": {
       "count": 28,
@@ -429,7 +557,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_North_Carolina"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 2,
+      "historicExamples": 26,
+      "recentPhotoShortfall": 8,
+      "historicShortfall": 0
     },
     "North Dakota": {
       "count": 16,
@@ -442,7 +574,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_North_Dakota"
         ]
       },
-      "limitation": "newer reusable standard unavailable"
+      "limitation": "newer reusable standard unavailable",
+      "recentPhotos": 1,
+      "historicExamples": 15,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Ohio": {
       "count": 29,
@@ -455,7 +591,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Ohio"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 2,
+      "historicExamples": 25,
+      "recentPhotoShortfall": 8,
+      "historicShortfall": 0
     },
     "Oklahoma": {
       "count": 9,
@@ -468,11 +608,15 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Oklahoma"
         ]
       },
-      "limitation": "newer reusable standard unavailable"
+      "limitation": "newer reusable standard unavailable",
+      "recentPhotos": 1,
+      "historicExamples": 8,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Oregon": {
-      "count": 2,
-      "shortfall": 18,
+      "count": 5,
+      "shortfall": 15,
       "default": {
         "id": "oregon-modern.jpg",
         "label": "Standard passenger, tree base (2003 photograph)",
@@ -481,11 +625,15 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Oregon"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 0,
+      "historicExamples": 4,
+      "recentPhotoShortfall": 10,
+      "historicShortfall": 1
     },
     "Pennsylvania": {
-      "count": 3,
-      "shortfall": 17,
+      "count": 9,
+      "shortfall": 11,
       "default": {
         "id": "pennsylvania-modern.jpg",
         "label": "Standard passenger, Let Freedom Ring base (2025 sample)",
@@ -494,7 +642,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Pennsylvania"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 8,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Rhode Island": {
       "count": 18,
@@ -507,7 +659,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Rhode_Island"
         ]
       },
-      "limitation": "newer reusable standard unavailable"
+      "limitation": "newer reusable standard unavailable",
+      "recentPhotos": 1,
+      "historicExamples": 17,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "South Carolina": {
       "count": 22,
@@ -520,7 +676,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_South_Carolina"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 2,
+      "historicExamples": 18,
+      "recentPhotoShortfall": 8,
+      "historicShortfall": 0
     },
     "South Dakota": {
       "count": 29,
@@ -533,7 +693,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_South_Dakota"
         ]
       },
-      "limitation": "newer reusable standard unavailable"
+      "limitation": "newer reusable standard unavailable",
+      "recentPhotos": 1,
+      "historicExamples": 26,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Tennessee": {
       "count": 23,
@@ -546,7 +710,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Tennessee"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 2,
+      "historicExamples": 20,
+      "recentPhotoShortfall": 8,
+      "historicShortfall": 0
     },
     "Texas": {
       "count": 30,
@@ -559,7 +727,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Texas"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 24,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Utah": {
       "count": 27,
@@ -572,7 +744,11 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Utah"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 2,
+      "historicExamples": 23,
+      "recentPhotoShortfall": 8,
+      "historicShortfall": 0
     },
     "Vermont": {
       "count": 2,
@@ -585,11 +761,15 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Vermont"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 1,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 4
     },
     "Virginia": {
-      "count": 2,
-      "shortfall": 18,
+      "count": 8,
+      "shortfall": 12,
       "default": {
         "id": "virginia-modern.jpg",
         "label": "Standard passenger, Virginia Is for Lovers base (2016 photograph)",
@@ -598,11 +778,15 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Virginia"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 7,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Washington": {
-      "count": 2,
-      "shortfall": 18,
+      "count": 10,
+      "shortfall": 10,
       "default": {
         "id": "washington-modern.jpg",
         "label": "Standard passenger, Mount Rainier base (2019 photograph)",
@@ -611,11 +795,15 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Washington"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 9,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "West Virginia": {
-      "count": 2,
-      "shortfall": 18,
+      "count": 8,
+      "shortfall": 12,
       "default": {
         "id": "west-virginia-modern.jpg",
         "label": "Standard passenger, blue/gold borders base (2008 photograph)",
@@ -624,11 +812,15 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_West_Virginia"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 0,
+      "historicExamples": 7,
+      "recentPhotoShortfall": 10,
+      "historicShortfall": 0
     },
     "Wisconsin": {
-      "count": 2,
-      "shortfall": 18,
+      "count": 6,
+      "shortfall": 14,
       "default": {
         "id": "wisconsin-modern.jpg",
         "label": "Standard passenger, Dairyland base (2024 photograph)",
@@ -637,11 +829,15 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Wisconsin"
         ]
       },
-      "limitation": ""
+      "limitation": "",
+      "recentPhotos": 1,
+      "historicExamples": 5,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 0
     },
     "Wyoming": {
-      "count": 2,
-      "shortfall": 18,
+      "count": 4,
+      "shortfall": 16,
       "default": {
         "id": "wyoming-historical.jpg",
         "label": "1960 standard passenger base; newer reusable standard unavailable (university plate is not the default)",
@@ -650,18 +846,21 @@
           "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Wyoming"
         ]
       },
-      "limitation": "newer reusable standard unavailable (university plate is not the default)"
+      "limitation": "newer reusable standard unavailable (university plate is not the default)",
+      "recentPhotos": 1,
+      "historicExamples": 3,
+      "recentPhotoShortfall": 9,
+      "historicShortfall": 2
     }
   },
-  "total": 1021,
-  "statesMeetingTarget": 30,
+  "total": 1076,
+  "statesMeetingTarget": 31,
   "limitations": [
-    "Requested 20 distinct designs per state is not fulfilled for all states. See exact counts and shortfalls.",
-    "Commons returned sustained HTTP 429 responses during both bounded bulk sourcing attempts. Unavailable images were excluded.",
-    "Plate Shack requires permission before image reuse; no permission was inferred. PICRYL's collection was inaccessible (HTTP 403) and did not establish statewide design coverage.",
-    "Defaults use reviewed standard passenger designs in the available reusable library, not newer fleet, municipal, university or other specialty plates.",
-    "Image title dates can describe a renewal sticker or photo date, not an issue date; design labels identify the actual base where verified.",
-    "Annual colors or embossed dates are distinct historical designs. Different serials and renewal stickers on the same base are not counted as new designs."
+    "Recent counts are photographs dated 2011-2026, not proven plate issue dates. A photograph of a plate in use does not establish when it was issued.",
+    "Counts may understate recent examples where the source lacks a reliable photo date; no date was guessed.",
+    "Requested 10 recent and 5 historic examples per state were not found for every state. See per-state counts and gaps.",
+    "Some downloaded sources were unavailable or returned HTTP 429; third-party and ambiguous ownership were excluded.",
+    "All earlier designs remain selectable to preserve existing player preferences."
   ],
   "rejectedCandidates": {
     "Alaska": [
@@ -1139,5 +1338,10 @@
       }
     ]
   },
-  "reviewedAt": "2026-11-21"
+  "reviewedAt": "2026-11-21",
+  "recentTarget": 10,
+  "historicTarget": 5,
+  "recentPhotoWindow": "2011-2026",
+  "recentPhotoDefinition": "Modern plate photographed 2011-2026 with a source-recorded photo date; this does not prove issue date. Dated historic designs are excluded.",
+  "historicDefinition": "Previously reviewed old bases plus newly reviewed designs with visibly dated 1900-1969 issues; renewal stickers alone are not new designs."
 }

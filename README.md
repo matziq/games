@@ -70,20 +70,21 @@ a guarantee of today's issue. Storage failures warn and leave the game playable.
 Images are local and lazy-loaded only when selected; complete source credits and
 coverage tables are built when their disclosure is opened.
 
-The collection contains 1,021 reviewed designs. Thirty states meet the requested
-20 designs; twenty states still have shortfalls because accessible, licensed
-sources could not supply enough distinct bases. The in-game table reports every
-count and dated default, including older standard designs where a newer reusable
-image was unavailable.
+The collection includes recent photographs and historical plates where available.
+The coverage table reports each state's count against goals of 10 recent photos
+and 5 historic examples. "Recent" means a source-dated photograph from 2011–2026
+of a modern plate; it does not prove that the plate was issued in that period.
+Some states fall short, and undated images are not counted as recent. Dated
+defaults are disclosed, including older standards where a newer reusable image
+was unavailable.
 
 Source titles, authors, individual licenses, resize/crop notes, and design keys
-are in `license_plate_assets/plate-images.js`. Exact per-state counts, shortfalls
-against the requested 20, default evidence, and sourcing limitations are recorded
+are in `license_plate_assets/plate-images.js`. Exact per-state counts, recent
+and historic shortfalls, default evidence, and sourcing limitations are recorded
 in `license_plate_assets/coverage.json` and shown in the game. Historical annual
 issues count only when color, artwork, or an embossed date differs; serial-only
 and renewal-sticker-only changes are excluded. Each image retains its original
 license. No invented plate art is used when an image is unavailable.
-
 Some browsers restrict features (or run slower) when opening files directly from disk.
 
 ```pwsh

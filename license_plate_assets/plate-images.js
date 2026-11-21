@@ -18,7 +18,8 @@ const PLATE_IMAGES = {
       "sha256": "6b8006589e4361a193a7248ba66cabe910bc6d2fdf89ae107415bc01722d008f",
       "designKey": "alabama-1997-standard-passenger-base-photo-with-2000-renewal-newer-reusable-standard-unavailable",
       "design": "1997 standard passenger base (photo with 2000 renewal); newer reusable standard unavailable",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-modern.jpg",
@@ -38,7 +39,8 @@ const PLATE_IMAGES = {
       "sha256": "1ddc0829b9d3ea02471389d87cfdf7a76b1cbe8f566694e7efb2d7b6bf7e5fbb",
       "designKey": "alabama-fleet",
       "design": "Fleet",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": "2024-01-20"
     },
     {
       "id": "alabama-c717e8d6536a.jpg",
@@ -58,7 +60,8 @@ const PLATE_IMAGES = {
       "sha256": "760839f0b3299016bf7a7f5d0b2841304a4db70f1995ef380a00b3c1a95c9bc4",
       "designKey": "alabama-municipal",
       "design": "Municipal",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-f2340c9942d0.jpg",
@@ -78,7 +81,8 @@ const PLATE_IMAGES = {
       "sha256": "a8293633c1c78cb7c3cbb0d5a359a34eabf12244b827901db111d9d1e1fcdcea",
       "designKey": "alabama-auburn-university",
       "design": "Auburn University",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-396f52c350d6.jpg",
@@ -98,7 +102,8 @@ const PLATE_IMAGES = {
       "sha256": "9a63c4a3e38790e1426dbc71c93be3d3ba35f860098a6549ae36429326ad08ba",
       "designKey": "alabama-historical-issue-1968",
       "design": "Historical issue 1968",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-c19fb30a6bd5.jpg",
@@ -118,7 +123,8 @@ const PLATE_IMAGES = {
       "sha256": "a8692770fd8145bbda9c66fef9a660668943cfa04df161976681e524d806a872",
       "designKey": "alabama-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-e5e74c8ecb17.jpg",
@@ -138,7 +144,8 @@ const PLATE_IMAGES = {
       "sha256": "f3afead602ba59c98c6c0fc0c1d74f548a9087219913a7618e1d085eabcffe4c",
       "designKey": "alabama-historical-issue-1966",
       "design": "Historical issue 1966",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-c3ad1aa99ae0.jpg",
@@ -158,7 +165,8 @@ const PLATE_IMAGES = {
       "sha256": "c708c724d1fe4dede5bdf34db9b355706181a6b212477345eed1dca894cbbb26",
       "designKey": "alabama-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-0e9922864533.jpg",
@@ -178,7 +186,8 @@ const PLATE_IMAGES = {
       "sha256": "ddf6e0424c5109860bc49eaf01c3eeddb3010b8c3cadfe10abbd30d30eb2368d",
       "designKey": "alabama-historical-issue-1964",
       "design": "Historical issue 1964",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-bddc04aa7c2a.jpg",
@@ -198,7 +207,8 @@ const PLATE_IMAGES = {
       "sha256": "f0147c7223419cac81cd18d59a0a765c7e42a1a9cc5085f9fff5a0689b6251a2",
       "designKey": "alabama-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-86479afb3170.jpg",
@@ -218,7 +228,8 @@ const PLATE_IMAGES = {
       "sha256": "df447fdda67a932180ca0c32ac87e2a79d1f77152bdae9c9b4552768bd31c69c",
       "designKey": "alabama-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-d3a1461ddc3d.jpg",
@@ -238,7 +249,8 @@ const PLATE_IMAGES = {
       "sha256": "9cc59e3bc49152d5e057a1d67fb6aee65ce8ee1058baf8a7d2d866d883e98a8d",
       "designKey": "alabama-historical-issue-1961",
       "design": "Historical issue 1961",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-historical.jpg",
@@ -258,7 +270,8 @@ const PLATE_IMAGES = {
       "sha256": "692338d0de9c1bfecfd849c7bfc660db044a021a0cc379fea1588723f01a0c75",
       "designKey": "alabama-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-b1e08da8549b.jpg",
@@ -278,7 +291,8 @@ const PLATE_IMAGES = {
       "sha256": "170f8a11a24d9006235ed3cf55545abef16031486dec065d241a37c7b3b1cd6c",
       "designKey": "alabama-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-a5c2fc96088f.jpg",
@@ -298,7 +312,8 @@ const PLATE_IMAGES = {
       "sha256": "9c71a2f46a3a21529443582f67a99e278562b6449940c6bf18873fe0970f8745",
       "designKey": "alabama-historical-issue-1958",
       "design": "Historical issue 1958",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-61a934c7deff.jpg",
@@ -318,7 +333,8 @@ const PLATE_IMAGES = {
       "sha256": "4b41d5684768fa48a8d232fbe3e768f001548d8da49a121507f5e1d131c56eb5",
       "designKey": "alabama-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-c1e3837912e6.jpg",
@@ -338,7 +354,8 @@ const PLATE_IMAGES = {
       "sha256": "368c654fbe40005e1f2dd3c99f6d6c58c0baeb4c23e53c6f03cd08d58b1f8872",
       "designKey": "alabama-historical-issue-1956",
       "design": "Historical issue 1956",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-ee6a426568d4.jpg",
@@ -358,7 +375,8 @@ const PLATE_IMAGES = {
       "sha256": "9094ac6a6ecd64de8928cd0070bd6ef1d075dbf29d64d26efd545dcf03ea003c",
       "designKey": "alabama-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-275dfafed61e.jpg",
@@ -378,7 +396,8 @@ const PLATE_IMAGES = {
       "sha256": "0d4f9c73e33afe17c2c6ca291cb25acfbd213bd99ea3e23a86a3393cee450719",
       "designKey": "alabama-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-3b7f053f266f.jpg",
@@ -398,7 +417,8 @@ const PLATE_IMAGES = {
       "sha256": "bcdd5c7689949474eccfe1469a500d3c61dbcd19ee62d370e598f89d19e3942f",
       "designKey": "alabama-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-ae776f18052c.jpg",
@@ -418,7 +438,8 @@ const PLATE_IMAGES = {
       "sha256": "616801a36af7088fbcd0e3d2c855ad61d54c474c9b369ace7599823b29b411da",
       "designKey": "alabama-historical-issue-1952",
       "design": "Historical issue 1952",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-70090521eca2.jpg",
@@ -438,7 +459,8 @@ const PLATE_IMAGES = {
       "sha256": "f2f6ff87f83155db20b00d9173f69bfc336e2d76564840666ffee2686b4dad1b",
       "designKey": "alabama-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-7d4920a0f688.jpg",
@@ -458,7 +480,8 @@ const PLATE_IMAGES = {
       "sha256": "3405f168d84e7bce87a7fbca8ed19f194d663f21ce8c95d01d4c30933c48c4c5",
       "designKey": "alabama-historical-issue-1950",
       "design": "Historical issue 1950",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-3b783affcd98.jpg",
@@ -478,7 +501,8 @@ const PLATE_IMAGES = {
       "sha256": "11ee5a59c8c4fd2b888e7d85326ecec47035ac6e235d6c9bd20801d4bcc31f02",
       "designKey": "alabama-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-d87626ee83ab.jpg",
@@ -498,7 +522,8 @@ const PLATE_IMAGES = {
       "sha256": "e45f5930dd07cf99b4827996aa670485c65b62c071acd8a0c0784c3f92bb52d4",
       "designKey": "alabama-historical-issue-1948",
       "design": "Historical issue 1948",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-d0f76ccf93c6.jpg",
@@ -518,7 +543,8 @@ const PLATE_IMAGES = {
       "sha256": "eca6a57c74db939d46326bd3ae3d3234f03bfc1f90dde408da885361984ba878",
       "designKey": "alabama-historical-issue-1947",
       "design": "Historical issue 1947",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-4d511d88c7af.jpg",
@@ -538,7 +564,8 @@ const PLATE_IMAGES = {
       "sha256": "1cd9fb8a5b565a398e110be317ecd1c27da31d11056d915d288d197e990176c4",
       "designKey": "alabama-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-e08f58f663cc.jpg",
@@ -558,7 +585,8 @@ const PLATE_IMAGES = {
       "sha256": "b3b28e6ca629b97fe755cfdf8c50aa19802759fc0857544d66e7371774ec676d",
       "designKey": "alabama-historical-issue-1945",
       "design": "Historical issue 1945",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-40e121ed8af7.jpg",
@@ -578,7 +606,8 @@ const PLATE_IMAGES = {
       "sha256": "17436a23f421abb8643fa3a8f85d0efd9205e610599d2cc5fec672a765337d25",
       "designKey": "alabama-historical-issue-1944",
       "design": "Historical issue 1944",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alabama-b4a398cf18f4.jpg",
@@ -598,7 +627,8 @@ const PLATE_IMAGES = {
       "sha256": "717d8d416400e38dcbe06f8295caf2f948090cc44295c1013d64a62948bc6781",
       "designKey": "alabama-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Alaska": [
@@ -620,7 +650,8 @@ const PLATE_IMAGES = {
       "sha256": "4d06fcef98e9678d0c76de75028b9959dfbaa02ea232637926045f8c6b6c09b2",
       "designKey": "alaska-standard-passenger-last-frontier-base-2020-photograph",
       "design": "Standard passenger, Last Frontier base (2020 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2021-12-23"
     },
     {
       "id": "alaska-d0217800755e.jpg",
@@ -640,7 +671,8 @@ const PLATE_IMAGES = {
       "sha256": "138a3ea8979a34a87f38fb0ea91f57e108db5ad45de034e8d4e99fdeac272d3f",
       "designKey": "alaska-flag-base-2007-photograph",
       "design": "Flag base, 2007 photograph",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-b0dd55ecd3c2.jpg",
@@ -660,7 +692,8 @@ const PLATE_IMAGES = {
       "sha256": "de8c769cd1d989d073f4311da05cc5f43d105b066c03babfc80b2effb8163ec8",
       "designKey": "alaska-historical-issue-1966",
       "design": "Historical issue 1966",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-bc2d7046b4fe.jpg",
@@ -680,7 +713,8 @@ const PLATE_IMAGES = {
       "sha256": "43961b793f92583d5d525fda57b5cb4d44748702cf1171a84c1fe53fd675a13e",
       "designKey": "alaska-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-76cd1b1d5c3d.jpg",
@@ -700,7 +734,8 @@ const PLATE_IMAGES = {
       "sha256": "dcecb0b62a945fa7f01996c855e1b227de840fbeb1c3c7f986942d81a2952727",
       "designKey": "alaska-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-historical.jpg",
@@ -720,7 +755,8 @@ const PLATE_IMAGES = {
       "sha256": "27c3f5dae3268b52e754970b056fede44091234d5e86ef1702bc5018d5066d60",
       "designKey": "alaska-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-05ff882149d3.jpg",
@@ -740,7 +776,8 @@ const PLATE_IMAGES = {
       "sha256": "ad86b17e71f94fa9d7df1cf18866c09d5c49973fcdab2da1e7f3a19da6f65b1c",
       "designKey": "alaska-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-3a8b0515ee4a.jpg",
@@ -760,7 +797,8 @@ const PLATE_IMAGES = {
       "sha256": "80a696c1a18e0a2547120731ad535654affa55f17e4362ee3aac9f2d4b645b4a",
       "designKey": "alaska-1956-flag-base-with-1957-renewal",
       "design": "1956 flag base with 1957 renewal",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-8932a88ba890.jpg",
@@ -780,7 +818,8 @@ const PLATE_IMAGES = {
       "sha256": "780bbac568e61d233f7a57d4c9d94fc46cbebe05b12dca6205c25b62ae52ab6e",
       "designKey": "alaska-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-40369b33af30.jpg",
@@ -800,7 +839,8 @@ const PLATE_IMAGES = {
       "sha256": "2e36cae9a0a37b831571130fd5a5a87efd90e8dcc3eaff9a199c2e01067cb0d9",
       "designKey": "alaska-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-2cc94cca51c5.jpg",
@@ -820,7 +860,8 @@ const PLATE_IMAGES = {
       "sha256": "909b2e7f65d0b222a79194014a83f559ea8643d874423c09e3a9bc8f88a2fe7f",
       "designKey": "alaska-historical-issue-1952",
       "design": "Historical issue 1952",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-51f594461fd8.jpg",
@@ -840,7 +881,8 @@ const PLATE_IMAGES = {
       "sha256": "9a1c5fe69fac9c14f9a4ad5be6c197d52d5bedab312f15e3c444fde7b8515b51",
       "designKey": "alaska-historical-issue-1950",
       "design": "Historical issue 1950",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-a25d0ce385aa.jpg",
@@ -860,7 +902,8 @@ const PLATE_IMAGES = {
       "sha256": "73f59968834e1019c2de20e89b28b28250f87b1894105f90ce3a5131543c0b2a",
       "designKey": "alaska-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-390f845f43cb.jpg",
@@ -880,7 +923,8 @@ const PLATE_IMAGES = {
       "sha256": "823573c1ee90ad58ea06336f1fdda869df4ba306a888d2103c00494d40c25625",
       "designKey": "alaska-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-2ea9bbe5ef95.jpg",
@@ -900,7 +944,8 @@ const PLATE_IMAGES = {
       "sha256": "d8a700a542ad34f6ea38584a4132ef2600d4f10db93b70502a4b0bfc58a4a85d",
       "designKey": "alaska-historical-issue-1943",
       "design": "Historical issue 1943",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-a346344db3f7.jpg",
@@ -920,7 +965,8 @@ const PLATE_IMAGES = {
       "sha256": "005c72760227046bb4f80fc3f8f95fca768eaf5bfd16479271e88aedd2657983",
       "designKey": "alaska-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-6ed70745e2d4.jpg",
@@ -940,7 +986,8 @@ const PLATE_IMAGES = {
       "sha256": "cde6580eed789a92cca6ad66a4d3724ff1fe63d45971e07ae13a17616ee17e11",
       "designKey": "alaska-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-05f4aa6a62fa.jpg",
@@ -960,7 +1007,8 @@ const PLATE_IMAGES = {
       "sha256": "e66267ada7b1d6319c1f147018fe7de78687e777338ab39b9182b8a3ead8642b",
       "designKey": "alaska-historical-issue-1933",
       "design": "Historical issue 1933",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-b2a1d104bada.jpg",
@@ -980,7 +1028,8 @@ const PLATE_IMAGES = {
       "sha256": "5cdb4668aacd9557f56b8c8f755d36dfe09447313e08019ebbc52e7933d2e52d",
       "designKey": "alaska-historical-issue-1931",
       "design": "Historical issue 1931",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-50f992db80f0.jpg",
@@ -1000,7 +1049,8 @@ const PLATE_IMAGES = {
       "sha256": "23db56807f85c23a148e7281bb83a32981227df2787bbe467208eed92ee12009",
       "designKey": "alaska-historical-issue-1930",
       "design": "Historical issue 1930",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-49ff0d5188e9.jpg",
@@ -1020,7 +1070,8 @@ const PLATE_IMAGES = {
       "sha256": "8457131add92322eb95d39fcada6bce01f00b5d525e62e81aed6ca882a6e1334",
       "designKey": "alaska-historical-issue-1929",
       "design": "Historical issue 1929",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-b84624c2906c.jpg",
@@ -1040,7 +1091,8 @@ const PLATE_IMAGES = {
       "sha256": "a1da69169b38e4b488c131193faa8f422bb6cec43839c8538ba65b2ee0d011a0",
       "designKey": "alaska-historical-issue-1928",
       "design": "Historical issue 1928",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-2f0ef6401540.jpg",
@@ -1060,7 +1112,8 @@ const PLATE_IMAGES = {
       "sha256": "826385173068ae3a98782134e2cc795906ada6b1c13b908ce4bc8860a0381054",
       "designKey": "alaska-historical-issue-1927",
       "design": "Historical issue 1927",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-f0dbec38164e.jpg",
@@ -1080,7 +1133,8 @@ const PLATE_IMAGES = {
       "sha256": "31d7306744911437e8ab58d74e28cf526c94e4e2d271a6497f7a30cefb7753cc",
       "designKey": "alaska-historical-issue-1925",
       "design": "Historical issue 1925",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-9b05aa3807b4.jpg",
@@ -1100,7 +1154,8 @@ const PLATE_IMAGES = {
       "sha256": "a45579294973a5e9c20916201ef5cb04ad9c0d35fff0d2cb67f2d506914511e6",
       "designKey": "alaska-historical-issue-1924",
       "design": "Historical issue 1924",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-2895d1accff8.jpg",
@@ -1120,7 +1175,8 @@ const PLATE_IMAGES = {
       "sha256": "a9cc72429dd09731e0a90147d40c7c858c5fc1d7fed890e7eb11529cd7134385",
       "designKey": "alaska-historical-issue-1923",
       "design": "Historical issue 1923",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-fe3cf79fa1d9.jpg",
@@ -1140,7 +1196,8 @@ const PLATE_IMAGES = {
       "sha256": "775e85e709f1d1f4de4a9dfcd1b2091182ef403f5a5f68202739888f7a8dddd6",
       "designKey": "alaska-historical-issue-1922",
       "design": "Historical issue 1922",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "alaska-b4201f4831b7.jpg",
@@ -1160,7 +1217,8 @@ const PLATE_IMAGES = {
       "sha256": "5ef33eb2873890d166e4b81ba5f488eb970f45dc6a64704fe3c48d6e549645fa",
       "designKey": "alaska-historical-issue-1921",
       "design": "Historical issue 1921",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Arizona": [
@@ -1182,7 +1240,8 @@ const PLATE_IMAGES = {
       "sha256": "8cb285ac13eeca1b4620af8fbb392f26f2c18ca56c81fe41f9a20b19dbe51323",
       "designKey": "arizona-standard-passenger-desert-base-2005-photograph",
       "design": "Standard passenger, desert base (2005 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-37e9d0d51ab4.jpg",
@@ -1202,7 +1261,8 @@ const PLATE_IMAGES = {
       "sha256": "94b407e64c0587f60dc7a45e7a551d923f9bfbe48ce013f0172ad7e93fa54c67",
       "designKey": "arizona-historic-vehicle",
       "design": "Historic Vehicle",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-0a13b1537ec9.jpg",
@@ -1222,7 +1282,8 @@ const PLATE_IMAGES = {
       "sha256": "e04bdf67ff33957f46839aea205fbd92f6fc784259b70a028087563b4dd70f85",
       "designKey": "arizona-historical-issue-1969",
       "design": "Historical issue 1969",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-2576bb7703d9.jpg",
@@ -1242,7 +1303,8 @@ const PLATE_IMAGES = {
       "sha256": "da42487a6c7bf5befd1e2b8a2cf40caf9681e151bb0602f972a6f99d31d90eb4",
       "designKey": "arizona-1965-base-with-1966-renewal",
       "design": "1965 base with 1966 renewal",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-d0397faaef2d.jpg",
@@ -1262,7 +1324,8 @@ const PLATE_IMAGES = {
       "sha256": "cf2a813de5756b3020dd5a3f13f779ff329ef9544ebba874b38d692e3e3d1951",
       "designKey": "arizona-historical-issue-1964",
       "design": "Historical issue 1964",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-66c6704199ba.jpg",
@@ -1282,7 +1345,8 @@ const PLATE_IMAGES = {
       "sha256": "5655731649e95edfeb63710e050868c789e38294d049861bc7401a4b485fb7d2",
       "designKey": "arizona-1961-base-with-1963-renewal",
       "design": "1961 base with 1963 renewal",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-ab8d7411fd4a.jpg",
@@ -1302,7 +1366,8 @@ const PLATE_IMAGES = {
       "sha256": "db45097797175cf358ea7255f26a391af56ee0fef2676547fa623af4dfc3d9f9",
       "designKey": "arizona-historical-issue-1961",
       "design": "Historical issue 1961",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-1a01488a4ad3.jpg",
@@ -1322,7 +1387,8 @@ const PLATE_IMAGES = {
       "sha256": "24383b88d55e7f0a1ce9bc9da013c6b8a58e9e4774ea2002b715d37a63edae99",
       "designKey": "arizona-historical-issue-1956",
       "design": "Historical issue 1956",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-cfaf0798146e.jpg",
@@ -1342,7 +1408,8 @@ const PLATE_IMAGES = {
       "sha256": "7e4950f805c95e9624edbcf07de8cdd2e7a2fffdaa42be2db95765fda90909bc",
       "designKey": "arizona-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-71dcc26bcb06.jpg",
@@ -1362,7 +1429,8 @@ const PLATE_IMAGES = {
       "sha256": "cdb50c05fcdb8deb0c9bb3dbf1ab327aa3e685deb7cb9a4aac740054619b83fa",
       "designKey": "arizona-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-d93057b333f6.jpg",
@@ -1382,7 +1450,8 @@ const PLATE_IMAGES = {
       "sha256": "b07ad8196b6f2ce7f2ac77d9fc159728f7506e966d71416e269b9e640835a5f9",
       "designKey": "arizona-historical-issue-1952",
       "design": "Historical issue 1952",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-e47598ac5477.jpg",
@@ -1402,7 +1471,8 @@ const PLATE_IMAGES = {
       "sha256": "6f8a48d155237c88bc71a2821be5a6962ec3c3f2c3324e2af56f624a6acbb303",
       "designKey": "arizona-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-d34af287e234.jpg",
@@ -1422,7 +1492,8 @@ const PLATE_IMAGES = {
       "sha256": "e33f11a2a4c586c2c2519a951e8d5b6b1f35dbe841b561407d711a8b896ee682",
       "designKey": "arizona-historical-issue-1950",
       "design": "Historical issue 1950",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-c1258159d5b1.jpg",
@@ -1442,7 +1513,8 @@ const PLATE_IMAGES = {
       "sha256": "e7f1b82988a8cd85d81a351167e484f9fbf27e62f5412b6505b390289f5ff31f",
       "designKey": "arizona-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-3f3324f18a33.jpg",
@@ -1462,7 +1534,8 @@ const PLATE_IMAGES = {
       "sha256": "25557d3e04fb50877bb8259613e32fb48a652d58ba4f5c8b8ca11b332fb28fc4",
       "designKey": "arizona-historical-issue-1948",
       "design": "Historical issue 1948",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-ed6a69993445.jpg",
@@ -1482,7 +1555,8 @@ const PLATE_IMAGES = {
       "sha256": "8407f79043502c232420d24edda7af4b1e3b02cd31791cade803e3ac36e37d4b",
       "designKey": "arizona-historical-issue-1947",
       "design": "Historical issue 1947",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-74011c6b6504.jpg",
@@ -1502,7 +1576,8 @@ const PLATE_IMAGES = {
       "sha256": "4162a6adb40326d5d28f3d43e7f3378e067ec96a7841d3dce3f9ccd9e5f0cac8",
       "designKey": "arizona-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-6ffb6c252866.jpg",
@@ -1522,7 +1597,8 @@ const PLATE_IMAGES = {
       "sha256": "a532567b91e5e554df402d361cad3b10581012daa5ec22c6c771df5b9a83ccb3",
       "designKey": "arizona-historical-issue-1941",
       "design": "Historical issue 1941",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-afaa3cad2512.jpg",
@@ -1542,7 +1618,8 @@ const PLATE_IMAGES = {
       "sha256": "f165fb696aa49b69198bcded84161e03361f63c3c52f23571a53304f68766a2a",
       "designKey": "arizona-historical-issue-1939",
       "design": "Historical issue 1939",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-6d3430be54c6.jpg",
@@ -1562,7 +1639,8 @@ const PLATE_IMAGES = {
       "sha256": "6e591742fc2584f1d38b65f3e7b3b97cb0d498150703fab10528f3327191f307",
       "designKey": "arizona-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-9193d8316b41.jpg",
@@ -1582,7 +1660,8 @@ const PLATE_IMAGES = {
       "sha256": "f399b6976b83b9e4c09b83953450b6e63aa10bf1d105a65e6a4f94417a1361ce",
       "designKey": "arizona-historical-issue-1937",
       "design": "Historical issue 1937",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-6cdffff67fff.jpg",
@@ -1602,7 +1681,8 @@ const PLATE_IMAGES = {
       "sha256": "a24b05ceff78e1bfb6975da769284f9675ac55ebc0bda0bee6db2156e1ad5182",
       "designKey": "arizona-historical-issue-1936",
       "design": "Historical issue 1936",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-ae0d7d431173.jpg",
@@ -1622,7 +1702,8 @@ const PLATE_IMAGES = {
       "sha256": "449c6b7cc55561115c8aca352a47f2c6c766f4927f3120d7cff8f899c23f21f3",
       "designKey": "arizona-historical-issue-1935",
       "design": "Historical issue 1935",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-cc442d8e6aaf.jpg",
@@ -1642,7 +1723,8 @@ const PLATE_IMAGES = {
       "sha256": "954521e849ff03fcb5125ec53180b595cdf96508ee93c33ebc76e32748f9d8b2",
       "designKey": "arizona-historical-issue-1934",
       "design": "Historical issue 1934",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-836d9264e196.jpg",
@@ -1662,7 +1744,8 @@ const PLATE_IMAGES = {
       "sha256": "bae4b5edbd57a7fbdda6cce0f41e704777fcb5ca8c28b4629910563eb397853a",
       "designKey": "arizona-historical-issue-1933",
       "design": "Historical issue 1933",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-d0562476d6c9.jpg",
@@ -1682,7 +1765,8 @@ const PLATE_IMAGES = {
       "sha256": "6fd4d17e1ab71f962fd9bc84cc068fd6f278064d71e27cb556afd16e3e14fee6",
       "designKey": "arizona-historical-issue-1932",
       "design": "Historical issue 1932",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-56b79d146ab6.jpg",
@@ -1702,7 +1786,8 @@ const PLATE_IMAGES = {
       "sha256": "dec05d8d4de460adc5e7431989d7067fd619d0c5eb9cab57e777abb85d1a54bb",
       "designKey": "arizona-historical-issue-1930",
       "design": "Historical issue 1930",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arizona-historical.jpg",
@@ -1722,7 +1807,8 @@ const PLATE_IMAGES = {
       "sha256": "548c6ba7abd978de0d0ad731f40334212f4b9a66e1c484420437a9be86bd4a78",
       "designKey": "arizona-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Arkansas": [
@@ -1744,7 +1830,8 @@ const PLATE_IMAGES = {
       "sha256": "808fc89bad36095fecf5821df78e53705dfb94e5e1a76dd61ed5f97719e60a26",
       "designKey": "arkansas-standard-passenger-natural-state-base-2011-photograph",
       "design": "Standard passenger, Natural State base (2011 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2024-11-09 15:16:43"
     },
     {
       "id": "arkansas-9075f87619d4.jpg",
@@ -1764,7 +1851,8 @@ const PLATE_IMAGES = {
       "sha256": "4c27bef263a240d660c9834c75f8a81bab15b2fbce3c602972627d9f74158bb2",
       "designKey": "arkansas-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arkansas-e069d834b153.jpg",
@@ -1784,7 +1872,8 @@ const PLATE_IMAGES = {
       "sha256": "c18e71e694d073b8456c56a616e6af5bf3d8f6908bad70dbcca7a5c8669f778c",
       "designKey": "arkansas-historical-issue-1966",
       "design": "Historical issue 1966",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arkansas-65016d74de28.jpg",
@@ -1804,7 +1893,8 @@ const PLATE_IMAGES = {
       "sha256": "d03373064a25983b0752e257580d55a8e31b37d5281a1c247a2ea0a3daa3be91",
       "designKey": "arkansas-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arkansas-d18434eb938a.jpg",
@@ -1824,7 +1914,8 @@ const PLATE_IMAGES = {
       "sha256": "244beccac38f5cff77ea1f060c9ce16fa546010c5045888f990b55848671dfde",
       "designKey": "arkansas-historical-issue-1964",
       "design": "Historical issue 1964",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arkansas-8f4f19cb6724.jpg",
@@ -1844,7 +1935,8 @@ const PLATE_IMAGES = {
       "sha256": "83e51ef476770e64354bb4cc8dd8c2e247665cdd7cf54bb977c651aebf6a6387",
       "designKey": "arkansas-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arkansas-d4a61317a0d6.jpg",
@@ -1864,7 +1956,8 @@ const PLATE_IMAGES = {
       "sha256": "9c89803bb1035112706a779321eb80ff834f5d7553a15dca44372bf96aee6c67",
       "designKey": "arkansas-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arkansas-220f14054024.jpg",
@@ -1884,7 +1977,8 @@ const PLATE_IMAGES = {
       "sha256": "330258c8417253958d7375faf07999b9440388a4e52f2faf63fd923d44cc46f6",
       "designKey": "arkansas-historical-issue-1961",
       "design": "Historical issue 1961",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arkansas-historical.jpg",
@@ -1904,7 +1998,8 @@ const PLATE_IMAGES = {
       "sha256": "234665b75479a0ee2f8685f543fb7b94fcfd3e666216bb8cc7ae73816bc1cb9a",
       "designKey": "arkansas-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arkansas-77092fb7238a.jpg",
@@ -1924,7 +2019,8 @@ const PLATE_IMAGES = {
       "sha256": "db3733f0dd347ef4b7059ada8fa3dabd75d9eb4812586e89b2613c7f44f5b964",
       "designKey": "arkansas-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arkansas-3d83ce486099.jpg",
@@ -1944,7 +2040,8 @@ const PLATE_IMAGES = {
       "sha256": "8f4f467d69c04f99b42a3c950501510ec79d30583c2cc60a77a64158c07b2e4e",
       "designKey": "arkansas-historical-issue-1958",
       "design": "Historical issue 1958",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arkansas-dfb445ba7278.jpg",
@@ -1964,7 +2061,8 @@ const PLATE_IMAGES = {
       "sha256": "8e5b269832eb3f9269a29fb7217462f02274f652497e8f94d313fa3c70308ba1",
       "designKey": "arkansas-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arkansas-515dc2502c9e.jpg",
@@ -1984,7 +2082,8 @@ const PLATE_IMAGES = {
       "sha256": "9f910bf8a6d78371bbaef12106ccface2d392c1d721d05ca3afc25c41d17f5d6",
       "designKey": "arkansas-historical-issue-1956",
       "design": "Historical issue 1956",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arkansas-c1e75f7ac953.jpg",
@@ -2004,7 +2103,8 @@ const PLATE_IMAGES = {
       "sha256": "49c784abb0cc1fe7cca449f8d081f1b5a318fe4fcd8d170b0a1ab59c7c5aae68",
       "designKey": "arkansas-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arkansas-50ef13448c25.jpg",
@@ -2024,7 +2124,8 @@ const PLATE_IMAGES = {
       "sha256": "e258f27a842c93a509e57fea583b6c72e2ec8202765476eb67756e99cdd26b82",
       "designKey": "arkansas-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arkansas-7501116c1871.jpg",
@@ -2044,7 +2145,8 @@ const PLATE_IMAGES = {
       "sha256": "296c11e66a3c4d01b31ff2405bebccc4a23e5b8cf081b434583a6c7cde02a900",
       "designKey": "arkansas-historical-issue-1944",
       "design": "Historical issue 1944",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arkansas-264e36c2a287.jpg",
@@ -2064,7 +2166,8 @@ const PLATE_IMAGES = {
       "sha256": "9c81993617ca48c567409628949eecc6f75d6ec4114b0bc9c2a07311d1b2a9d8",
       "designKey": "arkansas-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arkansas-eec50254c261.jpg",
@@ -2084,7 +2187,8 @@ const PLATE_IMAGES = {
       "sha256": "4f66ff219997b4295d2ff89c4c5a71bd5316d33eca505260db9fb6051cfd58f4",
       "designKey": "arkansas-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arkansas-d07b1596c089.jpg",
@@ -2104,7 +2208,8 @@ const PLATE_IMAGES = {
       "sha256": "cbb9ab386322a0626d2ec8ab94053d39840119e2a1b43733ec574aad11d5d578",
       "designKey": "arkansas-historical-issue-1933",
       "design": "Historical issue 1933",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arkansas-84554f3d853c.jpg",
@@ -2124,7 +2229,8 @@ const PLATE_IMAGES = {
       "sha256": "ca5202091aac31a59e7c471b0cb97487629ad1c89da6ff87afafe9f3eb5e8cc1",
       "designKey": "arkansas-historical-issue-1932",
       "design": "Historical issue 1932",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arkansas-a0c44f9788fc.jpg",
@@ -2144,7 +2250,8 @@ const PLATE_IMAGES = {
       "sha256": "e2f7252e20e40e5a2246217d1fb163af73082c06353e9b9bc442d4b95f293464",
       "designKey": "arkansas-historical-issue-1930",
       "design": "Historical issue 1930",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arkansas-b32f667dd490.jpg",
@@ -2164,7 +2271,8 @@ const PLATE_IMAGES = {
       "sha256": "150a12b1d5c18c4b9953b0f7de021375bb64163abb5fc7f1da2d3949fb0bf084",
       "designKey": "arkansas-historical-issue-1926",
       "design": "Historical issue 1926",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arkansas-94db529f4231.jpg",
@@ -2184,7 +2292,8 @@ const PLATE_IMAGES = {
       "sha256": "735fbd02bf9b338b80ea39eb00c5d4c406b3a081ca447cee95c4e90750888e9c",
       "designKey": "arkansas-historical-issue-1924",
       "design": "Historical issue 1924",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "arkansas-66a5e83993ac.jpg",
@@ -2204,7 +2313,8 @@ const PLATE_IMAGES = {
       "sha256": "84c8cbd8f3ab714052416606a14cc59c506a05e74ff489b651b0c9d9df08b83b",
       "designKey": "arkansas-historical-issue-1921",
       "design": "Historical issue 1921",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "California": [
@@ -2226,7 +2336,113 @@ const PLATE_IMAGES = {
       "sha256": "7ca470ea959107076bd0913e909b2fb8031933941d4672f777894d3566611682",
       "designKey": "california-standard-passenger-red-script-base-2024-photograph",
       "design": "Standard passenger, red script base (2024 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2024-02-19"
+    },
+    {
+      "id": "california-recent-f3c0935487a0.jpg",
+      "src": "./license_plate_assets/california-recent-f3c0935487a0.jpg",
+      "era": "modern",
+      "kind": "photograph",
+      "title": "California 2011 whale tail license plate.png",
+      "author": "Tholle33",
+      "source": "https://commons.wikimedia.org/wiki/File:California_2011_whale_tail_license_plate.png",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/b/b6/California_2011_whale_tail_license_plate.png",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 252,
+      "sha256": "abc18bfd96c611a41595753a40ab22ea2ab4ed6ee19ed78bf389826ec058483a",
+      "designKey": "california-protect-our-coast-and-ocean-photographed-2021",
+      "design": "Protect Our Coast and Ocean, photographed 2021",
+      "standard": false,
+      "recentPhotoDate": "2021-06-23"
+    },
+    {
+      "id": "california-recent-eb1b36d313c0.jpg",
+      "src": "./license_plate_assets/california-recent-eb1b36d313c0.jpg",
+      "era": "modern",
+      "kind": "photograph",
+      "title": "California 2016 legacy license plate.jpg",
+      "author": "Jeff d kirby",
+      "source": "https://commons.wikimedia.org/wiki/File:California_2016_legacy_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/9/97/California_2016_legacy_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 256,
+      "sha256": "62a4e9e88494b7d0da5edd1cac074ee205a97017c9d6ec67ce0073d50ff4d923",
+      "designKey": "california-black-legacy-plate-photographed-2015",
+      "design": "Black Legacy plate, photographed 2015",
+      "standard": false,
+      "recentPhotoDate": "2015-06-27"
+    },
+    {
+      "id": "california-recent-50a2ec05da38.jpg",
+      "src": "./license_plate_assets/california-recent-50a2ec05da38.jpg",
+      "era": "modern",
+      "kind": "photograph",
+      "title": "California 2017 Gold Star Family license plate.jpg",
+      "author": "Jeff d kirby",
+      "source": "https://commons.wikimedia.org/wiki/File:California_2017_Gold_Star_Family_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/d/d2/California_2017_Gold_Star_Family_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 238,
+      "sha256": "961772c8871ef3e71d69c90dcc42da42d7e9a6b3d5c12b7e8f692e716ecc8c1d",
+      "designKey": "california-gold-star-family-photographed-2016",
+      "design": "Gold Star Family, photographed 2016",
+      "standard": false,
+      "recentPhotoDate": "2016-06-08"
+    },
+    {
+      "id": "california-recent-fa2a01128cb4.jpg",
+      "src": "./license_plate_assets/california-recent-fa2a01128cb4.jpg",
+      "era": "modern",
+      "kind": "photograph",
+      "title": "California 2022 Yosemite license plate.jpg",
+      "author": "Tholle33",
+      "source": "https://commons.wikimedia.org/wiki/File:California_2022_Yosemite_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/2/2c/California_2022_Yosemite_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 237,
+      "sha256": "fa9579fb7765cdf4c4111ee30057ac7b4ef92960418b609683e313e4cc0e5d7d",
+      "designKey": "california-yosemite-national-park-photographed-2021",
+      "design": "Yosemite National Park, photographed 2021",
+      "standard": false,
+      "recentPhotoDate": "2021-03-26 23:55:24"
+    },
+    {
+      "id": "california-recent-dc4ca400c503.jpg",
+      "src": "./license_plate_assets/california-recent-dc4ca400c503.jpg",
+      "era": "modern",
+      "kind": "photograph",
+      "title": "California Honoring Veterans license plate 123ABC.jpg",
+      "author": "Tholle33",
+      "source": "https://commons.wikimedia.org/wiki/File:California_Honoring_Veterans_license_plate_123ABC.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/0/06/California_Honoring_Veterans_license_plate_123ABC.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 212,
+      "sha256": "d562cb8cbbdbd857bbbb86dd495760bc02c617446149e1c6445ca3e3a52c4c0f",
+      "designKey": "california-honoring-veterans-photographed-2021",
+      "design": "Honoring Veterans, photographed 2021",
+      "standard": false,
+      "recentPhotoDate": "2021-02-08 17:26:46"
     },
     {
       "id": "california-443e467bfa70.jpg",
@@ -2246,7 +2462,8 @@ const PLATE_IMAGES = {
       "sha256": "e57bc0392bdf17c706581f0c506a6f476eb3e46f9ae63cec53d8a3aa603ff43c",
       "designKey": "california-exempt",
       "design": "Exempt",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": "2016-04-23"
     },
     {
       "id": "california-e48c7f345e9c.jpg",
@@ -2266,7 +2483,8 @@ const PLATE_IMAGES = {
       "sha256": "2949284708ca8ceaa8753c51cb4f6e14f28957b619b658a922dc513bc42b91bd",
       "designKey": "california-historical-issue-1969",
       "design": "Historical issue 1969",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "california-bca4f50ae1ef.jpg",
@@ -2286,7 +2504,8 @@ const PLATE_IMAGES = {
       "sha256": "5393e395dd336366eaeea6fb73e95bcde05adb36627589395b5c625a010896b9",
       "designKey": "california-historical-issue-1956",
       "design": "Historical issue 1956",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "california-8cb51f0bc428.jpg",
@@ -2306,7 +2525,8 @@ const PLATE_IMAGES = {
       "sha256": "75c5d4169a2a332064262e078ba3ce6b980352e364fc055549565fd644c8cf22",
       "designKey": "california-1951-base",
       "design": "1951 base",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "california-df3e23d84832.jpg",
@@ -2326,7 +2546,8 @@ const PLATE_IMAGES = {
       "sha256": "f07c0b78af7cb5c96c82abde31a3853b87f5cb5b28cd6fd18d63054d1ef64bae",
       "designKey": "california-historical-issue-1947",
       "design": "Historical issue 1947",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "california-cce98c6efc16.jpg",
@@ -2346,7 +2567,8 @@ const PLATE_IMAGES = {
       "sha256": "0f7f6bef0727389a4d3ff44b5d87db8c3f82ac7f1af6687385db993c2d766b19",
       "designKey": "california-1945-base",
       "design": "1945 base",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "california-3fd7d10840c5.jpg",
@@ -2366,7 +2588,8 @@ const PLATE_IMAGES = {
       "sha256": "c91bc67076ab518ee43b82e6a9f09f05e8d0445962dc9e296d2f7bc51e9393f3",
       "designKey": "california-historical-issue-1940",
       "design": "Historical issue 1940",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "california-ed4af7284f1e.jpg",
@@ -2386,7 +2609,8 @@ const PLATE_IMAGES = {
       "sha256": "e91dcb8337244351346be917df4205b9606eb126af97d2e43131f3755be66c7f",
       "designKey": "california-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "california-9522e0cce7a6.jpg",
@@ -2406,7 +2630,8 @@ const PLATE_IMAGES = {
       "sha256": "f5e532df522bb7d45b6303840b9118bcbf823955ab58540dccd964e5cd9f69c5",
       "designKey": "california-historical-issue-1936",
       "design": "Historical issue 1936",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "california-90791d9aa6e4.jpg",
@@ -2426,7 +2651,8 @@ const PLATE_IMAGES = {
       "sha256": "a295b84df28d2f9b44191e63f5d825a81551c0f882389683473e713f5f53960d",
       "designKey": "california-historical-issue-1935",
       "design": "Historical issue 1935",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "california-023dfd0aa482.jpg",
@@ -2446,7 +2672,8 @@ const PLATE_IMAGES = {
       "sha256": "d1db883b6250317ef36eb0729707789cc3ba250a723184de14fac88eab943ce8",
       "designKey": "california-historical-issue-1934",
       "design": "Historical issue 1934",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "california-02e1c3ed594a.jpg",
@@ -2466,7 +2693,8 @@ const PLATE_IMAGES = {
       "sha256": "5b106edcb3066146b50104afb681ec215292f2c027048d37d32c206c0947889c",
       "designKey": "california-historical-issue-1933",
       "design": "Historical issue 1933",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "california-621b731a71a6.jpg",
@@ -2486,7 +2714,8 @@ const PLATE_IMAGES = {
       "sha256": "d1182fec28c6699d30f409a705cac1e120f9026548302a3833a607b77d596304",
       "designKey": "california-historical-issue-1932",
       "design": "Historical issue 1932",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "california-35adf71ed6f8.jpg",
@@ -2506,7 +2735,8 @@ const PLATE_IMAGES = {
       "sha256": "5f3315e64af16dea579cfa703e5a53420ac6521481b8fafd8ca811da22a44820",
       "designKey": "california-historical-issue-1930",
       "design": "Historical issue 1930",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "california-31f4a4fa4c33.jpg",
@@ -2526,7 +2756,8 @@ const PLATE_IMAGES = {
       "sha256": "be3c93ea359b67a79b3ff850cde3d3f923d4eb26f9c6dfd33a762108fc5adef9",
       "designKey": "california-historical-issue-1929",
       "design": "Historical issue 1929",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Colorado": [
@@ -2548,7 +2779,8 @@ const PLATE_IMAGES = {
       "sha256": "23a8d048a29fd5f27dcb2986b5ca05643ecdbde67db33d5318cba8506c6084ac",
       "designKey": "colorado-standard-passenger-green-mountains-base-2018-photograph",
       "design": "Standard passenger, green mountains base (2018 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2026-03-26 11:44:12"
     },
     {
       "id": "colorado-940555728636.jpg",
@@ -2568,7 +2800,8 @@ const PLATE_IMAGES = {
       "sha256": "089fdcfb35c08632d579429278faaffdda9de3e7b1485ae56898f882edd1c1bf",
       "designKey": "colorado-historical-issue-1969",
       "design": "Historical issue 1969",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-10040d0fc921.jpg",
@@ -2588,7 +2821,8 @@ const PLATE_IMAGES = {
       "sha256": "f9f094f8969ed91c96a61643189a038c3dfeab5a760e0ae540820e0ebe9fd0be",
       "designKey": "colorado-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-75e1a80701e2.jpg",
@@ -2608,7 +2842,8 @@ const PLATE_IMAGES = {
       "sha256": "7431347c8fc2b54e9020a7b172c8f634148f6a4bead2c175018714c77f38306b",
       "designKey": "colorado-historical-issue-1966",
       "design": "Historical issue 1966",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-379553602ed1.jpg",
@@ -2628,7 +2863,8 @@ const PLATE_IMAGES = {
       "sha256": "d0e270be82d3a62d33d95078aab7db9fbff7c9c22c4d6a22afd96551a390cc63",
       "designKey": "colorado-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-historical.jpg",
@@ -2648,7 +2884,8 @@ const PLATE_IMAGES = {
       "sha256": "45d234a40fbf9ec8c1d375c63f2c43a6c56f054bed6e7d57341af063d19a3c88",
       "designKey": "colorado-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-1d29aabb0a26.jpg",
@@ -2668,7 +2905,8 @@ const PLATE_IMAGES = {
       "sha256": "62f3659a30c22b0e827dcac42021d3b1362d44b3e39b675163d9ad38956c2507",
       "designKey": "colorado-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-355b317e2b6b.jpg",
@@ -2688,7 +2926,8 @@ const PLATE_IMAGES = {
       "sha256": "bd3fe2289aad58ebb8445c118f7418998b19c8c4a74cb1cc600054590e921ca9",
       "designKey": "colorado-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-445f89a63ea2.jpg",
@@ -2708,7 +2947,8 @@ const PLATE_IMAGES = {
       "sha256": "3e1e4aacb3b75f1c03b0ca30f3a5627c98c003817cc368a94799092d95ee84fb",
       "designKey": "colorado-historical-issue-1956",
       "design": "Historical issue 1956",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-47cfb230145e.jpg",
@@ -2728,7 +2968,8 @@ const PLATE_IMAGES = {
       "sha256": "f448fe768917f6953d155426ff47b40ce7b472a20bd95d62db9b0371bb314be4",
       "designKey": "colorado-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-88f8eefdc8bf.jpg",
@@ -2748,7 +2989,8 @@ const PLATE_IMAGES = {
       "sha256": "7ca2944e4b229d599eee906c04a3472d2404118a0c5770bd393d6be8f5f4b95d",
       "designKey": "colorado-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-ceab75fc27e6.jpg",
@@ -2768,7 +3010,8 @@ const PLATE_IMAGES = {
       "sha256": "4bfb9bba4fe5b16860da9ab0ed916e3771a6147c6e8123ce4cbc3573621fcde3",
       "designKey": "colorado-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-d8191c619983.jpg",
@@ -2788,7 +3031,8 @@ const PLATE_IMAGES = {
       "sha256": "d96a93621c6bac9ff8ca60a98a0656712cd9654340140afaf18f238191c8983a",
       "designKey": "colorado-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-3367b7cb0499.jpg",
@@ -2808,7 +3052,8 @@ const PLATE_IMAGES = {
       "sha256": "6ab78c5b98a3b92e3fb157166311f79a18f1bcfe5c018b111b8d298c728a34fe",
       "designKey": "colorado-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-578813f68272.jpg",
@@ -2828,7 +3073,8 @@ const PLATE_IMAGES = {
       "sha256": "77cb10341db4139577ed422cfb7849cd9a19a17c700f2b85b9a7eba38df9f36f",
       "designKey": "colorado-historical-issue-1948",
       "design": "Historical issue 1948",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-e374ee403596.jpg",
@@ -2848,7 +3094,8 @@ const PLATE_IMAGES = {
       "sha256": "529d0087960f68f39128d74afb882dfdb4c4da4318a30e615e3c8404d60f3a68",
       "designKey": "colorado-historical-issue-1947",
       "design": "Historical issue 1947",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-9d73f39c25a2.jpg",
@@ -2868,7 +3115,8 @@ const PLATE_IMAGES = {
       "sha256": "92d031ba137f4a8d4c8f0f953d1901b68592699b59b4b71c07b27b2e4b184157",
       "designKey": "colorado-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-bd49c1e784bc.jpg",
@@ -2888,7 +3136,8 @@ const PLATE_IMAGES = {
       "sha256": "bcd4a3d6a3c9928fa7c0a4c12b9d9dce68bce3a2f2a06491b56b2cacdf680274",
       "designKey": "colorado-historical-issue-1945",
       "design": "Historical issue 1945",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-cd502c540de6.jpg",
@@ -2908,7 +3157,8 @@ const PLATE_IMAGES = {
       "sha256": "7c177809b3ee9139bf3e022b9e5f4d95b585ac27ef737966b7bf7b2dc8bd7dde",
       "designKey": "colorado-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-43d80105493a.jpg",
@@ -2928,7 +3178,8 @@ const PLATE_IMAGES = {
       "sha256": "e90296f205e93a3cadfe13164eb7b3977cff44637a82f2ed90e137df0909a254",
       "designKey": "colorado-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-7508f71cefa2.jpg",
@@ -2948,7 +3199,8 @@ const PLATE_IMAGES = {
       "sha256": "4279657df44b01112c50c4c25527c7e7bfac005eba6cf15f4ff336bb3ee0c83a",
       "designKey": "colorado-historical-issue-1937",
       "design": "Historical issue 1937",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-348af3b9fca3.jpg",
@@ -2968,7 +3220,8 @@ const PLATE_IMAGES = {
       "sha256": "40c8fa1c76de573c7bc3a247a24f871c164f6c9f71c02c71cf28b2f4534d3eb6",
       "designKey": "colorado-historical-issue-1936",
       "design": "Historical issue 1936",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-96b55c17fe38.jpg",
@@ -2988,7 +3241,8 @@ const PLATE_IMAGES = {
       "sha256": "9eb41f7dfe73d4f87e08fab6662d4e38ad81739f3bc0539de1d6e42a0b543bcc",
       "designKey": "colorado-historical-issue-1935",
       "design": "Historical issue 1935",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-b84349e8cee7.jpg",
@@ -3008,7 +3262,8 @@ const PLATE_IMAGES = {
       "sha256": "e927ba73942d4690caa3a0c2f996324eb3e156722a66f740a27f3fa55e86286d",
       "designKey": "colorado-historical-issue-1933",
       "design": "Historical issue 1933",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-ae223ff94b67.jpg",
@@ -3028,7 +3283,8 @@ const PLATE_IMAGES = {
       "sha256": "994e8bcc8f3dc8ac480903f50bcf5de9cd8c21d04e556b0fc6803bf97b1d99b8",
       "designKey": "colorado-historical-issue-1931",
       "design": "Historical issue 1931",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-6a120df6a5c2.jpg",
@@ -3048,7 +3304,8 @@ const PLATE_IMAGES = {
       "sha256": "75f1e1a144504dbb8ad8365359b17019276e10f13de8e0228cd0ba520834ae53",
       "designKey": "colorado-historical-issue-1930",
       "design": "Historical issue 1930",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-34f6e54a27a0.jpg",
@@ -3068,7 +3325,8 @@ const PLATE_IMAGES = {
       "sha256": "303eaf99dddb80d29395d8e805b86b8dffbd7d7e220869f07947243d5e73a244",
       "designKey": "colorado-historical-issue-1929",
       "design": "Historical issue 1929",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-baef5c2e1a72.jpg",
@@ -3088,7 +3346,8 @@ const PLATE_IMAGES = {
       "sha256": "ba2b15a79379af3816e1c03b36cf19b17cc3567ffc4ecc766859c08607031f36",
       "designKey": "colorado-historical-issue-1927",
       "design": "Historical issue 1927",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "colorado-09bc248efb18.jpg",
@@ -3108,7 +3367,8 @@ const PLATE_IMAGES = {
       "sha256": "72da36f1cac30a4a97cda169bfc62c943d5920205fe82d3638cfd5773e27d612",
       "designKey": "colorado-historical-issue-1926",
       "design": "Historical issue 1926",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Connecticut": [
@@ -3130,7 +3390,8 @@ const PLATE_IMAGES = {
       "sha256": "e5cc7ee019b173d32f280d7b8593643f178aefc53d4f61835fc70948cd8bd2cc",
       "designKey": "connecticut-standard-passenger-blue-gradient-base-2004-photograph",
       "design": "Standard passenger, blue gradient base (2004 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "connecticut-371622a9323b.jpg",
@@ -3150,7 +3411,8 @@ const PLATE_IMAGES = {
       "sha256": "644ac7d6c4b90e2e57234698441720bf72708cfa2e64ad241dc906f30297ef27",
       "designKey": "connecticut-fire-apparatus-sample",
       "design": "Fire Apparatus sample",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "connecticut-97346f12791f.jpg",
@@ -3170,7 +3432,8 @@ const PLATE_IMAGES = {
       "sha256": "03d4de6e39fcccde4471c162ba50a0bad2da300984fe0731deda7b3a5b14eca2",
       "designKey": "connecticut-undated-blue-base-1967-renewal",
       "design": "Undated blue base, 1967 renewal",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "connecticut-868ca26d94bd.jpg",
@@ -3190,7 +3453,8 @@ const PLATE_IMAGES = {
       "sha256": "37c0d6214c517bb098901d5cdab1adaa62791255ca4d03c8c5417b596ab2b745",
       "designKey": "connecticut-undated-gray-base-1938-renewal",
       "design": "Undated gray base, 1938 renewal",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "connecticut-fb761cf6498f.jpg",
@@ -3210,7 +3474,8 @@ const PLATE_IMAGES = {
       "sha256": "d1b1dd12421798710742c64c9a20a7d4297ad0e13786157d69b144bb6a43cfd9",
       "designKey": "connecticut-historical-issue-1936",
       "design": "Historical issue 1936",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "connecticut-5ef20c843a75.jpg",
@@ -3230,7 +3495,8 @@ const PLATE_IMAGES = {
       "sha256": "003af085a8ddf27e2bccd6cb077b6a5279a05df83eb6a7a696783b3836a0243a",
       "designKey": "connecticut-historical-issue-1933",
       "design": "Historical issue 1933",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "connecticut-dfb1eb83f2a0.jpg",
@@ -3250,7 +3516,8 @@ const PLATE_IMAGES = {
       "sha256": "58b3fd98e5cb95b64ea19c03164ee1d239a4b90474ed86784648312c47833700",
       "designKey": "connecticut-historical-issue-1927",
       "design": "Historical issue 1927",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "connecticut-b6c59c995741.jpg",
@@ -3270,7 +3537,8 @@ const PLATE_IMAGES = {
       "sha256": "2ea86435d067f59b1ad92da40547eef397686d15d6266514716ae4d39627af60",
       "designKey": "connecticut-historical-issue-1923",
       "design": "Historical issue 1923",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "connecticut-d8ddb557ad64.jpg",
@@ -3290,7 +3558,8 @@ const PLATE_IMAGES = {
       "sha256": "cf2424eebd993972e7356444d5c91a5ef7f801a2750ba6178c6eb346cc4e45db",
       "designKey": "connecticut-historical-issue-1922",
       "design": "Historical issue 1922",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "connecticut-87110f1c2b8f.jpg",
@@ -3310,7 +3579,8 @@ const PLATE_IMAGES = {
       "sha256": "7d1135cb224ffdf0e349ddd2370866144fbd208aa7c5c10d6d42136e9a2d92b5",
       "designKey": "connecticut-historical-issue-1921",
       "design": "Historical issue 1921",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "connecticut-79befddbbfe1.jpg",
@@ -3330,7 +3600,8 @@ const PLATE_IMAGES = {
       "sha256": "5ac51ba5e5f89516b8d4711fe10a03b3ee525485140780c7883a273a34ebc46d",
       "designKey": "connecticut-historical-issue-1920",
       "design": "Historical issue 1920",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "connecticut-850b75c818c0.jpg",
@@ -3350,7 +3621,8 @@ const PLATE_IMAGES = {
       "sha256": "e4793da284d454bbab04f13401290bdfddd55391c2a583e16e6cdc823b64048a",
       "designKey": "connecticut-historical-issue-1919",
       "design": "Historical issue 1919",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "connecticut-5f06641b1f1d.jpg",
@@ -3370,7 +3642,8 @@ const PLATE_IMAGES = {
       "sha256": "f5d2ef489c763a36c8d84ddbd1796eb4be7016a8993877aeeb30826555a5d57e",
       "designKey": "connecticut-historical-issue-1918",
       "design": "Historical issue 1918",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "connecticut-8269486f3ff7.jpg",
@@ -3390,7 +3663,8 @@ const PLATE_IMAGES = {
       "sha256": "4d7046d9b22b3933edb5e75c273817f5d02df6b89e1a8e7932f2bb11c43b7727",
       "designKey": "connecticut-historical-issue-1916",
       "design": "Historical issue 1916",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Delaware": [
@@ -3412,7 +3686,8 @@ const PLATE_IMAGES = {
       "sha256": "7ed55e2bf0ba94872c49384e33eadf5a963b4768c5969b3594881393e5cf45d3",
       "designKey": "delaware-standard-passenger-blue-gold-first-state-base-2013-photograph",
       "design": "Standard passenger, blue/gold First State base (2013 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2012-06-06"
     },
     {
       "id": "delaware-267fd361eb27.jpg",
@@ -3432,7 +3707,8 @@ const PLATE_IMAGES = {
       "sha256": "d07db69ae371cf0dd157dd58cc1c90822806c57cb29992e9d8bacaceb6237176",
       "designKey": "delaware-centennial-commemorative",
       "design": "Centennial commemorative",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "delaware-c23a1d590198.jpg",
@@ -3452,7 +3728,8 @@ const PLATE_IMAGES = {
       "sha256": "1f5d8b3859cae56842898dc3e8ea456966ec1fb7e0b2ffb3aa0f4c16681b70fb",
       "designKey": "delaware-historical-issue-1969",
       "design": "Historical issue 1969",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "delaware-3de58d1ea696.jpg",
@@ -3472,7 +3749,8 @@ const PLATE_IMAGES = {
       "sha256": "1b5cb81b0e76ccc1075ecd0b23cac88b43bb8be6a877c5e095cf4d84145e81f7",
       "designKey": "delaware-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "delaware-historical.jpg",
@@ -3492,7 +3770,8 @@ const PLATE_IMAGES = {
       "sha256": "54a2ab948d605bf9e081a7c0d63347430fef8cf0928a6e07841675d8916d5477",
       "designKey": "delaware-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "delaware-d2c1d3fd48ec.jpg",
@@ -3512,7 +3791,8 @@ const PLATE_IMAGES = {
       "sha256": "34963485685188f7da78fdc8cf5aaf929ad7351b9eb386d28a8ff5ae774e4c60",
       "designKey": "delaware-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "delaware-cdcff0aa728f.jpg",
@@ -3532,7 +3812,8 @@ const PLATE_IMAGES = {
       "sha256": "d75a6737fae3e319561940a6cd5d5bd3ddd90579b987c574f8d4b0d9cea0d83b",
       "designKey": "delaware-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "delaware-88a686da5b36.jpg",
@@ -3552,7 +3833,8 @@ const PLATE_IMAGES = {
       "sha256": "bdd00d538d2b67869cb7bd7a7dba06aaac0f93e46eed3fd3716f20c959854f16",
       "designKey": "delaware-historical-issue-1939",
       "design": "Historical issue 1939",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "delaware-95ece0df422f.jpg",
@@ -3572,7 +3854,8 @@ const PLATE_IMAGES = {
       "sha256": "bf22b23029c8f7e22b6de356d5dcd85cdf810755a29255158e77cdfdcf9e1e87",
       "designKey": "delaware-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "delaware-67d3c7ac8f65.jpg",
@@ -3592,7 +3875,8 @@ const PLATE_IMAGES = {
       "sha256": "5d4953e6ab89a70cf05d9fcd2f742ca6bd14d257e5b5be232aa1e5b502a56210",
       "designKey": "delaware-historical-issue-1931",
       "design": "Historical issue 1931",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "delaware-a13074577daa.jpg",
@@ -3612,7 +3896,8 @@ const PLATE_IMAGES = {
       "sha256": "e4d76492186582b2401bedfd6455109158d5fc77c64765784d3a852a544c355b",
       "designKey": "delaware-historical-issue-1921",
       "design": "Historical issue 1921",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Florida": [
@@ -3634,7 +3919,218 @@ const PLATE_IMAGES = {
       "sha256": "3bc7b6f6d3b3f886ab74167762ec4fa70aebd4646a9bfd6065c73457092a4b4a",
       "designKey": "florida-standard-passenger-orange-map-base-2026-photograph",
       "design": "Standard passenger, orange map base (2026 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2026-02-06 14:49:05"
+    },
+    {
+      "id": "florida-recent-955b368a7723.jpg",
+      "src": "./license_plate_assets/florida-recent-955b368a7723.jpg",
+      "era": "modern",
+      "kind": "photograph",
+      "title": "2017FloridaChildren.jpg",
+      "author": "Jamesashmore",
+      "source": "https://commons.wikimedia.org/wiki/File:2017FloridaChildren.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/9/9d/2017FloridaChildren.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 241,
+      "sha256": "64a726f8d3ee6a04f8e34a24122e3e84c8144678d11632d93ef59a536a3d5cd8",
+      "designKey": "florida-invest-in-children-2017-renewal",
+      "design": "Invest in Children, 2017 renewal",
+      "standard": false,
+      "recentPhotoDate": "2022-11-07"
+    },
+    {
+      "id": "florida-recent-55775554e759.jpg",
+      "src": "./license_plate_assets/florida-recent-55775554e759.jpg",
+      "era": "modern",
+      "kind": "photograph",
+      "title": "2021FloridaIGWT.jpg",
+      "author": "Jamesashmore",
+      "source": "https://commons.wikimedia.org/wiki/File:2021FloridaIGWT.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/c/cc/2021FloridaIGWT.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 246,
+      "sha256": "b8eebeb6d947dad9acc12a321dc1c7d8acf6b9d9dc48ded9a5ad54a60c531950",
+      "designKey": "florida-in-god-we-trust-2021-renewal",
+      "design": "In God We Trust, 2021 renewal",
+      "standard": false,
+      "recentPhotoDate": "2022-11-07"
+    },
+    {
+      "id": "florida-recent-8054c1ee816d.jpg",
+      "src": "./license_plate_assets/florida-recent-8054c1ee816d.jpg",
+      "era": "modern",
+      "kind": "photograph",
+      "title": "Florida 2018 Go Fishing license plate.jpg",
+      "author": "Dickelbers",
+      "source": "https://commons.wikimedia.org/wiki/File:Florida_2018_Go_Fishing_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/0/0f/Florida_2018_Go_Fishing_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 162,
+      "sha256": "0ff1909b07d4efa7cd65b47d2fe4b84165c836d61a0d73692197bde8e216cb66",
+      "designKey": "florida-go-fishing-photographed-2018",
+      "design": "Go Fishing, photographed 2018",
+      "standard": false,
+      "recentPhotoDate": "2018-03-17 16:04:29"
+    },
+    {
+      "id": "florida-recent-f1af02274523.jpg",
+      "src": "./license_plate_assets/florida-recent-f1af02274523.jpg",
+      "era": "modern",
+      "kind": "photograph",
+      "title": "Florida 2018 Horse Country license plate.jpg",
+      "author": "Dickelbers",
+      "source": "https://commons.wikimedia.org/wiki/File:Florida_2018_Horse_Country_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/8/84/Florida_2018_Horse_Country_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 237,
+      "sha256": "05aa77dfd9f1f376116981770845876986d12b20f092ec0a9eed667a2bd304b6",
+      "designKey": "florida-horse-country-photographed-2018",
+      "design": "Horse Country, photographed 2018",
+      "standard": false,
+      "recentPhotoDate": "2018-03-17 16:01:37"
+    },
+    {
+      "id": "florida-recent-075dad137435.jpg",
+      "src": "./license_plate_assets/florida-recent-075dad137435.jpg",
+      "era": "modern",
+      "kind": "photograph",
+      "title": "Florida 2018 Marine Corps license plate - UNI8A.jpg",
+      "author": "Dickelbers",
+      "source": "https://commons.wikimedia.org/wiki/File:Florida_2018_Marine_Corps_license_plate_-_UNI8A.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/2/2c/Florida_2018_Marine_Corps_license_plate_-_UNI8A.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 219,
+      "sha256": "9e3a3705bebcaa9a5841c95bb24527a73f99115f610b2f295f4488692d6c4711",
+      "designKey": "florida-marine-corps-photographed-2018",
+      "design": "Marine Corps, photographed 2018",
+      "standard": false,
+      "recentPhotoDate": "2018-03-17 16:08:58"
+    },
+    {
+      "id": "florida-recent-8acac5748547.jpg",
+      "src": "./license_plate_assets/florida-recent-8acac5748547.jpg",
+      "era": "modern",
+      "kind": "photograph",
+      "title": "FloridaDVPlate.jpg",
+      "author": "Jamesashmore",
+      "source": "https://commons.wikimedia.org/wiki/File:FloridaDVPlate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/e/e8/FloridaDVPlate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 221,
+      "sha256": "c79c192f2845da344cd0908d67ef749168ee8f1b3882f5d58d57b9ee91d68cf0",
+      "designKey": "florida-disabled-veteran-photographed-2023",
+      "design": "Disabled Veteran, photographed 2023",
+      "standard": false,
+      "recentPhotoDate": "2023-02-25"
+    },
+    {
+      "id": "florida-recent-65ce2d9f0f4a.jpg",
+      "src": "./license_plate_assets/florida-recent-65ce2d9f0f4a.jpg",
+      "era": "modern",
+      "kind": "photograph",
+      "title": "FloridaEndlessSummerPlate.jpg",
+      "author": "Jamesashmore",
+      "source": "https://commons.wikimedia.org/wiki/File:FloridaEndlessSummerPlate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/a/a4/FloridaEndlessSummerPlate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 252,
+      "sha256": "1495b6da2ecf79e71fd0f00983c1333f4f9316d563503323bd5d1a9d03656aff",
+      "designKey": "florida-endless-summer-photographed-2023",
+      "design": "Endless Summer, photographed 2023",
+      "standard": false,
+      "recentPhotoDate": "2023-02-25"
+    },
+    {
+      "id": "florida-recent-7010662e4ac8.jpg",
+      "src": "./license_plate_assets/florida-recent-7010662e4ac8.jpg",
+      "era": "modern",
+      "kind": "photograph",
+      "title": "FloridaIndianRiverLagoonPlate.jpg",
+      "author": "Jamesashmore",
+      "source": "https://commons.wikimedia.org/wiki/File:FloridaIndianRiverLagoonPlate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/9/98/FloridaIndianRiverLagoonPlate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 236,
+      "sha256": "ed6c6e3ac0acdbddcb8c805dbcfb4b6fbe5a3ce1a8caa277def8897c8dc779c7",
+      "designKey": "florida-indian-river-lagoon-2015-renewal",
+      "design": "Indian River Lagoon, 2015 renewal",
+      "standard": false,
+      "recentPhotoDate": "2023-02-25"
+    },
+    {
+      "id": "florida-recent-090ff96a46a9.jpg",
+      "src": "./license_plate_assets/florida-recent-090ff96a46a9.jpg",
+      "era": "modern",
+      "kind": "photograph",
+      "title": "FloridaParatrooperPlate.jpg",
+      "author": "Jamesashmore",
+      "source": "https://commons.wikimedia.org/wiki/File:FloridaParatrooperPlate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/f/f0/FloridaParatrooperPlate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 230,
+      "sha256": "cba9497f44a05d65dfde8f7c378bfbfcbbbfcc817f34d775ba4588598fcb7984",
+      "designKey": "florida-us-paratrooper-photographed-2023",
+      "design": "US Paratrooper, photographed 2023",
+      "standard": false,
+      "recentPhotoDate": "2023-02-25"
+    },
+    {
+      "id": "florida-recent-3d99dd543627.jpg",
+      "src": "./license_plate_assets/florida-recent-3d99dd543627.jpg",
+      "era": "modern",
+      "kind": "photograph",
+      "title": "FloridaSupportLawEnforcement.jpg",
+      "author": "Jamesashmore",
+      "source": "https://commons.wikimedia.org/wiki/File:FloridaSupportLawEnforcement.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/0/0f/FloridaSupportLawEnforcement.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 252,
+      "sha256": "5dd80dcf6a23fec42b614e3888832e48b8aac1ef9b534f3b4c1c627bb463cac2",
+      "designKey": "florida-support-law-enforcement-2013-renewal",
+      "design": "Support Law Enforcement, 2013 renewal",
+      "standard": false,
+      "recentPhotoDate": "2022-09-10"
     },
     {
       "id": "florida-f08cc7b33751.jpg",
@@ -3654,7 +4150,8 @@ const PLATE_IMAGES = {
       "sha256": "dd59fad332af7bba03a6c127c6f458ecc20ca0ef6359e300fdc50268f96cb2b3",
       "designKey": "florida-protect-wild-dolphins",
       "design": "Protect Wild Dolphins",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": "2018-03-17 16:03:40"
     },
     {
       "id": "florida-36f5279daf77.jpg",
@@ -3674,7 +4171,8 @@ const PLATE_IMAGES = {
       "sha256": "71f7bf0583559c93e48b14b2d729e3d5740d46e1825a85dd694d8943ee59417b",
       "designKey": "florida-nova-southeastern-university",
       "design": "Nova Southeastern University",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": "2018-03-17 14:30:02"
     },
     {
       "id": "florida-e8e29c8fdb56.jpg",
@@ -3694,7 +4192,8 @@ const PLATE_IMAGES = {
       "sha256": "08a6baa4333c300b0298dc8c9ccd28e568e646f3008ec45a9ac6d9d77640f8e1",
       "designKey": "florida-historical-issue-1969",
       "design": "Historical issue 1969",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-d0dee0ed056c.jpg",
@@ -3714,7 +4213,8 @@ const PLATE_IMAGES = {
       "sha256": "222f7a98bbd42457246ed6f4b81c484ba41597ab3bb89d8798cdaed11b3f2503",
       "designKey": "florida-historical-issue-1968",
       "design": "Historical issue 1968",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-45d4b38a7776.jpg",
@@ -3734,7 +4234,8 @@ const PLATE_IMAGES = {
       "sha256": "7dfd394dc72c553d7b105a36e511c709a5db3eeb1b8dc0661d21d6361731e842",
       "designKey": "florida-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-4cc952062358.jpg",
@@ -3754,7 +4255,8 @@ const PLATE_IMAGES = {
       "sha256": "5101ccd833d3b9ff63748a06e9c61c68bbae32cb637a2d1d7cac3b0778c585eb",
       "designKey": "florida-historical-issue-1966",
       "design": "Historical issue 1966",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-ad87fc4a842f.jpg",
@@ -3774,7 +4276,8 @@ const PLATE_IMAGES = {
       "sha256": "c54b564387940554f87875f11e2489f01cb9a6d89c8dee25c7118f0fcfff1083",
       "designKey": "florida-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-7418f44e8276.jpg",
@@ -3794,7 +4297,8 @@ const PLATE_IMAGES = {
       "sha256": "85af750235cc0ef059f51880d6d30ba0f21547130c660c27c593d13f3c0975e3",
       "designKey": "florida-historical-issue-1964",
       "design": "Historical issue 1964",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-62e85aa05fe6.jpg",
@@ -3814,7 +4318,8 @@ const PLATE_IMAGES = {
       "sha256": "f87936e0e323ac9d0aeade155cd687600233e57bf4d61ca41cb1f814036b3533",
       "designKey": "florida-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-b4d8b55f65af.jpg",
@@ -3834,7 +4339,8 @@ const PLATE_IMAGES = {
       "sha256": "9f959e1cc84628500289976752fb6dc7d745a718ea9a0c98152b32b2df09d251",
       "designKey": "florida-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-0b0a2cc0e460.jpg",
@@ -3854,7 +4360,8 @@ const PLATE_IMAGES = {
       "sha256": "6f692779bb2d3711e76e9429e0ed6b15f28bc65913f6fa1b193ef0d8fdb5181c",
       "designKey": "florida-historical-issue-1961",
       "design": "Historical issue 1961",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-historical.jpg",
@@ -3874,7 +4381,8 @@ const PLATE_IMAGES = {
       "sha256": "46bcb6d78b8ec5a2e7d9c0c600079e01f04816d760cffcb0b11d227a7f5f436e",
       "designKey": "florida-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-5713b80621a7.jpg",
@@ -3894,7 +4402,8 @@ const PLATE_IMAGES = {
       "sha256": "ccbc16f8d55174b84080fdddfdcd1ed72f929acf3a9f846fefd0f6701bf9aad3",
       "designKey": "florida-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-6b6627bd7192.jpg",
@@ -3914,7 +4423,8 @@ const PLATE_IMAGES = {
       "sha256": "ef4c9be322a7d1efd5b48f5e9e9c05289a9bd84c2529147235ef6abb23b432c9",
       "designKey": "florida-historical-issue-1958",
       "design": "Historical issue 1958",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-fc9b9120699c.jpg",
@@ -3934,7 +4444,8 @@ const PLATE_IMAGES = {
       "sha256": "63629cddb608b1849d3904ce571c649e02f47080aebe5804b8b58d45ef45320c",
       "designKey": "florida-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-a1a885db8031.jpg",
@@ -3954,7 +4465,8 @@ const PLATE_IMAGES = {
       "sha256": "015e0c13cc4f31e211f2d6a0b1fe582d77767a45dc1ae0e8c09e4f6bb2416ad3",
       "designKey": "florida-historical-issue-1956",
       "design": "Historical issue 1956",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-e839908d842e.jpg",
@@ -3974,7 +4486,8 @@ const PLATE_IMAGES = {
       "sha256": "3d5223de5185c880adfd59f02bf147d01ac9fef8538376ca1d478eaba83b321a",
       "designKey": "florida-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-476a06b06276.jpg",
@@ -3994,7 +4507,8 @@ const PLATE_IMAGES = {
       "sha256": "adc063d9b64fadb771be5073e6159e56f274f6efe867a27a6bce619923f7a17d",
       "designKey": "florida-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-a220cd8f08ad.jpg",
@@ -4014,7 +4528,8 @@ const PLATE_IMAGES = {
       "sha256": "77a1667f06c0ff11f1ff9e1be0ea480eecf7eee8b808f0f495354dff4629076f",
       "designKey": "florida-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-85c17c195207.jpg",
@@ -4034,7 +4549,8 @@ const PLATE_IMAGES = {
       "sha256": "cb5ca1b80537ddeafe50ce52d5fc8133535bd37aeb8e8011d5d32b731f555de3",
       "designKey": "florida-historical-issue-1952",
       "design": "Historical issue 1952",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-ec8e441bbaa3.jpg",
@@ -4054,7 +4570,8 @@ const PLATE_IMAGES = {
       "sha256": "5b45e7593a6614f3e34122226bb050d1af8a74c67174d7f22d33a3af8ca518e2",
       "designKey": "florida-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-d0da98e31127.jpg",
@@ -4074,7 +4591,8 @@ const PLATE_IMAGES = {
       "sha256": "d82b6fd95c3359b1b74f1b6a5f675333f36d27f329ac0de2a29490693ebfcc9e",
       "designKey": "florida-historical-issue-1950",
       "design": "Historical issue 1950",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-2b68c976136b.jpg",
@@ -4094,7 +4612,8 @@ const PLATE_IMAGES = {
       "sha256": "51648641f9a3241c63a3fe82c9ee84b018e29ad3d1868e1fb0c5b81d73e48608",
       "designKey": "florida-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-ddd1aabe38b3.jpg",
@@ -4114,7 +4633,8 @@ const PLATE_IMAGES = {
       "sha256": "62e86ead2c6eeca3b0df5c393784849efc97db3c70c11e12b9e73239c8729e89",
       "designKey": "florida-historical-issue-1948",
       "design": "Historical issue 1948",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-8f4a00b50c73.jpg",
@@ -4134,7 +4654,8 @@ const PLATE_IMAGES = {
       "sha256": "d3111639faa5890bb766b5eb0f30fa42b9bf2ddb95717dccff27607b6fdeeb34",
       "designKey": "florida-historical-issue-1947",
       "design": "Historical issue 1947",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-2dc5b9291367.jpg",
@@ -4154,7 +4675,8 @@ const PLATE_IMAGES = {
       "sha256": "aec824836d42dbd3b08658e62fb8e8f4afbce15cf121df5ee286435a707b1bb6",
       "designKey": "florida-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-bc947ef7c20f.jpg",
@@ -4174,7 +4696,8 @@ const PLATE_IMAGES = {
       "sha256": "1e461eab702e8771a1d3bd730305e8c359ac22a0e832ac4d68c5619c6c18f2e1",
       "designKey": "florida-historical-issue-1945",
       "design": "Historical issue 1945",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-9011b413d9ed.jpg",
@@ -4194,7 +4717,8 @@ const PLATE_IMAGES = {
       "sha256": "d99ecc6b3f9da101f060d953ea2af57c67839990ec90bf6ba0c57d4bfb24f3d2",
       "designKey": "florida-historical-issue-1944",
       "design": "Historical issue 1944",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "florida-536e7fd5bf20.jpg",
@@ -4214,7 +4738,8 @@ const PLATE_IMAGES = {
       "sha256": "78303acdee8e15ec4e587956e9bdb5cabc339f623da6d4bf5415f7e0073a13d9",
       "designKey": "florida-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Georgia": [
@@ -4236,7 +4761,8 @@ const PLATE_IMAGES = {
       "sha256": "b5fb5f8b6ee27cef6e5be273b22ba4d1643b487ac7cc1079aa24db99d1acf446",
       "designKey": "georgia-standard-passenger-white-base-2024-photograph",
       "design": "Standard passenger, white base (2024 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2024-09-30 18:06:58"
     },
     {
       "id": "georgia-1e179c9f9e33.jpg",
@@ -4256,7 +4782,8 @@ const PLATE_IMAGES = {
       "sha256": "3606528dfdcd79bed1fd1c3237171eae249334012b2312a7419f9cd37ca1a545",
       "designKey": "georgia-peach-county-base-2011-photograph",
       "design": "Peach/county base, 2011 photograph",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2012-07-01 09:05:12"
     },
     {
       "id": "georgia-687e4c6a73ef.jpg",
@@ -4276,7 +4803,8 @@ const PLATE_IMAGES = {
       "sha256": "cd68f7615f1ee60d1b7f6a1d12965d64c279a0881c4727f393ddbd7f8588e367",
       "designKey": "georgia-family-member-serving",
       "design": "Family Member Serving (sample)",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-043fbff7dcaf.jpg",
@@ -4296,7 +4824,8 @@ const PLATE_IMAGES = {
       "sha256": "e29d793978c07396b4ee27695cb36e0a72aca2b64d7571bf19079ddee88b3b45",
       "designKey": "georgia-historical-issue-1969",
       "design": "Historical issue 1969",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-1585dbe9303b.jpg",
@@ -4316,7 +4845,8 @@ const PLATE_IMAGES = {
       "sha256": "4dd4d824996b0a2ff408faeb1097ec746836d4a3f2abf221dd403d4f81034348",
       "designKey": "georgia-historical-issue-1968",
       "design": "Historical issue 1968",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-d6ebce8ad812.jpg",
@@ -4336,7 +4866,8 @@ const PLATE_IMAGES = {
       "sha256": "bd50cd22b3315a3213317308edf516a117f0644ffb794643ef67dca52aec8056",
       "designKey": "georgia-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-6eecb085fe72.jpg",
@@ -4356,7 +4887,8 @@ const PLATE_IMAGES = {
       "sha256": "be1d35285cff65c11d817abaa05664faa2e1d226a0299cad30fdec375297e8ae",
       "designKey": "georgia-historical-issue-1966",
       "design": "Historical issue 1966",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-d74659878e5b.jpg",
@@ -4376,7 +4908,8 @@ const PLATE_IMAGES = {
       "sha256": "4bc66085fcbc2a7f07f98d1740e6fa3fbf539b949f47dbbde0098f324ba5d09c",
       "designKey": "georgia-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-9603329fa533.jpg",
@@ -4396,7 +4929,8 @@ const PLATE_IMAGES = {
       "sha256": "9386a9b25d243d527ec7dd9fb5627547912d52f45b752d29e4cc2799ed7366d5",
       "designKey": "georgia-historical-issue-1964",
       "design": "Historical issue 1964",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-8c0fc7fd6a51.jpg",
@@ -4416,7 +4950,8 @@ const PLATE_IMAGES = {
       "sha256": "8a2cdfc0575c360f61eba9c12f570dd4ce5aabd24e7f0d7492a9238f65a58137",
       "designKey": "georgia-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-c4348ff769e7.jpg",
@@ -4436,7 +4971,8 @@ const PLATE_IMAGES = {
       "sha256": "36e7d11d17829e9f7910cbfd42489477cbacee1ced76dacb1a10d54eeab32aed",
       "designKey": "georgia-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-4da7c8368b34.jpg",
@@ -4456,7 +4992,8 @@ const PLATE_IMAGES = {
       "sha256": "28842e1d8c44967152a8c3d8d0e41469ec33b407774cacf99bf9d0b7ff6bf96f",
       "designKey": "georgia-historical-issue-1961",
       "design": "Historical issue 1961",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-historical.jpg",
@@ -4476,7 +5013,8 @@ const PLATE_IMAGES = {
       "sha256": "18a3e127bc3d2879fcce6b7330598ea5289be7e034a28467512f8050d91a2e6e",
       "designKey": "georgia-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-bc54b11c99f3.jpg",
@@ -4496,7 +5034,8 @@ const PLATE_IMAGES = {
       "sha256": "06d4b8141e2f9a00078efb7abd585bc8aaf9ce287c76a01e04413800c4aa4c0d",
       "designKey": "georgia-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-8c0e196ce27e.jpg",
@@ -4516,7 +5055,8 @@ const PLATE_IMAGES = {
       "sha256": "d8520e73ce9d6bd0828eeae123273c26cd79d3ed8a99db3117185ff6cf004209",
       "designKey": "georgia-historical-issue-1958",
       "design": "Historical issue 1958",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-9f5e5e2a9c91.jpg",
@@ -4536,7 +5076,8 @@ const PLATE_IMAGES = {
       "sha256": "248c7fe0f8d2fd0746df884dc02f8f84300da26e07217a316f91394a9d0a5b8e",
       "designKey": "georgia-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-589e4bcdd82a.jpg",
@@ -4556,7 +5097,8 @@ const PLATE_IMAGES = {
       "sha256": "4ef78bdc6c3a4689d293d66b4b2c79dc6071a40a94b20e773e0b5cd87d361508",
       "designKey": "georgia-historical-issue-1956",
       "design": "Historical issue 1956",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-6047b6541fa7.jpg",
@@ -4576,7 +5118,8 @@ const PLATE_IMAGES = {
       "sha256": "c11fed45afbf318abbdac20220dc1f7e1bb961797c25d82953c3265c46993596",
       "designKey": "georgia-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-45a5638a2896.jpg",
@@ -4596,7 +5139,8 @@ const PLATE_IMAGES = {
       "sha256": "7a317c5b96273c37943a6e981399d000579cf3310d86c85655473dd3e727f46e",
       "designKey": "georgia-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-42037c70ae22.jpg",
@@ -4616,7 +5160,8 @@ const PLATE_IMAGES = {
       "sha256": "74e2b24a58f49707c4dff20e3db10571deb87f57cb123282224742d21d6afa2c",
       "designKey": "georgia-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-bc620abfde2b.jpg",
@@ -4636,7 +5181,8 @@ const PLATE_IMAGES = {
       "sha256": "20d339cc3126c618df3ad912b6480009d3a307b91e26a28be72568322663d646",
       "designKey": "georgia-historical-issue-1952",
       "design": "Historical issue 1952",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-68eaae984095.jpg",
@@ -4656,7 +5202,8 @@ const PLATE_IMAGES = {
       "sha256": "03f32d5708fd2177894cf5606acff737e359a46bd8fb12acab33001f04a53a43",
       "designKey": "georgia-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-054b42d38d50.jpg",
@@ -4676,7 +5223,8 @@ const PLATE_IMAGES = {
       "sha256": "2be2328b487a28f42271196367a5302fd2ca4298c3a0ec1d065d6fb497a82124",
       "designKey": "georgia-historical-issue-1950",
       "design": "Historical issue 1950",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-e8ebce26602a.jpg",
@@ -4696,7 +5244,8 @@ const PLATE_IMAGES = {
       "sha256": "682c45786bf72cd354098cf5b44169f48100a808a2a66411f207c5cc57c92601",
       "designKey": "georgia-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-e7fe44850563.jpg",
@@ -4716,7 +5265,8 @@ const PLATE_IMAGES = {
       "sha256": "b6b0c8798316e5eac2697e3b506b8ba7ac7309e025d08d4e0fb7107ea7ff54a6",
       "designKey": "georgia-historical-issue-1948",
       "design": "Historical issue 1948",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-1441bc52e4b7.jpg",
@@ -4736,7 +5286,8 @@ const PLATE_IMAGES = {
       "sha256": "93bb241213b1c4d4e039a34c87d621df91cd150b7a82b860c3e93302fa41f13f",
       "designKey": "georgia-historical-issue-1947",
       "design": "Historical issue 1947",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-52ab795e48e1.jpg",
@@ -4756,7 +5307,8 @@ const PLATE_IMAGES = {
       "sha256": "412120c4df6923fc53f4e6254dd6eb92ee4c9ea7fe9a4941aa688d150701852d",
       "designKey": "georgia-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-8ae073a70414.jpg",
@@ -4776,7 +5328,8 @@ const PLATE_IMAGES = {
       "sha256": "a82daf0f0f0d1b54dc78adf76bbf409e26ff44919f01ae69c0e6be89ad6789e4",
       "designKey": "georgia-historical-issue-1945",
       "design": "Historical issue 1945",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "georgia-c9ba1c9d734f.jpg",
@@ -4796,7 +5349,8 @@ const PLATE_IMAGES = {
       "sha256": "7209a5ee68a9856abae83f818ac6a343e48492ed75e3e44b364f3ae70b20d57a",
       "designKey": "georgia-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Hawaii": [
@@ -4818,7 +5372,8 @@ const PLATE_IMAGES = {
       "sha256": "9799103ec125699ad4507aaf21335f042e7ed6496d66a0edffb502ffd765255c",
       "designKey": "hawaii-standard-passenger-rainbow-base-2025-sample",
       "design": "Standard passenger, rainbow base (2025 sample)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2025-01"
     },
     {
       "id": "hawaii-48ea6811e2a6.jpg",
@@ -4838,7 +5393,8 @@ const PLATE_IMAGES = {
       "sha256": "47b7f0d62a38b1945e4e83e95a071a05d7a22425b110f3229d4e9104f69fb171",
       "designKey": "hawaii-historical-issue-1969",
       "design": "Historical issue 1969",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "hawaii-historical.jpg",
@@ -4858,7 +5414,8 @@ const PLATE_IMAGES = {
       "sha256": "897718b63d9e680c9f9c3fb01d682614fe8b9dbdc36b42cd8722470260c8c217",
       "designKey": "hawaii-historical-issue-1961",
       "design": "Historical issue 1961",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "hawaii-1af2477b2daa.jpg",
@@ -4878,7 +5435,8 @@ const PLATE_IMAGES = {
       "sha256": "c493fe8ec6f94608fae3cdc0d82fc5bceaf04026dfe091341af871d0cc2039ad",
       "designKey": "hawaii-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "hawaii-ec84a6d0943f.jpg",
@@ -4898,7 +5456,8 @@ const PLATE_IMAGES = {
       "sha256": "d64a8461fdce86e54e9209b35e2d9006b1f96d7b9ac6175ba3ff53a67fa427cc",
       "designKey": "hawaii-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "hawaii-0215b5b46525.jpg",
@@ -4918,7 +5477,8 @@ const PLATE_IMAGES = {
       "sha256": "2fc8167f3b7fb48c21984d45ee8de053e0a67bfc3a59161a935205ca05cbfeeb",
       "designKey": "hawaii-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "hawaii-5e01aec8b33d.jpg",
@@ -4938,7 +5498,8 @@ const PLATE_IMAGES = {
       "sha256": "72c2ad5aa963a0c6632c39e3f76ca498a8958dc70948d20c26a110070a7218d6",
       "designKey": "hawaii-historical-issue-1933",
       "design": "Historical issue 1933",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "hawaii-69be4a90b16d.jpg",
@@ -4958,7 +5519,8 @@ const PLATE_IMAGES = {
       "sha256": "ea8e99730588711f481903577a5d233bfde97d3a1680b45dd7c386f7ebcf0fd1",
       "designKey": "hawaii-historical-issue-1922",
       "design": "Historical issue 1922",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Idaho": [
@@ -4980,7 +5542,8 @@ const PLATE_IMAGES = {
       "sha256": "e36a02874d791db71506b647a677bf06fe3c6111e988b791658c1daca261afd3",
       "designKey": "idaho-standard-passenger-scenic-famous-potatoes-base-sample",
       "design": "Standard passenger, scenic Famous Potatoes base (sample)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2026-01-01"
     },
     {
       "id": "idaho-a43f04066603.jpg",
@@ -5000,7 +5563,8 @@ const PLATE_IMAGES = {
       "sha256": "932d33950ce455c5697c5bc2e3c84872f4aef0343d1e49314c8b73abbaf65a66",
       "designKey": "idaho-historical-issue-1968",
       "design": "Historical issue 1968",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "idaho-2f6c2005ca21.jpg",
@@ -5020,7 +5584,8 @@ const PLATE_IMAGES = {
       "sha256": "6cd977a095ab9ea117f2c0e19562824fe95db8d33a0d9d9f753ac12bfe4fa8e6",
       "designKey": "idaho-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "idaho-5a1ebcdd0619.jpg",
@@ -5040,7 +5605,8 @@ const PLATE_IMAGES = {
       "sha256": "a1024e8b3502c454760e9cf75a5a9209b0883bd66eb599877c815220dc8a045b",
       "designKey": "idaho-historical-issue-1966",
       "design": "Historical issue 1966",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "idaho-b4a9cab46cff.jpg",
@@ -5060,7 +5626,8 @@ const PLATE_IMAGES = {
       "sha256": "cb1f2c67c200b53d34c7da08908cc36157d2635837f8b76a5bdbbd5ec195d0ea",
       "designKey": "idaho-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "idaho-5bac5671b7fb.jpg",
@@ -5080,7 +5647,8 @@ const PLATE_IMAGES = {
       "sha256": "223a0b7003ec331c78465ea7c4647c339dd7be0c64a296e6f9d6612d37a152a5",
       "designKey": "idaho-historical-issue-1964",
       "design": "Historical issue 1964",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "idaho-02f5239a1f12.jpg",
@@ -5100,7 +5668,8 @@ const PLATE_IMAGES = {
       "sha256": "06a1ecf44bb86343788d601f61a46fc7fc3db1d75a4cb2c767f633f6f390e289",
       "designKey": "idaho-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "idaho-f3583b434876.jpg",
@@ -5120,7 +5689,8 @@ const PLATE_IMAGES = {
       "sha256": "97370b132b53312a53002155725dfe97060df0a4e3926d6c7e9db0272fa7e4e6",
       "designKey": "idaho-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "idaho-historical.jpg",
@@ -5140,7 +5710,8 @@ const PLATE_IMAGES = {
       "sha256": "7300f1b40041b2e4ad260513a95b79e21bcbc2c9266358fff7dad5981fdbde1a",
       "designKey": "idaho-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "idaho-c8bc018c8d4a.jpg",
@@ -5160,7 +5731,8 @@ const PLATE_IMAGES = {
       "sha256": "57d2972f6da069a2e1464de74eaccdc4b5d43035409838a72f9381d62791daad",
       "designKey": "idaho-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "idaho-29b7b8c6e714.jpg",
@@ -5180,7 +5752,8 @@ const PLATE_IMAGES = {
       "sha256": "ac0371de9c9feba9d4cec76b5f8c30056792a17e1884825abeeebeddf6833f8f",
       "designKey": "idaho-historical-issue-1958",
       "design": "Historical issue 1958",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "idaho-b08c4a09f4c7.jpg",
@@ -5200,7 +5773,8 @@ const PLATE_IMAGES = {
       "sha256": "3a5c871c722d1275d708636755abb53d0d9088c4e2e64ed4073765a96db64e63",
       "designKey": "idaho-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "idaho-808b92edd6ca.jpg",
@@ -5220,7 +5794,8 @@ const PLATE_IMAGES = {
       "sha256": "1a5b9f61247a6c89689a0a74147a54c379c635db05b312679dff44158dc239d9",
       "designKey": "idaho-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "idaho-cb4ceaa34883.jpg",
@@ -5240,7 +5815,8 @@ const PLATE_IMAGES = {
       "sha256": "5c8fa15a835bba45d53532df9ff49dacaad28b02eb2d03a697db9d0f3316457f",
       "designKey": "idaho-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "idaho-3d1b27e6530c.jpg",
@@ -5260,7 +5836,8 @@ const PLATE_IMAGES = {
       "sha256": "8ca0783c97e2ce170b418a8e725abc4fa56d1aa3b16539035ea5891c76aa21af",
       "designKey": "idaho-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "idaho-7cd3c445aa27.jpg",
@@ -5280,7 +5857,8 @@ const PLATE_IMAGES = {
       "sha256": "13a14b095698807b5117a14708f6670aa3f4b1731500d72453571710da82a1a7",
       "designKey": "idaho-historical-issue-1933",
       "design": "Historical issue 1933",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "idaho-af86444274b7.jpg",
@@ -5300,7 +5878,8 @@ const PLATE_IMAGES = {
       "sha256": "8b3741fa5d79fec669a8643c53d61d8207fef2f11b977d54ed0f501cc1d80c62",
       "designKey": "idaho-historical-issue-1930",
       "design": "Historical issue 1930",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "idaho-c0e75958641f.jpg",
@@ -5320,7 +5899,8 @@ const PLATE_IMAGES = {
       "sha256": "2b894245e32e5a58e794f449b5e45afe0b6228710a4392ed0fa4def4cfeab619",
       "designKey": "idaho-historical-issue-1927",
       "design": "Historical issue 1927",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "idaho-c981994b7d56.jpg",
@@ -5340,7 +5920,8 @@ const PLATE_IMAGES = {
       "sha256": "f6b240b7750d77332df6668e45533efc56856eda19dd47fb443cc083a8c59b8d",
       "designKey": "idaho-historical-issue-1913",
       "design": "Historical issue 1913",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Illinois": [
@@ -5362,7 +5943,8 @@ const PLATE_IMAGES = {
       "sha256": "5dfbf28b3b2986ac6009605491e0017466ef7fb1da3150cb130d6854136d2454",
       "designKey": "illinois-standard-passenger-land-of-lincoln-base",
       "design": "Standard passenger, Land of Lincoln base",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2024-04-28 12:22:07"
     },
     {
       "id": "illinois-modern.jpg",
@@ -5382,7 +5964,8 @@ const PLATE_IMAGES = {
       "sha256": "874f21093601178e245cd47fa0fd23f3c5c500b0ff03ee953b103c3fee3bb0de",
       "designKey": "illinois-with-god-religious-specialty",
       "design": "With God religious specialty",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": "2024-12-28 16:33:35"
     },
     {
       "id": "illinois-51d6505cba14.jpg",
@@ -5402,7 +5985,8 @@ const PLATE_IMAGES = {
       "sha256": "cfe59623024a3e0b8e8c1c7e6813bea5efa6296bf1d34f05c9bcf9e52b04b8d8",
       "designKey": "illinois-modern-passenger-base",
       "design": "Modern passenger base",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-0cae69603216.jpg",
@@ -5422,7 +6006,8 @@ const PLATE_IMAGES = {
       "sha256": "67932ebf7260931ccb7b347b92ab6e4214d6209f8072841c27adb5bf08b48f72",
       "designKey": "illinois-historical-issue-1969",
       "design": "Historical issue 1969",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-75c90d652feb.jpg",
@@ -5442,7 +6027,8 @@ const PLATE_IMAGES = {
       "sha256": "20b7807d5c42ca49a013e4f703c77c5f2e6a29a9e472089ecab3e6291d41ee9d",
       "designKey": "illinois-historical-issue-1968",
       "design": "Historical issue 1968",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-d271da67332e.jpg",
@@ -5462,7 +6048,8 @@ const PLATE_IMAGES = {
       "sha256": "de8dfb168bb20616cb3ec10110bc3962b8be1ac423af9f5841f080eb3919439b",
       "designKey": "illinois-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-f8028ade1b88.jpg",
@@ -5482,7 +6069,8 @@ const PLATE_IMAGES = {
       "sha256": "aa63172602d78b2a7e5e9c2b884da90307575b475defe78c8b5aca439a27afdd",
       "designKey": "illinois-historical-issue-1966",
       "design": "Historical issue 1966",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-55420ad13c5e.jpg",
@@ -5502,7 +6090,8 @@ const PLATE_IMAGES = {
       "sha256": "9c4975185d8a5f47c87ce3e2bfd9ccb1f0101b5c95c6e219fb54410700b37827",
       "designKey": "illinois-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-9c842d8cd433.jpg",
@@ -5522,7 +6111,8 @@ const PLATE_IMAGES = {
       "sha256": "4aab72b4fb42e3c1fe179ee5d0d8676bc83b1d595372d51dbbd7cc3a27f5d10c",
       "designKey": "illinois-historical-issue-1964",
       "design": "Historical issue 1964",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-5761571dc3ab.jpg",
@@ -5542,7 +6132,8 @@ const PLATE_IMAGES = {
       "sha256": "b4b8c8aa12362129779e2eb2c41e719fb40cff46fae92cf90885377f97404ccd",
       "designKey": "illinois-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-49282ef86f28.jpg",
@@ -5562,7 +6153,8 @@ const PLATE_IMAGES = {
       "sha256": "9c775eb7ddcf3f23fa0653b31e2ef62b14d5ccbb613d3651910d839658e38225",
       "designKey": "illinois-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-fe86d8b3c7dc.jpg",
@@ -5582,7 +6174,8 @@ const PLATE_IMAGES = {
       "sha256": "3b4225b72c80a8e4f53f9ecc97214d1e5f5ad85de71d1c9046b3fd8f3f62f8eb",
       "designKey": "illinois-historical-issue-1961",
       "design": "Historical issue 1961",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-0c588aa1b5a2.jpg",
@@ -5602,7 +6195,8 @@ const PLATE_IMAGES = {
       "sha256": "9fb5b243a70f5593cc6d56282f9652ca555109640a9d24aaa64e29a21f5d8c41",
       "designKey": "illinois-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-6fa652a99a18.jpg",
@@ -5622,7 +6216,8 @@ const PLATE_IMAGES = {
       "sha256": "a152b09bce733bddbaed21a72851ef42e29a4223d7f0a0004462a495cfc522bf",
       "designKey": "illinois-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-4fa0356776cc.jpg",
@@ -5642,7 +6237,8 @@ const PLATE_IMAGES = {
       "sha256": "7d57f647f6e57314ab6325797810ac8e0208ce477f2d1b9e538b234498daec99",
       "designKey": "illinois-historical-issue-1958",
       "design": "Historical issue 1958",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-d9733f3d691a.jpg",
@@ -5662,7 +6258,8 @@ const PLATE_IMAGES = {
       "sha256": "b85f5b6c84c71321882e3d23569c2006e1fd8acbc2a170eb63d1b13e83ea0ba0",
       "designKey": "illinois-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-4e20f3111042.jpg",
@@ -5682,7 +6279,8 @@ const PLATE_IMAGES = {
       "sha256": "5c195bf0672be6dcd990a6608f8652b681d39d4b5df2336b8062ace8a10019af",
       "designKey": "illinois-historical-issue-1956",
       "design": "Historical issue 1956",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-be2020fcba00.jpg",
@@ -5702,7 +6300,8 @@ const PLATE_IMAGES = {
       "sha256": "8cd4b3c3d792ecb9d11dbd47cd3747f2ea9f63e6935ceac321c4916f19b3482f",
       "designKey": "illinois-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-5280c6ebee69.jpg",
@@ -5722,7 +6321,8 @@ const PLATE_IMAGES = {
       "sha256": "8d468c9f5d49baf6ddc95d5d251866d5a679ae2677d0516f0b77acb56d545049",
       "designKey": "illinois-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-46c0bf0d0f3c.jpg",
@@ -5742,7 +6342,8 @@ const PLATE_IMAGES = {
       "sha256": "4f5b5ec5d28d60c3689c21ec9ca09d0a562b3219b2b2931855d2973ecd11c5ef",
       "designKey": "illinois-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-6cc081b3ded9.jpg",
@@ -5762,7 +6363,8 @@ const PLATE_IMAGES = {
       "sha256": "e64e4fed89a687b0578f6a36d6bbf5ba4caaa6276e891a98c0648cf59627a794",
       "designKey": "illinois-historical-issue-1952",
       "design": "Historical issue 1952",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-b3cd64d312ee.jpg",
@@ -5782,7 +6384,8 @@ const PLATE_IMAGES = {
       "sha256": "81ec21afb5bc6c60e7cfb252dc6ca7b4f1bfbdec7373132ce736a0ea5edb5e18",
       "designKey": "illinois-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-161ad66b23cc.jpg",
@@ -5802,7 +6405,8 @@ const PLATE_IMAGES = {
       "sha256": "45fde1089b2e68b5425ca31eebc03076230d8f3b9dcaeb299ce2f92034867f90",
       "designKey": "illinois-historical-issue-1950",
       "design": "Historical issue 1950",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-a5784b6efd9a.jpg",
@@ -5822,7 +6426,8 @@ const PLATE_IMAGES = {
       "sha256": "cf0d379409ff7056e71d70052c937ea7114f088556f7d0b5cf8c2cb04a121f6f",
       "designKey": "illinois-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-0c5c8a15e846.jpg",
@@ -5842,7 +6447,8 @@ const PLATE_IMAGES = {
       "sha256": "b79db6b76ee7fcd89f077de2f5b4fae2fc639a41c03c516610ee264b61133775",
       "designKey": "illinois-historical-issue-1948",
       "design": "Historical issue 1948",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-b62b2ab12267.jpg",
@@ -5862,7 +6468,8 @@ const PLATE_IMAGES = {
       "sha256": "5435d68edfd0b502c5d41e2f37d2bf859c8673884d3f873bbad349d8020089fd",
       "designKey": "illinois-historical-issue-1947",
       "design": "Historical issue 1947",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-ce6fb61897bb.jpg",
@@ -5882,7 +6489,8 @@ const PLATE_IMAGES = {
       "sha256": "7c584d605cb51532a414bd1dd521ec0013c0079a590e5b56ba41b7803eeb96cb",
       "designKey": "illinois-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-797c4026e22d.jpg",
@@ -5902,7 +6510,8 @@ const PLATE_IMAGES = {
       "sha256": "558b76de7f8c4ade67b534b47c3377ef8d0c6b63f455c1c6dc39839030d24927",
       "designKey": "illinois-historical-issue-1945",
       "design": "Historical issue 1945",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-1461c779eec5.jpg",
@@ -5922,7 +6531,8 @@ const PLATE_IMAGES = {
       "sha256": "e9bb5b260e5863af84969f890f00df5a30a6fd3c38d5344f7731d9f63e13f140",
       "designKey": "illinois-historical-issue-1944",
       "design": "Historical issue 1944",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "illinois-11d5cddc15dd.jpg",
@@ -5942,7 +6552,8 @@ const PLATE_IMAGES = {
       "sha256": "020eaf2aaf67ddc60d7d6f7a117dac1aaca48194b0fa3a7758eb5876da6fcca1",
       "designKey": "illinois-historical-issue-1943",
       "design": "Historical issue 1943",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Indiana": [
@@ -5964,7 +6575,8 @@ const PLATE_IMAGES = {
       "sha256": "66c225dd09bba6d0a951e4b201fab4827f9f850d02c27e974941844ad96a46dc",
       "designKey": "indiana-standard-passenger-covered-bridge-base",
       "design": "Standard passenger, covered bridge base",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2024-09-23 17:13:27"
     },
     {
       "id": "indiana-a4954904134f.jpg",
@@ -5984,7 +6596,8 @@ const PLATE_IMAGES = {
       "sha256": "f9b9e70641473e642fc1fdcf4c5228409ddb10f6116c616193b630405396d52d",
       "designKey": "indiana-boy-scouts-sample",
       "design": "Boy Scouts sample",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-7a84851a4d20.jpg",
@@ -6004,7 +6617,8 @@ const PLATE_IMAGES = {
       "sha256": "1c05737b0b2e135a8a2ed2b9ed6e58c138e290876bddb73cea25bd6ed2a9cdcb",
       "designKey": "indiana-historical-issue-1969",
       "design": "Historical issue 1969",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-23589b44b31a.jpg",
@@ -6024,7 +6638,8 @@ const PLATE_IMAGES = {
       "sha256": "b2931ed18434cdc8e77c031018054257700769751ba536e5f85b2dcb81203692",
       "designKey": "indiana-historical-issue-1968",
       "design": "Historical issue 1968",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-17512a4c6fb2.jpg",
@@ -6044,7 +6659,8 @@ const PLATE_IMAGES = {
       "sha256": "9c177fc77b1e1ae0b0df2348ee429197b4ac082d25e32936ce5ed76af8584042",
       "designKey": "indiana-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-196a9736d1d6.jpg",
@@ -6064,7 +6680,8 @@ const PLATE_IMAGES = {
       "sha256": "e0d35513a7c0b8f3e8837167dc97a2677a88154aeb822e247dd44a2d1d2a3428",
       "designKey": "indiana-historical-issue-1966",
       "design": "Historical issue 1966",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-51a0a6f47d6d.jpg",
@@ -6084,7 +6701,8 @@ const PLATE_IMAGES = {
       "sha256": "c7bb836d6405c87659d2c83eff3a068c2ec31b5e393d7fdd0e8310206655575d",
       "designKey": "indiana-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-cb9488761fd6.jpg",
@@ -6104,7 +6722,8 @@ const PLATE_IMAGES = {
       "sha256": "31788a017b1080418204a53cb29145d1bb4835482e8b7fb3692b16d4dcc9e5fe",
       "designKey": "indiana-historical-issue-1964",
       "design": "Historical issue 1964",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-f06a3628c3dc.jpg",
@@ -6124,7 +6743,8 @@ const PLATE_IMAGES = {
       "sha256": "6d14ed320dcb61c8e575288f222d0d1ba0c182fa8a428473e69f7fd023fcd32b",
       "designKey": "indiana-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-a645cc6d62fd.jpg",
@@ -6144,7 +6764,8 @@ const PLATE_IMAGES = {
       "sha256": "ca35ca07f23bd47c937e9be09eaab6da44ea23b12e1334e54dfc841f48fb0dbb",
       "designKey": "indiana-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-05fe2944bc97.jpg",
@@ -6164,7 +6785,8 @@ const PLATE_IMAGES = {
       "sha256": "f78590275aa9c4ad09bfddf790c77824543b244ecf8db98de86d9f6bc60fea32",
       "designKey": "indiana-historical-issue-1961",
       "design": "Historical issue 1961",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-historical.jpg",
@@ -6184,7 +6806,8 @@ const PLATE_IMAGES = {
       "sha256": "cc28d0dc6a151d3b9753d7314572d23d5d367ce0736a2c75d34fd75da8055ed5",
       "designKey": "indiana-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-f99d06c947f2.jpg",
@@ -6204,7 +6827,8 @@ const PLATE_IMAGES = {
       "sha256": "c5f4bdf70ae59160b21d796b6a9499579c5e5b5161d81cfc60d18269422ae9d3",
       "designKey": "indiana-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-e5a5b4b59764.jpg",
@@ -6224,7 +6848,8 @@ const PLATE_IMAGES = {
       "sha256": "791c08beaa86fc7bdb3741d238c4dc1bb36e6208ca79414f5a82db44b1c1767d",
       "designKey": "indiana-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-918cfe802165.jpg",
@@ -6244,7 +6869,8 @@ const PLATE_IMAGES = {
       "sha256": "e03353646eac7cd70808f0c543323dfbd5cbfa2b854e4fcb05f02883f699aba0",
       "designKey": "indiana-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-b399365febbb.jpg",
@@ -6264,7 +6890,8 @@ const PLATE_IMAGES = {
       "sha256": "e6d5e7779a80dd12b663d5bf1b550d62133f283cbf925c57dc6abc91d8789b76",
       "designKey": "indiana-historical-issue-1950",
       "design": "Historical issue 1950",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-4df9f265c99e.jpg",
@@ -6284,7 +6911,8 @@ const PLATE_IMAGES = {
       "sha256": "fa8d0cf23ce07e9e0f73ec773755550899dfa7679d12e5276ca3912b9de805e4",
       "designKey": "indiana-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-f50d9bb241a6.jpg",
@@ -6304,7 +6932,8 @@ const PLATE_IMAGES = {
       "sha256": "ceec57c99d82d9fd1c2394f558c19fac1836eee561938f6e5e49950045a3202d",
       "designKey": "indiana-historical-issue-1948",
       "design": "Historical issue 1948",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-d5579c9674ce.jpg",
@@ -6324,7 +6953,8 @@ const PLATE_IMAGES = {
       "sha256": "7b9bb50865e61ffb7d1a16f354bffecce6b37f4a72992852d3fea368d5d78864",
       "designKey": "indiana-historical-issue-1947",
       "design": "Historical issue 1947",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-a58a6570c74c.jpg",
@@ -6344,7 +6974,8 @@ const PLATE_IMAGES = {
       "sha256": "20c75eb4c1d4e1bf647f75125dea771cf92359ca9e852024b7aeff8df4ab7660",
       "designKey": "indiana-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-fb05dd73aad4.jpg",
@@ -6364,7 +6995,8 @@ const PLATE_IMAGES = {
       "sha256": "b08a73d8016133ad6b0c3de852ac5d2e066eafabfcca98f88403102e78056177",
       "designKey": "indiana-historical-issue-1945",
       "design": "Historical issue 1945",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-9b7259360d20.jpg",
@@ -6384,7 +7016,8 @@ const PLATE_IMAGES = {
       "sha256": "adabbbdd75eaf947cf1631fb9aeb2058a89a3b0cad2eaede361bb08ffca64834",
       "designKey": "indiana-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-a779c972a803.jpg",
@@ -6404,7 +7037,8 @@ const PLATE_IMAGES = {
       "sha256": "9dec11d58138a8f5de956f4044f401dfab4c2c084f7e8c92b29623c454ebd0e2",
       "designKey": "indiana-historical-issue-1940",
       "design": "Historical issue 1940",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-98c088672a90.jpg",
@@ -6424,7 +7058,8 @@ const PLATE_IMAGES = {
       "sha256": "fbd341cabc0d7a1368f136a71536f367025bcac41bd224cbdf0bc280c2b03dbd",
       "designKey": "indiana-historical-issue-1939",
       "design": "Historical issue 1939",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-4c148d522ddf.jpg",
@@ -6444,7 +7079,8 @@ const PLATE_IMAGES = {
       "sha256": "6a1fd88dd191b2bd2ef3c950ccb771a32e847b3b51406c83d775603638367c8c",
       "designKey": "indiana-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-f2d3fd020b68.jpg",
@@ -6464,7 +7100,8 @@ const PLATE_IMAGES = {
       "sha256": "54ad048c3315c8dff1afc301742417d2dd775bdbf800a193e5f0bb7f1617a360",
       "designKey": "indiana-historical-issue-1936",
       "design": "Historical issue 1936",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-32ffad166687.jpg",
@@ -6484,7 +7121,8 @@ const PLATE_IMAGES = {
       "sha256": "48ee0ede115b3705d9b6b579bc9781c737a6d51fc18bccec51ecebf4e12d2db3",
       "designKey": "indiana-historical-issue-1935",
       "design": "Historical issue 1935",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-60c29c42d5f2.jpg",
@@ -6504,7 +7142,8 @@ const PLATE_IMAGES = {
       "sha256": "2d1f14e88eda1ae14c467d7edf01db963dd1b98cfe57cb602ef84fe2eec0159a",
       "designKey": "indiana-historical-issue-1933",
       "design": "Historical issue 1933",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-96c6e0bb1b65.jpg",
@@ -6524,7 +7163,8 @@ const PLATE_IMAGES = {
       "sha256": "8163e50567e29c471252e6f7a6247cedee3a6d20f7a2ee8d48df916e374017e8",
       "designKey": "indiana-historical-issue-1931",
       "design": "Historical issue 1931",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "indiana-7d0ed3ffa593.jpg",
@@ -6544,7 +7184,8 @@ const PLATE_IMAGES = {
       "sha256": "14593f272bcad1aa4098472c0e44c1c3abbf36827d217c84a2480c6c7450f4cd",
       "designKey": "indiana-historical-issue-1930",
       "design": "Historical issue 1930",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Iowa": [
@@ -6566,7 +7207,8 @@ const PLATE_IMAGES = {
       "sha256": "bff38b7fbfc8268377aaa0b23431417bb1eba9b903aede0127d938c81ddd9297",
       "designKey": "iowa-standard-passenger-county-landscape-base",
       "design": "Standard passenger, county landscape base",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2024-03-11 17:30:36"
     },
     {
       "id": "iowa-61b214681a04.jpg",
@@ -6586,7 +7228,8 @@ const PLATE_IMAGES = {
       "sha256": "1bdf9c47e5835a5fb9e14e447a467b8f286dee0a82a45d97827c7879d66baa76",
       "designKey": "iowa-historical-issue-1969",
       "design": "Historical issue 1969",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-5d2abd0c643f.jpg",
@@ -6606,7 +7249,8 @@ const PLATE_IMAGES = {
       "sha256": "764dfc6e71caae44f9a9c7b6c9ea81b12b4598ccee51da78f289c5e334f7ef20",
       "designKey": "iowa-historical-issue-1968",
       "design": "Historical issue 1968",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-991f4720fb46.jpg",
@@ -6626,7 +7270,8 @@ const PLATE_IMAGES = {
       "sha256": "e0a0af8ed3d952b75c4f2fa6aeea59d09cf5a8550a36e1e2b5c981b61dc165f9",
       "designKey": "iowa-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-d06c29a09346.jpg",
@@ -6646,7 +7291,8 @@ const PLATE_IMAGES = {
       "sha256": "6dba21ef61223a04aed51f37274b80695bc85d62dade770b132d99b6f0f7d7fd",
       "designKey": "iowa-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-19fbe0aededd.jpg",
@@ -6666,7 +7312,8 @@ const PLATE_IMAGES = {
       "sha256": "58b5267d7492c87bf0037ddc81d32407976df15c896fc333951ec917b124132e",
       "designKey": "iowa-historical-issue-1964",
       "design": "Historical issue 1964",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-b13120752b47.jpg",
@@ -6686,7 +7333,8 @@ const PLATE_IMAGES = {
       "sha256": "7ffc65518c148ac1c8806908eae28fef7f77c39ee8e67239137ded7451a682dc",
       "designKey": "iowa-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-6142f86bd421.jpg",
@@ -6706,7 +7354,8 @@ const PLATE_IMAGES = {
       "sha256": "5908ae0b24be3550c55425f191e1afed191e248f82b722bd279a22a3c674fef6",
       "designKey": "iowa-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-709aa546f7b3.jpg",
@@ -6726,7 +7375,8 @@ const PLATE_IMAGES = {
       "sha256": "074df071ccf145bd19699ffc63d8052fccd7dd51922f927091ea0189c7a48e76",
       "designKey": "iowa-historical-issue-1961",
       "design": "Historical issue 1961",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-historical.jpg",
@@ -6746,7 +7396,8 @@ const PLATE_IMAGES = {
       "sha256": "dd9c18c3a94d0bc2839c609d2a542ae23d5f089c7b6440e9db5f1d2a0f663700",
       "designKey": "iowa-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-112223ae89cf.jpg",
@@ -6766,7 +7417,8 @@ const PLATE_IMAGES = {
       "sha256": "b14f8e0f09956e9c89c4fb7da8ac5254ef509e7d1e1b9ff1724065554c597a13",
       "designKey": "iowa-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-6640e1c66217.jpg",
@@ -6786,7 +7438,8 @@ const PLATE_IMAGES = {
       "sha256": "49595e8e9c115bb696db55313d2e236547440c022b5fd9169b573446e4ab19e7",
       "designKey": "iowa-historical-issue-1958",
       "design": "Historical issue 1958",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-bcaa0d6f4fb1.jpg",
@@ -6806,7 +7459,8 @@ const PLATE_IMAGES = {
       "sha256": "8047134f81f4300d8aa5d6a770c85ed5ab9590bc638a2e8527e98422e190c47a",
       "designKey": "iowa-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-0e491ce5813f.jpg",
@@ -6826,7 +7480,8 @@ const PLATE_IMAGES = {
       "sha256": "76887336c7f18aa8e712fdedc3bb57f8d907da011acb62dbc95597c30cc1ccea",
       "designKey": "iowa-historical-issue-1956",
       "design": "Historical issue 1956",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-ab2de9b0f026.jpg",
@@ -6846,7 +7501,8 @@ const PLATE_IMAGES = {
       "sha256": "23d746436e28069c966d9b53bb9e45cd19c83321fab525a0578b3995fe0423dc",
       "designKey": "iowa-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-bc5d45d76e05.jpg",
@@ -6866,7 +7522,8 @@ const PLATE_IMAGES = {
       "sha256": "a76ec9e74a694fe987e891affa586770e374f7a69a98d81768dfa5a6a4475a49",
       "designKey": "iowa-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-cd1fa428c4c8.jpg",
@@ -6886,7 +7543,8 @@ const PLATE_IMAGES = {
       "sha256": "6dea97f7e040e5bfaf91f286b412f794cd2d0829faa4bd829838e9adba93dd47",
       "designKey": "iowa-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-a2b11d263502.jpg",
@@ -6906,7 +7564,8 @@ const PLATE_IMAGES = {
       "sha256": "ad2c0a0f22618d8499a2d148a165b111869346e19857f4b17d7c504f7478761c",
       "designKey": "iowa-historical-issue-1952",
       "design": "Historical issue 1952",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-819a6a6f51d4.jpg",
@@ -6926,7 +7585,8 @@ const PLATE_IMAGES = {
       "sha256": "4cef272e777c4ee895f1e262bef240c59326653e09b4fe0df1c4cdd8caf2a183",
       "designKey": "iowa-historical-issue-1950",
       "design": "Historical issue 1950",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-27ee73a32b27.jpg",
@@ -6946,7 +7606,8 @@ const PLATE_IMAGES = {
       "sha256": "a269a8f3a11ec6a48f02757335708aa20cf61b48dae7006af1486045e7670134",
       "designKey": "iowa-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-f4c39f779d3a.jpg",
@@ -6966,7 +7627,8 @@ const PLATE_IMAGES = {
       "sha256": "9a7ad810f2a7f3509c72fd5b0171b3acdc03321559516b970ccc21a7b5747b34",
       "designKey": "iowa-historical-issue-1947",
       "design": "Historical issue 1947",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-52f907d11c7f.jpg",
@@ -6986,7 +7648,8 @@ const PLATE_IMAGES = {
       "sha256": "6cae9b443758b268164919e42ec18a7e77e156148bee8a7158149f5798155bf7",
       "designKey": "iowa-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-9091c6381a01.jpg",
@@ -7006,7 +7669,8 @@ const PLATE_IMAGES = {
       "sha256": "20cee8b09dca4f9a88fa011d1449cc535641976172ca4b6c5b645eda5720b6a6",
       "designKey": "iowa-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-131fba8b0dfa.jpg",
@@ -7026,7 +7690,8 @@ const PLATE_IMAGES = {
       "sha256": "4e848ef5af9fcceffdd404227caa4980ab63d606cc4208de1f318f2a23f210e9",
       "designKey": "iowa-historical-issue-1941",
       "design": "Historical issue 1941",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-f7140675b8b5.jpg",
@@ -7046,7 +7711,8 @@ const PLATE_IMAGES = {
       "sha256": "4c623e8141343475232ac506b03a1b4d22e0de23173f48242169c5cdcc503b5e",
       "designKey": "iowa-historical-issue-1940",
       "design": "Historical issue 1940",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-8f7d7c9c177d.jpg",
@@ -7066,7 +7732,8 @@ const PLATE_IMAGES = {
       "sha256": "cf9386a2dcf2be2d4177b1660f3571947449f2bbd38b6efe349f594fe7850f41",
       "designKey": "iowa-historical-issue-1937",
       "design": "Historical issue 1937",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "iowa-1b038f73ec72.jpg",
@@ -7086,7 +7753,8 @@ const PLATE_IMAGES = {
       "sha256": "08e029dd8de2ba1184d0e93fceb395e197afac2f9e0d32d6d6c867cc6c30ad03",
       "designKey": "iowa-historical-issue-1936",
       "design": "Historical issue 1936",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Kansas": [
@@ -7108,7 +7776,71 @@ const PLATE_IMAGES = {
       "sha256": "58641fdeb42207703ff21b42727c8fdc7df37c185ec9eabf5aa0e8682832e158",
       "designKey": "kansas-standard-passenger-state-seal-base-newer-reusable-standard-unavailable",
       "design": "Standard passenger, state seal base; newer reusable standard unavailable",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2023-11-10 13:12:50"
+    },
+    {
+      "id": "kansas-recent-ff04cabadf84.jpg",
+      "src": "./license_plate_assets/kansas-recent-ff04cabadf84.jpg",
+      "era": "modern",
+      "kind": "photograph",
+      "title": "Kansas License Plate Ducks Unlimited 2020.jpg",
+      "author": "Stowellg",
+      "source": "https://commons.wikimedia.org/wiki/File:Kansas_License_Plate_Ducks_Unlimited_2020.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Kansas_License_Plate_Ducks_Unlimited_2020.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 249,
+      "sha256": "f68516ae0db9e668b7c9e790b155cfc2778a0c7e4e2fdcac64bca143a79b3ae6",
+      "designKey": "kansas-ducks-unlimited-2020-example",
+      "design": "Ducks Unlimited, 2020 example",
+      "standard": false,
+      "recentPhotoDate": "2022-02-21 18:48:08"
+    },
+    {
+      "id": "kansas-recent-451db0feedbb.jpg",
+      "src": "./license_plate_assets/kansas-recent-451db0feedbb.jpg",
+      "era": "modern",
+      "kind": "photograph",
+      "title": "Kansas License Plate K-State 2nd Edition Flat 2022.jpg",
+      "author": "Stowellg",
+      "source": "https://commons.wikimedia.org/wiki/File:Kansas_License_Plate_K-State_2nd_Edition_Flat_2022.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/8/86/Kansas_License_Plate_K-State_2nd_Edition_Flat_2022.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 234,
+      "sha256": "ccd2bf5aa09c203eea9c4c5c1a534ff5614bcf72929e2255e6942b7dd106b0dd",
+      "designKey": "kansas-k-state-2022-example",
+      "design": "K-State, 2022 example",
+      "standard": false,
+      "recentPhotoDate": "2022-03-29 15:32:21"
+    },
+    {
+      "id": "kansas-recent-242bcfa6cbb5.jpg",
+      "src": "./license_plate_assets/kansas-recent-242bcfa6cbb5.jpg",
+      "era": "modern",
+      "kind": "photograph",
+      "title": "Kansas License Plate Wichita State Embossed 2014.jpg",
+      "author": "Stowellg",
+      "source": "https://commons.wikimedia.org/wiki/File:Kansas_License_Plate_Wichita_State_Embossed_2014.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/2/27/Kansas_License_Plate_Wichita_State_Embossed_2014.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 247,
+      "sha256": "f231854023b5f069817fd715a34f82174a7298934957de854e6a7eafc50a917d",
+      "designKey": "kansas-wichita-state-2014-example",
+      "design": "Wichita State, 2014 example",
+      "standard": false,
+      "recentPhotoDate": "2022-02-21 18:48:12"
     },
     {
       "id": "kansas-bcbcecfd7b82.jpg",
@@ -7128,7 +7860,8 @@ const PLATE_IMAGES = {
       "sha256": "72429fe1b31aee2065c1d1addb568e97dccba1e483f37deffd52f564426bc8f8",
       "designKey": "kansas-sunflower-vanity-base",
       "design": "Sunflower vanity base",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-80099e87ad73.jpg",
@@ -7148,7 +7881,8 @@ const PLATE_IMAGES = {
       "sha256": "6eb372f628c8689f14e65ca454b6ef98228bfa130acdc67b276787f60aa1c61d",
       "designKey": "kansas-blue-header-wheat-base-1991-renewal",
       "design": "Blue-header wheat base, 1991 renewal",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-50bf61269615.jpg",
@@ -7168,7 +7902,8 @@ const PLATE_IMAGES = {
       "sha256": "af06d7fc0cbeba837020d956355810300770b5905f53d28d7e42ea4fac05820a",
       "designKey": "kansas-historical-issue-1969",
       "design": "Historical issue 1969",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-2b9c12bae8d3.jpg",
@@ -7188,7 +7923,8 @@ const PLATE_IMAGES = {
       "sha256": "27e71ade87e8bcac00b2efa5dff5c908903d9e10e65bfb839b5902697d39cca7",
       "designKey": "kansas-historical-issue-1968",
       "design": "Historical issue 1968",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-0818850ab374.jpg",
@@ -7208,7 +7944,8 @@ const PLATE_IMAGES = {
       "sha256": "5adba37fc0a0aa75c9f926964b3e2e3d86a98e54d9cbe1a82783431bc05767b2",
       "designKey": "kansas-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-15ada0670ef2.jpg",
@@ -7228,7 +7965,8 @@ const PLATE_IMAGES = {
       "sha256": "2cce06746e8172190b3b427c4bee4651ed8444e252e5a059b13fd2422cf7ee58",
       "designKey": "kansas-historical-issue-1966",
       "design": "Historical issue 1966",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-128a521446ce.jpg",
@@ -7248,7 +7986,8 @@ const PLATE_IMAGES = {
       "sha256": "96cb85750043542fb09c23e7c47fccad6e7c58f6c0656dca9ed9887bc36e248b",
       "designKey": "kansas-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-3a65c84dc555.jpg",
@@ -7268,7 +8007,8 @@ const PLATE_IMAGES = {
       "sha256": "bb47a1bf341f22fce79955614e4bdd738c53614960b0b391263e979c2d84392f",
       "designKey": "kansas-historical-issue-1964",
       "design": "Historical issue 1964",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-c1f173eb3755.jpg",
@@ -7288,7 +8028,8 @@ const PLATE_IMAGES = {
       "sha256": "c0fea1b5db10bbf00aa4c97ac2df53fc75d901626ed28f7b3a41527046c8be9f",
       "designKey": "kansas-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-e521ed12b586.jpg",
@@ -7308,7 +8049,8 @@ const PLATE_IMAGES = {
       "sha256": "e937a4e65b810b4e9d9111066b545ea9a164c426a08199deb9f5cb8050110ea9",
       "designKey": "kansas-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-24004ce3715c.jpg",
@@ -7328,7 +8070,8 @@ const PLATE_IMAGES = {
       "sha256": "62f9a3db77fcfe177fb38245557dbf476100d6f30ecd84eee6684e3217caadc0",
       "designKey": "kansas-historical-issue-1961",
       "design": "Historical issue 1961",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-historical.jpg",
@@ -7348,7 +8091,8 @@ const PLATE_IMAGES = {
       "sha256": "9f6d4ed1195d027b9f8e4c84f29b4bb8cda43704bb296c3b366a6e1c40b7d3bb",
       "designKey": "kansas-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-e25ab7a0b6b4.jpg",
@@ -7368,7 +8112,8 @@ const PLATE_IMAGES = {
       "sha256": "a14d2759975d1154d5e11eca5309962fc68528870c2e891401ceb8e724028fe4",
       "designKey": "kansas-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-788d66a10195.jpg",
@@ -7388,7 +8133,8 @@ const PLATE_IMAGES = {
       "sha256": "3a25c9a7bda3298cae777b6258f19d9a5eb4bf86b2cf2b03f0788eec025d83a6",
       "designKey": "kansas-historical-issue-1958",
       "design": "Historical issue 1958",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-e867d206831f.jpg",
@@ -7408,7 +8154,8 @@ const PLATE_IMAGES = {
       "sha256": "5a79594c462c67ee4fc61e5213aa95a1804c4d8dcf93255c1d8ea9ebd033c6bc",
       "designKey": "kansas-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-d368c770fa06.jpg",
@@ -7428,7 +8175,8 @@ const PLATE_IMAGES = {
       "sha256": "d02972d17d2c5bd2b0068a840ce25b4b66b9b66c64b2a84f4ded05762ea8c11d",
       "designKey": "kansas-historical-issue-1956",
       "design": "Historical issue 1956",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-4b18a2d683df.jpg",
@@ -7448,7 +8196,8 @@ const PLATE_IMAGES = {
       "sha256": "700e4a6009268e56d2c1f26fd4186ab8cc87cbce326f250dbc249fff792c77ff",
       "designKey": "kansas-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-5725417ec57d.jpg",
@@ -7468,7 +8217,8 @@ const PLATE_IMAGES = {
       "sha256": "4d1b193e4beca1eb75f5e43addd20bd6afd5c989dd85283fd798c0bd0fa26631",
       "designKey": "kansas-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-277b96d4bbee.jpg",
@@ -7488,7 +8238,8 @@ const PLATE_IMAGES = {
       "sha256": "6d89a1182cf6fc7fcc52dd06e70d88594d7dc706706b1a110896d6dee765137c",
       "designKey": "kansas-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-9929dfb91141.jpg",
@@ -7508,7 +8259,8 @@ const PLATE_IMAGES = {
       "sha256": "94e696ec8070b815d82b8e99ac152275f2b4bacdd020312e67f118ee9140487b",
       "designKey": "kansas-historical-issue-1950",
       "design": "Historical issue 1950",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-d814600dda94.jpg",
@@ -7528,7 +8280,8 @@ const PLATE_IMAGES = {
       "sha256": "fd1722fcb809c97f6448a8ea8a76d5c77ab3609980a93c5d484f76f8d983811f",
       "designKey": "kansas-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-6b878a9d117c.jpg",
@@ -7548,7 +8301,8 @@ const PLATE_IMAGES = {
       "sha256": "3528048ec27b85091d6948a56f659b592001f152b323b6bd5e38e0f4847fa970",
       "designKey": "kansas-historical-issue-1948",
       "design": "Historical issue 1948",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-74345db21f33.jpg",
@@ -7568,7 +8322,8 @@ const PLATE_IMAGES = {
       "sha256": "739a8e4c1f4f7e0643f7c298a16f9489a7d472bc688d4564520c8923acc39dd6",
       "designKey": "kansas-historical-issue-1947",
       "design": "Historical issue 1947",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-30ecb5bc37fd.jpg",
@@ -7588,7 +8343,8 @@ const PLATE_IMAGES = {
       "sha256": "812fabeb2a678b069bf3fdcf60c63acae9bf30d033410a7f2afcb64f9d326778",
       "designKey": "kansas-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-e9c09f88c0a9.jpg",
@@ -7608,7 +8364,8 @@ const PLATE_IMAGES = {
       "sha256": "d5c34f4875c3a49b82881030f97001b74032a83c45ba4b2af20875ca391c44c8",
       "designKey": "kansas-historical-issue-1945",
       "design": "Historical issue 1945",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-071b4fa70944.jpg",
@@ -7628,7 +8385,8 @@ const PLATE_IMAGES = {
       "sha256": "960e088716d85d068f289136d93d29f377b3721e929d50b003b86d12d660ed60",
       "designKey": "kansas-historical-issue-1944",
       "design": "Historical issue 1944",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kansas-6f8dc1499252.jpg",
@@ -7648,7 +8406,8 @@ const PLATE_IMAGES = {
       "sha256": "d7bd0bc8c0f8c082bbe23a1e3ae0e3654c00a6913d237354533ac5c25b7620d8",
       "designKey": "kansas-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Kentucky": [
@@ -7670,7 +8429,8 @@ const PLATE_IMAGES = {
       "sha256": "b7cae09e0d5549db8afe8ae28bfc298b6e268ba052de7780f2c19a05db5e79cc",
       "designKey": "kentucky-standard-passenger-white-blue-base-2021-photograph-newer-reusable-standard-unavailable",
       "design": "Standard passenger, white/blue base (2021 photograph); newer reusable standard unavailable",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2025-04-05"
     },
     {
       "id": "kentucky-819ef815c4e1.jpg",
@@ -7690,7 +8450,8 @@ const PLATE_IMAGES = {
       "sha256": "24d462eb67a86c3257e430b7dd68b9eca169d5d82d25c8c919d911c04e98b90b",
       "designKey": "kentucky-historical-issue-1969",
       "design": "Historical issue 1969",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-94ffac821d60.jpg",
@@ -7710,7 +8471,8 @@ const PLATE_IMAGES = {
       "sha256": "20c0afe63b0478cfc7fd05f01598cd955a823e7e1a21d0a62804d6ad7aad8818",
       "designKey": "kentucky-historical-issue-1968",
       "design": "Historical issue 1968",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-dcacb34bef37.jpg",
@@ -7730,7 +8492,8 @@ const PLATE_IMAGES = {
       "sha256": "62eec7bda68bfa080ec46a45a17ec0ca72d70dbc0e2917cf7f6149a7aeea452f",
       "designKey": "kentucky-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-1f5be39dda07.jpg",
@@ -7750,7 +8513,8 @@ const PLATE_IMAGES = {
       "sha256": "1d3f86344e653e0d77d4fe684ea50905116b57b053f8ced4da40f21a7154857f",
       "designKey": "kentucky-historical-issue-1966",
       "design": "Historical issue 1966",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-74a0196365f2.jpg",
@@ -7770,7 +8534,8 @@ const PLATE_IMAGES = {
       "sha256": "bebcf1549ffdf9f08296c11192da0d458306d8b7f79a3257577a7c6b6cafcdb5",
       "designKey": "kentucky-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-3dd74587d626.jpg",
@@ -7790,7 +8555,8 @@ const PLATE_IMAGES = {
       "sha256": "2bc7a14633d05ddc116041e136a2ea4314eab5db1cbf1662ab0ee42d8b38c88c",
       "designKey": "kentucky-historical-issue-1964",
       "design": "Historical issue 1964",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-737af2772133.jpg",
@@ -7810,7 +8576,8 @@ const PLATE_IMAGES = {
       "sha256": "7e0fcfc6aed5f4bfe1b6554c45463e857d9624676c58e2fb3a95df09af9cde15",
       "designKey": "kentucky-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-fb0b4ccce758.jpg",
@@ -7830,7 +8597,8 @@ const PLATE_IMAGES = {
       "sha256": "f56d448c19a94ea1fb5b0af7d3494c425dbefbff3d4db9c8a614e80e384126d7",
       "designKey": "kentucky-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-3276a86c0442.jpg",
@@ -7850,7 +8618,8 @@ const PLATE_IMAGES = {
       "sha256": "7e4124e57baebe7b520c7ad035ad1bd6c238fc94adaeda8102e0667bb69c96a2",
       "designKey": "kentucky-historical-issue-1961",
       "design": "Historical issue 1961",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-historical.jpg",
@@ -7870,7 +8639,8 @@ const PLATE_IMAGES = {
       "sha256": "f9c7fd0618d08d504918a572db7abc5310c3dddda4065d77520750a2bc77c2d7",
       "designKey": "kentucky-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-b9265ba51ddb.jpg",
@@ -7890,7 +8660,8 @@ const PLATE_IMAGES = {
       "sha256": "75bb66e2285c20b2c6cb662e5e7f49df485bd634461900278ee689eca353ca37",
       "designKey": "kentucky-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-161af3679a37.jpg",
@@ -7910,7 +8681,8 @@ const PLATE_IMAGES = {
       "sha256": "fa9a670bdad058962d77f54d8ca5a6eca16290be016fb77803b9faa93b985c00",
       "designKey": "kentucky-historical-issue-1958",
       "design": "Historical issue 1958",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-b96d21153752.jpg",
@@ -7930,7 +8702,8 @@ const PLATE_IMAGES = {
       "sha256": "3a7b20d702f77926df9efc748b15701ca9d7330851c00e0e978193d61087f0d1",
       "designKey": "kentucky-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-5523f17438e7.jpg",
@@ -7950,7 +8723,8 @@ const PLATE_IMAGES = {
       "sha256": "500801bf40e02a3a3fe52e865316d61d652c8060b8430b453370d3eabfd8d0b5",
       "designKey": "kentucky-historical-issue-1956",
       "design": "Historical issue 1956",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-998f2b0d92a0.jpg",
@@ -7970,7 +8744,8 @@ const PLATE_IMAGES = {
       "sha256": "3418d35e2339ad46037b7fd61bd10778edf153958c558f2580921ed00e4cc327",
       "designKey": "kentucky-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-a78648742632.jpg",
@@ -7990,7 +8765,8 @@ const PLATE_IMAGES = {
       "sha256": "275c29795afcb4c5d3ab49d3dfc64dfc92a80feb179256d6a7cece8be17474c8",
       "designKey": "kentucky-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-a4aca80b2b68.jpg",
@@ -8010,7 +8786,8 @@ const PLATE_IMAGES = {
       "sha256": "2ad30abb1a03a263b60727e4ed141545ec6ae88a75d2956af814b9b3d7bbaef5",
       "designKey": "kentucky-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-1939b9a9ea52.jpg",
@@ -8030,7 +8807,8 @@ const PLATE_IMAGES = {
       "sha256": "6234abebaa0aa65f3e0221f68c5069818ff78008cf827a2797ba24b7d2a9a8e4",
       "designKey": "kentucky-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-d7706af4580c.jpg",
@@ -8050,7 +8828,8 @@ const PLATE_IMAGES = {
       "sha256": "cc284f724b93e72a7957f5b0da54f15d04ebdd508d1dd7aa84a8cf6cec5deef3",
       "designKey": "kentucky-historical-issue-1950",
       "design": "Historical issue 1950",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-be1b94fd15ef.jpg",
@@ -8070,7 +8849,8 @@ const PLATE_IMAGES = {
       "sha256": "a332466aa77c7b38b5622fc43c3f9c7d4e7e13c14e6fc52ffa704ebd072599f8",
       "designKey": "kentucky-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-1b6d9f0e7317.jpg",
@@ -8090,7 +8870,8 @@ const PLATE_IMAGES = {
       "sha256": "8e2e07113dcff4f8e38cbbc22a029c471a1d04a33e0687fc14697bf2641a17cd",
       "designKey": "kentucky-historical-issue-1948",
       "design": "Historical issue 1948",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-c5b38ecef122.jpg",
@@ -8110,7 +8891,8 @@ const PLATE_IMAGES = {
       "sha256": "6b0346486e5fd43271d20b720ea2432646e21c73c1445af3be4bb5a538c479f9",
       "designKey": "kentucky-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-aa8f6d2e7be6.jpg",
@@ -8130,7 +8912,8 @@ const PLATE_IMAGES = {
       "sha256": "e73e2f26b9534d7732747e7298706a55a9c515ccbd6fb8db3a910ed01c7a895d",
       "designKey": "kentucky-historical-issue-1944",
       "design": "Historical issue 1944",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-24f127d13412.jpg",
@@ -8150,7 +8933,8 @@ const PLATE_IMAGES = {
       "sha256": "00b700ab70c6c729ec408a3ccb55fcbd0cb90502f26bc5eb71030b943508abbf",
       "designKey": "kentucky-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-20fa83b9b5ee.jpg",
@@ -8170,7 +8954,8 @@ const PLATE_IMAGES = {
       "sha256": "0159ab30433fde002645cd0ec1e6010e6f2f2428473eca6da20b4a3e10d8d8c4",
       "designKey": "kentucky-historical-issue-1941",
       "design": "Historical issue 1941",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-2b5e6f4f0477.jpg",
@@ -8190,7 +8975,8 @@ const PLATE_IMAGES = {
       "sha256": "d252d20a65a09df62e2581d3ec0ac6b7198b88bc51c59893eae1b5d5a8464415",
       "designKey": "kentucky-historical-issue-1940",
       "design": "Historical issue 1940",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-66ba42178d52.jpg",
@@ -8210,7 +8996,8 @@ const PLATE_IMAGES = {
       "sha256": "131b81a0b0fe77c873ef2128f7977df5a312f7c4cf0a16d9c87e021dd5ce567b",
       "designKey": "kentucky-historical-issue-1939",
       "design": "Historical issue 1939",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-cea9acac544e.jpg",
@@ -8230,7 +9017,8 @@ const PLATE_IMAGES = {
       "sha256": "68e630e9cdf26cc0ffff61cab759400ce66391df5eae860c989495cc8453e36a",
       "designKey": "kentucky-historical-issue-1937",
       "design": "Historical issue 1937",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "kentucky-39a8aa2c7ca8.jpg",
@@ -8250,7 +9038,8 @@ const PLATE_IMAGES = {
       "sha256": "9a889ac3b8c995f29d54b11f495cdba64ad1aa64763c389571cda35bc576e583",
       "designKey": "kentucky-historical-issue-1936",
       "design": "Historical issue 1936",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Louisiana": [
@@ -8272,7 +9061,8 @@ const PLATE_IMAGES = {
       "sha256": "2f21464e94ad5a04921e365e0a419171a4e02c67de3b52f4298ff8f718a86f21",
       "designKey": "louisiana-standard-passenger-sportsman-s-paradise-base-2026-photograph",
       "design": "Standard passenger, Sportsman's Paradise base (2026 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2025-02-10 12:11:07"
     },
     {
       "id": "louisiana-ce354516eb6a.jpg",
@@ -8292,7 +9082,8 @@ const PLATE_IMAGES = {
       "sha256": "bca36a221bdf55e8a96b2cd00fde83feced2a103e6071f2678c51d1b9a28be4c",
       "designKey": "louisiana-historical-issue-1968",
       "design": "Historical issue 1968",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-a3870912d968.jpg",
@@ -8312,7 +9103,8 @@ const PLATE_IMAGES = {
       "sha256": "8533de16d35b84c5b85655569c3305051fe8f5f0d9d6fc390cdcd111d3abb7fc",
       "designKey": "louisiana-historical-issue-1966",
       "design": "Historical issue 1966",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-9ff4d5087272.jpg",
@@ -8332,7 +9124,8 @@ const PLATE_IMAGES = {
       "sha256": "03b3c82ea12b081ba0c8f2403463c0fe31ff630017b957d8dab175a4be9bf5f3",
       "designKey": "louisiana-historical-issue-1964",
       "design": "Historical issue 1964",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-02f93acf435f.jpg",
@@ -8352,7 +9145,8 @@ const PLATE_IMAGES = {
       "sha256": "4aaeaf53c907de9ab0cd0f2a9d1da726e6df9c9aef7e40d9a39a2cea10008e1d",
       "designKey": "louisiana-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-a58ce32efc77.jpg",
@@ -8372,7 +9166,8 @@ const PLATE_IMAGES = {
       "sha256": "440a01493e12f5a7cb1549720053b5a38a1f5402beb7cb24e6dc77c6f036a523",
       "designKey": "louisiana-historical-issue-1961",
       "design": "Historical issue 1961",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-historical.jpg",
@@ -8392,7 +9187,8 @@ const PLATE_IMAGES = {
       "sha256": "c6121cbea2cd05965fb6144556f126a4ac83ef0ffbd9dbda2c9eb2ea3915d697",
       "designKey": "louisiana-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-2f6d59544a80.jpg",
@@ -8412,7 +9208,8 @@ const PLATE_IMAGES = {
       "sha256": "c17ee0f219c9f93a5fb6fa55fc268feed64361c694d42c73ea2190327c484262",
       "designKey": "louisiana-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-d55cb328a297.jpg",
@@ -8432,7 +9229,8 @@ const PLATE_IMAGES = {
       "sha256": "6c5e38af84d45747f01009b0367c347f688cba9c3abeed97426a8318fa2b92f9",
       "designKey": "louisiana-historical-issue-1958",
       "design": "Historical issue 1958",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-ca28c768e93c.jpg",
@@ -8452,7 +9250,8 @@ const PLATE_IMAGES = {
       "sha256": "876833fb99d48590743ac600e15eac71db7a1138b45318488f859f290272cbd8",
       "designKey": "louisiana-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-94f3f335b039.jpg",
@@ -8472,7 +9271,8 @@ const PLATE_IMAGES = {
       "sha256": "4b7be95a9c02ae7704acef12e72c20b62f6fe0b6197e0772096c394bc2072d55",
       "designKey": "louisiana-historical-issue-1956",
       "design": "Historical issue 1956",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-a26fae778bf7.jpg",
@@ -8492,7 +9292,8 @@ const PLATE_IMAGES = {
       "sha256": "60cfda9cb09943145bcb9a161a915870b20de67a2535dcbd932d8adfaf269e58",
       "designKey": "louisiana-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-2577795b5b45.jpg",
@@ -8512,7 +9313,8 @@ const PLATE_IMAGES = {
       "sha256": "de1aad5f930023f11a8d0577a3ac8ed6b7067b42f24cb075bbcc519715515d58",
       "designKey": "louisiana-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-49855492a0a1.jpg",
@@ -8532,7 +9334,8 @@ const PLATE_IMAGES = {
       "sha256": "a0f82f680a2f996a00568d69c5e223ca8adef1c7d7d919da1760379ba1f267a4",
       "designKey": "louisiana-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-1b214296dfe6.jpg",
@@ -8552,7 +9355,8 @@ const PLATE_IMAGES = {
       "sha256": "8bf7a112b7df4a9805d92581e9b461759a403df2622f9cedd01d144cb3b033c0",
       "designKey": "louisiana-historical-issue-1952",
       "design": "Historical issue 1952",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-3e7413bac24b.jpg",
@@ -8572,7 +9376,8 @@ const PLATE_IMAGES = {
       "sha256": "10b53daff3645ec88eb3bff7f1fc6cca9ff92cfd580ca3cfe18853e2351a2278",
       "designKey": "louisiana-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-bac5c3fb7135.jpg",
@@ -8592,7 +9397,8 @@ const PLATE_IMAGES = {
       "sha256": "4709b7b2fa2faeff6d205bf52b5af8899f12d285ade2fc61ccb4247b2d64fc72",
       "designKey": "louisiana-historical-issue-1950",
       "design": "Historical issue 1950",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-8834eadb5088.jpg",
@@ -8612,7 +9418,8 @@ const PLATE_IMAGES = {
       "sha256": "9bd38d2beb789c53a9d0dfe4d218930b33d4b91bb4ca09456f8703c1efc091ec",
       "designKey": "louisiana-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-ffd137f0d1be.jpg",
@@ -8632,7 +9439,8 @@ const PLATE_IMAGES = {
       "sha256": "81760c36e97f8c77309754f455ad3549cdbb73f2744b9fb115bef173ac9aaa70",
       "designKey": "louisiana-historical-issue-1948",
       "design": "Historical issue 1948",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-f98457b97db6.jpg",
@@ -8652,7 +9460,8 @@ const PLATE_IMAGES = {
       "sha256": "68e3264d2212a551c6ff68508de9c029be07e91e71a615a8fc70d353c08acede",
       "designKey": "louisiana-historical-issue-1947",
       "design": "Historical issue 1947",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-9b8a808c3712.jpg",
@@ -8672,7 +9481,8 @@ const PLATE_IMAGES = {
       "sha256": "63e65e6c8886dc4ebe000748bf814f46cdb7326a98e4d58d3ff208f00dc3ef52",
       "designKey": "louisiana-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-00d479bc5636.jpg",
@@ -8692,7 +9502,8 @@ const PLATE_IMAGES = {
       "sha256": "6b984d8d79aad7ee52ea3966fbe48a19214336565325b7bf721e77d07db774b5",
       "designKey": "louisiana-historical-issue-1945",
       "design": "Historical issue 1945",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-d91dc02faa49.jpg",
@@ -8712,7 +9523,8 @@ const PLATE_IMAGES = {
       "sha256": "5cfcabbda6b58b3ca35791aa9365656b84642183f504fbd89d5ae7aa8adfd2e8",
       "designKey": "louisiana-historical-issue-1944",
       "design": "Historical issue 1944",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-e16a3f8669aa.jpg",
@@ -8732,7 +9544,8 @@ const PLATE_IMAGES = {
       "sha256": "42ee832e231980d70992cc6d6a379fac34d8382ef5783fb8181d5f455e672df0",
       "designKey": "louisiana-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-5147a6f25bb3.jpg",
@@ -8752,7 +9565,8 @@ const PLATE_IMAGES = {
       "sha256": "acecf631356967d62f988a01d14cdebde5daddcf67ef9bdf00133a162b7ac977",
       "designKey": "louisiana-historical-issue-1941",
       "design": "Historical issue 1941",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-70b9db6bd73c.jpg",
@@ -8772,7 +9586,8 @@ const PLATE_IMAGES = {
       "sha256": "c4122a1f4f439c119b22abcdfe044e1bbb6186c8333989dee3ea47c64ed09bde",
       "designKey": "louisiana-historical-issue-1940",
       "design": "Historical issue 1940",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-2e018a96b275.jpg",
@@ -8792,7 +9607,8 @@ const PLATE_IMAGES = {
       "sha256": "c2c2cc38f94f5949be57b396facd60a329fe189a8e606459d2c04374a0f808d9",
       "designKey": "louisiana-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-7b0b18d0ae59.jpg",
@@ -8812,7 +9628,8 @@ const PLATE_IMAGES = {
       "sha256": "4835560bc09741e5d250522aead7fa2468c95e7fed68fce5cb6143f69fcb50e5",
       "designKey": "louisiana-historical-issue-1937",
       "design": "Historical issue 1937",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "louisiana-9ece8424da8d.jpg",
@@ -8832,7 +9649,8 @@ const PLATE_IMAGES = {
       "sha256": "5ac1b4ab58ede7f00ab8af1cacd1155792d82c9d06cb5e2e80069c01e8ee4166",
       "designKey": "louisiana-historical-issue-1936",
       "design": "Historical issue 1936",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Maine": [
@@ -8854,7 +9672,8 @@ const PLATE_IMAGES = {
       "sha256": "19e1d3bbddeca0290f30ccd40deb4b34658e73ba7f8accaa63b5563caa4fa3c1",
       "designKey": "maine-standard-passenger-white-vacationland-base-sample",
       "design": "Standard passenger, white Vacationland base (sample)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2025-05-01"
     },
     {
       "id": "maine-58383438913a.jpg",
@@ -8874,7 +9693,8 @@ const PLATE_IMAGES = {
       "sha256": "6cffcbcc1fbc0cfed5f715d499d9616117913ad47f65f0fbb4da5f998afac202",
       "designKey": "maine-undated-gray-vacationland-base-1962-validation",
       "design": "Undated gray Vacationland base, 1962 validation",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maine-58bf248fb204.jpg",
@@ -8894,7 +9714,8 @@ const PLATE_IMAGES = {
       "sha256": "10e165de02850c97113b0dd342c9fdb4f11f8588fe8dc416c870e57b41e54073",
       "designKey": "maine-historical-issue-1956",
       "design": "Historical issue 1956",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maine-8edb7d397e88.jpg",
@@ -8914,7 +9735,8 @@ const PLATE_IMAGES = {
       "sha256": "6cbe63b3c7ae04a6550c80adc34a375f074a962ff67ae4fb4d407f36e27a71bb",
       "designKey": "maine-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maine-672203107805.jpg",
@@ -8934,7 +9756,8 @@ const PLATE_IMAGES = {
       "sha256": "ae1e2031604c9627ce9aca765c3192129b74db3f177f45ae3ce14677d7f90d4b",
       "designKey": "maine-historical-issue-1945",
       "design": "Historical issue 1945",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maine-4b2efa329d48.jpg",
@@ -8954,7 +9777,8 @@ const PLATE_IMAGES = {
       "sha256": "8a2e4782cd1e2c43d12280b480635bbd8ab931081437788c82fe08c806db4bcd",
       "designKey": "maine-historical-issue-1944",
       "design": "Historical issue 1944",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maine-bea32635161b.jpg",
@@ -8974,7 +9798,8 @@ const PLATE_IMAGES = {
       "sha256": "ffdb4a4cf3fbb862e7956e024104a932527cc9abb05fa78971463c1ef16856f2",
       "designKey": "maine-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maine-ad624bc85173.jpg",
@@ -8994,7 +9819,8 @@ const PLATE_IMAGES = {
       "sha256": "f74880c94b7a31a3775049e0a5b48ffbdc52acb6f6d18694716adc12e91f5fd6",
       "designKey": "maine-historical-issue-1940",
       "design": "Historical issue 1940",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maine-446d879c7982.jpg",
@@ -9014,7 +9840,8 @@ const PLATE_IMAGES = {
       "sha256": "804428a32a06c2538b63d6708cd659bed031355e07232e87f752a6ee8b733e8b",
       "designKey": "maine-historical-issue-1939",
       "design": "Historical issue 1939",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maine-2a37308dd657.jpg",
@@ -9034,7 +9861,8 @@ const PLATE_IMAGES = {
       "sha256": "f81e919dacd11f28efc04e746df740dfd78f14607543a51b4cc0edc7bd233b8c",
       "designKey": "maine-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maine-5e98dbe3b713.jpg",
@@ -9054,7 +9882,8 @@ const PLATE_IMAGES = {
       "sha256": "a83ea6b3ed25f3ffe10b1f3ab1008455ea40108b5ad7b2f11c20974c59d54c15",
       "designKey": "maine-historical-issue-1937",
       "design": "Historical issue 1937",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maine-d15aee2ed616.jpg",
@@ -9074,7 +9903,8 @@ const PLATE_IMAGES = {
       "sha256": "bbf3b60bdeb4fb3a861cac21b2b42127afbf78b4c38477b8277708d334312e52",
       "designKey": "maine-historical-issue-1933",
       "design": "Historical issue 1933",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maine-8ed6c35f329d.jpg",
@@ -9094,7 +9924,8 @@ const PLATE_IMAGES = {
       "sha256": "703ab11e1277c6255bdfd1c2c94ba309eb5f90b9668719c3c266d7d83d535ad5",
       "designKey": "maine-historical-issue-1930",
       "design": "Historical issue 1930",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maine-79565a40a21c.jpg",
@@ -9114,7 +9945,8 @@ const PLATE_IMAGES = {
       "sha256": "b706688de9fad4c199d1b15a10f0fb5a8e69ba1729dc65d63723364e1dd561aa",
       "designKey": "maine-historical-issue-1928",
       "design": "Historical issue 1928",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maine-23fff1ebeae2.jpg",
@@ -9134,7 +9966,8 @@ const PLATE_IMAGES = {
       "sha256": "2f7feebac80a64451467e9c784e1b2d6d12e241c803161265701960305e7ecf6",
       "designKey": "maine-historical-issue-1927",
       "design": "Historical issue 1927",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maine-3f2c5232e793.jpg",
@@ -9154,7 +9987,8 @@ const PLATE_IMAGES = {
       "sha256": "8edae2479a3721f67d39bd1acdf806fb51bf19fbb2fa89d20c848ec8ed932fd9",
       "designKey": "maine-historical-issue-1925",
       "design": "Historical issue 1925",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maine-2cf6e3536381.jpg",
@@ -9174,7 +10008,8 @@ const PLATE_IMAGES = {
       "sha256": "f9354ce990870d190d9e7f4b60dc233e20da216d7b81095b2331f3fb4b3705d7",
       "designKey": "maine-historical-issue-1924",
       "design": "Historical issue 1924",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maine-8a62b4bf5ec4.jpg",
@@ -9194,7 +10029,8 @@ const PLATE_IMAGES = {
       "sha256": "7eec1dce7aa32e27a1b34ecf4d93363fc3c9093d8460f4bd78112862bcb69814",
       "designKey": "maine-historical-issue-1921",
       "design": "Historical issue 1921",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maine-9cd536605475.jpg",
@@ -9214,7 +10050,8 @@ const PLATE_IMAGES = {
       "sha256": "0204cee161e03184a99787c829556e3ecc4c0f6094108ad65de034dab3be237c",
       "designKey": "maine-historical-issue-1918",
       "design": "Historical issue 1918",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Maryland": [
@@ -9236,7 +10073,8 @@ const PLATE_IMAGES = {
       "sha256": "a8cd75db73bb8736f064eafcb73ea2e784f76c1c6bd0a05e2947bf9633006b08",
       "designKey": "maryland-standard-passenger-state-flag-base-2016-photograph",
       "design": "Standard passenger, state flag base (2016 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2021-12-23"
     },
     {
       "id": "maryland-a997d53d29e7.jpg",
@@ -9256,7 +10094,8 @@ const PLATE_IMAGES = {
       "sha256": "db55705936eecd2792a7a20a9e68e06abb151933c42640157a91c60bbeb84a97",
       "designKey": "maryland-shield-ourmaryland-gov-base",
       "design": "Shield / ourmaryland.gov base",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-862298ba15bf.jpg",
@@ -9276,7 +10115,8 @@ const PLATE_IMAGES = {
       "sha256": "a9e79eae0d950183595e1e863d7294b1047c76322543ef0e5dcc8634278247d7",
       "designKey": "maryland-shield-base",
       "design": "Shield base",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-8be1dde2fd68.jpg",
@@ -9296,7 +10136,8 @@ const PLATE_IMAGES = {
       "sha256": "df2a436a560a535066cb4aad1805e114ebdb8a2ce22696ae0817f9208fbf8b4a",
       "designKey": "maryland-historical-issue-1969",
       "design": "Historical issue 1969",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-ae685439d51c.jpg",
@@ -9316,7 +10157,8 @@ const PLATE_IMAGES = {
       "sha256": "229aa7f7419d2a69e8f25c9b39d8800f1af97dbbeb9bc915233c196154e74238",
       "designKey": "maryland-historical-issue-1968",
       "design": "Historical issue 1968",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-eb8e966857d0.jpg",
@@ -9336,7 +10178,8 @@ const PLATE_IMAGES = {
       "sha256": "035b228b9e3797164beac78e1cafa47c02f649bc6fad38cce3ca2c842093e4b8",
       "designKey": "maryland-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-7e9ca8ca17a9.jpg",
@@ -9356,7 +10199,8 @@ const PLATE_IMAGES = {
       "sha256": "e0972a5c8265f12528ba4395d929b2a0f707cb9226e6251b5a23692622e1be3c",
       "designKey": "maryland-historical-issue-1966",
       "design": "Historical issue 1966",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-c3593cfd5c56.jpg",
@@ -9376,7 +10220,8 @@ const PLATE_IMAGES = {
       "sha256": "7808db35b7e10058a8bd84c1e220c5a8b8164131494dfc8b1fbe64bc067102dc",
       "designKey": "maryland-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-ee05a86ea277.jpg",
@@ -9396,7 +10241,8 @@ const PLATE_IMAGES = {
       "sha256": "090929d9a362329075e9aa92168f27641e53d7f241591bba7f5c9ca00abdc580",
       "designKey": "maryland-historical-issue-1964",
       "design": "Historical issue 1964",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-65779b6e2e1c.jpg",
@@ -9416,7 +10262,8 @@ const PLATE_IMAGES = {
       "sha256": "2302debde484226fbb94a5827a3b29caaba7bb4526b8d78663f9dde18ba6e0c1",
       "designKey": "maryland-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-5bce9393af0e.jpg",
@@ -9436,7 +10283,8 @@ const PLATE_IMAGES = {
       "sha256": "cb42dffa1f6a558ec443daea6cc4164c9600fabd3f8b68fe329753dcf9aeebe4",
       "designKey": "maryland-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-3e9e2c7afd11.jpg",
@@ -9456,7 +10304,8 @@ const PLATE_IMAGES = {
       "sha256": "c1a6f996068b9eef4a9dc0947b54c53b29cbcd5ca0bcb16899517fc53e308de5",
       "designKey": "maryland-historical-issue-1961",
       "design": "Historical issue 1961",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-historical.jpg",
@@ -9476,7 +10325,8 @@ const PLATE_IMAGES = {
       "sha256": "fda71f16bb515c98fe1710cfe67c16de3cca8bf0b436f2d69ac4d490dfccf4bb",
       "designKey": "maryland-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-798901b4999c.jpg",
@@ -9496,7 +10346,8 @@ const PLATE_IMAGES = {
       "sha256": "46ac034574f00a6196e0abbc9170b47a8b12b06324699af3486a206bddf3a0bd",
       "designKey": "maryland-historical-issue-1958",
       "design": "Historical issue 1958",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-ec21950ffb22.jpg",
@@ -9516,7 +10367,8 @@ const PLATE_IMAGES = {
       "sha256": "d1ef06764a655f6d808e49bc7b33df116b6322bb16d05bfb9db566a46656a8e0",
       "designKey": "maryland-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-070cf5437cb8.jpg",
@@ -9536,7 +10388,8 @@ const PLATE_IMAGES = {
       "sha256": "f4ab50ca2ef6b80815befb3ba6ac3d15644365c8d75008bcfe781830ad2ec804",
       "designKey": "maryland-historical-issue-1956",
       "design": "Historical issue 1956",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-1d4bfb9d173d.jpg",
@@ -9556,7 +10409,8 @@ const PLATE_IMAGES = {
       "sha256": "b609613855978dafcef1a28b8ef237a34476582d7208ffa404356e6bdbcd5ce5",
       "designKey": "maryland-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-7eef1e3eb735.jpg",
@@ -9576,7 +10430,8 @@ const PLATE_IMAGES = {
       "sha256": "0432e9626b20182ba7926e161f0bc48997afba486c8595b1e4b94d3ad9fa1b3d",
       "designKey": "maryland-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-3a8549282a90.jpg",
@@ -9596,7 +10451,8 @@ const PLATE_IMAGES = {
       "sha256": "029fd4e9babc2012e3ad7109e2c645e1f446459b195a7be05dc8e52826021d8f",
       "designKey": "maryland-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-41a9c53cdaf8.jpg",
@@ -9616,7 +10472,8 @@ const PLATE_IMAGES = {
       "sha256": "54853872faee258b7fd73659cdc27586e6c7751bdcd07d2575bcfda6b8a229ef",
       "designKey": "maryland-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-e45797684867.jpg",
@@ -9636,7 +10493,8 @@ const PLATE_IMAGES = {
       "sha256": "a79ed4cb7c021b4dffbd197efa088d1d0c62da088b9c888a3fc58755058438f5",
       "designKey": "maryland-historical-issue-1944",
       "design": "Historical issue 1944",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-b6c94453ab4f.jpg",
@@ -9656,7 +10514,8 @@ const PLATE_IMAGES = {
       "sha256": "68d112f10c006e389acd952c9a61f47bc3d51138cbd47480e25429b6acbb05a0",
       "designKey": "maryland-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-2f9ad4bdefbf.jpg",
@@ -9676,7 +10535,8 @@ const PLATE_IMAGES = {
       "sha256": "6159850bac23d31ac1243ed7af4fe87146bc6312df264a0518455dd59e0edb31",
       "designKey": "maryland-historical-issue-1941",
       "design": "Historical issue 1941",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-3bb863bcdc8a.jpg",
@@ -9696,7 +10556,8 @@ const PLATE_IMAGES = {
       "sha256": "5836eee3f099551f03730bc59af4195598dccef10eaa18e89c7ffc815923a82c",
       "designKey": "maryland-1938-issue-expiration-march-31-1939",
       "design": "1938 issue, expiration March 31, 1939",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-46a5a479e562.jpg",
@@ -9716,7 +10577,8 @@ const PLATE_IMAGES = {
       "sha256": "b8b3dbb77953fcc757a80eb008d8c4675241fb8ea0c0ce47c161d32197a4dbd9",
       "designKey": "maryland-historical-issue-1937",
       "design": "Historical issue 1937",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "maryland-d5a45dcdc53d.jpg",
@@ -9736,7 +10598,8 @@ const PLATE_IMAGES = {
       "sha256": "a9c58b5182381c9da38b82a9585138ebd053382b2cb2dfa4c4d450988711b5bb",
       "designKey": "maryland-historical-issue-1936",
       "design": "Historical issue 1936",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Massachusetts": [
@@ -9758,7 +10621,8 @@ const PLATE_IMAGES = {
       "sha256": "bda6b36953a84e96bc04e9abe633a831398a3bc4aabddfc6e95c3c539ab4343f",
       "designKey": "massachusetts-standard-passenger-spirit-of-america-base-2011-photograph",
       "design": "Standard passenger, Spirit of America base (2011 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2019-04-07"
     },
     {
       "id": "massachusetts-b8f8825ce1ba.jpg",
@@ -9778,7 +10642,8 @@ const PLATE_IMAGES = {
       "sha256": "ef1dfba6012519839ba4062ed0c729a5aac2bb042710878e72385e832cd3c7d5",
       "designKey": "massachusetts-modern-passenger-base",
       "design": "Modern passenger base",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-3031e41d42e3.jpg",
@@ -9798,7 +10663,8 @@ const PLATE_IMAGES = {
       "sha256": "e94cf457b40b699eab6a6016e8c831987734f370c11deef685b308486a3c07ad",
       "designKey": "massachusetts-historical-issue-1968",
       "design": "Historical issue 1968",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-d640a6153b40.jpg",
@@ -9818,7 +10684,8 @@ const PLATE_IMAGES = {
       "sha256": "3e9939d0f4f1869360d4dfc61e159fc0b51d49a2868512d75e0ebce042bdaea1",
       "designKey": "massachusetts-historical-issue-1966",
       "design": "Historical issue 1966",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-8c412efea4e3.jpg",
@@ -9838,7 +10705,8 @@ const PLATE_IMAGES = {
       "sha256": "1a6e2b2ab54686deece9e37c3e816314e36f592fb4ba8beb96b0771c98cf167c",
       "designKey": "massachusetts-historical-issue-1964",
       "design": "Historical issue 1964",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-5f55324bd429.jpg",
@@ -9858,7 +10726,8 @@ const PLATE_IMAGES = {
       "sha256": "d7b777446bbaf235b7fa08051e1387b1e917960cb6e2287d41f25c6ce2cc73c2",
       "designKey": "massachusetts-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-historical.jpg",
@@ -9878,7 +10747,8 @@ const PLATE_IMAGES = {
       "sha256": "963dc7e6db2dec2b98908ca106e0d1d38de8debad28e2004c72ac9c59312b858",
       "designKey": "massachusetts-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-7dd3b6ca36ae.jpg",
@@ -9898,7 +10768,8 @@ const PLATE_IMAGES = {
       "sha256": "9abb274b1f0812810f920f5006e04112453c26f68d4769911a07e12bde4120fd",
       "designKey": "massachusetts-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-b13a61bc858c.jpg",
@@ -9918,7 +10789,8 @@ const PLATE_IMAGES = {
       "sha256": "31c8ed85c4896c3729448dce373ceb524e2eb39ab3a6845d41a27faae2fab951",
       "designKey": "massachusetts-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-c1f2eafcba5c.jpg",
@@ -9938,7 +10810,8 @@ const PLATE_IMAGES = {
       "sha256": "e5c8305659c129172b6954350edb4e70063c64e7a3cf0f2264e15dc5e4dba4f9",
       "designKey": "massachusetts-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-346c63fbf090.jpg",
@@ -9958,7 +10831,8 @@ const PLATE_IMAGES = {
       "sha256": "5b011af5788093751869489e0032687a5983b67b65ccbd9af2d551687490c3ae",
       "designKey": "massachusetts-historical-issue-1948",
       "design": "Historical issue 1948",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-4a4325bbb657.jpg",
@@ -9978,7 +10852,8 @@ const PLATE_IMAGES = {
       "sha256": "615f13c12ad793c43d7d6a637126f95039cf1192e79b2602edd4e16c911bb7f5",
       "designKey": "massachusetts-historical-issue-1947",
       "design": "Historical issue 1947",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-1c85c7473f93.jpg",
@@ -9998,7 +10873,8 @@ const PLATE_IMAGES = {
       "sha256": "6e9d265772f45e08f8deaaab2e6d36d8f6cba3a5edafa94fc7a818d4a9c0440e",
       "designKey": "massachusetts-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-646d58ed93c7.jpg",
@@ -10018,7 +10894,8 @@ const PLATE_IMAGES = {
       "sha256": "049e62e7b3e410d125eb6bdf0642203748090568967cc4ed5b6106baf30c7ae9",
       "designKey": "massachusetts-historical-issue-1945",
       "design": "Historical issue 1945",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-ef71b0b543dc.jpg",
@@ -10038,7 +10915,8 @@ const PLATE_IMAGES = {
       "sha256": "58ce2c1fe465f230f992dae6b28ec34657cbc065cf88acbb7b182c1ea105c362",
       "designKey": "massachusetts-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-b7a5379ced09.jpg",
@@ -10058,7 +10936,8 @@ const PLATE_IMAGES = {
       "sha256": "eab5fe8f0aebdacddaaa5027384eef0718540f06d14b138617da2ca25dc00b29",
       "designKey": "massachusetts-historical-issue-1941",
       "design": "Historical issue 1941",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-9a7b21a00e99.jpg",
@@ -10078,7 +10957,8 @@ const PLATE_IMAGES = {
       "sha256": "9ebb11d9c0348c4426f2f57fe6d25bc8356794878ca032463294c230e3b2c023",
       "designKey": "massachusetts-historical-issue-1940",
       "design": "Historical issue 1940",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-0945c3ec8a26.jpg",
@@ -10098,7 +10978,8 @@ const PLATE_IMAGES = {
       "sha256": "dc25710669ca833c0b21214950be1e7fae881158fac167b511922ba590dc0776",
       "designKey": "massachusetts-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-3472812d2f45.jpg",
@@ -10118,7 +10999,8 @@ const PLATE_IMAGES = {
       "sha256": "7f3172be4a0737008338936fb611933ce88fb927c1f5fb9f6b7363af529c8bf3",
       "designKey": "massachusetts-historical-issue-1935",
       "design": "Historical issue 1935",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-6a6bf64ef8e2.jpg",
@@ -10138,7 +11020,8 @@ const PLATE_IMAGES = {
       "sha256": "1484ee6b58ff6d406c0d308ef3fe8a81c0535dabe6d1e1d9cb9ae6f74070e933",
       "designKey": "massachusetts-historical-issue-1930",
       "design": "Historical issue 1930",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-78b2541997f7.jpg",
@@ -10158,7 +11041,8 @@ const PLATE_IMAGES = {
       "sha256": "817fbe65def9ed2605081e0710b31543e6eb42effa97905551dbeb5adf505d0b",
       "designKey": "massachusetts-historical-issue-1929",
       "design": "Historical issue 1929",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-d73b76dd3c2c.jpg",
@@ -10178,7 +11062,8 @@ const PLATE_IMAGES = {
       "sha256": "a4fb987bf96a331556ae0655bdccfb621aed9d657dc89facb72e291d6b17b458",
       "designKey": "massachusetts-historical-issue-1928",
       "design": "Historical issue 1928",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-ea82881db32c.jpg",
@@ -10198,7 +11083,8 @@ const PLATE_IMAGES = {
       "sha256": "cc613ed5b07277c9eb91e5b7f228b78a7fd6bb5ec95d1f6878773035919d6cdc",
       "designKey": "massachusetts-historical-issue-1927",
       "design": "Historical issue 1927",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-1e6737cb359e.jpg",
@@ -10218,7 +11104,8 @@ const PLATE_IMAGES = {
       "sha256": "9f77b62ad79a1e6f29f69aa3531baeff0bf9031de53dcd4a529f4e7cf151042e",
       "designKey": "massachusetts-historical-issue-1924",
       "design": "Historical issue 1924",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-b1925237d9c0.jpg",
@@ -10238,7 +11125,8 @@ const PLATE_IMAGES = {
       "sha256": "a03c9c47877198fb4783c79d72641efe43df8cdfa5f2939a27acd42b1076758e",
       "designKey": "massachusetts-historical-issue-1921",
       "design": "Historical issue 1921",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-e05821c0de2c.jpg",
@@ -10258,7 +11146,8 @@ const PLATE_IMAGES = {
       "sha256": "2f6c267591cd3c00b764f170fb34a68b87d51844e1addaa38c7a99f68cd4748d",
       "designKey": "massachusetts-historical-issue-1918",
       "design": "Historical issue 1918",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-839c1d5c12d9.jpg",
@@ -10278,7 +11167,8 @@ const PLATE_IMAGES = {
       "sha256": "c934fe310eef88b6609ae434dda5acd8ead01088b6a8349fc69b13265c619004",
       "designKey": "massachusetts-historical-issue-1917",
       "design": "Historical issue 1917",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-5e404cf4eda5.jpg",
@@ -10298,7 +11188,8 @@ const PLATE_IMAGES = {
       "sha256": "9d9b2ce9e7f7aaa7ab908bf1f4643fc81f75e017bcb5d073a0336321d48e41fb",
       "designKey": "massachusetts-historical-issue-1916",
       "design": "Historical issue 1916",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-da45333c1a00.jpg",
@@ -10318,7 +11209,8 @@ const PLATE_IMAGES = {
       "sha256": "09f8f42fc886643f9c48f27a302a7c703323ad2bb3f28ee3118c9e93090ff7e2",
       "designKey": "massachusetts-historical-issue-1915",
       "design": "Historical issue 1915",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "massachusetts-c72ae70d231b.jpg",
@@ -10338,7 +11230,8 @@ const PLATE_IMAGES = {
       "sha256": "997f4bd118e2b2865095aac0ce366a3a068daf82c37365660afc7f22164675bc",
       "designKey": "massachusetts-historical-issue-1914",
       "design": "Historical issue 1914",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Michigan": [
@@ -10360,7 +11253,8 @@ const PLATE_IMAGES = {
       "sha256": "e5acd33841dbced63dc0f0eebf76d73765657fc4e4cacd4012bb59458dad12fa",
       "designKey": "michigan-standard-passenger-pure-michigan-base-2018-photograph",
       "design": "Standard passenger, Pure Michigan base (2018 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2018-03-17 16:05:07"
     },
     {
       "id": "michigan-24d9af10b93a.jpg",
@@ -10380,7 +11274,8 @@ const PLATE_IMAGES = {
       "sha256": "d19e129c669b0094c97aa285bfce860069800b638e995892fca017f2fb0b6ae9",
       "designKey": "michigan-municipal",
       "design": "Municipal",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-42f107a6eee0.jpg",
@@ -10400,7 +11295,8 @@ const PLATE_IMAGES = {
       "sha256": "9abbf40540befc123c027353eb08f93bffba6036d5f74ee1d4b11d3a927d8eb8",
       "designKey": "michigan-blue-great-lakes-base",
       "design": "Blue Great Lakes base",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-cd5e656b63b1.jpg",
@@ -10420,7 +11316,8 @@ const PLATE_IMAGES = {
       "sha256": "3938d867966744322d349fc538a45430a3190622e9b2cde8c571f7d29c734a97",
       "designKey": "michigan-blue-header-michigan-gov-base-2008-photograph",
       "design": "Blue header / Michigan.gov base, 2008 photograph",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-b726b1910a97.jpg",
@@ -10440,7 +11337,8 @@ const PLATE_IMAGES = {
       "sha256": "5963162e5b0e0ed4ab498623b3fe685f68ad8f8cccc3921b575575e6deb06024",
       "designKey": "michigan-historical-issue-1969",
       "design": "Historical issue 1969",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-c06737a024f8.jpg",
@@ -10460,7 +11358,8 @@ const PLATE_IMAGES = {
       "sha256": "75901240078cf91d7eaf06c1ba2fb240c88b9a73f9329c76cf28afb3c4a20d18",
       "designKey": "michigan-historical-issue-1968",
       "design": "Historical issue 1968",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-36856f6b8bcd.jpg",
@@ -10480,7 +11379,8 @@ const PLATE_IMAGES = {
       "sha256": "f25601b2538ebc187025369d688c990c33f409be6d3b99065349ca64ce94c12b",
       "designKey": "michigan-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-080b9089d304.jpg",
@@ -10500,7 +11400,8 @@ const PLATE_IMAGES = {
       "sha256": "59d4494f5be0a4546ef0665b2e00412da2c449638f4e2578a9da0f5114e3be63",
       "designKey": "michigan-historical-issue-1966",
       "design": "Historical issue 1966",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-d36d1c641e62.jpg",
@@ -10520,7 +11421,8 @@ const PLATE_IMAGES = {
       "sha256": "37597949f02ce4efc53ca2260b8c2f29c368069a585603a24ee406ca2ecf0ff7",
       "designKey": "michigan-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-8b1ce34a6289.jpg",
@@ -10540,7 +11442,8 @@ const PLATE_IMAGES = {
       "sha256": "7bbc7301afcda47c1688ce6d54b9938decb452f508aaa5aad8cd4df6244ed290",
       "designKey": "michigan-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-29e98535ba7c.jpg",
@@ -10560,7 +11463,8 @@ const PLATE_IMAGES = {
       "sha256": "5df53c17e90eb0e3edd068ec85670fea5882d11567a272ea33ae2642c9fcbf74",
       "designKey": "michigan-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-historical.jpg",
@@ -10580,7 +11484,8 @@ const PLATE_IMAGES = {
       "sha256": "1433ec9efd8f65e4550ae5caff4a8ac5f63cd19afb1c9ba9981221ccf779504c",
       "designKey": "michigan-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-4dd02d54f86d.jpg",
@@ -10600,7 +11505,8 @@ const PLATE_IMAGES = {
       "sha256": "fabb8897deade42fcc88ad3358fc231b2b1edbcd71bee65b302cad8184eb4c94",
       "designKey": "michigan-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-fb25a1416377.jpg",
@@ -10620,7 +11526,8 @@ const PLATE_IMAGES = {
       "sha256": "8c4bcc2f1fba9fa001f537bfe24aa7fdb62f1354506fbe810cc505c76fd2432a",
       "designKey": "michigan-historical-issue-1958",
       "design": "Historical issue 1958",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-fced21e80ebc.jpg",
@@ -10640,7 +11547,8 @@ const PLATE_IMAGES = {
       "sha256": "2523187ccae22ac85f849f150fc90bd81b61479017ca4a1ab5a5d80f55315d36",
       "designKey": "michigan-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-ffa176956f1e.jpg",
@@ -10660,7 +11568,8 @@ const PLATE_IMAGES = {
       "sha256": "6424dc6d2ab632819b668a31392957bae9142129bf8e7a2a2eb72f964980f49c",
       "designKey": "michigan-historical-issue-1956",
       "design": "Historical issue 1956",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-75db951c40a0.jpg",
@@ -10680,7 +11589,8 @@ const PLATE_IMAGES = {
       "sha256": "81ccc291278e1c714296792bbde45879f64b8a932747a165bdb05454c480aff9",
       "designKey": "michigan-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-e3b65c90ba84.jpg",
@@ -10700,7 +11610,8 @@ const PLATE_IMAGES = {
       "sha256": "dcdeaec9a853c9af43fb92865a59547c1c2dd1c26648faf9498c9e960932de4a",
       "designKey": "michigan-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-8fd553a67fc2.jpg",
@@ -10720,7 +11631,8 @@ const PLATE_IMAGES = {
       "sha256": "f50113d6f8bfd56b1d90719f2fe1048822b9e428e9128cfbcb3c1ae5dfe53738",
       "designKey": "michigan-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-2b2ebf736b6f.jpg",
@@ -10740,7 +11652,8 @@ const PLATE_IMAGES = {
       "sha256": "ad15b19804f0dfe1e1050e2604a5aa414d05551373e7e494957544638d408adb",
       "designKey": "michigan-historical-issue-1952",
       "design": "Historical issue 1952",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-354e21b103ee.jpg",
@@ -10760,7 +11673,8 @@ const PLATE_IMAGES = {
       "sha256": "dd8ec93e8dc8d934e49f5242f9379f2ca801ac0118507b10551bf785bf7ba536",
       "designKey": "michigan-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-acb8e1abb0c2.jpg",
@@ -10780,7 +11694,8 @@ const PLATE_IMAGES = {
       "sha256": "ded11ef866af904c6ad870b7829754d70ec1eb3c2540bd65e80b123fb731ff45",
       "designKey": "michigan-historical-issue-1950",
       "design": "Historical issue 1950",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-ee62699cb615.jpg",
@@ -10800,7 +11715,8 @@ const PLATE_IMAGES = {
       "sha256": "da382df0685bb66c3c10531883c34c7060a1786428d6c86e7a9f6ead6a860383",
       "designKey": "michigan-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-473c61412997.jpg",
@@ -10820,7 +11736,8 @@ const PLATE_IMAGES = {
       "sha256": "294127a576b9ae20af3b9f9253afddd5c715cf62a17d5326873c53a25bb04ef0",
       "designKey": "michigan-historical-issue-1948",
       "design": "Historical issue 1948",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-33ded89f463f.jpg",
@@ -10840,7 +11757,8 @@ const PLATE_IMAGES = {
       "sha256": "a3b79a65ee62acecbf4892e2546c92752222534abcbb12daa25348276e0430f3",
       "designKey": "michigan-historical-issue-1947",
       "design": "Historical issue 1947",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-bb41dc5b24a1.jpg",
@@ -10860,7 +11778,8 @@ const PLATE_IMAGES = {
       "sha256": "fa26e8b764a7d9cf8d2972f2e26daa52aa8a692822aaab3c14621e9f37763dd3",
       "designKey": "michigan-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-6ad4c7206ec7.jpg",
@@ -10880,7 +11799,8 @@ const PLATE_IMAGES = {
       "sha256": "d8599fbba138418409d927f3c2341ea7682a8a4792effb1a191331592153413b",
       "designKey": "michigan-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "michigan-7e9c27fe6197.jpg",
@@ -10900,7 +11820,8 @@ const PLATE_IMAGES = {
       "sha256": "befd69c82eb332f3d41e4cd7cf5a0ccd9f892f02efd4a9b09211ee18e3049b4e",
       "designKey": "michigan-historical-issue-1941",
       "design": "Historical issue 1941",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Minnesota": [
@@ -10922,7 +11843,8 @@ const PLATE_IMAGES = {
       "sha256": "79730ef1753bf75be98cf5b43dbec9d1cb3cbf333b306499c4f638c7875ffa45",
       "designKey": "minnesota-standard-passenger-10-000-lakes-base-2011-photograph",
       "design": "Standard passenger, 10,000 Lakes base (2011 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2020-01-12 15:43:39"
     },
     {
       "id": "minnesota-17f79ef53f80.jpg",
@@ -10942,7 +11864,8 @@ const PLATE_IMAGES = {
       "sha256": "4097a9d07c814c303bf17404aad09919db76b9a9a50801a1b15c77abcf58cd25",
       "designKey": "minnesota-historical-issue-1968",
       "design": "Historical issue 1968",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-6d76c57ef707.jpg",
@@ -10962,7 +11885,8 @@ const PLATE_IMAGES = {
       "sha256": "7b9f90028029617df7532cacbd26f91baaf3f3558c3f43ed2d6022711bf67ec8",
       "designKey": "minnesota-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-270c182dd9dd.jpg",
@@ -10982,7 +11906,8 @@ const PLATE_IMAGES = {
       "sha256": "a38a93958f85be6aa2bcfdccd613b72400fc2c49c41005646a58696028eb6e9a",
       "designKey": "minnesota-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-f0fd09470ceb.jpg",
@@ -11002,7 +11927,8 @@ const PLATE_IMAGES = {
       "sha256": "15bacaf03bd2d109ed3d32d4387f7e47483de538e12c66fa01b8473d2efd1a1c",
       "designKey": "minnesota-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-641a034aafc4.jpg",
@@ -11022,7 +11948,8 @@ const PLATE_IMAGES = {
       "sha256": "3de940414c32ac3e27045185714c58280564fca7d1b8d4912964f22eb45d651a",
       "designKey": "minnesota-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-historical.jpg",
@@ -11042,7 +11969,8 @@ const PLATE_IMAGES = {
       "sha256": "6bb381d4be03711e02e3fc7561258b8e83b41aef1c2db656215c9736042a7f0f",
       "designKey": "minnesota-historical-issue-1958",
       "design": "Historical issue 1958",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-b931f525e4eb.jpg",
@@ -11062,7 +11990,8 @@ const PLATE_IMAGES = {
       "sha256": "78560d7ab8f412b8cc9ed2dbab718b63d3ab7dcc67a147bf4ebba0570cfe65bc",
       "designKey": "minnesota-historical-issue-1956",
       "design": "Historical issue 1956",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-8b8ac34608a4.jpg",
@@ -11082,7 +12011,8 @@ const PLATE_IMAGES = {
       "sha256": "881ac3d05f6c5cf9d99fb0dd6496b2d293357e944f8e6bafc97ef12ee97fb491",
       "designKey": "minnesota-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-92fe1ff156aa.jpg",
@@ -11102,7 +12032,8 @@ const PLATE_IMAGES = {
       "sha256": "0f43ed86df888b27b8cb915d3eaffdaed30789ebefbe7266632b565ef45a9ace",
       "designKey": "minnesota-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-90d0fed124b9.jpg",
@@ -11122,7 +12053,8 @@ const PLATE_IMAGES = {
       "sha256": "9509c1907f66cd9717c4783afd8b26af5dc9ab416e1e3138b413305a745a1f23",
       "designKey": "minnesota-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-a6140f2f4e69.jpg",
@@ -11142,7 +12074,8 @@ const PLATE_IMAGES = {
       "sha256": "a4cbf6e9e81e24aa18cc8bc141c0f5c2600ed13bff1ec86522b45a7cd480e139",
       "designKey": "minnesota-historical-issue-1952",
       "design": "Historical issue 1952",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-ada4a5101565.jpg",
@@ -11162,7 +12095,8 @@ const PLATE_IMAGES = {
       "sha256": "b19479edbb910ec868b15501bc742d80f64cd6a4832fcec13dbba1dd3454309b",
       "designKey": "minnesota-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-0aa92b3a4866.jpg",
@@ -11182,7 +12116,8 @@ const PLATE_IMAGES = {
       "sha256": "570277b59e4606ab1327b74c0477e1d6f7320e941d10ffc35fd59ad4b59d2301",
       "designKey": "minnesota-historical-issue-1950",
       "design": "Historical issue 1950",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-584a7299a1d5.jpg",
@@ -11202,7 +12137,8 @@ const PLATE_IMAGES = {
       "sha256": "ba63ac51e5f0c5cec36d461255ba332108a4eb8729343c6af437b862d85f2b67",
       "designKey": "minnesota-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-70e2168bc39f.jpg",
@@ -11222,7 +12158,8 @@ const PLATE_IMAGES = {
       "sha256": "7d58d2d75750c7f0f4babb290e8d11abf0b6e3503d0cdb780316f06a42f8fd0f",
       "designKey": "minnesota-historical-issue-1948",
       "design": "Historical issue 1948",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-2631eb3d9891.jpg",
@@ -11242,7 +12179,8 @@ const PLATE_IMAGES = {
       "sha256": "b66a984a0b8ed14afa299c1c4af6d7a708d24649fa5101f833e435ec3baf0fcd",
       "designKey": "minnesota-historical-issue-1947",
       "design": "Historical issue 1947",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-ffced3243479.jpg",
@@ -11262,7 +12200,8 @@ const PLATE_IMAGES = {
       "sha256": "8bab3f8ec42bde7903b3e4d8531d126e4224509b2f351fe04afd0a89f93c424d",
       "designKey": "minnesota-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-088148780801.jpg",
@@ -11282,7 +12221,8 @@ const PLATE_IMAGES = {
       "sha256": "967e03e580deca67e07b9d78bee3fe78b31a73101d68d613663b84fb8e5272ab",
       "designKey": "minnesota-historical-issue-1945",
       "design": "Historical issue 1945",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-ef3bdbff1fa0.jpg",
@@ -11302,7 +12242,8 @@ const PLATE_IMAGES = {
       "sha256": "f4837524a383e2a61eef40d966569bb5858b904ca6e841b4332da26aa2b63d8f",
       "designKey": "minnesota-historical-issue-1944",
       "design": "Historical issue 1944",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-1e2be5a11880.jpg",
@@ -11322,7 +12263,8 @@ const PLATE_IMAGES = {
       "sha256": "5c0d9388cec1c5d888515f352ba475bb45412d0a6b205469651a143a800046c9",
       "designKey": "minnesota-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-0786905362df.jpg",
@@ -11342,7 +12284,8 @@ const PLATE_IMAGES = {
       "sha256": "17f6709b967e754f6c1ade0e12b666ea415f597bc57473a181263e0f325afb65",
       "designKey": "minnesota-historical-issue-1940",
       "design": "Historical issue 1940",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-47aa4d47f960.jpg",
@@ -11362,7 +12305,8 @@ const PLATE_IMAGES = {
       "sha256": "47e1971229e7a38a043552dbf9af328761f09b670857364ccdab71536f73ce4e",
       "designKey": "minnesota-historical-issue-1937",
       "design": "Historical issue 1937",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-ea97c51211dd.jpg",
@@ -11382,7 +12326,8 @@ const PLATE_IMAGES = {
       "sha256": "7c187b35c566a6aa61da7a7d0edc3205d54d667162ad258426c0070f962e5e5a",
       "designKey": "minnesota-historical-issue-1934",
       "design": "Historical issue 1934",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-f95100b13711.jpg",
@@ -11402,7 +12347,8 @@ const PLATE_IMAGES = {
       "sha256": "d659888878fac52b553a8daee8a7bef90a9f16e033db82d335f5109c12963b45",
       "designKey": "minnesota-historical-issue-1932",
       "design": "Historical issue 1932",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-b724b4dc9832.jpg",
@@ -11422,7 +12368,8 @@ const PLATE_IMAGES = {
       "sha256": "ae9f333519e3a6e82aeab770c44677e615d5e46d056b2c2e9469a1a09f504cf9",
       "designKey": "minnesota-historical-issue-1927",
       "design": "Historical issue 1927",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-b4a2508c0852.jpg",
@@ -11442,7 +12389,8 @@ const PLATE_IMAGES = {
       "sha256": "7c0ab0f5fb057722122f46cd84c01a27406f7f18f24ff2fe1e1cc4d032465dbd",
       "designKey": "minnesota-historical-issue-1926",
       "design": "Historical issue 1926",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "minnesota-d8e9141f2e2e.jpg",
@@ -11462,7 +12410,8 @@ const PLATE_IMAGES = {
       "sha256": "04f2a6a9fc3a2fae1537743c1c584df89267ae95d546ba728e02a83fd63e01c6",
       "designKey": "minnesota-historical-issue-1925",
       "design": "Historical issue 1925",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Mississippi": [
@@ -11484,7 +12433,8 @@ const PLATE_IMAGES = {
       "sha256": "0817076003f5f58fa3f4d9a4454c5987604410b8f1c6f2e6b28ff2fbb16d6956",
       "designKey": "mississippi-standard-passenger-magnolia-base-2024-photograph",
       "design": "Standard passenger, magnolia base (2024 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2024-06-19 10:02:30"
     },
     {
       "id": "mississippi-bb345531df02.jpg",
@@ -11504,7 +12454,8 @@ const PLATE_IMAGES = {
       "sha256": "1aa9f3164973a3b2fad4aa26c0b8376b7e1db8ab1fa7a67afa878159a24caaae",
       "designKey": "mississippi-state-seal-base-sample",
       "design": "State seal base, sample",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2019"
     },
     {
       "id": "mississippi-daebaf6db7a3.jpg",
@@ -11524,7 +12475,8 @@ const PLATE_IMAGES = {
       "sha256": "4b66d10f2309d71ca71a5bfae6791474546d98ce330c7418188c49c0d8827651",
       "designKey": "mississippi-guitar-base-2012-2018-series",
       "design": "Guitar base, 2012-2018 series",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2024-08-18 07:44:04"
     },
     {
       "id": "mississippi-85adfba5ea7a.jpg",
@@ -11544,7 +12496,8 @@ const PLATE_IMAGES = {
       "sha256": "28ce23e1fb2605f1d8570e5613013c6db6efad4d6eb850904e0c26eb85778056",
       "designKey": "mississippi-historical-issue-1969",
       "design": "Historical issue 1969",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-dcf8913d123a.jpg",
@@ -11564,7 +12517,8 @@ const PLATE_IMAGES = {
       "sha256": "5257f2900370597472ba00799b80f9e9ed8eb1f6000ea6c82bfea0b4b45bedf5",
       "designKey": "mississippi-historical-issue-1968",
       "design": "Historical issue 1968",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-b2967d7dec8e.jpg",
@@ -11584,7 +12538,8 @@ const PLATE_IMAGES = {
       "sha256": "574c1b01e8092fae1a76ac32b02b42500e09300e970d849a294cdb964003c4d8",
       "designKey": "mississippi-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-0beeff6f07f6.jpg",
@@ -11604,7 +12559,8 @@ const PLATE_IMAGES = {
       "sha256": "72e2a8d44b87524c47d61fbc03d31f9f531785bd582100e44802db08c63c69b4",
       "designKey": "mississippi-historical-issue-1966",
       "design": "Historical issue 1966",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-7deae700690c.jpg",
@@ -11624,7 +12580,8 @@ const PLATE_IMAGES = {
       "sha256": "d97c0767df2d94d4d36a68e864d1b87870c7ace8463d191837ad176370761bb0",
       "designKey": "mississippi-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-2628d3861715.jpg",
@@ -11644,7 +12601,8 @@ const PLATE_IMAGES = {
       "sha256": "369ff10963c422b7be1e4c6f350efa1f60e123f9e011286121f20c0ea1099328",
       "designKey": "mississippi-historical-issue-1964",
       "design": "Historical issue 1964",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-a25261a1b94b.jpg",
@@ -11664,7 +12622,8 @@ const PLATE_IMAGES = {
       "sha256": "7aa6c6874aad5cbe72d0317bc7b28a0e5a69e69f5d3266797fd0c22f6217e162",
       "designKey": "mississippi-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-c951a6925d0d.jpg",
@@ -11684,7 +12643,8 @@ const PLATE_IMAGES = {
       "sha256": "c14b9b038c8a6323d5251d8b3afb5489cdf9f281e97dc5cbf7c6d1d6756a6bb6",
       "designKey": "mississippi-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-0c5d6d2e941c.jpg",
@@ -11704,7 +12664,8 @@ const PLATE_IMAGES = {
       "sha256": "a74c85cad547c93f48252deecb76e6daa128f33c59db7c64b6250416e22a3535",
       "designKey": "mississippi-historical-issue-1961",
       "design": "Historical issue 1961",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-historical.jpg",
@@ -11724,7 +12685,8 @@ const PLATE_IMAGES = {
       "sha256": "a718a5703756c5c3cc1ca88e857749a13b8d79228f7ece37de0f707b8bd58ef0",
       "designKey": "mississippi-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-f04f7ab85f99.jpg",
@@ -11744,7 +12706,8 @@ const PLATE_IMAGES = {
       "sha256": "0e4ec10d62cadfe416e469618f6be02733dc4a9f5c8e7c0e3358b62d8a6fbbff",
       "designKey": "mississippi-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-835eb28f2a4e.jpg",
@@ -11764,7 +12727,8 @@ const PLATE_IMAGES = {
       "sha256": "5c2a88e6ab686d17e5686b7412065b04cf825ba8bd391d09bf11ef7ebf59186d",
       "designKey": "mississippi-historical-issue-1958",
       "design": "Historical issue 1958",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-da6281b736e2.jpg",
@@ -11784,7 +12748,8 @@ const PLATE_IMAGES = {
       "sha256": "0d3bc2046cc6065b647feca3d74abb3d01c6425c8dde173bc9ccacf884170820",
       "designKey": "mississippi-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-8efb33b0986d.jpg",
@@ -11804,7 +12769,8 @@ const PLATE_IMAGES = {
       "sha256": "6d895816c03dcdfe03774426c234813e949c6e2a34b185d0820591532e2a9b94",
       "designKey": "mississippi-historical-issue-1956",
       "design": "Historical issue 1956",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-d363176dd530.jpg",
@@ -11824,7 +12790,8 @@ const PLATE_IMAGES = {
       "sha256": "862b91daec89f22d72cc17cbd923247eef55314e63f3b6c7e5cd84e18942d73a",
       "designKey": "mississippi-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-ddc7bf65167f.jpg",
@@ -11844,7 +12811,8 @@ const PLATE_IMAGES = {
       "sha256": "41f9cf13fbe05cafdb9da4e5244cbc68c17a908ebe4fe6be00b78a1f8dfb79c7",
       "designKey": "mississippi-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-259dfe2fa8c8.jpg",
@@ -11864,7 +12832,8 @@ const PLATE_IMAGES = {
       "sha256": "3b9115e1016a9cffb6e51478afe180fd98c5066a676083df7adab88412b7c01f",
       "designKey": "mississippi-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-fda47288d3f7.jpg",
@@ -11884,7 +12853,8 @@ const PLATE_IMAGES = {
       "sha256": "11d41d8206c278af12f8721fe29e0d133d1d2148616c3ce83cb5efb6ce6ba622",
       "designKey": "mississippi-historical-issue-1952",
       "design": "Historical issue 1952",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-f323b2c480df.jpg",
@@ -11904,7 +12874,8 @@ const PLATE_IMAGES = {
       "sha256": "95fdfe4e8ba763c7f596b2aa827fe0a28a5d4e78c9314c24f72823f7e61129cc",
       "designKey": "mississippi-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-2253c348053d.jpg",
@@ -11924,7 +12895,8 @@ const PLATE_IMAGES = {
       "sha256": "d7abba1f90493d575cb4ad5c2f4f52a9eaefeb011989802f254c5c87c0965011",
       "designKey": "mississippi-historical-issue-1950",
       "design": "Historical issue 1950",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-b954a128fb4a.jpg",
@@ -11944,7 +12916,8 @@ const PLATE_IMAGES = {
       "sha256": "76f153b5b0f4af87135f1e84798ae0164cb30b3b2b72186a778afa0fd47ac162",
       "designKey": "mississippi-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-97376fae5446.jpg",
@@ -11964,7 +12937,8 @@ const PLATE_IMAGES = {
       "sha256": "65aac1bc1c9eedee719f675a4df6afbc7babcd2f9fbf1aaf8e351957fbeb6ee7",
       "designKey": "mississippi-historical-issue-1948",
       "design": "Historical issue 1948",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-834cfe649881.jpg",
@@ -11984,7 +12958,8 @@ const PLATE_IMAGES = {
       "sha256": "26f9d1ba1862f65361b2a6ac91bc3954ab8c56c9fb9bda91d2c8de5ac500d39d",
       "designKey": "mississippi-historical-issue-1947",
       "design": "Historical issue 1947",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-203bc622a48f.jpg",
@@ -12004,7 +12979,8 @@ const PLATE_IMAGES = {
       "sha256": "37ce5d9b9d27bff9bd7c6a5f4b020d7550e7462a8f516e7c8f012cdea15b8e41",
       "designKey": "mississippi-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-fad5332e1785.jpg",
@@ -12024,7 +13000,8 @@ const PLATE_IMAGES = {
       "sha256": "9aa34b5a90c49f047e1ff2c68158dc8c884b43e889f32395a3a9942b8f495080",
       "designKey": "mississippi-historical-issue-1945",
       "design": "Historical issue 1945",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-96bfd7ebe2ab.jpg",
@@ -12044,7 +13021,8 @@ const PLATE_IMAGES = {
       "sha256": "3fa7f5813ea6314bd1ee9c838bbd8d87412593060a95fa64837040b8ca416e1f",
       "designKey": "mississippi-historical-issue-1944",
       "design": "Historical issue 1944",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "mississippi-0af1a8fb77f2.jpg",
@@ -12064,7 +13042,8 @@ const PLATE_IMAGES = {
       "sha256": "d04d56e7552676c7f8e60af37f6761eff48230121a5c3b75fc1f78b9da43ac23",
       "designKey": "mississippi-historical-issue-1943",
       "design": "Historical issue 1943",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Missouri": [
@@ -12086,7 +13065,8 @@ const PLATE_IMAGES = {
       "sha256": "93b809e27f2229dbad85317eedb5354f3a0255f6e21a351c0a56881f46447b92",
       "designKey": "missouri-standard-passenger-bicentennial-base-2020-photograph",
       "design": "Standard passenger, bicentennial base (2020 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2020-08-01"
     },
     {
       "id": "missouri-cc2c8586e8e6.jpg",
@@ -12106,7 +13086,8 @@ const PLATE_IMAGES = {
       "sha256": "cf8655fe0b12775041fbd313a22c14db3af458cfe0cf0a1aef0b7c3ce6b2c4cc",
       "designKey": "missouri-modern-passenger-base",
       "design": "Modern passenger base",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-36eaf07a1e08.jpg",
@@ -12126,7 +13107,8 @@ const PLATE_IMAGES = {
       "sha256": "53fdd0b93b4706610af0b847403629a10658061ccd8e5b2cd48f5a969b316d33",
       "designKey": "missouri-historical-issue-1969",
       "design": "Historical issue 1969",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-5b6198967a0b.jpg",
@@ -12146,7 +13128,8 @@ const PLATE_IMAGES = {
       "sha256": "ddd8b0de6fcf5af07f263fdc1d9189c52d1509204b5f5d42ed3d917fac05e0f9",
       "designKey": "missouri-historical-issue-1968",
       "design": "Historical issue 1968",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-79f0ca77a0db.jpg",
@@ -12166,7 +13149,8 @@ const PLATE_IMAGES = {
       "sha256": "50b0bbab8e07b289c6193d1afffea57ee8d950a80c81f5364881a62dd1087315",
       "designKey": "missouri-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-d3178d24a75d.jpg",
@@ -12186,7 +13170,8 @@ const PLATE_IMAGES = {
       "sha256": "e8b71f6e2dfb13b01a741474d89d0139a93177bced50a736d977716b2d1bb4b4",
       "designKey": "missouri-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-837c35ba3cda.jpg",
@@ -12206,7 +13191,8 @@ const PLATE_IMAGES = {
       "sha256": "28011d9bb4acde9cc92e72ae955a58816dcd0eed20764067d65e72b4eb53dcd4",
       "designKey": "missouri-undated-black-gold-base-with-1956-renewal",
       "design": "Undated black/gold base with 1956 renewal",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-f193840361a4.jpg",
@@ -12226,7 +13212,8 @@ const PLATE_IMAGES = {
       "sha256": "2a7408107cc4915ab1acc930f0e8973c2ce1c8d51167694ac6efd8275a26211b",
       "designKey": "missouri-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-4ac0689b9844.jpg",
@@ -12246,7 +13233,8 @@ const PLATE_IMAGES = {
       "sha256": "a74af1f194472c7af8de1e9cc3599a05e812adbbbda352b41bad163489a79346",
       "designKey": "missouri-historical-issue-1948",
       "design": "Historical issue 1948",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-be26b762afc4.jpg",
@@ -12266,7 +13254,8 @@ const PLATE_IMAGES = {
       "sha256": "c832cb89f23b83e836ca85a42df087efeb98a1c7d5bf730fb00530317ffd1e33",
       "designKey": "missouri-historical-issue-1945",
       "design": "Historical issue 1945",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-aa5e7f420345.jpg",
@@ -12286,7 +13275,8 @@ const PLATE_IMAGES = {
       "sha256": "f00eaedacde64fb3a5592edf5ab3bd109d2f6d3f4a747abd6c8a332e68e07e74",
       "designKey": "missouri-historical-issue-1944",
       "design": "Historical issue 1944",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-5f90e2c9a497.jpg",
@@ -12306,7 +13296,8 @@ const PLATE_IMAGES = {
       "sha256": "ac1cbb8295fe286578eae7b7384374efc779787305c32bbfc9e1dad4311b1f15",
       "designKey": "missouri-historical-issue-1943",
       "design": "Historical issue 1943",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-f958abf01bfc.jpg",
@@ -12326,7 +13317,8 @@ const PLATE_IMAGES = {
       "sha256": "b71f544d2c80285e00c523061662943e6d4918e59a8e5c42fe2be2483688e48d",
       "designKey": "missouri-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-a9dee7f68ace.jpg",
@@ -12346,7 +13338,8 @@ const PLATE_IMAGES = {
       "sha256": "49e3685402aad2f5856fc9738eac8249fb6f8e4a08cbef1fc35789dba43769a0",
       "designKey": "missouri-historical-issue-1940",
       "design": "Historical issue 1940",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-75e0baebe876.jpg",
@@ -12366,7 +13359,8 @@ const PLATE_IMAGES = {
       "sha256": "5298127806cd57945bbda6c9a962050ee366a9dd5cddfb71ab664e81002ff481",
       "designKey": "missouri-historical-issue-1939",
       "design": "Historical issue 1939",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-bc8a6bb5e3f4.jpg",
@@ -12386,7 +13380,8 @@ const PLATE_IMAGES = {
       "sha256": "0f7304f6c5b9f8e68802b5c89b568651cc1456ce45d64429364a7a6f6bdb9355",
       "designKey": "missouri-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-156c01518778.jpg",
@@ -12406,7 +13401,8 @@ const PLATE_IMAGES = {
       "sha256": "c9db9e730dab2a70b7d4c95c0bc0293774a8b1beb7704e13accf3379c63d5f21",
       "designKey": "missouri-historical-issue-1935",
       "design": "Historical issue 1935",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-45e9b629fbd0.jpg",
@@ -12426,7 +13422,8 @@ const PLATE_IMAGES = {
       "sha256": "d7c763ef810e76ff66bc7783db5370e759b8e63e6c8cdd1567e872b818c4477e",
       "designKey": "missouri-historical-issue-1933",
       "design": "Historical issue 1933",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-11a836b98ea9.jpg",
@@ -12446,7 +13443,8 @@ const PLATE_IMAGES = {
       "sha256": "ad00d06a02d3f303c68de723bf3759d6898849713e886d70ac04a19d2c8e3027",
       "designKey": "missouri-historical-issue-1931",
       "design": "Historical issue 1931",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-6a98911872f6.jpg",
@@ -12466,7 +13464,8 @@ const PLATE_IMAGES = {
       "sha256": "1a7ab507b0109d6e2b8f02c672db673428fa25d0cc5387700b0e722ba51362c2",
       "designKey": "missouri-historical-issue-1929",
       "design": "Historical issue 1929",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-5fb8f11bc21b.jpg",
@@ -12486,7 +13485,8 @@ const PLATE_IMAGES = {
       "sha256": "3c2404c7626358c09b2f88ce8cb6b64e136df290ca3858ac76eea4d6e22e946a",
       "designKey": "missouri-historical-issue-1928",
       "design": "Historical issue 1928",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-3689f3151876.jpg",
@@ -12506,7 +13506,8 @@ const PLATE_IMAGES = {
       "sha256": "62dec4aa289e88ffa2b9227e60269f16b4346df3deb56279f5beb49e6d0c0001",
       "designKey": "missouri-historical-issue-1927",
       "design": "Historical issue 1927",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-ce969c753f85.jpg",
@@ -12526,7 +13527,8 @@ const PLATE_IMAGES = {
       "sha256": "5a49e03a7fdecac3c305a46c06a3359cfaabcc3b26c9fb42e34a29c4a68e8cac",
       "designKey": "missouri-historical-issue-1926",
       "design": "Historical issue 1926",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-b8d9b16f7c99.jpg",
@@ -12546,7 +13548,8 @@ const PLATE_IMAGES = {
       "sha256": "7e24c68353a538348d33d15015c1b1fee76ba25fc5853153c11a9503805c4b9f",
       "designKey": "missouri-historical-issue-1922",
       "design": "Historical issue 1922",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-485c268879e5.jpg",
@@ -12566,7 +13569,8 @@ const PLATE_IMAGES = {
       "sha256": "e3347362f0198c1376f195f1db2f5e807657a86caa60c67ef0594af6ec335df0",
       "designKey": "missouri-historical-issue-1921",
       "design": "Historical issue 1921",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-4add31a42006.jpg",
@@ -12586,7 +13590,8 @@ const PLATE_IMAGES = {
       "sha256": "e56b5369ec157a3cfc89df4b38ca9dd6528c0525805a5fed42fc3fceda5f6522",
       "designKey": "missouri-historical-issue-1920",
       "design": "Historical issue 1920",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-946b4112c38e.jpg",
@@ -12606,7 +13611,8 @@ const PLATE_IMAGES = {
       "sha256": "4ff464c69d662a08bf87bc19bf928a311d5db0ee793892ec82611f7518692efe",
       "designKey": "missouri-historical-issue-1919",
       "design": "Historical issue 1919",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "missouri-cae167bfb742.jpg",
@@ -12626,7 +13632,8 @@ const PLATE_IMAGES = {
       "sha256": "d467e197eac4c6cf60ffa3101ffc88670ff91a4cb1d7ac5e3f327f11a45ec93d",
       "designKey": "missouri-historical-issue-1918",
       "design": "Historical issue 1918",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Montana": [
@@ -12648,7 +13655,8 @@ const PLATE_IMAGES = {
       "sha256": "3d9cdb96e78f04811691aef41c712f23c657a1b6441da908d2c0b7ed92349f66",
       "designKey": "montana-standard-passenger-2010-blue-state-outline-base",
       "design": "Standard passenger, 2010 blue state-outline base",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2021-10-13"
     },
     {
       "id": "montana-14fc437cf5d3.jpg",
@@ -12668,7 +13676,8 @@ const PLATE_IMAGES = {
       "sha256": "a3cd2252137e0f1763fe08c59ab1d189a5c5e053eb35293127718c5e88e2bfb8",
       "designKey": "montana-historical-issue-1968",
       "design": "Historical issue 1968",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "montana-fa66b79de650.jpg",
@@ -12688,7 +13697,8 @@ const PLATE_IMAGES = {
       "sha256": "db3211e303346f0dc02f83463b2c13a85ec1a94e12ae3c995a0cf7e9ab6592f7",
       "designKey": "montana-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "montana-467bc16a3295.jpg",
@@ -12708,7 +13718,8 @@ const PLATE_IMAGES = {
       "sha256": "1f8b107e61fc899802c7c7d34b4a328cf6ffe607b5fe41ee687828c488fe5ad7",
       "designKey": "montana-undated-gray-state-outline-base-1959-renewal",
       "design": "Undated gray state-outline base, 1959 renewal",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "montana-a222a646cfd5.jpg",
@@ -12728,7 +13739,8 @@ const PLATE_IMAGES = {
       "sha256": "999f248bba6705eb0622b205b5fcecf6fbf6b79439783331388bff4b6a3bdcb0",
       "designKey": "montana-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "montana-eb8f97ce1b47.jpg",
@@ -12748,7 +13760,8 @@ const PLATE_IMAGES = {
       "sha256": "318f0d9dd2dbe3aaac0a2455d7d815dddc93a52a4bd384fe26ab5e9923f765e7",
       "designKey": "montana-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "montana-e57b2e578635.jpg",
@@ -12768,7 +13781,8 @@ const PLATE_IMAGES = {
       "sha256": "d00a28295afa1a36e8cc548e911c44741d9f3d4ef7628752775febc7d971da5a",
       "designKey": "montana-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "montana-172f445faf3d.jpg",
@@ -12788,7 +13802,8 @@ const PLATE_IMAGES = {
       "sha256": "502e71b1e8ebcc086ccebf2e98c3c03d2cb9b36e513b6b4835cb648feb7919d2",
       "designKey": "montana-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "montana-edd333ffbe6d.jpg",
@@ -12808,7 +13823,8 @@ const PLATE_IMAGES = {
       "sha256": "e61073455bde4dac3f83bc4e96894be730ecb418e955c3891bf38d376039897c",
       "designKey": "montana-historical-issue-1944",
       "design": "Historical issue 1944",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "montana-19cd2746f1ec.jpg",
@@ -12828,7 +13844,8 @@ const PLATE_IMAGES = {
       "sha256": "50a5bc9e23ca8375ce331484472688a8a9f8af0ee2fc5dc6dc27be9446be7b21",
       "designKey": "montana-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "montana-bbccadc558d3.jpg",
@@ -12848,7 +13865,8 @@ const PLATE_IMAGES = {
       "sha256": "fb103f5952c193b64d424f8ae995bc9df996fb476629524486aac36b041b6e18",
       "designKey": "montana-historical-issue-1941",
       "design": "Historical issue 1941",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "montana-8906b474fca0.jpg",
@@ -12868,7 +13886,8 @@ const PLATE_IMAGES = {
       "sha256": "cbc6c997c6cc57a28ea186939e229ad75df7e4271e8cf1319daa268dc7a30820",
       "designKey": "montana-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "montana-0c9b42e5f724.jpg",
@@ -12888,7 +13907,8 @@ const PLATE_IMAGES = {
       "sha256": "c0a5e95e496da1ec0fdcd8f31312cb61b4c1ce16f2ddfd4f2a66d7a92478d9cf",
       "designKey": "montana-historical-issue-1937",
       "design": "Historical issue 1937",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "montana-c9e0cf1e22fe.jpg",
@@ -12908,7 +13928,8 @@ const PLATE_IMAGES = {
       "sha256": "81533338efb11b4cbd79fb6b0ddae9aaa533fc5274795cba44c0c07df98d822e",
       "designKey": "montana-historical-issue-1933",
       "design": "Historical issue 1933",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "montana-b862def6dbf7.jpg",
@@ -12928,7 +13949,8 @@ const PLATE_IMAGES = {
       "sha256": "cb18df8cdcb88e7f85cc706a68ae3dd2acc5737951485fdb58b6a4a141b1b9fb",
       "designKey": "montana-historical-issue-1930",
       "design": "Historical issue 1930",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "montana-3cf16d58c0a1.jpg",
@@ -12948,7 +13970,8 @@ const PLATE_IMAGES = {
       "sha256": "80a56251319ff71da54a0c8d642e8e257084125b078f8bdd381e1c687ec742bb",
       "designKey": "montana-historical-issue-1927",
       "design": "Historical issue 1927",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "montana-1aec257e2f71.jpg",
@@ -12968,7 +13991,8 @@ const PLATE_IMAGES = {
       "sha256": "d53c34bd86aa22a2aef4a1880a8dbcee868ddf269bdbe805ee9a023c5b49332c",
       "designKey": "montana-historical-issue-1926",
       "design": "Historical issue 1926",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "montana-fb6b0d308810.jpg",
@@ -12988,7 +14012,8 @@ const PLATE_IMAGES = {
       "sha256": "e461b1323ab9cc8a9f6bc798463b5fc0069ecfcb2ee3d21379792ac996053971",
       "designKey": "montana-historical-issue-1925",
       "design": "Historical issue 1925",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "montana-d60507e6e3d3.jpg",
@@ -13008,7 +14033,8 @@ const PLATE_IMAGES = {
       "sha256": "1a3eba04a786868ac3f8f291a1590c9bfeb18f7b7fca8e2433f0c2b8d631f497",
       "designKey": "montana-historical-issue-1923",
       "design": "Historical issue 1923",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "montana-024a9a0a53b0.jpg",
@@ -13028,7 +14054,8 @@ const PLATE_IMAGES = {
       "sha256": "de6e548a69b933001510d910a00c91925087bb0e39efd277e6f9b7b4740b56c7",
       "designKey": "montana-historical-issue-1922",
       "design": "Historical issue 1922",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "montana-8eb53a8a9d1d.jpg",
@@ -13048,7 +14075,8 @@ const PLATE_IMAGES = {
       "sha256": "2c1920b36db4f38f714d7083770e93f27282e202f9bf89dc2afeb399b9c18875",
       "designKey": "montana-historical-issue-1921",
       "design": "Historical issue 1921",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "montana-769e023cde53.jpg",
@@ -13068,7 +14096,8 @@ const PLATE_IMAGES = {
       "sha256": "b16bfae0215654500eb8a1e356baf656293557cfd4d3bfb291d4fa33c963629f",
       "designKey": "montana-historical-issue-1919",
       "design": "Historical issue 1919",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Nebraska": [
@@ -13090,7 +14119,29 @@ const PLATE_IMAGES = {
       "sha256": "9c050a5c59690916cb4bbf459cf8673c266dcb9cbb149be5469c6f22026aee49",
       "designKey": "nebraska-standard-passenger-2017-base-2023-standard-not-available-with-verified-reuse",
       "design": "Standard passenger, 2017 base; 2023 standard not available with verified reuse",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2019-04-15"
+    },
+    {
+      "id": "nebraska-recent-05e660cd776e.jpg",
+      "src": "./license_plate_assets/nebraska-recent-05e660cd776e.jpg",
+      "era": "modern",
+      "kind": "photograph",
+      "title": "Nebraska License Plate Breast Cancer Awareness 2017.png",
+      "author": "Ryansmith64",
+      "source": "https://commons.wikimedia.org/wiki/File:Nebraska_License_Plate_Breast_Cancer_Awareness_2017.png",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/9/95/Nebraska_License_Plate_Breast_Cancer_Awareness_2017.png",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 243,
+      "sha256": "c8d25bf632c72b8d0099dc323180d6e940022520525cb2e089595c5d425a670b",
+      "designKey": "nebraska-breast-cancer-awareness-2017-example",
+      "design": "Breast Cancer Awareness, 2017 example",
+      "standard": false,
+      "recentPhotoDate": "2019-04-26"
     },
     {
       "id": "nebraska-6f527b5b5b51.jpg",
@@ -13110,7 +14161,8 @@ const PLATE_IMAGES = {
       "sha256": "9564437b33613b436d32fd9f5b03d65a104eeac8aa05a0ca15ebc09d05d54c3f",
       "designKey": "nebraska-state-patrol",
       "design": "State Patrol",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": "2019-04-26"
     },
     {
       "id": "nebraska-145ca1754626.jpg",
@@ -13130,7 +14182,8 @@ const PLATE_IMAGES = {
       "sha256": "3a39bbb80f6d68616ece1379d1faa007d4755b5a450e4343681216e1715fabce",
       "designKey": "nebraska-huskers",
       "design": "Huskers",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": "2019-04-26"
     },
     {
       "id": "nebraska-8a6b7ba4da11.jpg",
@@ -13150,7 +14203,8 @@ const PLATE_IMAGES = {
       "sha256": "4bc77d837d63f0b7e3bf363f3ff689736e5797eeac6102708ea4b3a57bf782b2",
       "designKey": "nebraska-transporter",
       "design": "Transporter",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": "2019-04-19"
     },
     {
       "id": "nebraska-55ec2fec1789.jpg",
@@ -13170,7 +14224,8 @@ const PLATE_IMAGES = {
       "sha256": "807d10030ad8e6fbfe766424487e62a0680d02807938d41b96e5cce7fc598fa4",
       "designKey": "nebraska-repossession",
       "design": "Repossession",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": "2019-04-19"
     },
     {
       "id": "nebraska-8cacb7be82c8.jpg",
@@ -13190,7 +14245,8 @@ const PLATE_IMAGES = {
       "sha256": "2c23055c8482f45eae8b29e217ed727cf35dd1468e8779e97fc3fe0dffe99a6f",
       "designKey": "nebraska-purple-heart",
       "design": "Purple Heart",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-ebebe7536903.jpg",
@@ -13210,7 +14266,8 @@ const PLATE_IMAGES = {
       "sha256": "5800dfd9d41fc022ae6f854be9e20f048f3d636289b636e9ba5a3f3396be5937",
       "designKey": "nebraska-1966-centennial-base-with-1967-renewal",
       "design": "1966 Centennial base with 1967 renewal",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-fe642b0e93ac.jpg",
@@ -13230,7 +14287,8 @@ const PLATE_IMAGES = {
       "sha256": "f3d0eb3d61208d8203c155621fabfb6d97e2d460e19e352ca1b271b22ef7b5a8",
       "designKey": "nebraska-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-b2df661cb3b1.jpg",
@@ -13250,7 +14308,8 @@ const PLATE_IMAGES = {
       "sha256": "c304876caf8af2fb389957d0192d5965c235ba2b90b5a297e1d25d5e944001c5",
       "designKey": "nebraska-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-68f52dfd325f.jpg",
@@ -13270,7 +14329,8 @@ const PLATE_IMAGES = {
       "sha256": "6c97c4242cc04f8ea7bbe3b4117d6360ae1c5c4c422a38da3139443f11539c90",
       "designKey": "nebraska-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-historical.jpg",
@@ -13290,7 +14350,8 @@ const PLATE_IMAGES = {
       "sha256": "60e843f8cb670fb04c36bcf26ec56e25d74d49a5f237582cf5744d3264d83ca9",
       "designKey": "nebraska-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-19a72d123fc8.jpg",
@@ -13310,7 +14371,8 @@ const PLATE_IMAGES = {
       "sha256": "10f77db1fadfb49fd0b8fa4ce953912ee06f7b85eb84a3a782d6dc834f623eb1",
       "designKey": "nebraska-1958-base",
       "design": "1958 base",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-55d7945112a3.jpg",
@@ -13330,7 +14392,8 @@ const PLATE_IMAGES = {
       "sha256": "c86fface75acd1f842558648d2091604cb18570ff5ea207dae731193e24ecd75",
       "designKey": "nebraska-1959-base",
       "design": "1959 base",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-7fe2fef09e61.jpg",
@@ -13350,7 +14413,8 @@ const PLATE_IMAGES = {
       "sha256": "c91771127cbc37bdbc60d695840656db5136b31a51697b2f1c542631b3e4ee57",
       "designKey": "nebraska-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-b2c541a13a81.jpg",
@@ -13370,7 +14434,8 @@ const PLATE_IMAGES = {
       "sha256": "e491bd72e930431afc643ce04612729e06f819e52bac549528fdb7504e3c96f7",
       "designKey": "nebraska-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-22d7d11f3630.jpg",
@@ -13390,7 +14455,8 @@ const PLATE_IMAGES = {
       "sha256": "06e5ef9d1af5b09c8382aa93f3ffb2e2f327aeb324720b9f5f2c9d01fad8290d",
       "designKey": "nebraska-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-f73b4e0ff602.jpg",
@@ -13410,7 +14476,8 @@ const PLATE_IMAGES = {
       "sha256": "15b265bd01e86dc02211477204989549e447838c5677654965c8e0c26da3a03c",
       "designKey": "nebraska-1952-base-with-1953-renewal",
       "design": "1952 base with 1953 renewal",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-c5b0d3779455.jpg",
@@ -13430,7 +14497,8 @@ const PLATE_IMAGES = {
       "sha256": "5514e387657412b912cca5be08e9fe3d283ef96191843fd7bfdf2443ff6ec6d1",
       "designKey": "nebraska-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-1026af66d290.jpg",
@@ -13450,7 +14518,8 @@ const PLATE_IMAGES = {
       "sha256": "a1616e7eafc7a74566c0b3d0a917925adb0707795e182ad938aeb5da1ca714e8",
       "designKey": "nebraska-historical-issue-1950",
       "design": "Historical issue 1950",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-73b6630dc31e.jpg",
@@ -13470,7 +14539,8 @@ const PLATE_IMAGES = {
       "sha256": "f796ace920a70582d0136e2d74fbeed9c7b37e4eb37a13e7d2f725e4884f1798",
       "designKey": "nebraska-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-53d578c97694.jpg",
@@ -13490,7 +14560,8 @@ const PLATE_IMAGES = {
       "sha256": "a03981fcc654534fee59a402e3c7340ddb554b7b38ed5aac8fed0cddbf6966a6",
       "designKey": "nebraska-historical-issue-1948",
       "design": "Historical issue 1948",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-41a27026a275.jpg",
@@ -13510,7 +14581,8 @@ const PLATE_IMAGES = {
       "sha256": "bc93916c5bac3c0afd5f1daf543ff8e725d69dcbbd5351775626d4b54fca03ad",
       "designKey": "nebraska-historical-issue-1947",
       "design": "Historical issue 1947",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-6da2dc695beb.jpg",
@@ -13530,7 +14602,8 @@ const PLATE_IMAGES = {
       "sha256": "446d602567a618359b613a3f1516f6ef2127602bf4228a2686bd82a54403e973",
       "designKey": "nebraska-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-aad1e3229da3.jpg",
@@ -13550,7 +14623,8 @@ const PLATE_IMAGES = {
       "sha256": "bcf6466fb081d88d106cc5509917b325756d3a36b3918594b8d6b0de6ad89f59",
       "designKey": "nebraska-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-6c2023043773.jpg",
@@ -13570,7 +14644,8 @@ const PLATE_IMAGES = {
       "sha256": "df5404e3be979bd664e3ef699a4e625d0d6be244e500c7a7094b65655b27914e",
       "designKey": "nebraska-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-97e7adb99075.jpg",
@@ -13590,7 +14665,8 @@ const PLATE_IMAGES = {
       "sha256": "8de17b10693fde728b77e876732d19579c1e4169991e3de4871a8be1c87f9fa3",
       "designKey": "nebraska-historical-issue-1934",
       "design": "Historical issue 1934",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-45cd297c21c7.jpg",
@@ -13610,7 +14686,8 @@ const PLATE_IMAGES = {
       "sha256": "9949b8175b477f28be8b47dce0911a3c1714ab59390aaf6afd68a8ab73da9d01",
       "designKey": "nebraska-historical-issue-1932",
       "design": "Historical issue 1932",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-7514de49abff.jpg",
@@ -13630,7 +14707,8 @@ const PLATE_IMAGES = {
       "sha256": "cbbb08c9336a1d0f59cd5f96bb28a490dc08c32b494d0a2a4d5acbb99a60bec6",
       "designKey": "nebraska-historical-issue-1930",
       "design": "Historical issue 1930",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-9c451b1533b0.jpg",
@@ -13650,7 +14728,8 @@ const PLATE_IMAGES = {
       "sha256": "8a2e32b8682ad29762349f5c49bdba71872097ce0329d3a4ba3673c45dae0fee",
       "designKey": "nebraska-historical-issue-1929",
       "design": "Historical issue 1929",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nebraska-799ecb95871c.jpg",
@@ -13670,7 +14749,8 @@ const PLATE_IMAGES = {
       "sha256": "65f7aaba707cc6a7d84fe45589b90dce4f07d2d0dd9f2f0ffff1e67a913bc8d4",
       "designKey": "nebraska-historical-issue-1928",
       "design": "Historical issue 1928",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Nevada": [
@@ -13692,7 +14772,8 @@ const PLATE_IMAGES = {
       "sha256": "d37d1a843eb567701dd836bd935e5b3cb42fb5240cab2789bdaef5e082030548",
       "designKey": "nevada-standard-passenger-home-means-nevada-base-2016-photograph",
       "design": "Standard passenger, Home Means Nevada base (2016 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2026-03-25"
     },
     {
       "id": "nevada-a2be1bd53974.jpg",
@@ -13712,7 +14793,8 @@ const PLATE_IMAGES = {
       "sha256": "be43139dbc22b420ef6d6fe8ed1eef53296437fe1e32e8059f60b6aee866c955",
       "designKey": "nevada-modern-passenger-base",
       "design": "Modern passenger base (sample)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nevada-ad8e47b605cb.jpg",
@@ -13732,7 +14814,8 @@ const PLATE_IMAGES = {
       "sha256": "f43c43e59f087b6546ec32b09e24e6b9064d87cf7871d99ba1081241c8f1133e",
       "designKey": "nevada-historical-issue-1969",
       "design": "Historical issue 1969",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nevada-f8a9362c891e.jpg",
@@ -13752,7 +14835,8 @@ const PLATE_IMAGES = {
       "sha256": "f9566c5776ad0f21d91497157cb1d716c4190f0ce71a9aa04f9278227f22d316",
       "designKey": "nevada-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nevada-48854f1e2012.jpg",
@@ -13772,7 +14856,8 @@ const PLATE_IMAGES = {
       "sha256": "1a7b2e62a6e332e3f2ac4a6c573d1fba4ddd9005cfca8e3547bcdbbbb1bde248",
       "designKey": "nevada-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nevada-historical.jpg",
@@ -13792,7 +14877,8 @@ const PLATE_IMAGES = {
       "sha256": "8c63e8f308e20f5fd4bb5f739cb79e6dbcb5010eb2f3b18b464c5dabd5ad7d56",
       "designKey": "nevada-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nevada-55e9e2704f35.jpg",
@@ -13812,7 +14898,8 @@ const PLATE_IMAGES = {
       "sha256": "363db1c64e2ff4a318e42645b6b8b72fba10795396b9202d59b69ecbc18d84ec",
       "designKey": "nevada-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nevada-50bafb5d7a95.jpg",
@@ -13832,7 +14919,8 @@ const PLATE_IMAGES = {
       "sha256": "80f0cf6fccffc651609691c3ed06ea6fb5ccbe3300a6bdec2393976c3d79e558",
       "designKey": "nevada-1956-base-with-1957-renewal",
       "design": "1956 base with 1957 renewal",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nevada-35b21e1d3919.jpg",
@@ -13852,7 +14940,8 @@ const PLATE_IMAGES = {
       "sha256": "982999ef6b9ec1544663b5876af2dfbdf67f8a52692547a392b1160b87b6f08b",
       "designKey": "nevada-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nevada-f90a7cfddb0d.jpg",
@@ -13872,7 +14961,8 @@ const PLATE_IMAGES = {
       "sha256": "c1a0a56be17bc6910de3cd1194f28c08132850c8462237168cfd65663d3e5613",
       "designKey": "nevada-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nevada-9a29b177c1e9.jpg",
@@ -13892,7 +14982,8 @@ const PLATE_IMAGES = {
       "sha256": "4581f785a0adb2c59a8e3fd6057aa01033405d3527d952dd322b768d0e67bd1c",
       "designKey": "nevada-historical-issue-1941",
       "design": "Historical issue 1941",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nevada-beb52ee5b0ad.jpg",
@@ -13912,7 +15003,8 @@ const PLATE_IMAGES = {
       "sha256": "7c5dca6de0273e28a5e2b7d142e71e3ba13e04861a4604ac244962e176871345",
       "designKey": "nevada-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nevada-012d9f0de63f.jpg",
@@ -13932,7 +15024,8 @@ const PLATE_IMAGES = {
       "sha256": "f699fecf1ff8789b5d446348043be00862ffd90c9c1f5ea733e19df89feca9ca",
       "designKey": "nevada-private-carrier",
       "design": "Private carrier",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "nevada-b578a2b1159a.jpg",
@@ -13952,7 +15045,8 @@ const PLATE_IMAGES = {
       "sha256": "dca66c3605b95f5d8b677964de84c33f4fec48f821b45a81cb7c672dd52ec363",
       "designKey": "nevada-historical-issue-1930",
       "design": "Historical issue 1930",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "nevada-b3c54bb5c5e8.jpg",
@@ -13972,7 +15066,8 @@ const PLATE_IMAGES = {
       "sha256": "8b2ae4e8df2a5548c10d7dee8b7c4b9cf16cf01a6f5bf5f0c07ac0198625ff89",
       "designKey": "nevada-historical-issue-1927",
       "design": "Historical issue 1927",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "New Hampshire": [
@@ -13994,7 +15089,8 @@ const PLATE_IMAGES = {
       "sha256": "55271f63ca7320cf3385324e0418b9905e90388c5abe2a0e1741c0e6a23ffacb",
       "designKey": "new-hampshire-standard-passenger-old-man-of-the-mountain-base",
       "design": "Standard passenger, Old Man of the Mountain base",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2024-12-23 15:44:20"
     },
     {
       "id": "new-hampshire-1397b8fe1b6e.jpg",
@@ -14014,7 +15110,8 @@ const PLATE_IMAGES = {
       "sha256": "d7e5712e14f214bb2adafa3495e4681ca6b6c6057300ab51bcc2d6a1bc051e6a",
       "designKey": "new-hampshire-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-hampshire-4d821fb9f9bc.jpg",
@@ -14034,7 +15131,8 @@ const PLATE_IMAGES = {
       "sha256": "405202bb72475636306f4cb6aabf79d925cd1268ab08feda99588c70b0ff42d8",
       "designKey": "new-hampshire-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-hampshire-068aef519325.jpg",
@@ -14054,7 +15152,8 @@ const PLATE_IMAGES = {
       "sha256": "5c70f6045c3b74442d4b07e12c7e516a90fa28bb928f7dea3be58a5300049505",
       "designKey": "new-hampshire-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-hampshire-002d88990f4e.jpg",
@@ -14074,7 +15173,8 @@ const PLATE_IMAGES = {
       "sha256": "7100cf4648c7cd8da860196c25e1a5c6c6d584e06a4553ddd144ae39c1e61aec",
       "designKey": "new-hampshire-historical-issue-1961",
       "design": "Historical issue 1961",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-hampshire-historical.jpg",
@@ -14094,7 +15194,8 @@ const PLATE_IMAGES = {
       "sha256": "47f0094861ce9f171934ec5e62405c40046213315edbefc1ed2a6c3dda3bc522",
       "designKey": "new-hampshire-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-hampshire-6c74b7bfee4c.jpg",
@@ -14114,7 +15215,8 @@ const PLATE_IMAGES = {
       "sha256": "9a8514b6a06368fae687fcd02bdeefcdf2af13a76bc07256cbb91fcf2ca04127",
       "designKey": "new-hampshire-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-hampshire-c0c8a9c5d078.jpg",
@@ -14134,7 +15236,8 @@ const PLATE_IMAGES = {
       "sha256": "607803e129a489275ebbe32dc620f5153ee92470b7f42dccb25901a647b94e6c",
       "designKey": "new-hampshire-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-hampshire-a26664f00ad6.jpg",
@@ -14154,7 +15257,8 @@ const PLATE_IMAGES = {
       "sha256": "052670d814e08694fcc355c553d963b77eec4d29b02dcd91f8a31080f5f6465d",
       "designKey": "new-hampshire-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-hampshire-62bde9ac680b.jpg",
@@ -14174,7 +15278,8 @@ const PLATE_IMAGES = {
       "sha256": "66d4648d955fa5180bb8794198ec8f4dc9a89c6c995e525e5b3c88d313b4c26b",
       "designKey": "new-hampshire-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-hampshire-8b4b9373074e.jpg",
@@ -14194,7 +15299,8 @@ const PLATE_IMAGES = {
       "sha256": "befac2ada517dff63959c22bfc5e6ffd0b0158c8021809e34c8e874f368e5c7b",
       "designKey": "new-hampshire-historical-issue-1948",
       "design": "Historical issue 1948",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-hampshire-81f47ab582f7.jpg",
@@ -14214,7 +15320,8 @@ const PLATE_IMAGES = {
       "sha256": "92d46e6ff19d4421efbcce4a27bd693bcd7dc9b950e7890004c25feed5dce4dc",
       "designKey": "new-hampshire-historical-issue-1947",
       "design": "Historical issue 1947",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-hampshire-0294fbbb97c2.jpg",
@@ -14234,7 +15341,8 @@ const PLATE_IMAGES = {
       "sha256": "bded3a6de01fc727ad0ae0d6a1c486efda5b05ca1d2874c0b695d846cddb9031",
       "designKey": "new-hampshire-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-hampshire-0f45bf1b4cb0.jpg",
@@ -14254,7 +15362,8 @@ const PLATE_IMAGES = {
       "sha256": "54bda38f7cd97b46b3bd7382623d3c60b7ff3bc006b08e4a0b084cee021bfc73",
       "designKey": "new-hampshire-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-hampshire-2bc5b0615afe.jpg",
@@ -14274,7 +15383,8 @@ const PLATE_IMAGES = {
       "sha256": "9bb300ab4d276c532184a2c174cefa61771e473c4744b9c5ac9dbf9f20188718",
       "designKey": "new-hampshire-historical-issue-1933",
       "design": "Historical issue 1933",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-hampshire-f5aa70bd83ea.jpg",
@@ -14294,7 +15404,8 @@ const PLATE_IMAGES = {
       "sha256": "de61e58b6c08bc0b2bbfb3d2fdcd0ded1ba24947a987d401ebcd7134e549eb77",
       "designKey": "new-hampshire-historical-issue-1930",
       "design": "Historical issue 1930",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-hampshire-ad91bc6c8063.jpg",
@@ -14314,7 +15425,8 @@ const PLATE_IMAGES = {
       "sha256": "c866e8102e2896eb7f570e962a579174611e67d04c2c5b8b3a28c27a95522581",
       "designKey": "new-hampshire-historical-issue-1927",
       "design": "Historical issue 1927",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-hampshire-0758e6cf9c69.jpg",
@@ -14334,7 +15446,8 @@ const PLATE_IMAGES = {
       "sha256": "12a7028cfe8793c1f6c2dc07df693983b4aa2c396922b35f439c5d2a2ce2aa7b",
       "designKey": "new-hampshire-historical-issue-1926",
       "design": "Historical issue 1926",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-hampshire-94b5df930310.jpg",
@@ -14354,7 +15467,8 @@ const PLATE_IMAGES = {
       "sha256": "c560539167b7faa5f7fcfd357f4dc71a386c344583582db8e904b296f998b46e",
       "designKey": "new-hampshire-historical-issue-1921",
       "design": "Historical issue 1921",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-hampshire-7395eaeef0bb.jpg",
@@ -14374,7 +15488,8 @@ const PLATE_IMAGES = {
       "sha256": "1a636207c816ade7eb2151cfc7b4589f656e8876957e5fa078c106f5854dfb2c",
       "designKey": "new-hampshire-historical-issue-1920",
       "design": "Historical issue 1920",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-hampshire-6289b8b0da8d.jpg",
@@ -14394,7 +15509,8 @@ const PLATE_IMAGES = {
       "sha256": "dfafc305a05ebe61a976e9b591cdd763884029a5ee8b80e28832dcdcd914c662",
       "designKey": "new-hampshire-historical-issue-1918",
       "design": "Historical issue 1918",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-hampshire-379977c0a5e2.jpg",
@@ -14414,7 +15530,8 @@ const PLATE_IMAGES = {
       "sha256": "40a66489f08556583e6428f0cc56862bb40e1962323716dd4034a88ce0e6bb74",
       "designKey": "new-hampshire-historical-issue-1916",
       "design": "Historical issue 1916",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-hampshire-a048733594dc.jpg",
@@ -14434,7 +15551,8 @@ const PLATE_IMAGES = {
       "sha256": "3271c5d91880d54a89370229910fd0d33023ee695b68b843babd77797ee593e9",
       "designKey": "new-hampshire-historical-issue-1914",
       "design": "Historical issue 1914",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "New Jersey": [
@@ -14456,7 +15574,8 @@ const PLATE_IMAGES = {
       "sha256": "9ec73d2e03c37b46bfbf971124ccd9d081b3bd7416a618e8aca5fcbee7bbfc4e",
       "designKey": "new-jersey-standard-passenger-yellow-garden-state-base-2023-photograph",
       "design": "Standard passenger, yellow Garden State base (2023 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2023-08-27 10:54:00"
     },
     {
       "id": "new-jersey-7a33503bb6b5.jpg",
@@ -14476,7 +15595,8 @@ const PLATE_IMAGES = {
       "sha256": "d68cbe245d4e2e2b6476e14d246f235d397cbc80f21b135097cd27add9df99da",
       "designKey": "new-jersey-commercial",
       "design": "Commercial",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "new-jersey-63748e4b3e5d.jpg",
@@ -14496,7 +15616,8 @@ const PLATE_IMAGES = {
       "sha256": "d2313bb0e75baa4047e580cc96305a780069172f28a50eb8d2bba75ea1f8b54d",
       "designKey": "new-jersey-1952-orange-letter-base-with-1954-renewal",
       "design": "1952 orange-letter base with 1954 renewal",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-jersey-88e673457860.jpg",
@@ -14516,7 +15637,8 @@ const PLATE_IMAGES = {
       "sha256": "194a8386564cc19902786246c4c87667f353029e730823b091793b2a393521c6",
       "designKey": "new-jersey-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-jersey-ad06ed978410.jpg",
@@ -14536,7 +15658,8 @@ const PLATE_IMAGES = {
       "sha256": "519874cd1ad78616a915b5c870f275cc852e7699b946bb491d3581fdea636f43",
       "designKey": "new-jersey-historical-issue-1950",
       "design": "Historical issue 1950",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-jersey-48f1c63b1d81.jpg",
@@ -14556,7 +15679,8 @@ const PLATE_IMAGES = {
       "sha256": "e8ba075f5bda0d78ee5483af3f572c2e26cf000933b1339433c203f0222fe800",
       "designKey": "new-jersey-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-jersey-89268a730038.jpg",
@@ -14576,7 +15700,8 @@ const PLATE_IMAGES = {
       "sha256": "d2e61986d8cb4cd46cfc74556d510ef49695c3a02de35901b39baa9731ef07d1",
       "designKey": "new-jersey-historical-issue-1947",
       "design": "Historical issue 1947",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-jersey-0da9feb5b46e.jpg",
@@ -14596,7 +15721,8 @@ const PLATE_IMAGES = {
       "sha256": "c21526211f711fc89772c93a920a9f4dd45236e731fa6d0bd1d95cb302aa9fbf",
       "designKey": "new-jersey-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-jersey-a61f7e72a821.jpg",
@@ -14616,7 +15742,8 @@ const PLATE_IMAGES = {
       "sha256": "42fb0b6ac5ff5ff3da2eb03b8d605feb631f236e0e8cba592e234371e2dcafaa",
       "designKey": "new-jersey-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-jersey-df06249f2710.jpg",
@@ -14636,7 +15763,8 @@ const PLATE_IMAGES = {
       "sha256": "5df26d9516955635d1cd746cb8d513e09921019828df71eef94d1024e07b8512",
       "designKey": "new-jersey-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-jersey-6a1219990271.jpg",
@@ -14656,7 +15784,8 @@ const PLATE_IMAGES = {
       "sha256": "f2ffae30ceda260652a429d68534dec3fccb3b7670a70a4569d111e8100519c3",
       "designKey": "new-jersey-historical-issue-1933",
       "design": "Historical issue 1933",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-jersey-e86e6dd0c101.jpg",
@@ -14676,7 +15805,8 @@ const PLATE_IMAGES = {
       "sha256": "b198f93571c6cdc51439df6cb4e4f49cdfb7600576832da9dc5e5f3e8eb803ff",
       "designKey": "new-jersey-historical-issue-1925",
       "design": "Historical issue 1925",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-jersey-65eef8f72188.jpg",
@@ -14696,7 +15826,8 @@ const PLATE_IMAGES = {
       "sha256": "1b54b4a3b4a72ba2e3a49bcba84ee2cba910018accb3260a3268fcdf702a764e",
       "designKey": "new-jersey-historical-issue-1924",
       "design": "Historical issue 1924",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-jersey-42664cee34a4.jpg",
@@ -14716,7 +15847,8 @@ const PLATE_IMAGES = {
       "sha256": "e9b264c19a3abe225f34e2b1a99690a5207563d7c8644318765b208db5c480fa",
       "designKey": "new-jersey-historical-issue-1923",
       "design": "Historical issue 1923",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-jersey-eff42360da68.jpg",
@@ -14736,7 +15868,8 @@ const PLATE_IMAGES = {
       "sha256": "8e41ee321053e34bde8ab8f9b33a4362a220bd0c926c3f9478b3aab0ea449e82",
       "designKey": "new-jersey-historical-issue-1922",
       "design": "Historical issue 1922",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-jersey-258d4a29a304.jpg",
@@ -14756,7 +15889,8 @@ const PLATE_IMAGES = {
       "sha256": "87a2ea4eed676cb3f62e4df8fe984326c013926e405d51c8abc3a13226ed02c9",
       "designKey": "new-jersey-historical-issue-1921",
       "design": "Historical issue 1921",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-jersey-15c74e9329f6.jpg",
@@ -14776,7 +15910,8 @@ const PLATE_IMAGES = {
       "sha256": "9aa25e402d7d1eb17d1c2797e512ae2d3926e21e1740fbca35129a99156c41b3",
       "designKey": "new-jersey-historical-issue-1920",
       "design": "Historical issue 1920",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-jersey-ab1170e2b141.jpg",
@@ -14796,7 +15931,8 @@ const PLATE_IMAGES = {
       "sha256": "b72f37b571b843940d2f7024987f13a58c337b54c75950b2a29624b1cdf217b7",
       "designKey": "new-jersey-historical-issue-1919",
       "design": "Historical issue 1919",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-jersey-157ecf437638.jpg",
@@ -14816,7 +15952,8 @@ const PLATE_IMAGES = {
       "sha256": "ea35243fbbf8fe0039892d74024dfabc9a3a38b8b645de542016d128365fe41c",
       "designKey": "new-jersey-historical-issue-1914",
       "design": "Historical issue 1914",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-jersey-79d45bb24e98.jpg",
@@ -14836,7 +15973,8 @@ const PLATE_IMAGES = {
       "sha256": "0b8f99cb3b6122180f5f9d0889f7d48d638dacd74cc2253ce3728b6e79c86ba7",
       "designKey": "new-jersey-historical-issue-1913",
       "design": "Historical issue 1913",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-jersey-historical.jpg",
@@ -14856,7 +15994,8 @@ const PLATE_IMAGES = {
       "sha256": "b2d73fd27bd592ba8b4d7d0616bafd7586d171808fc83faf34e858ba5d3a3853",
       "designKey": "new-jersey-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "New Mexico": [
@@ -14878,7 +16017,29 @@ const PLATE_IMAGES = {
       "sha256": "3e2b83b0c5e0b3739f9b53f3507f52acf97d6532a6a1357d1205b1ef32be689b",
       "designKey": "new-mexico-standard-passenger-turquoise-land-of-enchantment-base-2019-photograph",
       "design": "Standard passenger, turquoise Land of Enchantment base (2019 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2018-07-19"
+    },
+    {
+      "id": "new-mexico-recent-4f6a5095e6d8.jpg",
+      "src": "./license_plate_assets/new-mexico-recent-4f6a5095e6d8.jpg",
+      "era": "modern",
+      "kind": "photograph",
+      "title": "NM Chile 2017.jpg",
+      "author": "Jtplates",
+      "source": "https://commons.wikimedia.org/wiki/File:NM_Chile_2017.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/a/a0/NM_Chile_2017.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 238,
+      "sha256": "4d89b7b201ca1d42d88020814ced8029ced3abe02bdc34d6ff62136bdfb8a62f",
+      "designKey": "new-mexico-chile-capital-of-the-world-2017-example",
+      "design": "Chile Capital of the World, 2017 example",
+      "standard": false,
+      "recentPhotoDate": "2021-06-23"
     },
     {
       "id": "new-mexico-5b9e270e3059.jpg",
@@ -14898,7 +16059,8 @@ const PLATE_IMAGES = {
       "sha256": "5c98b70a7eb69da62a502294de45bdc2731c0522904e944b51c5d539ae7cd537",
       "designKey": "new-mexico-yellow-red-rv-example",
       "design": "Yellow/red RV example",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": "2025-12-03 11:56:52"
     },
     {
       "id": "new-mexico-ecb4b89b2753.jpg",
@@ -14918,7 +16080,8 @@ const PLATE_IMAGES = {
       "sha256": "a163e1700bbca69785659cff2d69461738b01496e55020dcae3ec4129c1e7aa8",
       "designKey": "new-mexico-centennial-1912-2012-turquoise-base-sample",
       "design": "Centennial 1912-2012 turquoise base, sample",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2021-10-22"
     },
     {
       "id": "new-mexico-cdbbec239762.jpg",
@@ -14938,7 +16101,8 @@ const PLATE_IMAGES = {
       "sha256": "be6ddd2865f7a175de470e71c994f31ad4b76d1c4e9ca05ac4185f9a22e53717",
       "designKey": "new-mexico-1965-base-with-1968-renewal",
       "design": "1965 base with 1968 renewal",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-mexico-6f17e42415a2.jpg",
@@ -14958,7 +16122,8 @@ const PLATE_IMAGES = {
       "sha256": "c8ed3b444462ad82a7ed0ee3c035743aa6970921a7c497afb83a488293e5009c",
       "designKey": "new-mexico-historical-issue-1964",
       "design": "Historical issue 1964",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-mexico-91cec79fc3d8.jpg",
@@ -14978,7 +16143,8 @@ const PLATE_IMAGES = {
       "sha256": "86e6e0fb18b1d0b31a6c0ea9ed9f119cb6a71d88479d39280d3ba4de1a70056c",
       "designKey": "new-mexico-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-mexico-c6220dc53f50.jpg",
@@ -14998,7 +16164,8 @@ const PLATE_IMAGES = {
       "sha256": "f5184d34d5b7aedf909bbd77382a7b38d4ec8f9e437576c551e0395fc02ad197",
       "designKey": "new-mexico-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-mexico-9134c9661271.jpg",
@@ -15018,7 +16185,8 @@ const PLATE_IMAGES = {
       "sha256": "11bc6dd6d64b312fff7c77c45a3fb5afd9ef89ba7d9c1390a584dd557bfa0945",
       "designKey": "new-mexico-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-mexico-7441e30d0b6d.jpg",
@@ -15038,7 +16206,8 @@ const PLATE_IMAGES = {
       "sha256": "d0c02f01bd6f24d9678e0707304377792ec4090311c8ab5669e5317cd6aeb3ca",
       "designKey": "new-mexico-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-mexico-66636cfb8695.jpg",
@@ -15058,7 +16227,8 @@ const PLATE_IMAGES = {
       "sha256": "08f965fd166654e657fa5f0a5f1732cbca5ae0cf65776d15152f1b51b3862ebd",
       "designKey": "new-mexico-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-mexico-be6cad9a6844.jpg",
@@ -15078,7 +16248,8 @@ const PLATE_IMAGES = {
       "sha256": "837922dfc863badc714d2ec8e25e81316ea7fcd1d57ead78d8a7c8387b56dc31",
       "designKey": "new-mexico-historical-issue-1940",
       "design": "Historical issue 1940",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-mexico-ad7429e22640.jpg",
@@ -15098,7 +16269,8 @@ const PLATE_IMAGES = {
       "sha256": "2516d8cac06f107c19205a1dee385c5314150db83dc6877b1ba079c40b970aef",
       "designKey": "new-mexico-historical-issue-1939",
       "design": "Historical issue 1939",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-mexico-011f7a0f49b9.jpg",
@@ -15118,7 +16290,8 @@ const PLATE_IMAGES = {
       "sha256": "1d8d6cc8ea511e7db3e7117ca49a478c284dfa7b9ca94285395d3ede4fb28689",
       "designKey": "new-mexico-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-mexico-b43164041b00.jpg",
@@ -15138,7 +16311,8 @@ const PLATE_IMAGES = {
       "sha256": "365279118645f91288a7f1a5dec3379f7ec1fe175305984e5014487077bb490d",
       "designKey": "new-mexico-historical-issue-1937",
       "design": "Historical issue 1937",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-mexico-32c897d5a2fc.jpg",
@@ -15158,7 +16332,8 @@ const PLATE_IMAGES = {
       "sha256": "3dc899fb8ce2c119eb7c9543b0bb2c90a020d4dc2f6b901c6fbadd8c4442fa3f",
       "designKey": "new-mexico-historical-issue-1936",
       "design": "Historical issue 1936",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-mexico-5adaf80d6587.jpg",
@@ -15178,7 +16353,8 @@ const PLATE_IMAGES = {
       "sha256": "aa917773baf7b5deb28d199dfad4e3a13bc5aef4d11b528bf55caf03595213e3",
       "designKey": "new-mexico-historical-issue-1932",
       "design": "Historical issue 1932",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-mexico-2844d4907571.jpg",
@@ -15198,7 +16374,8 @@ const PLATE_IMAGES = {
       "sha256": "a279774f47122ecd457ae04b589edee84eb5235d909e14e1c65e1068fcd7480d",
       "designKey": "new-mexico-historical-issue-1915",
       "design": "Historical issue 1915",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "New York": [
@@ -15220,7 +16397,8 @@ const PLATE_IMAGES = {
       "sha256": "aa34addfe73517901fab36d1c3590d784fbbdc8fcef2517e8bd52811b6b66433",
       "designKey": "new-york-standard-passenger-empire-gold-base-newer-reusable-standard-unavailable",
       "design": "Standard passenger, Empire Gold base; newer reusable standard unavailable",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2023-08-16 17:32:16"
     },
     {
       "id": "new-york-4ece04492df9.jpg",
@@ -15240,7 +16418,8 @@ const PLATE_IMAGES = {
       "sha256": "60756046d207d2d981afb3b5a2a6f05e9b973bed7842393c80093aa6ec1a2c6f",
       "designKey": "new-york-orange-1973-1986-base",
       "design": "Orange 1973-1986 base",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-york-c90395bb6ff9.jpg",
@@ -15260,7 +16439,8 @@ const PLATE_IMAGES = {
       "sha256": "57388023ad5cca683b5537099b0f8dfb96a0f06302019f8001eca67ad779d43d",
       "designKey": "new-york-historical-issue-1964",
       "design": "Historical issue 1964",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-york-de6a3cbe6a6d.jpg",
@@ -15280,7 +16460,8 @@ const PLATE_IMAGES = {
       "sha256": "6a99792616bfcf3ccce988871063b9bdb68cc2c651e26fcd7d0ad4cac89f1045",
       "designKey": "new-york-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-york-87f7044df6a0.jpg",
@@ -15300,7 +16481,8 @@ const PLATE_IMAGES = {
       "sha256": "82d5096df90c831437f0f63a7768c4111989db27ddfeb34de0f8c2a9171153bb",
       "designKey": "new-york-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-york-49c01f133373.jpg",
@@ -15320,7 +16502,8 @@ const PLATE_IMAGES = {
       "sha256": "3b6ee2ce941bdbaa3b5de242cc2146800962747063cdfcd5cd2593d55b3aef23",
       "designKey": "new-york-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-york-0635484f6694.jpg",
@@ -15340,7 +16523,8 @@ const PLATE_IMAGES = {
       "sha256": "8b9993d80f66c00dca2e4e2dfbe48487c5a91101dedfaeb58d844546f8bf40d7",
       "designKey": "new-york-historical-issue-1950",
       "design": "Historical issue 1950",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-york-826dbc022742.jpg",
@@ -15360,7 +16544,8 @@ const PLATE_IMAGES = {
       "sha256": "07bc485f2ed14c2f1fa3de27127ff2167cc99e4144c44eab94fb02a55c77b7cf",
       "designKey": "new-york-historical-issue-1943",
       "design": "Historical issue 1943",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-york-dc89a8cbfcf6.jpg",
@@ -15380,7 +16565,8 @@ const PLATE_IMAGES = {
       "sha256": "21fa33c8b019817c446977bd37d90ed7f619e25a88d17a49a742b57b84607bdc",
       "designKey": "new-york-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-york-781e65a10c52.jpg",
@@ -15400,7 +16586,8 @@ const PLATE_IMAGES = {
       "sha256": "5e2723adad2702ed1c894012092d20954c62f7618fd79e26523c284b1244b2ac",
       "designKey": "new-york-historical-issue-1941",
       "design": "Historical issue 1941",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-york-c208c8a001cc.jpg",
@@ -15420,7 +16607,8 @@ const PLATE_IMAGES = {
       "sha256": "1271d6dac2be89c7250d9dbfafa800119e3266e528b2eab6f74efce6f59f5a21",
       "designKey": "new-york-historical-issue-1939",
       "design": "Historical issue 1939",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-york-c76a378bdd8d.jpg",
@@ -15440,7 +16628,8 @@ const PLATE_IMAGES = {
       "sha256": "72e8238314ac98661ad2258c74aa2705d83f998a1ed2be79e1a6df0752eb6901",
       "designKey": "new-york-historical-issue-1937",
       "design": "Historical issue 1937",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-york-571d246a931f.jpg",
@@ -15460,7 +16649,8 @@ const PLATE_IMAGES = {
       "sha256": "aecb897d02e75afefa042999a6f491ee5e35a43bd5d970bf8a1c20c560b7a9e6",
       "designKey": "new-york-historical-issue-1934",
       "design": "Historical issue 1934",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-york-d6d7c927c319.jpg",
@@ -15480,7 +16670,8 @@ const PLATE_IMAGES = {
       "sha256": "6ddbe1ad4b8995bdbc808e9816ebb905420c3d0f018019065527f83925559137",
       "designKey": "new-york-historical-issue-1933",
       "design": "Historical issue 1933",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-york-5c100e39200c.jpg",
@@ -15500,7 +16691,8 @@ const PLATE_IMAGES = {
       "sha256": "4108d9d06166c895aa8bb2556e711c06c209c56136322da032dedeeadce60055",
       "designKey": "new-york-historical-issue-1932",
       "design": "Historical issue 1932",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "new-york-historical.jpg",
@@ -15520,7 +16712,8 @@ const PLATE_IMAGES = {
       "sha256": "70826cbcfb8f65256eba3f8a20b88e7c910043470ff434b4ca473ed5d4cc8cb8",
       "designKey": "new-york-empire-state-base-with-1960-renewal",
       "design": "Empire State base with 1960 renewal",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "North Carolina": [
@@ -15542,7 +16735,8 @@ const PLATE_IMAGES = {
       "sha256": "1d390d142594849e55f93e08f19b3b0108358359d6ec0c777719a24fe2e36453",
       "designKey": "north-carolina-standard-passenger-first-in-flight-base-2020-photograph",
       "design": "Standard passenger, First in Flight base (2020 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2022-06-19"
     },
     {
       "id": "north-carolina-e031b071376a.jpg",
@@ -15562,7 +16756,8 @@ const PLATE_IMAGES = {
       "sha256": "bbaff05d1a406e988dc7c60059be66e86da9eaf9886f895a8b0fee6c85bda7e5",
       "designKey": "north-carolina-first-in-freedom-base-2018-photograph",
       "design": "First in Freedom base, 2018 photograph",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2018-03-14 18:48:29"
     },
     {
       "id": "north-carolina-84cc09eae1d5.jpg",
@@ -15582,7 +16777,8 @@ const PLATE_IMAGES = {
       "sha256": "cde703b8d1a7ad1c715bc5f3cb818bebb24fe8788981343eab7e36993ab789f4",
       "designKey": "north-carolina-historical-issue-1969",
       "design": "Historical issue 1969",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-290d053d1301.jpg",
@@ -15602,7 +16798,8 @@ const PLATE_IMAGES = {
       "sha256": "5acd76d8056c2053f609290931c9a92c30088c1ae0aaf0a3d95d1dca0555d10c",
       "designKey": "north-carolina-historical-issue-1968",
       "design": "Historical issue 1968",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-d73473750ba4.jpg",
@@ -15622,7 +16819,8 @@ const PLATE_IMAGES = {
       "sha256": "87c9b263b6efc0a012f616494eaee5b8a098c1b947d3e72587ced7cb9dd47fba",
       "designKey": "north-carolina-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-621e5afa12b0.jpg",
@@ -15642,7 +16840,8 @@ const PLATE_IMAGES = {
       "sha256": "88d908efb69bc4222601f1c9a1bae78d521646255978d19f034efdd8d1295d97",
       "designKey": "north-carolina-historical-issue-1966",
       "design": "Historical issue 1966",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-6c417fb42c50.jpg",
@@ -15662,7 +16861,8 @@ const PLATE_IMAGES = {
       "sha256": "86ee8a21b4cfe2a3d0ffb776bf597ef4c38de5b1debf942d972b1dfdf89968cf",
       "designKey": "north-carolina-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-02614e7a14e6.jpg",
@@ -15682,7 +16882,8 @@ const PLATE_IMAGES = {
       "sha256": "6301e5c1aafc4e2166f4a1df8697f58a47c25e34f1ccb324c5603546fec1c479",
       "designKey": "north-carolina-historical-issue-1964",
       "design": "Historical issue 1964",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-1954eec6cfbb.jpg",
@@ -15702,7 +16903,8 @@ const PLATE_IMAGES = {
       "sha256": "7fb8d4440fd5b9eb462f9f3b95bead8fd650d9b79f9f62c2c3862b7f1d35ce16",
       "designKey": "north-carolina-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-1fb2e1b0ec69.jpg",
@@ -15722,7 +16924,8 @@ const PLATE_IMAGES = {
       "sha256": "12f61a160234e4b340af5a8d15dbfd5660b4ab24b141d47d53ead5bb29b620fb",
       "designKey": "north-carolina-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-9682e630e2ba.jpg",
@@ -15742,7 +16945,8 @@ const PLATE_IMAGES = {
       "sha256": "d61a53e19c57f1ba56c882f4635d87742fa9ebfdd999ac59a1ec2ce628131ed4",
       "designKey": "north-carolina-historical-issue-1961",
       "design": "Historical issue 1961",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-historical.jpg",
@@ -15762,7 +16966,8 @@ const PLATE_IMAGES = {
       "sha256": "644a60aae8ecda6e5ee39897512dbbd78f42c5cec1a388bfc7f048b1ad9ab6c9",
       "designKey": "north-carolina-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-8018a660c134.jpg",
@@ -15782,7 +16987,8 @@ const PLATE_IMAGES = {
       "sha256": "7b0298a89c88f95d6e23cb839ef7c4adc6801e86bec88a749b496993e8452186",
       "designKey": "north-carolina-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-29afa97df53a.jpg",
@@ -15802,7 +17008,8 @@ const PLATE_IMAGES = {
       "sha256": "f76c104c0725e00f8de61a4758a3e48e62e6ba885c9c7bebc2cc84fd3786fd82",
       "designKey": "north-carolina-historical-issue-1958",
       "design": "Historical issue 1958",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-6fa35f162194.jpg",
@@ -15822,7 +17029,8 @@ const PLATE_IMAGES = {
       "sha256": "fc77793493e930499c7604979aa413270a675ad8f14108f43af3a97197b6732f",
       "designKey": "north-carolina-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-035d314a7e7a.jpg",
@@ -15842,7 +17050,8 @@ const PLATE_IMAGES = {
       "sha256": "b5087e033b4bd98072373880a51d7442b976c812ba02c669b3ca12913e9251a2",
       "designKey": "north-carolina-historical-issue-1956",
       "design": "Historical issue 1956",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-537bd3b1178c.jpg",
@@ -15862,7 +17071,8 @@ const PLATE_IMAGES = {
       "sha256": "dd7bd2d73ad2f6ada08efcace964c89a013b638f5ba8db732713a2636fe42557",
       "designKey": "north-carolina-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-be6692590f5c.jpg",
@@ -15882,7 +17092,8 @@ const PLATE_IMAGES = {
       "sha256": "11bdb6c1b840801d086e38a76ecce3b15a082f2e3f308261d57e863dc0f1376d",
       "designKey": "north-carolina-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-2cf0ea125caa.jpg",
@@ -15902,7 +17113,8 @@ const PLATE_IMAGES = {
       "sha256": "0b12612118b16ebdabb86eef21c82cc5939cb8ce7ba2667911ef2814aaeea1db",
       "designKey": "north-carolina-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-2746633f65ff.jpg",
@@ -15922,7 +17134,8 @@ const PLATE_IMAGES = {
       "sha256": "2e922fab78cda31d79883bd5900d885d02d308cd08c66cba238c3389521b94dd",
       "designKey": "north-carolina-historical-issue-1952",
       "design": "Historical issue 1952",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-2a62333df901.jpg",
@@ -15942,7 +17155,8 @@ const PLATE_IMAGES = {
       "sha256": "03282e817c4484514fc475c89c92dd08578769c4177bb37282f37c5c81d8fb7a",
       "designKey": "north-carolina-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-662722323207.jpg",
@@ -15962,7 +17176,8 @@ const PLATE_IMAGES = {
       "sha256": "4e07e1424cf1f0f290465659585507b097d62a7bdb49f11a3c205730c22d4f50",
       "designKey": "north-carolina-historical-issue-1950",
       "design": "Historical issue 1950",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-7cc9356d9ec3.jpg",
@@ -15982,7 +17197,8 @@ const PLATE_IMAGES = {
       "sha256": "96b786575a5253455167c8ffdeafab85fef720afd7e7731872f71711534c5ec8",
       "designKey": "north-carolina-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-74b80cb74656.jpg",
@@ -16002,7 +17218,8 @@ const PLATE_IMAGES = {
       "sha256": "0b178107a223c91617e884db389df1ceb10b685dc243bb0afc4ab7d3feb7fe22",
       "designKey": "north-carolina-historical-issue-1947",
       "design": "Historical issue 1947",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-8869b19317a4.jpg",
@@ -16022,7 +17239,8 @@ const PLATE_IMAGES = {
       "sha256": "a79f623a9ebbbd944414de756c5b94453fb623a6531dd3f2492598eec8137d2a",
       "designKey": "north-carolina-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-727402b1190a.jpg",
@@ -16042,7 +17260,8 @@ const PLATE_IMAGES = {
       "sha256": "955948b238c780d24e092275f85d93fa2c0b4f802bf4f0c09fc6e263f2ffd1a2",
       "designKey": "north-carolina-historical-issue-1944",
       "design": "Historical issue 1944",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-c6c5b2063db1.jpg",
@@ -16062,7 +17281,8 @@ const PLATE_IMAGES = {
       "sha256": "2345b966407ffdb95e8ed31d5d8d75b178243696414f11d0cc59644b3eb48e63",
       "designKey": "north-carolina-historical-issue-1943",
       "design": "Historical issue 1943",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-carolina-96ce07b6739d.jpg",
@@ -16082,7 +17302,8 @@ const PLATE_IMAGES = {
       "sha256": "680db41f2d80a8e0daf2f7a72d6c9a2b15fafd621340a8d7ca51983170b0a4ec",
       "designKey": "north-carolina-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "North Dakota": [
@@ -16104,7 +17325,8 @@ const PLATE_IMAGES = {
       "sha256": "d0d18f87567b1c510681a38e8c4e022d859ec144a3cf9fce83b06bbbe50c5f6a",
       "designKey": "north-dakota-standard-passenger-older-buffalo-landscape-base-2012-renewal-newer-reusable-standard-unavailable",
       "design": "Standard passenger, older buffalo/landscape base (2012 renewal); newer reusable standard unavailable",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2024-10-18 15:50:16"
     },
     {
       "id": "north-dakota-b5e26c6290ec.jpg",
@@ -16124,7 +17346,8 @@ const PLATE_IMAGES = {
       "sha256": "8d5863334398dbec9fbabdb607cc70da7591489a3583e5d04a9914abb8406d35",
       "designKey": "north-dakota-1966-base-with-1967-renewal",
       "design": "1966 base with 1967 renewal",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-dakota-aac9835928cf.jpg",
@@ -16144,7 +17367,8 @@ const PLATE_IMAGES = {
       "sha256": "c2f9d52e6f82151593657f1587029d0caee891df1128b982a31b0f14725fb833",
       "designKey": "north-dakota-1962-base-with-1963-renewal",
       "design": "1962 base with 1963 renewal",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-dakota-241084b2ea3d.jpg",
@@ -16164,7 +17388,8 @@ const PLATE_IMAGES = {
       "sha256": "329ff7df0fd1bb1d4125ebeceb1dd02511950166a2acdd43bdaac531703258be",
       "designKey": "north-dakota-historical-issue-1958",
       "design": "Historical issue 1958",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-dakota-9839f536ff82.jpg",
@@ -16184,7 +17409,8 @@ const PLATE_IMAGES = {
       "sha256": "ffa2ca182961e2d2755592d7c6028edf27514c8c326712fef4deef5d114e2a18",
       "designKey": "north-dakota-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-dakota-fc20a42bb40a.jpg",
@@ -16204,7 +17430,8 @@ const PLATE_IMAGES = {
       "sha256": "302e0d12e632ae1ec550624d954f2b129e124d872956a3ee9ca92b55d22c7ccf",
       "designKey": "north-dakota-historical-issue-1948",
       "design": "Historical issue 1948",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-dakota-b5644df3994f.jpg",
@@ -16224,7 +17451,8 @@ const PLATE_IMAGES = {
       "sha256": "7a94627dfa7dd4cf1684cf1f40218febccef10b48ae0b77142acf1f22df8075d",
       "designKey": "north-dakota-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-dakota-7e699be6eb3d.jpg",
@@ -16244,7 +17472,8 @@ const PLATE_IMAGES = {
       "sha256": "5a66dbf206553f12a15e99414fbe7481d4d7282bcc4d4eb8503fcc255d399153",
       "designKey": "north-dakota-historical-issue-1940",
       "design": "Historical issue 1940",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-dakota-465cb17a812d.jpg",
@@ -16264,7 +17493,8 @@ const PLATE_IMAGES = {
       "sha256": "f09fd1c89750a11bad929b0d4f2acd92a3e551dfc59a4639a787348cefc970b3",
       "designKey": "north-dakota-historical-issue-1939",
       "design": "Historical issue 1939",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-dakota-8e946d92961f.jpg",
@@ -16284,7 +17514,8 @@ const PLATE_IMAGES = {
       "sha256": "b35e0557e92af35253f1d656e4974be269e7ac707983023079db3a9d8f41b200",
       "designKey": "north-dakota-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-dakota-0949f66422bb.jpg",
@@ -16304,7 +17535,8 @@ const PLATE_IMAGES = {
       "sha256": "d9f1626b047a649aa88dd33d704a0582e88540db3a3a9d1df758ef23f7c055b3",
       "designKey": "north-dakota-historical-issue-1933",
       "design": "Historical issue 1933",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-dakota-ece463be6d62.jpg",
@@ -16324,7 +17556,8 @@ const PLATE_IMAGES = {
       "sha256": "8053681587b2284e42c7831af9fddf8b753b7e1cb5e3123790ff3b8c042f7226",
       "designKey": "north-dakota-historical-issue-1930",
       "design": "Historical issue 1930",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-dakota-0a98f8241536.jpg",
@@ -16344,7 +17577,8 @@ const PLATE_IMAGES = {
       "sha256": "a720e933f8fa3c51fc9dd2072e34d6702dee5871e99a3c943084cd6e5c0b4612",
       "designKey": "north-dakota-historical-issue-1929",
       "design": "Historical issue 1929",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-dakota-6d8f1d40beec.jpg",
@@ -16364,7 +17598,8 @@ const PLATE_IMAGES = {
       "sha256": "8be7fd0ff4cf9cc3787a8b1db44658ec1dd7f5865bafcb67676a4b89594adb8f",
       "designKey": "north-dakota-historical-issue-1927",
       "design": "Historical issue 1927",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-dakota-3ff7f1c883b7.jpg",
@@ -16384,7 +17619,8 @@ const PLATE_IMAGES = {
       "sha256": "aa1eb7b283c7feebccb8c89db50e642b340ec90b173a407d92f856c20ecede37",
       "designKey": "north-dakota-historical-issue-1921",
       "design": "Historical issue 1921",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "north-dakota-5c6d6ae090b4.jpg",
@@ -16404,7 +17640,8 @@ const PLATE_IMAGES = {
       "sha256": "feb33ebe0fe5db0c7ba4d83c1b19c70549b96c1d3ba380d68dd530f52aa486f5",
       "designKey": "north-dakota-historical-issue-1913",
       "design": "Historical issue 1913",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Ohio": [
@@ -16426,7 +17663,8 @@ const PLATE_IMAGES = {
       "sha256": "9acf8bfe6e2b35e69072037a5f778d35075a08fbb012eebf9b2bafea9c951e07",
       "designKey": "ohio-standard-passenger-sunrise-in-ohio-base-2021-sample",
       "design": "Standard passenger, Sunrise in Ohio base (2021 sample)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2021-12-29"
     },
     {
       "id": "ohio-modern.jpg",
@@ -16446,7 +17684,8 @@ const PLATE_IMAGES = {
       "sha256": "4c50c5b563abf2399d3391b0a11d4099bec49e946f25bd0fec66428f78827a10",
       "designKey": "ohio-pride-of-ohio-base-2013-sample",
       "design": "Pride of Ohio base, 2013 sample",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2013-06-17 20:08:41"
     },
     {
       "id": "ohio-36cc08098dc6.jpg",
@@ -16466,7 +17705,8 @@ const PLATE_IMAGES = {
       "sha256": "39bc397256945c8d88d0ff6815dd531eb4d5bca7a0fe5dc3b65ea143be75abbe",
       "designKey": "ohio-bicentennial-base-2004-photograph",
       "design": "Bicentennial base, 2004 photograph",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-8728d4a4cd08.jpg",
@@ -16486,7 +17726,8 @@ const PLATE_IMAGES = {
       "sha256": "98c813aed33c789735cd748d0c5233d4cff0d1f4e1bcf56056bfe8efe1a315c4",
       "designKey": "ohio-birthplace-of-aviation-base-2000-photograph",
       "design": "Birthplace of Aviation base, 2000 photograph",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-196aee03f7c3.jpg",
@@ -16506,7 +17747,8 @@ const PLATE_IMAGES = {
       "sha256": "e2dfd2dffc6550aa058a5b3192056011643f6c7057db505018852ba3dd5029a0",
       "designKey": "ohio-historical-issue-1969",
       "design": "Historical issue 1969",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-b60308c4da98.jpg",
@@ -16526,7 +17768,8 @@ const PLATE_IMAGES = {
       "sha256": "8024ad367a3f4d8d73e92ba8236eaa62517905bd47a3e766647f5ac4d07b10ac",
       "designKey": "ohio-historical-issue-1968",
       "design": "Historical issue 1968",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-7fc0a5febc54.jpg",
@@ -16546,7 +17789,8 @@ const PLATE_IMAGES = {
       "sha256": "9c560198114bf93849af222189a327e761a0f60526edeff02b51472531ef4a77",
       "designKey": "ohio-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-bc1655a04840.jpg",
@@ -16566,7 +17810,8 @@ const PLATE_IMAGES = {
       "sha256": "f576c659382ee11a0daecf9c3cd4dbf19bcccbf65185d9e0625ef5c65d7e8da0",
       "designKey": "ohio-historical-issue-1966",
       "design": "Historical issue 1966",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-130cc5a6f6a9.jpg",
@@ -16586,7 +17831,8 @@ const PLATE_IMAGES = {
       "sha256": "4883360d603493d1a622a75086a73ae32a994c93bb90c4d3bd6810f08c8087ca",
       "designKey": "ohio-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-0b0c7b790d17.jpg",
@@ -16606,7 +17852,8 @@ const PLATE_IMAGES = {
       "sha256": "b1ade06b52978ef9cb4e5678e4fd39d8ba57ac0c7132cf1defe1c7c7bb42dbe1",
       "designKey": "ohio-historical-issue-1964",
       "design": "Historical issue 1964",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-7749f90ee5f4.jpg",
@@ -16626,7 +17873,8 @@ const PLATE_IMAGES = {
       "sha256": "aa9efb2240058f88862083ab8e8c30a75973c5744dec3b576d45dc7eef8bcf52",
       "designKey": "ohio-historical-issue-1963",
       "design": "Historical issue 1963 (sample)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-052c26ec7622.jpg",
@@ -16646,7 +17894,8 @@ const PLATE_IMAGES = {
       "sha256": "ea53bbf0039dce3d5bb552bcb32e937d401f8984d3d9f8256a757ef2119fb1fe",
       "designKey": "ohio-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-c61b273382f0.jpg",
@@ -16666,7 +17915,8 @@ const PLATE_IMAGES = {
       "sha256": "df7a2f07e134c5b92303fa639bf8b3273566faa35730f74e1eb5c58084c1c788",
       "designKey": "ohio-historical-issue-1961",
       "design": "Historical issue 1961",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-historical.jpg",
@@ -16686,7 +17936,8 @@ const PLATE_IMAGES = {
       "sha256": "6f5209273328507eed02ec22f8370a65c22e8fff38a5591f3fbfaf351fab317b",
       "designKey": "ohio-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-b995970a5d07.jpg",
@@ -16706,7 +17957,8 @@ const PLATE_IMAGES = {
       "sha256": "48b933635547dfcc0a765bdd1f61787a26ab644f59b21a94774b8e05b78f2550",
       "designKey": "ohio-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-654df3c5b5a7.jpg",
@@ -16726,7 +17978,8 @@ const PLATE_IMAGES = {
       "sha256": "5a9eac38c01e5b1203b0053a2d5a139fd6cdcccd08d8c05fbff3e826eedc2ee0",
       "designKey": "ohio-historical-issue-1958",
       "design": "Historical issue 1958",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-40ae2fbbeac6.jpg",
@@ -16746,7 +17999,8 @@ const PLATE_IMAGES = {
       "sha256": "9bc44fc5e74d94e9eed54858fb347dd0a86f3c95e0e1a2a0d2e8bbab6b370e8c",
       "designKey": "ohio-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-acc712bc606e.jpg",
@@ -16766,7 +18020,8 @@ const PLATE_IMAGES = {
       "sha256": "bc5bda1aa79b18409268bf4a73d3cd50647cc73ad78392742ba4127698f1c438",
       "designKey": "ohio-historical-issue-1956",
       "design": "Historical issue 1956",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-71906bdd9a9b.jpg",
@@ -16786,7 +18041,8 @@ const PLATE_IMAGES = {
       "sha256": "cb230e5f2426028b04d87157f3c80c7877137b197b79ca85125585a47dc0184c",
       "designKey": "ohio-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-b26d8c76bad4.jpg",
@@ -16806,7 +18062,8 @@ const PLATE_IMAGES = {
       "sha256": "2261fa55e36a5a814a1e8d5e7ccec9d4f9049058926b37a1563e6e4545226dc8",
       "designKey": "ohio-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-32704b44872e.jpg",
@@ -16826,7 +18083,8 @@ const PLATE_IMAGES = {
       "sha256": "50d1d1bfc1a4dadf629499d2b475bccb661eb721c1662f28ce5e2f5c40e0408e",
       "designKey": "ohio-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-75b7aabe2c7d.jpg",
@@ -16846,7 +18104,8 @@ const PLATE_IMAGES = {
       "sha256": "d820fab84bee86f190fbb7a00b40636077f8db6acaa28416f937c452b1c0a34d",
       "designKey": "ohio-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-7ae583330edf.jpg",
@@ -16866,7 +18125,8 @@ const PLATE_IMAGES = {
       "sha256": "86d87b0b0601a16c2c107d4f566df49ea0bb1faab78630d48fc663fd5fb754ef",
       "designKey": "ohio-historical-issue-1950",
       "design": "Historical issue 1950",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-a83e292990f9.jpg",
@@ -16886,7 +18146,8 @@ const PLATE_IMAGES = {
       "sha256": "1f282c760d214003fa386a79efc6353d48f093e291c50409dd6b753a6d6fdee4",
       "designKey": "ohio-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-83d090342f4b.jpg",
@@ -16906,7 +18167,8 @@ const PLATE_IMAGES = {
       "sha256": "f75a5d8d4ad68fa35d45ca06ba1a5bc5720bbebebfddad84ab8e74bb57916d98",
       "designKey": "ohio-historical-issue-1948",
       "design": "Historical issue 1948",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-9b18cadeaa54.jpg",
@@ -16926,7 +18188,8 @@ const PLATE_IMAGES = {
       "sha256": "6882cde3c1a0e299eb8e2a89823e86b443a58769ff4280dd0bf4ea5e191a1021",
       "designKey": "ohio-historical-issue-1947",
       "design": "Historical issue 1947",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-5f450bf29c46.jpg",
@@ -16946,7 +18209,8 @@ const PLATE_IMAGES = {
       "sha256": "5ea53869daf4145018fe1562374055486e6641a0f176c27462aafdd2dfdd4edb",
       "designKey": "ohio-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-65d9546cb885.jpg",
@@ -16966,7 +18230,8 @@ const PLATE_IMAGES = {
       "sha256": "be6494b1c2b3b204c746bf4e81b2b6f7307c025802940b7c1f9a204a860954c3",
       "designKey": "ohio-historical-issue-1945",
       "design": "Historical issue 1945",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "ohio-e396762a0af4.jpg",
@@ -16986,7 +18251,8 @@ const PLATE_IMAGES = {
       "sha256": "7820bf4350af0814cda7e0b12a40d4c932d44e1ecacb242a4080c122350c4f17",
       "designKey": "ohio-historical-issue-1944",
       "design": "Historical issue 1944",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Oklahoma": [
@@ -17008,7 +18274,8 @@ const PLATE_IMAGES = {
       "sha256": "393459e076601b837b5b560710ee8b4a50b01fda3bcc177d550e59c7a0ad53db",
       "designKey": "oklahoma-standard-passenger-2009-sacred-rain-arrow-base-newer-reusable-standard-unavailable",
       "design": "Standard passenger, 2009 Sacred Rain Arrow base; newer reusable standard unavailable",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2024-12-12"
     },
     {
       "id": "oklahoma-c341749d639c.jpg",
@@ -17028,7 +18295,8 @@ const PLATE_IMAGES = {
       "sha256": "6c3c0d7db2b719e7fd9851b999e707c2d245556f304d4577c25f2521d0de49b6",
       "designKey": "oklahoma-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "oklahoma-9dc91c483ec3.jpg",
@@ -17048,7 +18316,8 @@ const PLATE_IMAGES = {
       "sha256": "2e3025bf7acaee26533e8f04fd07aefadacc248db62e565b510ddef2edeb6aea",
       "designKey": "oklahoma-historical-issue-1961",
       "design": "Historical issue 1961",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "oklahoma-historical.jpg",
@@ -17068,7 +18337,8 @@ const PLATE_IMAGES = {
       "sha256": "5061039b1c2dda38a0aa56153026777531e45c40eb48488fb1b010b0cf4c2cbf",
       "designKey": "oklahoma-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "oklahoma-eb3554047d04.jpg",
@@ -17088,7 +18358,8 @@ const PLATE_IMAGES = {
       "sha256": "0bc86d10fd43ff1a353b58fede3811ac6a515907a1534e76f0ed7000ceb3e3e0",
       "designKey": "oklahoma-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "oklahoma-8ce8ef265924.jpg",
@@ -17108,7 +18379,8 @@ const PLATE_IMAGES = {
       "sha256": "a625f469af5e1d8f7899e5006decedde57dd081b5cbf1aeb81ee1eeed101d141",
       "designKey": "oklahoma-historical-issue-1958",
       "design": "Historical issue 1958",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "oklahoma-d53b91db9da7.jpg",
@@ -17128,7 +18400,8 @@ const PLATE_IMAGES = {
       "sha256": "8616b821c2644c0fc48995addabfe58957a8792dfce7aea8304812997e3b29c0",
       "designKey": "oklahoma-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "oklahoma-b390548091e7.jpg",
@@ -17148,7 +18421,8 @@ const PLATE_IMAGES = {
       "sha256": "9e3282042fd63b196cdcfee5a023a3d7d7a637e1cad01b380641da214d81e65d",
       "designKey": "oklahoma-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "oklahoma-a0672e9f89f8.jpg",
@@ -17168,7 +18442,8 @@ const PLATE_IMAGES = {
       "sha256": "dad62c2faa81cec3fe1c5cf85fffce2748dbbe4050971022e12ae6b086c1ab2a",
       "designKey": "oklahoma-historical-issue-1952",
       "design": "Historical issue 1952",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Oregon": [
@@ -17190,7 +18465,71 @@ const PLATE_IMAGES = {
       "sha256": "f0783b10f098c24fc5ca3911f52c4f5d48fb6b1570cada843704d0fec84a1ebe",
       "designKey": "oregon-standard-passenger-tree-base-2003-photograph",
       "design": "Standard passenger, tree base (2003 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "oregon-recent-7b4854007eab.jpg",
+      "src": "./license_plate_assets/oregon-recent-7b4854007eab.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1919 Oregon license plate.jpg",
+      "author": "Ratsenmice",
+      "source": "https://commons.wikimedia.org/wiki/File:1919_Oregon_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/a/ad/1919_Oregon_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 166,
+      "sha256": "dae4a13ac519b918893fd7c8505614906d1be27e808b17072222ebaf896ca4eb",
+      "designKey": "oregon-1919-historic-issue",
+      "design": "1919 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "oregon-recent-4dbe16ae1441.jpg",
+      "src": "./license_plate_assets/oregon-recent-4dbe16ae1441.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1920 Oregon license plate.jpg",
+      "author": "Cody gg 88",
+      "source": "https://commons.wikimedia.org/wiki/File:1920_Oregon_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/8/89/1920_Oregon_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 175,
+      "sha256": "b98122a2f5e1e879768fb682521bdc332bfd0cd5899ce1fdd48d2f19f6bea74b",
+      "designKey": "oregon-1920-historic-issue",
+      "design": "1920 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "oregon-recent-8744d660a09e.jpg",
+      "src": "./license_plate_assets/oregon-recent-8744d660a09e.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1921 Oregon license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1921_Oregon_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/c/cf/1921_Oregon_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 182,
+      "sha256": "66b3f8f67793abc016446d231b3ef034780508c49f427d774b9a9ec394f7d0f9",
+      "designKey": "oregon-1921-historic-issue",
+      "design": "1921 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "oregon-historical.jpg",
@@ -17210,7 +18549,8 @@ const PLATE_IMAGES = {
       "sha256": "f20055d4e9fe61479f9c731c52358e1351c8135ad2625338ab7c27c5048f9ffc",
       "designKey": "oregon-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Pennsylvania": [
@@ -17232,7 +18572,134 @@ const PLATE_IMAGES = {
       "sha256": "4517eb14c5505cec1a88ebec610029f21bf5c15f638ad748aa60998a7fb905c2",
       "designKey": "pennsylvania-standard-passenger-let-freedom-ring-base-2025-sample",
       "design": "Standard passenger, Let Freedom Ring base (2025 sample)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2024-01-15"
+    },
+    {
+      "id": "pennsylvania-recent-312c923fe89d.jpg",
+      "src": "./license_plate_assets/pennsylvania-recent-312c923fe89d.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1906 Pennsylvania license plate 11961.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1906_Pennsylvania_license_plate_11961.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/6/63/1906_Pennsylvania_license_plate_11961.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 298,
+      "sha256": "a3c73d470d3481d8491c55667a50082ed2875dceefa86eb8ce5904d5c7db1778",
+      "designKey": "pennsylvania-1906-historic-issue",
+      "design": "1906 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "pennsylvania-recent-6ed2b7ed433a.jpg",
+      "src": "./license_plate_assets/pennsylvania-recent-6ed2b7ed433a.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1910 Pennsylvania license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1910_Pennsylvania_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/2/22/1910_Pennsylvania_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 209,
+      "sha256": "4d3885e1f4ad11037eb969a816c06869d2e97cd18e4c0547537438701853eed6",
+      "designKey": "pennsylvania-1910-historic-issue",
+      "design": "1910 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "pennsylvania-recent-16e018c20057.jpg",
+      "src": "./license_plate_assets/pennsylvania-recent-16e018c20057.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1911 Pennsylvania license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1911_Pennsylvania_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/a/a4/1911_Pennsylvania_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 215,
+      "sha256": "6a1703065ebef63555358b132792bf2bec631a6a82ad3f1af478c1ca5ae86afb",
+      "designKey": "pennsylvania-1911-historic-issue",
+      "design": "1911 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "pennsylvania-recent-d75d919b29dc.jpg",
+      "src": "./license_plate_assets/pennsylvania-recent-d75d919b29dc.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1912 Pennsylvania license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1912_Pennsylvania_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/a/ac/1912_Pennsylvania_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 208,
+      "sha256": "1ca67be92d463172e482244a71b46417aa3c7639d7abf8bc753b479165aa48b7",
+      "designKey": "pennsylvania-1912-historic-issue",
+      "design": "1912 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "pennsylvania-recent-394af77e3e5c.jpg",
+      "src": "./license_plate_assets/pennsylvania-recent-394af77e3e5c.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1913 Pennsylvania license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1913_Pennsylvania_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/b/bf/1913_Pennsylvania_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 209,
+      "sha256": "4f79a349f61aa654648c23e40f940a029dda20a778af92864a6a1cd971311896",
+      "designKey": "pennsylvania-1913-historic-issue",
+      "design": "1913 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "pennsylvania-recent-94615cad70ea.jpg",
+      "src": "./license_plate_assets/pennsylvania-recent-94615cad70ea.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1914 Pennsylvania license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1914_Pennsylvania_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/5/52/1914_Pennsylvania_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 208,
+      "sha256": "591b2f702d1a70364ab6a02f55dda4f5c9ef050db01bbf88d60b8ad58a8d465e",
+      "designKey": "pennsylvania-1914-historic-issue",
+      "design": "1914 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "pennsylvania-historical.jpg",
@@ -17252,7 +18719,8 @@ const PLATE_IMAGES = {
       "sha256": "407c989943a93584de22472c3532fdcf934be7acfdbedb705731d57574937f11",
       "designKey": "pennsylvania-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "pennsylvania-78b546399648.jpg",
@@ -17272,7 +18740,8 @@ const PLATE_IMAGES = {
       "sha256": "84db55a8563bbcd40dee8687c6d979dd9e3ee87b9c7012541918c3e68699db08",
       "designKey": "pennsylvania-1958-base-with-1963-renewal",
       "design": "1958 base with 1963 renewal",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Rhode Island": [
@@ -17294,7 +18763,8 @@ const PLATE_IMAGES = {
       "sha256": "bea9a3f46d0890875b70a387aab5d2fb2e75a2a00995cfb6a20d8173fece3823",
       "designKey": "rhode-island-standard-passenger-old-wave-base-2013-photograph-newer-reusable-standard-unavailable",
       "design": "Standard passenger, old wave base (2013 photograph); newer reusable standard unavailable",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2021-12-23"
     },
     {
       "id": "rhode-island-450d56a15b18.jpg",
@@ -17314,7 +18784,8 @@ const PLATE_IMAGES = {
       "sha256": "4385df0aaba64da7985764d604ef16a42d3662ec8c36d61d6f56a057021a60f3",
       "designKey": "rhode-island-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "rhode-island-eca04e642460.jpg",
@@ -17334,7 +18805,8 @@ const PLATE_IMAGES = {
       "sha256": "02ca21a4829571b4dc6d38fe314b8c90e3495c9a4ab2ac7c1a0b81b501727a17",
       "designKey": "rhode-island-undated-white-rhode-island-base-1963-renewal",
       "design": "Undated white Rhode Island base, 1963 renewal",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "rhode-island-de4cea84ae80.jpg",
@@ -17354,7 +18826,8 @@ const PLATE_IMAGES = {
       "sha256": "029880d594366065e5c77e531bdc2734488e9935dfea3cb8964ad71034e76d5d",
       "designKey": "rhode-island-undated-black-rhode-island-base-1959-renewal",
       "design": "Undated black Rhode Island base, 1959 renewal",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "rhode-island-a00a009a0472.jpg",
@@ -17374,7 +18847,8 @@ const PLATE_IMAGES = {
       "sha256": "3140a15b3ea63fe82bf7dcf65db4605b964c6a6c089891eacd721d07679ce3cc",
       "designKey": "rhode-island-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "rhode-island-f6493ffbb681.jpg",
@@ -17394,7 +18868,8 @@ const PLATE_IMAGES = {
       "sha256": "d2ac465598578930c83730127fdab0cb38e82b4fb71a9b48bd4ae5a7a4d3f5ce",
       "designKey": "rhode-island-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "rhode-island-49c3f4c5b902.jpg",
@@ -17414,7 +18889,8 @@ const PLATE_IMAGES = {
       "sha256": "f0445f784caadd1c92c49394cc20b94170d01399a6ab88ccb6c48b6095186d50",
       "designKey": "rhode-island-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "rhode-island-7103494c3fe1.jpg",
@@ -17434,7 +18910,8 @@ const PLATE_IMAGES = {
       "sha256": "64ef421577de68e1076bc0fb38a30fb193d3e052dcfe97d17967bf760d43c284",
       "designKey": "rhode-island-historical-issue-1947",
       "design": "Historical issue 1947",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "rhode-island-1fb79cb3db04.jpg",
@@ -17454,7 +18931,8 @@ const PLATE_IMAGES = {
       "sha256": "a2a5312153f3800d854d2898a5bb6e749602a11c463e3df0989b51e730374197",
       "designKey": "rhode-island-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "rhode-island-dce0371791bf.jpg",
@@ -17474,7 +18952,8 @@ const PLATE_IMAGES = {
       "sha256": "f3093f0074ae0458f91087ae53eee1692908d13347fbfc5c0b9d9a4b596aa3a1",
       "designKey": "rhode-island-historical-issue-1941",
       "design": "Historical issue 1941",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "rhode-island-ed5015319e6e.jpg",
@@ -17494,7 +18973,8 @@ const PLATE_IMAGES = {
       "sha256": "be11ccfb86e838fbb8673a0294c62eeff01b90ef27eb81af7017abd1cea0647f",
       "designKey": "rhode-island-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "rhode-island-a2287b87d47c.jpg",
@@ -17514,7 +18994,8 @@ const PLATE_IMAGES = {
       "sha256": "8fc656e2d44dd51bee63da9957994a91f9de90992c7a8250f1d7261ad49f5d97",
       "designKey": "rhode-island-historical-issue-1934",
       "design": "Historical issue 1934",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "rhode-island-468d7cc03cce.jpg",
@@ -17534,7 +19015,8 @@ const PLATE_IMAGES = {
       "sha256": "b530bee2b15b8a5ce2f88f14b25d2a861539d409775c6f2c17237768058dbcf4",
       "designKey": "rhode-island-historical-issue-1933",
       "design": "Historical issue 1933",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "rhode-island-1c5e87da8c0d.jpg",
@@ -17554,7 +19036,8 @@ const PLATE_IMAGES = {
       "sha256": "722f9b70ef4c40d6a4de82e5540698ec884dbbc4d580c31343cd6e11592150ca",
       "designKey": "rhode-island-historical-issue-1930",
       "design": "Historical issue 1930",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "rhode-island-58c0e631dccf.jpg",
@@ -17574,7 +19057,8 @@ const PLATE_IMAGES = {
       "sha256": "6440948421e19f9158e555172cbed116252b805a9c2afc63e51b2cf91e46943f",
       "designKey": "rhode-island-historical-issue-1929",
       "design": "Historical issue 1929",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "rhode-island-962ad38d85a4.jpg",
@@ -17594,7 +19078,8 @@ const PLATE_IMAGES = {
       "sha256": "6d292ff5aa3dbd1a08209e84cb5b89d5984c72c711ed244df7ef2a632ade6a87",
       "designKey": "rhode-island-historical-issue-1926",
       "design": "Historical issue 1926",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "rhode-island-b5ea41c55805.jpg",
@@ -17614,7 +19099,8 @@ const PLATE_IMAGES = {
       "sha256": "f46772ba6bf79512025d9c8b7ad9738d3608eea6c2977dec231dd8e8e4a97619",
       "designKey": "rhode-island-historical-issue-1921",
       "design": "Historical issue 1921",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "rhode-island-2e186981ca89.jpg",
@@ -17634,7 +19120,8 @@ const PLATE_IMAGES = {
       "sha256": "b2d3c916126c0be6c404aab6d26317783c877e456fb7b2e731f3e0eb0134bad4",
       "designKey": "rhode-island-historical-issue-1918",
       "design": "Historical issue 1918",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "South Carolina": [
@@ -17656,7 +19143,8 @@ const PLATE_IMAGES = {
       "sha256": "6f68d4ecca29a6e290cfc05b7c61cbe84921dfa69bccc1afce34bdf53e40e3f9",
       "designKey": "south-carolina-standard-passenger-palmetto-base-2023-photograph",
       "design": "Standard passenger, palmetto base (2023 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2024-07-10"
     },
     {
       "id": "south-carolina-e11382577a21.jpg",
@@ -17676,7 +19164,8 @@ const PLATE_IMAGES = {
       "sha256": "7f79c8b37853657942d74f901283affd4ad9f3ce25d70fdeca914d71602d409d",
       "designKey": "south-carolina-in-god-we-trust-modern-flag",
       "design": "In God We Trust, modern flag",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": "2024-07-10"
     },
     {
       "id": "south-carolina-b79c5d88f2f8.jpg",
@@ -17696,7 +19185,8 @@ const PLATE_IMAGES = {
       "sha256": "7726b9b497d55bb88d4bd19f706bd52c147fd9d73f763d81d38c083bc54f0636",
       "designKey": "south-carolina-united-we-stand-flag",
       "design": "United We Stand flag",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "south-carolina-79d4dd410bba.jpg",
@@ -17716,7 +19206,8 @@ const PLATE_IMAGES = {
       "sha256": "8b113baf2d60b527cff21ec59539ebc8457949d95e31a4166da86cd330fe3de6",
       "designKey": "south-carolina-in-god-we-trust-older-flag",
       "design": "In God We Trust, older flag",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "south-carolina-1c8e0c5ef005.jpg",
@@ -17736,7 +19227,8 @@ const PLATE_IMAGES = {
       "sha256": "21a4699220695afb0b7ea8af2d563ca025d5e10c845e949d40febc81798e295a",
       "designKey": "south-carolina-historical-issue-1968",
       "design": "Historical issue 1968",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-carolina-d951d7ecab98.jpg",
@@ -17756,7 +19248,8 @@ const PLATE_IMAGES = {
       "sha256": "3125b88d0a8bfb0f0fc208678af18894aefc1cd271f71ef2f3ce6b6b00a95673",
       "designKey": "south-carolina-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-carolina-a05f6b2de6e3.jpg",
@@ -17776,7 +19269,8 @@ const PLATE_IMAGES = {
       "sha256": "6276f67aaed803fe492b014a8da9a7083ba3f22e275a84811ea4c4c88a5a67db",
       "designKey": "south-carolina-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-carolina-cf3198d9581f.jpg",
@@ -17796,7 +19290,8 @@ const PLATE_IMAGES = {
       "sha256": "2085951ba37ab9f6b0f2ac159c6ff726d7c5890b025afd72838d6d86ee9694a9",
       "designKey": "south-carolina-historical-issue-1964",
       "design": "Historical issue 1964",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-carolina-c39918e130da.jpg",
@@ -17816,7 +19311,8 @@ const PLATE_IMAGES = {
       "sha256": "f177de81c187f0f38422817972683e042912084bad425ba42be20086b100c1d1",
       "designKey": "south-carolina-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-carolina-d38bd6cce7a9.jpg",
@@ -17836,7 +19332,8 @@ const PLATE_IMAGES = {
       "sha256": "824f8ba814b84535a404b7202dc61ab32b24159a0f2a88f743432cdc283c0b9d",
       "designKey": "south-carolina-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-carolina-b0b3cb631f3d.jpg",
@@ -17856,7 +19353,8 @@ const PLATE_IMAGES = {
       "sha256": "147542b426de306fae5c064288c7df59a80d9804b0ed167e8322c618e32c8efc",
       "designKey": "south-carolina-historical-issue-1961",
       "design": "Historical issue 1961",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-carolina-historical.jpg",
@@ -17876,7 +19374,8 @@ const PLATE_IMAGES = {
       "sha256": "c2bca1b7257d54050eb962c3a4b08e9c796ce53e23b965e821f8e930a27caaca",
       "designKey": "south-carolina-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-carolina-1155c5d3ca96.jpg",
@@ -17896,7 +19395,8 @@ const PLATE_IMAGES = {
       "sha256": "baea8d3515d50772ab1a07204da6c600368d99e1c37999582563dac2bf587167",
       "designKey": "south-carolina-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-carolina-4b59ffa06ee3.jpg",
@@ -17916,7 +19416,8 @@ const PLATE_IMAGES = {
       "sha256": "d7bf639582cd4af332720a4bd7025ddc0aa357e751d6b078d4ce9c971749bdc6",
       "designKey": "south-carolina-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-carolina-6171e094b990.jpg",
@@ -17936,7 +19437,8 @@ const PLATE_IMAGES = {
       "sha256": "4ce70d4ef22b4511ab0bd3c88e05d9b8f84845cdfd4110b09249bcfae8394ca2",
       "designKey": "south-carolina-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-carolina-136baeef9f23.jpg",
@@ -17956,7 +19458,8 @@ const PLATE_IMAGES = {
       "sha256": "da1912e88c0f4da5f1fe84d7f645dff7b2b2b4b08f2d0108e5f8e5bafa6b01dd",
       "designKey": "south-carolina-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-carolina-914e29f7825a.jpg",
@@ -17976,7 +19479,8 @@ const PLATE_IMAGES = {
       "sha256": "f8a7523ae485d56848d057c5d73842d3a14481e659e2c73685140e9130445401",
       "designKey": "south-carolina-historical-issue-1952",
       "design": "Historical issue 1952",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-carolina-0c3ca72c838b.jpg",
@@ -17996,7 +19500,8 @@ const PLATE_IMAGES = {
       "sha256": "4e45baab156589fe759de4a269a7d6c7b9206566f55d669cc26e7ea897dad2b0",
       "designKey": "south-carolina-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-carolina-965bf6449c9e.jpg",
@@ -18016,7 +19521,8 @@ const PLATE_IMAGES = {
       "sha256": "10f88574c65cc8aeb4afa8a165bed4b22b3bca3f501a96122f8a066ade356bd3",
       "designKey": "south-carolina-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-carolina-159bc0e91022.jpg",
@@ -18036,7 +19542,8 @@ const PLATE_IMAGES = {
       "sha256": "881c0c381cbb2c9e990b244597f66281d5f4cd31d2282193bb32b0d744f2bb87",
       "designKey": "south-carolina-historical-issue-1937",
       "design": "Historical issue 1937",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-carolina-0a2f81653b6e.jpg",
@@ -18056,7 +19563,8 @@ const PLATE_IMAGES = {
       "sha256": "5079fe189fcfddeb84674d4e085b72ca1edfbd3234041d040defd92cdd9f6960",
       "designKey": "south-carolina-historical-issue-1930",
       "design": "Historical issue 1930",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-carolina-7c7a4d004395.jpg",
@@ -18076,7 +19584,8 @@ const PLATE_IMAGES = {
       "sha256": "7d5001c9d9752b5997e0b57e5225ef0812ae958927b5a38ac43fbb3d2a9a3067",
       "designKey": "south-carolina-historical-issue-1927",
       "design": "Historical issue 1927",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "South Dakota": [
@@ -18098,7 +19607,8 @@ const PLATE_IMAGES = {
       "sha256": "16391b5592dff3546ed844e8823a88438111149bf6ec8e6cb240c5358d2f3e35",
       "designKey": "south-dakota-standard-passenger-older-rushmore-base-2018-photograph-newer-reusable-standard-unavailable",
       "design": "Standard passenger, older Rushmore base (2018 photograph); newer reusable standard unavailable",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2021-12-23"
     },
     {
       "id": "south-dakota-fff27e43c9ca.jpg",
@@ -18118,7 +19628,8 @@ const PLATE_IMAGES = {
       "sha256": "e41680c00ae320853e17955dbf49d386f426bfaac0c491e51219948665bac90c",
       "designKey": "south-dakota-red-header-rushmore-base-2006-renewal",
       "design": "Red-header Rushmore base, 2006 renewal",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-a81d6e4241de.jpg",
@@ -18138,7 +19649,8 @@ const PLATE_IMAGES = {
       "sha256": "b404e3adaa82435039052cf060da978f63c2ff535fe94fe4c89cd9b212c5ecd8",
       "designKey": "south-dakota-white-gold-rushmore-base-2000-series",
       "design": "White/gold Rushmore base, 2000 series",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-a169ada78315.jpg",
@@ -18158,7 +19670,8 @@ const PLATE_IMAGES = {
       "sha256": "8cd1f98d2714321acf020a98286af27e874d12c3d4ab7e3e1d1f2d5079601ad2",
       "designKey": "south-dakota-historical-issue-1968",
       "design": "Historical issue 1968",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-ef7c68379722.jpg",
@@ -18178,7 +19691,8 @@ const PLATE_IMAGES = {
       "sha256": "22a1e609a19e54576fae5101d60609d8e9f790eed134a03a33712c573e0019eb",
       "designKey": "south-dakota-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-8a2589e61c08.jpg",
@@ -18198,7 +19712,8 @@ const PLATE_IMAGES = {
       "sha256": "9874941d080705a18e493e4cc52fb86ef662f0ba09e7017ee08a313ffbb3fc0a",
       "designKey": "south-dakota-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-7c8fbdb9b30c.jpg",
@@ -18218,7 +19733,8 @@ const PLATE_IMAGES = {
       "sha256": "6051f2479e404e1a4b341ad5f36f9ac1e2dc6afd6cec0e30fb637bd187c98738",
       "designKey": "south-dakota-historical-issue-1964",
       "design": "Historical issue 1964",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-b10211333afd.jpg",
@@ -18238,7 +19754,8 @@ const PLATE_IMAGES = {
       "sha256": "d2b01c3f4bb50280befce0779e2b8b34eae49c9e5d14a37fb291f577b8afac8b",
       "designKey": "south-dakota-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-0ed0c2e5a0b3.jpg",
@@ -18258,7 +19775,8 @@ const PLATE_IMAGES = {
       "sha256": "ccc862a01440799c7ea006e9fac7fbbb8e78be4ca771817d1c8618fdf08f91d7",
       "designKey": "south-dakota-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-ab211b398a81.jpg",
@@ -18278,7 +19796,8 @@ const PLATE_IMAGES = {
       "sha256": "bbdf1260555417825b442c7736ef67eaeec3f576960a77ad08aa30002b9f153a",
       "designKey": "south-dakota-historical-issue-1961",
       "design": "Historical issue 1961",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-historical.jpg",
@@ -18298,7 +19817,8 @@ const PLATE_IMAGES = {
       "sha256": "9ba22be4c3fe94fb6379c09e53b6069d4b698492e13cb4e07f12bb732f8da41a",
       "designKey": "south-dakota-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-8ec9547b1b63.jpg",
@@ -18318,7 +19838,8 @@ const PLATE_IMAGES = {
       "sha256": "27be259336fc85168aa4b6ed68c246bcea91f1873cb21e33ac339c133ae029aa",
       "designKey": "south-dakota-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-f9ca0b454b3f.jpg",
@@ -18338,7 +19859,8 @@ const PLATE_IMAGES = {
       "sha256": "c05462378feb0dee64842bbe73920940d3c6eaa776a2ae4566765e3342019372",
       "designKey": "south-dakota-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-f3eee490dddf.jpg",
@@ -18358,7 +19880,8 @@ const PLATE_IMAGES = {
       "sha256": "e6fedafb144bd6423b286584467ea3cd83737af2a5dbe0ef984d6ca84b347cc2",
       "designKey": "south-dakota-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-3e6a1697ba14.jpg",
@@ -18378,7 +19901,8 @@ const PLATE_IMAGES = {
       "sha256": "8d53e7c6a18544aa41adb1c9dbfe7e52925de8405e23a9a10edaec4eff0ccadf",
       "designKey": "south-dakota-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-7d3bbdbe5a00.jpg",
@@ -18398,7 +19922,8 @@ const PLATE_IMAGES = {
       "sha256": "83ea32559735ca1e30e704aab65a5dd6f8e2c01e26e021b3574ace480ec532ff",
       "designKey": "south-dakota-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-2beed0711586.jpg",
@@ -18418,7 +19943,8 @@ const PLATE_IMAGES = {
       "sha256": "1ade491ba4a32d06ebd632b036f32bfe42dc17340f252e9946b31302b10657e4",
       "designKey": "south-dakota-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-5c42999a4d32.jpg",
@@ -18438,7 +19964,8 @@ const PLATE_IMAGES = {
       "sha256": "f327c05e95ef245634d28541a7b5ae35c7d4aeefa0f65e2c4dc1da507eed0af4",
       "designKey": "south-dakota-historical-issue-1950",
       "design": "Historical issue 1950",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-65e4d368210d.jpg",
@@ -18458,7 +19985,8 @@ const PLATE_IMAGES = {
       "sha256": "66c7cfb300cda5cc7b173200224e8e8e2a0535580ef84a524d7f0f0325a0a683",
       "designKey": "south-dakota-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-307f8851a653.jpg",
@@ -18478,7 +20006,8 @@ const PLATE_IMAGES = {
       "sha256": "a982b26eb1afabe21d37709e511dde8551867a48da85a0ea16f6e88ff18cd253",
       "designKey": "south-dakota-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-5c25afafa8ca.jpg",
@@ -18498,7 +20027,8 @@ const PLATE_IMAGES = {
       "sha256": "5befabbd8b9368164efa72f126fecf7c9fc95ed17c28010b2a4e761325891861",
       "designKey": "south-dakota-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-12579786bcb4.jpg",
@@ -18518,7 +20048,8 @@ const PLATE_IMAGES = {
       "sha256": "9400c838dc6790bbe883340e96fbdfed281a68fbc5106be02d93003b0d713012",
       "designKey": "south-dakota-historical-issue-1941",
       "design": "Historical issue 1941",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-24bf2b26a701.jpg",
@@ -18538,7 +20069,8 @@ const PLATE_IMAGES = {
       "sha256": "73c70dbfe410a6bdd676ddf0e743bebef831fcc1470ff2791755d41190ba7869",
       "designKey": "south-dakota-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-35c7cbba83ae.jpg",
@@ -18558,7 +20090,8 @@ const PLATE_IMAGES = {
       "sha256": "f237c1332ba677f427376e3e8d309d1b055552a67396502c4b2dfb09345eb1d7",
       "designKey": "south-dakota-historical-issue-1937",
       "design": "Historical issue 1937",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-1a6aad3b31a5.jpg",
@@ -18578,7 +20111,8 @@ const PLATE_IMAGES = {
       "sha256": "1f103c1feee41ef79b181f9db96e23ab4c88c53d4d1fc64a1cbd247309ffb7d6",
       "designKey": "south-dakota-historical-issue-1935",
       "design": "Historical issue 1935",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-8c2c3e20202a.jpg",
@@ -18598,7 +20132,8 @@ const PLATE_IMAGES = {
       "sha256": "2f89a54784f7c3520396a85398cc727dcc032d5962afb18554c379de37242bf6",
       "designKey": "south-dakota-historical-issue-1933",
       "design": "Historical issue 1933",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-3dfd5d9ccf5a.jpg",
@@ -18618,7 +20153,8 @@ const PLATE_IMAGES = {
       "sha256": "5d047c710f348a30d08b33236dab4f625eb349061a4bd0307a464720b341b3a5",
       "designKey": "south-dakota-historical-issue-1932",
       "design": "Historical issue 1932",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-e5825a16c93d.jpg",
@@ -18638,7 +20174,8 @@ const PLATE_IMAGES = {
       "sha256": "d9d5e62cb46f01d406c09f630e0238d779db68e60005749cffba2d76d7eb6db2",
       "designKey": "south-dakota-historical-issue-1931",
       "design": "Historical issue 1931",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "south-dakota-f1ab56a6cdac.jpg",
@@ -18658,7 +20195,8 @@ const PLATE_IMAGES = {
       "sha256": "bc98ea08bcff96d0ac505d4bf6c277303ef0b5924cb4a3aff2a55c0c90240977",
       "designKey": "south-dakota-historical-issue-1929",
       "design": "Historical issue 1929",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Tennessee": [
@@ -18680,7 +20218,8 @@ const PLATE_IMAGES = {
       "sha256": "e6c2b0bd1838375ca13d1033c4bfb126bcc4e88959780b4f58801a2117fa801e",
       "designKey": "tennessee-standard-passenger-blue-2022-base",
       "design": "Standard passenger, blue 2022 base",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2022-01-11"
     },
     {
       "id": "tennessee-845575b48f0f.jpg",
@@ -18700,7 +20239,8 @@ const PLATE_IMAGES = {
       "sha256": "7e842adcb9c0e7c0dab31ef60828fa85d3339c81ae391da468176950c7c0fbf1",
       "designKey": "tennessee-optional-in-god-we-trust-blue-base",
       "design": "Optional In God We Trust blue base",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": "2023-06-29"
     },
     {
       "id": "tennessee-f4fd2aabcf40.jpg",
@@ -18720,7 +20260,8 @@ const PLATE_IMAGES = {
       "sha256": "606fdc2033aa88ab14fe398981075ab0c1e9030ae702b01e41593172521994af",
       "designKey": "tennessee-green-landscape-base-2007-photograph",
       "design": "Green landscape base, 2007 photograph",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "tennessee-eec033429eec.jpg",
@@ -18740,7 +20281,8 @@ const PLATE_IMAGES = {
       "sha256": "aeb3d5fb68d4b7f284c556aa27a5891132de289a40bd3e5ee84ba74bd7e0c4e6",
       "designKey": "tennessee-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "tennessee-b60bbb462859.jpg",
@@ -18760,7 +20302,8 @@ const PLATE_IMAGES = {
       "sha256": "351fee63b02df54a53ac93bc3c0ed6fe9c2816787f87302528de657ebd69e444",
       "designKey": "tennessee-historical-issue-1961",
       "design": "Historical issue 1961",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "tennessee-historical.jpg",
@@ -18780,7 +20323,8 @@ const PLATE_IMAGES = {
       "sha256": "e0bf7784dcc3129d0799903174217d4ce7413ce06e85e72a25004fbf85d73b15",
       "designKey": "tennessee-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "tennessee-ea39b4d2d82b.jpg",
@@ -18800,7 +20344,8 @@ const PLATE_IMAGES = {
       "sha256": "c2b8c98836f316ec23dbd841b2b51053b12c4ff502a1ee1c570f69a80b73b510",
       "designKey": "tennessee-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "tennessee-bdde615a11fc.jpg",
@@ -18820,7 +20365,8 @@ const PLATE_IMAGES = {
       "sha256": "9ea4f9b13f956f2ea55bb93ab6e0c448b8763eebe9157e4bad6b4f9e75324d53",
       "designKey": "tennessee-historical-issue-1958",
       "design": "Historical issue 1958",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "tennessee-9533ca493906.jpg",
@@ -18840,7 +20386,8 @@ const PLATE_IMAGES = {
       "sha256": "c7c9d1bcf0f9875dc3cf9b4f0bf8822a6d2bba96e880927434b26b0a55689270",
       "designKey": "tennessee-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "tennessee-68953cc62dff.jpg",
@@ -18860,7 +20407,8 @@ const PLATE_IMAGES = {
       "sha256": "c88b58f3512dbe710545c6af97587d633ac9f849b6db2dda72b95af54c3f34d5",
       "designKey": "tennessee-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "tennessee-7dff3b55c995.jpg",
@@ -18880,7 +20428,8 @@ const PLATE_IMAGES = {
       "sha256": "db39f9694a149be80fd2391551434dcc26c9430117a6debb0663c579de004d4b",
       "designKey": "tennessee-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "tennessee-5c5d3fc03291.jpg",
@@ -18900,7 +20449,8 @@ const PLATE_IMAGES = {
       "sha256": "fa0c50b3678c313ab03da9c50b68c2f1eb44c9375d6c62a294b44198bbd34c63",
       "designKey": "tennessee-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "tennessee-22e9ca7de409.jpg",
@@ -18920,7 +20470,8 @@ const PLATE_IMAGES = {
       "sha256": "013be30e5fbe0967b0e0c9091ff4832a120ddd2d703f9055db77ee1de36fc9dc",
       "designKey": "tennessee-historical-issue-1952",
       "design": "Historical issue 1952",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "tennessee-00fdcce7ac94.jpg",
@@ -18940,7 +20491,8 @@ const PLATE_IMAGES = {
       "sha256": "4ec2dbf63c138e718f78162bddab7084a2270923dff7d2038e0bcb0f19abf099",
       "designKey": "tennessee-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "tennessee-f0590a42146a.jpg",
@@ -18960,7 +20512,8 @@ const PLATE_IMAGES = {
       "sha256": "6cedd1346a38e294e4ca7d4081c0906faf302ad514dabb10eb10308407070612",
       "designKey": "tennessee-historical-issue-1950",
       "design": "Historical issue 1950",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "tennessee-f788a8065836.jpg",
@@ -18980,7 +20533,8 @@ const PLATE_IMAGES = {
       "sha256": "8c12a2634a8fd05dd0545926eb60e6c6f0b18239f14885209a957c7e64d125cd",
       "designKey": "tennessee-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "tennessee-7e7358281f4c.jpg",
@@ -19000,7 +20554,8 @@ const PLATE_IMAGES = {
       "sha256": "ba4b532edde8959a8e6fb75e256bf2e102fcd2808aea3b6213bd48e9c474c6a0",
       "designKey": "tennessee-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "tennessee-52b61d6b83cc.jpg",
@@ -19020,7 +20575,8 @@ const PLATE_IMAGES = {
       "sha256": "3b70ab642e6bf80e087d646a87f71115d7f529615c31a74669dcaa8a3e155977",
       "designKey": "tennessee-historical-issue-1942",
       "design": "Historical issue 1942",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "tennessee-ffc9532ad7cf.jpg",
@@ -19040,7 +20596,8 @@ const PLATE_IMAGES = {
       "sha256": "9541157f72d71466a611a28154d207f15b410721407aa2fca1d2dd31add45113",
       "designKey": "tennessee-historical-issue-1938",
       "design": "Historical issue 1938",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "tennessee-b2149720780b.jpg",
@@ -19060,7 +20617,8 @@ const PLATE_IMAGES = {
       "sha256": "ddf761652b8f875100a12276e3261f43f7ea1a783081270cf44ee67598af27d8",
       "designKey": "tennessee-historical-issue-1928",
       "design": "Historical issue 1928",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "tennessee-0709cf2ba722.jpg",
@@ -19080,7 +20638,8 @@ const PLATE_IMAGES = {
       "sha256": "fc446fa4ec274f0d2145e5ead6d057a491a0db5db6d084e5027f07a015134540",
       "designKey": "tennessee-historical-issue-1924",
       "design": "Historical issue 1924",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "tennessee-1b1243d0c518.jpg",
@@ -19100,7 +20659,8 @@ const PLATE_IMAGES = {
       "sha256": "e64d1f262bcaeb10f4aa048cb42c73a81f70d10b157099d45243bd4369f790ac",
       "designKey": "tennessee-historical-issue-1922",
       "design": "Historical issue 1922",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "tennessee-fee1794960ec.jpg",
@@ -19120,7 +20680,8 @@ const PLATE_IMAGES = {
       "sha256": "04e7f8ec70b1840663a11e40dcb47e3e9f5a67a174def83fd3335bd3a5bd8050",
       "designKey": "tennessee-historical-issue-1921",
       "design": "Historical issue 1921",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Texas": [
@@ -19142,7 +20703,8 @@ const PLATE_IMAGES = {
       "sha256": "dcc7f3d6577df4b2c29d2510cafb8ebda7a7097490e1062929a19da206a029ed",
       "designKey": "texas-standard-passenger-lone-star-base-2020-photograph",
       "design": "Standard passenger, Lone Star base (2020 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2015"
     },
     {
       "id": "texas-9468085ed6a9.jpg",
@@ -19162,7 +20724,8 @@ const PLATE_IMAGES = {
       "sha256": "3ddb8ade4ac6bea485eb4930f134e6cb221ab03a63d2aa1de7607d0339605515",
       "designKey": "texas-black-letter-exempt",
       "design": "Black-letter Exempt",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-8d498d6a890a.jpg",
@@ -19182,7 +20745,8 @@ const PLATE_IMAGES = {
       "sha256": "a9b7c1a13e588898dc5d752e3436b8b41d0a0064cab16bd31c0c74cf8e300bf3",
       "designKey": "texas-blue-texas-red-exempt",
       "design": "Blue Texas / red Exempt",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-9e1ecadf35a1.jpg",
@@ -19202,7 +20766,8 @@ const PLATE_IMAGES = {
       "sha256": "7b9fb6c4a0580d6b18e2a755453a87713d81eaf32c1c4a49b02c8086a1746753",
       "designKey": "texas-red-texas-blue-exempt",
       "design": "Red Texas / blue Exempt",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-066a2e3bdfc1.jpg",
@@ -19222,7 +20787,8 @@ const PLATE_IMAGES = {
       "sha256": "eea5ba335f6615fc1b463b9a35d38f149a58f6c4c38ccee34ad399744ddaab85",
       "designKey": "texas-blue-exempt",
       "design": "Blue Exempt",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-a73706a15c88.jpg",
@@ -19242,7 +20808,8 @@ const PLATE_IMAGES = {
       "sha256": "af9a33046d31abbc1835cb23b86d9397263af883e9e8355550262337f6773e94",
       "designKey": "texas-space-shuttle",
       "design": "Space Shuttle",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-f2a189b083ca.jpg",
@@ -19262,7 +20829,8 @@ const PLATE_IMAGES = {
       "sha256": "373f3b9935be1234fe65a86740e7f8f3918838971e5d8fcf1e55bb0bad3ff033",
       "designKey": "texas-historical-issue-1969",
       "design": "Historical issue 1969",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-7f56fccf5ccc.jpg",
@@ -19282,7 +20850,8 @@ const PLATE_IMAGES = {
       "sha256": "fc10a0631a1dfcbd6b944a55790ce6aac68de1d0efc22bd522d8c6365772d494",
       "designKey": "texas-historical-issue-1968",
       "design": "Historical issue 1968",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-ea530e2657df.jpg",
@@ -19302,7 +20871,8 @@ const PLATE_IMAGES = {
       "sha256": "6dbab6f3896160701140e5f07a1cb1beeeda6ea6170e43730486dccf3208377b",
       "designKey": "texas-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-353c4a445895.jpg",
@@ -19322,7 +20892,8 @@ const PLATE_IMAGES = {
       "sha256": "273f49c2ab202d623818cd9911d69ee6b753e73ecc3e2df6477105decea71380",
       "designKey": "texas-historical-issue-1966",
       "design": "Historical issue 1966",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-b644d3557bf8.jpg",
@@ -19342,7 +20913,8 @@ const PLATE_IMAGES = {
       "sha256": "6caad5d79e2b897fbb37344d310f6a5d6ca264bd500ea85d582d562508e8c20a",
       "designKey": "texas-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-373ad8c61766.jpg",
@@ -19362,7 +20934,8 @@ const PLATE_IMAGES = {
       "sha256": "8964f23a049c6cb84706ebdf0c98c452dc05e0862d8d8bc95824f0a15aaae474",
       "designKey": "texas-historical-issue-1964",
       "design": "Historical issue 1964",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-8eb517d584c5.jpg",
@@ -19382,7 +20955,8 @@ const PLATE_IMAGES = {
       "sha256": "b2d724f8b7c69624e61dd00b91e9a903931eb28d89658035abf7de3b3e46de93",
       "designKey": "texas-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-690e6bc59216.jpg",
@@ -19402,7 +20976,8 @@ const PLATE_IMAGES = {
       "sha256": "59b63fa91b3f08ab09b05ef31e1431f49cf68266b2e8306e016d13452ac1c54f",
       "designKey": "texas-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-93ec0408d930.jpg",
@@ -19422,7 +20997,8 @@ const PLATE_IMAGES = {
       "sha256": "1e8f40abf04322e7ccb006e2bf15f534d869cbdca6040e3b9daae5c858ecf96a",
       "designKey": "texas-historical-issue-1961",
       "design": "Historical issue 1961",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-historical.jpg",
@@ -19442,7 +21018,8 @@ const PLATE_IMAGES = {
       "sha256": "3a208599781d00391dfdac83a69b347f32222d208165b094c887d9cb1cd279c8",
       "designKey": "texas-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-d29b859d2cc4.jpg",
@@ -19462,7 +21039,8 @@ const PLATE_IMAGES = {
       "sha256": "507e354911fb39bde011d0a746d4f404ac4a605eaa333ddec7e1b88386068a0d",
       "designKey": "texas-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-28582cb28d4d.jpg",
@@ -19482,7 +21060,8 @@ const PLATE_IMAGES = {
       "sha256": "e668d8cc4122ea41e33916b20d0cf3bb30c04408588b811835ab363d5e4872dc",
       "designKey": "texas-historical-issue-1958",
       "design": "Historical issue 1958",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-2f044b31c954.jpg",
@@ -19502,7 +21081,8 @@ const PLATE_IMAGES = {
       "sha256": "41aae288984497a23d38f691bc265b365d217d56a32edef85654a6a599aa95f5",
       "designKey": "texas-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-d6cb49d69454.jpg",
@@ -19522,7 +21102,8 @@ const PLATE_IMAGES = {
       "sha256": "02fe184afa8c0af7ac5cb846e5e9a54bc64aa06246b721c6b6f3cffd0f0666b3",
       "designKey": "texas-historical-issue-1956",
       "design": "Historical issue 1956",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-bc11a594f666.jpg",
@@ -19542,7 +21123,8 @@ const PLATE_IMAGES = {
       "sha256": "df9b32a37917c6400b1b3a157ccac3389f45bd4baa05c45a84bbd4a97e20ebeb",
       "designKey": "texas-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-4a99ade5afc3.jpg",
@@ -19562,7 +21144,8 @@ const PLATE_IMAGES = {
       "sha256": "a4791849f294556afc93477fc9f287afb8d4f3169928c6aaf3373999ab0deb18",
       "designKey": "texas-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-a988f80f1c90.jpg",
@@ -19582,7 +21165,8 @@ const PLATE_IMAGES = {
       "sha256": "7db027ef454e8f342c856dc6247b7b6ad08108cdbf4ecf7e730e1f89286ad6ac",
       "designKey": "texas-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-b4beb73ed963.jpg",
@@ -19602,7 +21186,8 @@ const PLATE_IMAGES = {
       "sha256": "f49b7e140764621cd8c445767383002a2896881a31cbfc1f4f8b9dca2c65d064",
       "designKey": "texas-historical-issue-1952",
       "design": "Historical issue 1952",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-58bcc7de8239.jpg",
@@ -19622,7 +21207,8 @@ const PLATE_IMAGES = {
       "sha256": "9eab46c7ce9ba149192819447d235f8d0216bd77ef35c41e91fd9b6467bf084c",
       "designKey": "texas-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-6d12af2e4091.jpg",
@@ -19642,7 +21228,8 @@ const PLATE_IMAGES = {
       "sha256": "f3201522296607d9914209e15298cc6423a2acbd0d53f07fad6c7fd8d982c876",
       "designKey": "texas-historical-issue-1950",
       "design": "Historical issue 1950",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-c162ef284416.jpg",
@@ -19662,7 +21249,8 @@ const PLATE_IMAGES = {
       "sha256": "48ddd7f166fe1b47409941e7825ce05e57347247f20790485eb9f102d0d7b539",
       "designKey": "texas-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-edee355ed50d.jpg",
@@ -19682,7 +21270,8 @@ const PLATE_IMAGES = {
       "sha256": "03d139a43ea7892a8ebedfc2746cb2760735d810e9f1a28cef3c25dd4e73dcc8",
       "designKey": "texas-historical-issue-1948",
       "design": "Historical issue 1948",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-6ac069ee4ff3.jpg",
@@ -19702,7 +21291,8 @@ const PLATE_IMAGES = {
       "sha256": "ebb5b60e6c7d123925e89109a3e8d5a67500ffce0cccab2bd6ac1e74f0ed5d61",
       "designKey": "texas-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "texas-6bb27fe6bf3a.jpg",
@@ -19722,7 +21312,8 @@ const PLATE_IMAGES = {
       "sha256": "958005dec567e42bbcff60de851dc5ebac4049c62d0ff0a45b1254c8c948e07a",
       "designKey": "texas-historical-issue-1945",
       "design": "Historical issue 1945",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Utah": [
@@ -19744,7 +21335,8 @@ const PLATE_IMAGES = {
       "sha256": "7bf0d966b4949dbaf07b0de7704e6d2ad665bc5aa756a88dedf3a6bbd8a01be9",
       "designKey": "utah-standard-passenger-life-elevated-arch-base-2021-photograph",
       "design": "Standard passenger, Life Elevated arch base (2021 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2021-08-20 17:17:19"
     },
     {
       "id": "utah-4741102d9405.jpg",
@@ -19764,7 +21356,8 @@ const PLATE_IMAGES = {
       "sha256": "643b499f7e97b6d756bad28d17b3ff289cd7e7619821f253664b9541111bde58",
       "designKey": "utah-ski-utah-1985-2007-base",
       "design": "Ski Utah, 1985-2007 base",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-fdb5ba5cf842.jpg",
@@ -19784,7 +21377,8 @@ const PLATE_IMAGES = {
       "sha256": "8a6e1d0e56be4f35ed73a299be536e3ae0d0db08e53ba3f0f0e30e11030f47da",
       "designKey": "utah-ski-utah-orange-header-base-2018-photograph",
       "design": "Ski Utah orange-header base, 2018 photograph",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2018-03-17 16:04:46"
     },
     {
       "id": "utah-d36120ef1e3c.jpg",
@@ -19804,7 +21398,8 @@ const PLATE_IMAGES = {
       "sha256": "78a6befc75f61e75c8accd915b89843ccb5ae0de64aaecf8f0480328173e9166",
       "designKey": "utah-2002-winter-olympics",
       "design": "2002 Winter Olympics",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-4d2b48583c22.jpg",
@@ -19824,7 +21419,8 @@ const PLATE_IMAGES = {
       "sha256": "d985fe36c2366ead7e5447c3a5b25e1760f718eed2cd35cfc3659f8466fdfde1",
       "designKey": "utah-historical-issue-1968",
       "design": "Historical issue 1968",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-b5130bd29d67.jpg",
@@ -19844,7 +21440,8 @@ const PLATE_IMAGES = {
       "sha256": "d332177cd4f23ff711ac0ab0dd1fd9883bb5fa703824cdc56758d5c833a77ebb",
       "designKey": "utah-historical-issue-1967",
       "design": "Historical issue 1967",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-b0972f635520.jpg",
@@ -19864,7 +21461,8 @@ const PLATE_IMAGES = {
       "sha256": "777a5339ad8636fbb6a5e7c27fe41e79676117598501d55dce87d0f9910785be",
       "designKey": "utah-historical-issue-1966",
       "design": "Historical issue 1966",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-65d58efbfc5c.jpg",
@@ -19884,7 +21482,8 @@ const PLATE_IMAGES = {
       "sha256": "0de431da1eb0d16a133d8acf8e9f33cc7e84b42c62c74ba928554547e480e96c",
       "designKey": "utah-historical-issue-1965",
       "design": "Historical issue 1965",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-9ca2d411c6b4.jpg",
@@ -19904,7 +21503,8 @@ const PLATE_IMAGES = {
       "sha256": "9f931a6f6bf8285efa95a0b2d7ca45a293042793dc7b90f11d3553f116eda22a",
       "designKey": "utah-historical-issue-1964",
       "design": "Historical issue 1964",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-b2500bce4444.jpg",
@@ -19924,7 +21524,8 @@ const PLATE_IMAGES = {
       "sha256": "756705f0fd22373deb9250e857dba50c3dc0db4644bfa9a72b88820c35839acb",
       "designKey": "utah-historical-issue-1963",
       "design": "Historical issue 1963",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-4e5d93655d19.jpg",
@@ -19944,7 +21545,8 @@ const PLATE_IMAGES = {
       "sha256": "ef3c157e66f235f273e7280e1912280e934b5a1847c2b3c92afbda3cc12a596f",
       "designKey": "utah-historical-issue-1962",
       "design": "Historical issue 1962",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-870a1c61a310.jpg",
@@ -19964,7 +21566,8 @@ const PLATE_IMAGES = {
       "sha256": "b4d7dfdedf9dd79c3eca7b2b82b5605b124732ccdda70a3e387441436c060e66",
       "designKey": "utah-historical-issue-1961",
       "design": "Historical issue 1961",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-historical.jpg",
@@ -19984,7 +21587,8 @@ const PLATE_IMAGES = {
       "sha256": "cd160fb8de8a8c51bdfa29340888e5fd99032d5b41f91dab91cd0f55a264ed5a",
       "designKey": "utah-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-35063f062922.jpg",
@@ -20004,7 +21608,8 @@ const PLATE_IMAGES = {
       "sha256": "4e5c4c0694ed8b4623a4503231523c2efc4a3cad65d10445c13ce39c1d0714ed",
       "designKey": "utah-historical-issue-1959",
       "design": "Historical issue 1959",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-5fad12e03a24.jpg",
@@ -20024,7 +21629,8 @@ const PLATE_IMAGES = {
       "sha256": "41205e246ac9da12639ec905993b0ae219e86f24c871d1e6700fddab25532087",
       "designKey": "utah-historical-issue-1957",
       "design": "Historical issue 1957",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-4d9032a6b7e5.jpg",
@@ -20044,7 +21650,8 @@ const PLATE_IMAGES = {
       "sha256": "2107dfa7fcc160678036e2cb245651fc2e050adebacb817cf1d4b9e52e509b2b",
       "designKey": "utah-historical-issue-1956",
       "design": "Historical issue 1956",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-fc2fd12e0777.jpg",
@@ -20064,7 +21671,8 @@ const PLATE_IMAGES = {
       "sha256": "bd16d8f1dab676b2c06852658b9536e112b583e4bad8320295ab56865e0f41e7",
       "designKey": "utah-historical-issue-1955",
       "design": "Historical issue 1955",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-49af1e767ce1.jpg",
@@ -20084,7 +21692,8 @@ const PLATE_IMAGES = {
       "sha256": "a4c3be81c12227a43aab85a5f9dfb9fe9147a8026ecd1bf2ca61b1352d1aec7e",
       "designKey": "utah-historical-issue-1954",
       "design": "Historical issue 1954",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-01f0aa660581.jpg",
@@ -20104,7 +21713,8 @@ const PLATE_IMAGES = {
       "sha256": "857801a364b7e0585a32c0cd76f82344baf0487b86f112bf668a7673259b1a92",
       "designKey": "utah-historical-issue-1953",
       "design": "Historical issue 1953",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-8150f411ef1e.jpg",
@@ -20124,7 +21734,8 @@ const PLATE_IMAGES = {
       "sha256": "6aeca059f413da07972355e4ec64c894b95624ebf4aa52968acbe1ae70a1f6b9",
       "designKey": "utah-historical-issue-1952",
       "design": "Historical issue 1952",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-effb45e23529.jpg",
@@ -20144,7 +21755,8 @@ const PLATE_IMAGES = {
       "sha256": "31a25d7ca905d5d111437ac9fa1622f49b44d234b82e1aaf2591ce4dc7bbd39e",
       "designKey": "utah-historical-issue-1951",
       "design": "Historical issue 1951",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-216436c4534f.jpg",
@@ -20164,7 +21776,8 @@ const PLATE_IMAGES = {
       "sha256": "8740b129974077fc7c065ad40b548fbe927d8458c19ec67de482e84a2cf9d658",
       "designKey": "utah-historical-issue-1950",
       "design": "Historical issue 1950",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-30e5198fcd6b.jpg",
@@ -20184,7 +21797,8 @@ const PLATE_IMAGES = {
       "sha256": "86b4d69db1426ba76859a9cefffbc1505f0797ba6003a4adaaec323426699a88",
       "designKey": "utah-historical-issue-1949",
       "design": "Historical issue 1949",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-afbe3ac58704.jpg",
@@ -20204,7 +21818,8 @@ const PLATE_IMAGES = {
       "sha256": "f306c99ce971e90e9ef69be660f699e2ae0a52ac12ed6aa4be52a1662f252422",
       "designKey": "utah-historical-issue-1948",
       "design": "Historical issue 1948",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-26433e158a27.jpg",
@@ -20224,7 +21839,8 @@ const PLATE_IMAGES = {
       "sha256": "979d831b263bb67ad8b822d991a1df6452fa741a81f913ea81b71cb0ff7daba8",
       "designKey": "utah-historical-issue-1947",
       "design": "Historical issue 1947",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-66769ccc55c8.jpg",
@@ -20244,7 +21860,8 @@ const PLATE_IMAGES = {
       "sha256": "d1bc497afd6aface91e95c745e789cf5911f1e388f4864dc8de89293aa5c9df6",
       "designKey": "utah-historical-issue-1946",
       "design": "Historical issue 1946",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     },
     {
       "id": "utah-56eed03a5573.jpg",
@@ -20264,7 +21881,8 @@ const PLATE_IMAGES = {
       "sha256": "5091b306924b8deb6884e515fb74e1f9c1252a7f7d088b87e6d70979d49efb89",
       "designKey": "utah-historical-issue-1945",
       "design": "Historical issue 1945",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Vermont": [
@@ -20286,7 +21904,8 @@ const PLATE_IMAGES = {
       "sha256": "11fdb8ad7c5ba774ba68b294bcbf1b0dbaf998f1d926768eaf23d6bc7687c517",
       "designKey": "vermont-standard-passenger-green-base-2017-photograph",
       "design": "Standard passenger, green base (2017 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2021-12-23"
     },
     {
       "id": "vermont-historical.jpg",
@@ -20306,7 +21925,8 @@ const PLATE_IMAGES = {
       "sha256": "52b01c8074299c4af04598de428ca20c09206b31919ee49b84e98cf9bcfaa497",
       "designKey": "vermont-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Virginia": [
@@ -20328,7 +21948,134 @@ const PLATE_IMAGES = {
       "sha256": "35112e9580e4fce8a814d6c4ac84be6c3cb62d0f622c7ad57374510b703771e6",
       "designKey": "virginia-standard-passenger-virginia-is-for-lovers-base-2016-photograph",
       "design": "Standard passenger, Virginia Is for Lovers base (2016 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2016-09"
+    },
+    {
+      "id": "virginia-recent-e1c33ec23464.jpg",
+      "src": "./license_plate_assets/virginia-recent-e1c33ec23464.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1921 Virginia license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1921_Virginia_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/5/59/1921_Virginia_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 184,
+      "sha256": "35767eef2daa52cb40c35d31dba0b6f0bfdc586d3bd2ede8bfdfc164665fb804",
+      "designKey": "virginia-1921-historic-issue",
+      "design": "1921 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "virginia-recent-e94a5efe004e.jpg",
+      "src": "./license_plate_assets/virginia-recent-e94a5efe004e.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1930 Virginia license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1930_Virginia_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/8/8f/1930_Virginia_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 198,
+      "sha256": "31b3db5d051e86b55830b5f129dc512870ca35fc561c01cf714ab162f83fca01",
+      "designKey": "virginia-1930-historic-issue",
+      "design": "1930 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "virginia-recent-2d1763c40542.jpg",
+      "src": "./license_plate_assets/virginia-recent-2d1763c40542.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1931 Virginia license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1931_Virginia_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/c/c9/1931_Virginia_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 187,
+      "sha256": "fa7c0dc3fbba34c6e536a043d2598a3bb98d737e229639d5f3a9192dcdb2f832",
+      "designKey": "virginia-1931-historic-issue",
+      "design": "1931 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "virginia-recent-4a656b58e332.jpg",
+      "src": "./license_plate_assets/virginia-recent-4a656b58e332.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1933 Virginia license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1933_Virginia_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/d/d1/1933_Virginia_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 216,
+      "sha256": "279a6850b816bf69dc07ee6f0e850d02352b3ff1eda3f337d91f1639a8908a27",
+      "designKey": "virginia-1933-historic-issue",
+      "design": "1933 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "virginia-recent-003344eb0905.jpg",
+      "src": "./license_plate_assets/virginia-recent-003344eb0905.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1938 Virginia license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1938_Virginia_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/9/9f/1938_Virginia_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 221,
+      "sha256": "1e3f7078cee6e6e54f400da7fe6409361c67a7975877048f18c2ead986d0b888",
+      "designKey": "virginia-1938-historic-issue",
+      "design": "1938 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "virginia-recent-559429235d66.jpg",
+      "src": "./license_plate_assets/virginia-recent-559429235d66.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1942 Virginia licence plate.JPG",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1942_Virginia_licence_plate.JPG",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/e/ee/1942_Virginia_licence_plate.JPG",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 219,
+      "sha256": "414baccf7a7ed89a56ab7ae426152e1a006531c70ce2c321cb3ae232b7446e60",
+      "designKey": "virginia-1942-historic-issue",
+      "design": "1942 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "virginia-historical.jpg",
@@ -20348,7 +22095,8 @@ const PLATE_IMAGES = {
       "sha256": "51e76bd1b044132135e90fabcb3889072e9d76e1552d2f6340846ed6eb677f36",
       "designKey": "virginia-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Washington": [
@@ -20370,7 +22118,176 @@ const PLATE_IMAGES = {
       "sha256": "7029e7ff75fb51b45088700c259f8340bd043ad39f9575d5c92960a5a5972b5f",
       "designKey": "washington-standard-passenger-mount-rainier-base-2019-photograph",
       "design": "Standard passenger, Mount Rainier base (2019 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2018-08-22"
+    },
+    {
+      "id": "washington-recent-60a10c9125e1.jpg",
+      "src": "./license_plate_assets/washington-recent-60a10c9125e1.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1916 Washington license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1916_Washington_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/6/6b/1916_Washington_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 200,
+      "sha256": "ccfb392926c605a7ef26ee268492bf1bb3be65284d5518c8128675f5239f5a58",
+      "designKey": "washington-1916-historic-issue",
+      "design": "1916 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "washington-recent-468f5626bf71.jpg",
+      "src": "./license_plate_assets/washington-recent-468f5626bf71.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1917 Washington license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1917_Washington_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/6/60/1917_Washington_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 201,
+      "sha256": "82bb724f6e87532872c77becfb7a0a4d5a0b43a0c6a96989012efbe2fd3a5fbf",
+      "designKey": "washington-1917-historic-issue",
+      "design": "1917 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "washington-recent-af90ea5e5d85.jpg",
+      "src": "./license_plate_assets/washington-recent-af90ea5e5d85.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1920 Washington license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1920_Washington_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/6/60/1920_Washington_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 194,
+      "sha256": "3337ced26a263ed31fa159145390e6135cffd1a99d8847e29dcad3d412c56943",
+      "designKey": "washington-1920-historic-issue",
+      "design": "1920 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "washington-recent-ef0d26ec8430.jpg",
+      "src": "./license_plate_assets/washington-recent-ef0d26ec8430.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1921 Washington license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1921_Washington_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/3/30/1921_Washington_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 175,
+      "sha256": "a3484ee497782275017bdd95b273711a9887faf9bd57c29ccdff8c79d35ec664",
+      "designKey": "washington-1921-historic-issue",
+      "design": "1921 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "washington-recent-f79d32cb26d4.jpg",
+      "src": "./license_plate_assets/washington-recent-f79d32cb26d4.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1925 Washington license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1925_Washington_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/b/bc/1925_Washington_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 163,
+      "sha256": "abe4817557558abce690163383601ece389c1f5a032adecb9fe6dd449aa66a4c",
+      "designKey": "washington-1925-historic-issue",
+      "design": "1925 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "washington-recent-749fd67f2acb.jpg",
+      "src": "./license_plate_assets/washington-recent-749fd67f2acb.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1927 Washington license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1927_Washington_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/2/22/1927_Washington_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 205,
+      "sha256": "a486cecf2a2475c9040067a6f5d0a3c3253b72fe70470d7e92bff2e4a4f8b0b9",
+      "designKey": "washington-1927-historic-issue",
+      "design": "1927 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "washington-recent-1383256b07a9.jpg",
+      "src": "./license_plate_assets/washington-recent-1383256b07a9.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1928 Washington license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1928_Washington_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/8/8d/1928_Washington_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 202,
+      "sha256": "2d60cb505d4b730d307fbcb5c2c00356ab4e69b80b79406516853a2ea4a21512",
+      "designKey": "washington-1928-historic-issue",
+      "design": "1928 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "washington-recent-2e3ca88fafa0.jpg",
+      "src": "./license_plate_assets/washington-recent-2e3ca88fafa0.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1933 Washington license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1933_Washington_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/9/9c/1933_Washington_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 204,
+      "sha256": "536d4165dc915d064ac88ed7fb0d4f0f5b262706f530724ace2e01a186b4606e",
+      "designKey": "washington-1933-historic-issue",
+      "design": "1933 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "washington-historical.jpg",
@@ -20390,7 +22307,8 @@ const PLATE_IMAGES = {
       "sha256": "f30ee0402fb3dfb1712b3576cb6ef5bcb6d62c884a361c4d569b562e2d5d8c64",
       "designKey": "washington-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "West Virginia": [
@@ -20412,7 +22330,134 @@ const PLATE_IMAGES = {
       "sha256": "a5411137fb72e4e519f5852d9ecb7444591f835a2a45c17f0245a5cb3159e79b",
       "designKey": "west-virginia-standard-passenger-blue-gold-borders-base-2008-photograph",
       "design": "Standard passenger, blue/gold borders base (2008 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "west-virginia-recent-62c25b9c1e94.jpg",
+      "src": "./license_plate_assets/west-virginia-recent-62c25b9c1e94.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1909 West Virginia license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1909_West_Virginia_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/8/81/1909_West_Virginia_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 231,
+      "sha256": "9b38f51d04ac5eb59b4151f01decab8eb0c870489e9ec8a09028d9a352e41aa5",
+      "designKey": "west-virginia-1909-historic-issue",
+      "design": "1909 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "west-virginia-recent-4ee79f985254.jpg",
+      "src": "./license_plate_assets/west-virginia-recent-4ee79f985254.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1921 West Virginia license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1921_West_Virginia_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/3/3d/1921_West_Virginia_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 187,
+      "sha256": "05d0c99be4cf041313930c6bf5be4ea89541dfedc90d6610775d9891dad3ca95",
+      "designKey": "west-virginia-1921-historic-issue",
+      "design": "1921 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "west-virginia-recent-30170bd3af06.jpg",
+      "src": "./license_plate_assets/west-virginia-recent-30170bd3af06.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1932 West Virginia license plate 100-436.jpg",
+      "author": "Jaycarlcooper",
+      "source": "https://commons.wikimedia.org/wiki/File:1932_West_Virginia_license_plate_100-436.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/6/6f/1932_West_Virginia_license_plate_100-436.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 185,
+      "sha256": "665594c1fd7ac9c7134db47246aedc070ff2f21d7f78bad71c86815a9cc8830d",
+      "designKey": "west-virginia-1932-historic-issue",
+      "design": "1932 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "west-virginia-recent-03a3896c379e.jpg",
+      "src": "./license_plate_assets/west-virginia-recent-03a3896c379e.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1933 West Virginia license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1933_West_Virginia_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/b/b9/1933_West_Virginia_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 214,
+      "sha256": "5e72f2f20949165ce6da6786a5289ddb7684c1aa7daaebcfd1cd93ffc2322747",
+      "designKey": "west-virginia-1933-historic-issue",
+      "design": "1933 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "west-virginia-recent-c110ffc8a87f.jpg",
+      "src": "./license_plate_assets/west-virginia-recent-c110ffc8a87f.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1936-37 West Virginia license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1936-37_West_Virginia_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/4/41/1936-37_West_Virginia_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 224,
+      "sha256": "13f0674cb902103de5a4b7ba74e8f2fcee4d461960ad0591e55e77d41e89284f",
+      "designKey": "west-virginia-1936-37-historic-issue",
+      "design": "1936-37 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "west-virginia-recent-51bc796bb71b.jpg",
+      "src": "./license_plate_assets/west-virginia-recent-51bc796bb71b.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1938 West Virginia license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1938_West_Virginia_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/2/2c/1938_West_Virginia_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 217,
+      "sha256": "cc4df28f0e094f67a1ebe0dd2052514770e4c186b3dad5fb3f8b08ba8fd2fb8e",
+      "designKey": "west-virginia-1938-historic-issue",
+      "design": "1938 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "west-virginia-historical.jpg",
@@ -20432,7 +22477,8 @@ const PLATE_IMAGES = {
       "sha256": "8f9da531c640186a942b8dae94054f7f10745016068963c297766933489a9344",
       "designKey": "west-virginia-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Wisconsin": [
@@ -20454,7 +22500,92 @@ const PLATE_IMAGES = {
       "sha256": "64018fc22766a3f19652981cc2e6ce0cb111b0e5d6c573652deaa354b450dce9",
       "designKey": "wisconsin-standard-passenger-dairyland-base-2024-photograph",
       "design": "Standard passenger, Dairyland base (2024 photograph)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": "2025-05-08"
+    },
+    {
+      "id": "wisconsin-recent-e6d421f74bba.jpg",
+      "src": "./license_plate_assets/wisconsin-recent-e6d421f74bba.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1920 Wisconsin Passenger.jpg",
+      "author": "GDog 0",
+      "source": "https://commons.wikimedia.org/wiki/File:1920_Wisconsin_Passenger.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/4/4c/1920_Wisconsin_Passenger.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 189,
+      "sha256": "b9e9aa6468a93c7bde76aa0be62a06fe8ff6f8e2f1e4b756f0bb5ceec0ebab84",
+      "designKey": "wisconsin-1920-historic-issue",
+      "design": "1920 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "wisconsin-recent-08adbfca9694.jpg",
+      "src": "./license_plate_assets/wisconsin-recent-08adbfca9694.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1922 Wisconsin Passenger.jpg",
+      "author": "GDog 0",
+      "source": "https://commons.wikimedia.org/wiki/File:1922_Wisconsin_Passenger.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/a/ad/1922_Wisconsin_Passenger.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 163,
+      "sha256": "61072b6a2f9227c3217c7d775c516ee80eedeaeb501381471943b66e94165a77",
+      "designKey": "wisconsin-1922-historic-issue",
+      "design": "1922 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "wisconsin-recent-c91909fdff74.jpg",
+      "src": "./license_plate_assets/wisconsin-recent-c91909fdff74.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1923 Wisconsin Passenger.jpg",
+      "author": "GDog 0",
+      "source": "https://commons.wikimedia.org/wiki/File:1923_Wisconsin_Passenger.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/f/f0/1923_Wisconsin_Passenger.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 161,
+      "sha256": "07eea4f98ee13d648fc8bf284265959d1c048289ce9c460aac6756af314a0df7",
+      "designKey": "wisconsin-1923-historic-issue",
+      "design": "1923 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "wisconsin-recent-3debe7e2365f.jpg",
+      "src": "./license_plate_assets/wisconsin-recent-3debe7e2365f.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1924 Wisconsin Passenger.jpg",
+      "author": "GDog 0",
+      "source": "https://commons.wikimedia.org/wiki/File:1924_Wisconsin_Passenger.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/0/00/1924_Wisconsin_Passenger.jpg",
+      "credit": "Own work",
+      "license": "Public domain",
+      "licenseUrl": "https://commons.wikimedia.org/wiki/File:1924_Wisconsin_Passenger.jpg#Licensing",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 163,
+      "sha256": "76cae43393f93f8f65202ae2e153dc868c5602005633e0b0196b3ec8f4fe9eee",
+      "designKey": "wisconsin-1924-historic-issue",
+      "design": "1924 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "wisconsin-historical.jpg",
@@ -20474,7 +22605,8 @@ const PLATE_IMAGES = {
       "sha256": "7ea48e1567ad12a3e4450dfcf10e35711d7b7636c7f7ac5a0fa3ecc722f9f3c6",
       "designKey": "wisconsin-historical-issue-1960",
       "design": "Historical issue 1960",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
     }
   ],
   "Wyoming": [
@@ -20496,7 +22628,50 @@ const PLATE_IMAGES = {
       "sha256": "a9e3e206cde6f0f94e793b701ad07a57f3b3b879e35464421012adca728dfd95",
       "designKey": "wyoming-1960-standard-passenger-base-newer-reusable-standard-unavailable-university-plate-is-not-the-default",
       "design": "1960 standard passenger base; newer reusable standard unavailable (university plate is not the default)",
-      "standard": true
+      "standard": true,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "wyoming-recent-27ce753889b6.jpg",
+      "src": "./license_plate_assets/wyoming-recent-27ce753889b6.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1915 Wyoming License Plate -40.jpg",
+      "author": "Mr. Satterly",
+      "source": "https://commons.wikimedia.org/wiki/File:1915_Wyoming_License_Plate_-40.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/1/1d/1915_Wyoming_License_Plate_-40.jpg",
+      "credit": "Own work",
+      "license": "CC0",
+      "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 181,
+      "sha256": "ab7aa430eff567ef9be7ec82134f8ce00b6fd119e34d3067e09ce0a3191d7d17",
+      "designKey": "wyoming-1915-historic-issue",
+      "design": "1915 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
+    },
+    {
+      "id": "wyoming-recent-ad7ee24c42c8.jpg",
+      "src": "./license_plate_assets/wyoming-recent-ad7ee24c42c8.jpg",
+      "era": "historical",
+      "kind": "photograph",
+      "title": "1922 Wyoming license plate.jpg",
+      "author": "Absecon 49",
+      "source": "https://commons.wikimedia.org/wiki/File:1922_Wyoming_license_plate.jpg",
+      "original": "https://upload.wikimedia.org/wikipedia/commons/d/d4/1922_Wyoming_license_plate.jpg",
+      "credit": "Own work",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "changes": "Resized and converted to JPEG; plate content unchanged.",
+      "width": 480,
+      "height": 180,
+      "sha256": "317fd9f0aa8f743ee235f9b14c740a77e734fa75060747693176df44821fc236",
+      "designKey": "wyoming-1922-historic-issue",
+      "design": "1922 historic issue",
+      "standard": false,
+      "recentPhotoDate": null
     },
     {
       "id": "wyoming-modern.jpg",
@@ -20516,7 +22691,8 @@ const PLATE_IMAGES = {
       "sha256": "70529d44e34606f9d0adc61dbb535d7f8d0532db4ada6004399eb21039e79d8a",
       "designKey": "wyoming-university-of-wyoming",
       "design": "University of Wyoming",
-      "standard": false
+      "standard": false,
+      "recentPhotoDate": "2023-04-02 13:51:21"
     }
   ]
 };

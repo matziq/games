@@ -195,6 +195,12 @@ test("catalog coverage, standard defaults and attributed local assets match the 
     const state = Object.keys(catalog).find(name => catalog[name] === choices);
     assert.equal(coverage.states[state].count, choices.length);
     assert.equal(coverage.states[state].shortfall, Math.max(0, 20 - choices.length));
+    const recent = choices.filter(image => image.recentPhotoDate).length;
+    const historic = choices.filter(image => image.era === "historical").length;
+    assert.equal(coverage.states[state].recentPhotos, recent);
+    assert.equal(coverage.states[state].recentPhotoShortfall, Math.max(0, 10 - recent));
+    assert.equal(coverage.states[state].historicExamples, historic);
+    assert.equal(coverage.states[state].historicShortfall, Math.max(0, 5 - historic));
     assert.ok(choices.some(image => image.id === defaults[state].id && image.standard));
     assert.ok(defaults[state].label && defaults[state].evidence);
     assert.equal(new Set(choices.map(image => image.designKey)).size, choices.length);
@@ -211,6 +217,10 @@ test("catalog coverage, standard defaults and attributed local assets match the 
       assert.equal(bytes.readUInt16BE(0), 0xffd8);
       assert.equal(crypto.createHash("sha256").update(bytes).digest("hex"), image.sha256);
       assert.ok(image.width >= 150 && image.height >= 50);
+      if (image.recentPhotoDate) {
+        assert.match(image.recentPhotoDate, /^(?:201[1-9]|202[0-6])(?:-|$)/);
+        assert.notEqual(image.era, "historical");
+      }
     }
   }
   assert.equal(coverage.total, Object.values(catalog).reduce((sum, choices) => sum + choices.length, 0));
@@ -294,6 +304,11 @@ test("credits are built only on first expansion and images are lazy", () => {
   credits.open = true;
   credits.handlers.toggle({ target: credits });
   assert.equal(game.elements.get("coverageRows").children.length, 50);
+  const firstRow = game.elements.get("coverageRows").children[0].children.map(cell => cell.textContent);
+  assert.equal(firstRow[0], "Alabama");
+  assert.match(firstRow[1], new RegExp(`^${coverage.states.Alabama.recentPhotos} / 10`));
+  assert.match(firstRow[2], new RegExp(`^${coverage.states.Alabama.historicExamples} / 5`));
+  assert.match(game.elements.get("coverageSummary").textContent, /not a verified plate issue date/);
   const count = game.elements.get("imageCredits").children.length;
   assert.equal(count, coverage.total);
   credits.handlers.toggle({ target: credits });
