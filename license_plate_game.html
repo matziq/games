@@ -35,7 +35,7 @@
   }
   .counter.bump { transform: scale(1.18); }
   .progress { height: 6px; background: #0b1424; }
-  .progress > div { height: 100%; width: 0; background: var(--green); transition: width .3s; }
+  .progress > div { height: 100%; background: var(--green); transform: scaleX(0); transform-origin: left; transition: transform .3s; }
 
   .toolbar { display: flex; gap: 8px; padding: 10px 16px; align-items: center; flex-wrap: wrap; }
   .toolbar input {
@@ -51,6 +51,11 @@
   .toolbar a { color: var(--accent); padding: 10px 0; }
   .save-status { padding: 0 16px 8px; margin: 0; font-size: .85rem; color: #c4d4e8; }
   .save-status.warning { color: var(--accent); }
+  .photo-note { padding: 0 16px 10px; margin: 0; color: #c4d4e8; font-size: .8rem; line-height: 1.5; }
+  .credits { margin: 0 16px 24px; font-size: .85rem; line-height: 1.5; }
+  .credits summary { cursor: pointer; color: var(--accent); }
+  .credits a { color: #a8d5ff; }
+  .credits li { margin-bottom: 12px; }
 
   .grid {
     display: grid; gap: 12px; padding: 8px 16px 40px;
@@ -58,41 +63,29 @@
   }
   @media (min-width: 600px) { .grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); } }
 
-  /* ---- License plate ---- */
   .plate {
-    position: relative; aspect-ratio: 2 / 1; border-radius: 10px; cursor: pointer;
-    border: 3px solid rgba(255,255,255,.85);
-    box-shadow: inset 0 0 0 2px rgba(0,0,0,.25), 0 4px 10px rgba(0,0,0,.45);
+    position: relative; border-radius: 10px; cursor: pointer;
+    border: 2px solid #466389;
+    box-shadow: 0 4px 10px rgba(0,0,0,.45);
     overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;
-    padding: 5% 6%; text-align: center; transition: transform .1s, filter .3s;
-    color: var(--plate-fg, #111);
-    background: var(--plate-bg, #fff);
+    padding: 8px; gap: 6px; text-align: center; transition: transform .1s, filter .3s;
+    color: var(--text); background: var(--panel);
   }
   .plate:active { transform: scale(.96); }
-  .plate .bolt {
-    position: absolute; width: 6%; aspect-ratio: 1; border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, #ddd, #555); top: 6%;
-  }
-  .plate .bolt.l { left: 6%; } .plate .bolt.r { right: 6%; }
+  .plate:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
   .plate .state {
-    font-size: clamp(.6rem, 2.9vw, .85rem); font-weight: 800; text-transform: uppercase;
-    letter-spacing: .12em; line-height: 1.1;
+    font-size: .85rem; font-weight: 800; line-height: 1.2;
   }
-  .plate .number {
-    font-family: "Courier New", Courier, monospace; font-weight: 700;
-    font-size: clamp(1.2rem, 6.5vw, 2rem); letter-spacing: .08em; line-height: 1;
-    text-shadow: 0 1px 0 rgba(255,255,255,.25);
-  }
-  .plate .slogan {
-    font-size: clamp(.5rem, 2.3vw, .7rem); font-style: italic; font-weight: 600; opacity: .9;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
+  .plate .photo { aspect-ratio: 2 / 1; display: grid; place-items: center; background: #0f1b2d; }
+  .plate img { width: 100%; height: 100%; object-fit: contain; }
+  .plate .era { font-size: .7rem; color: #c4d4e8; }
+  .plate .photo-error { font-size: .8rem; padding: 8px; }
 
   /* Found state */
   .plate.found { filter: saturate(.55) brightness(.85); }
   .plate .check {
     position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-    background: rgba(34,197,94,.28); opacity: 0; transform: scale(.4); transition: all .25s cubic-bezier(.2,1.4,.5,1);
+    background: rgba(34,197,94,.28); opacity: 0; transform: scale(.4); transition: opacity .25s, transform .25s ease-out;
     pointer-events: none;
   }
   .plate.found .check { opacity: 1; transform: scale(1); }
@@ -135,11 +128,19 @@
   <button id="reset" class="danger">Reset</button>
 </div>
 <p id="saveStatus" class="save-status" role="status" aria-live="polite"></p>
+<p id="imageStatus" class="save-status" role="status" aria-live="polite"></p>
+<p class="photo-note">Real plate photographs and sample images, selected anew on each visit. Modern-era examples span different issue dates, not just the latest designs. Alabama shows a fleet plate; Nebraska and South Dakota show 2017/2018 bases; Rhode Island shows a 2013 plate; Wyoming shows a 2018 university plate.</p>
 
 <main class="grid" id="grid"></main>
 
+<details class="credits">
+  <summary>Image sources, dates, and reuse licenses (100 examples)</summary>
+  <p>Photos and samples are from Wikimedia Commons. Each image keeps its own license; the game does not relicense them. Sample plates do not represent an active vehicle registration. Dates in source titles may refer to a base design or a renewal sticker. Resizing and any crop are noted below.</p>
+  <ul id="imageCredits"></ul>
+</details>
 <footer>Continue in the same browser on this device. Clearing site data clears saved progress; private browsing may not retain it.</footer>
 
+<script src="./license_plate_assets/plate-images.js"></script>
 <script>
   // name, slogan, background, foreground
   const STATES = [
@@ -201,6 +202,10 @@
   const saveStatus = document.getElementById("saveStatus");
   let found = loadProgress();
   let hideFound = false;
+  const IMAGE_STORAGE_KEY = "plateGame.images.v1";
+  const imageStatus = document.getElementById("imageStatus");
+  const plateImages = typeof PLATE_IMAGES === "undefined" ? {} : PLATE_IMAGES;
+  let imageSelection = chooseImages();
 
   function showSaveStatus(message, warning = false) {
     saveStatus.textContent = message;
@@ -254,13 +259,74 @@
     build();
   }
 
-  // Deterministic pseudo plate number per state
-  function plateNumber(name) {
-    let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-    const L = "ABCDEFGHJKLMNPRSTUVWXYZ";
-    const letters = L[h % 23] + L[(h >> 5) % 23] + L[(h >> 10) % 23];
-    const digits = String(100 + (h >> 15) % 900);
-    return letters + " " + digits;
+  function chooseImages() {
+    let previous = {};
+    let historyWarning = false;
+    try {
+      const raw = localStorage.getItem(IMAGE_STORAGE_KEY);
+      if (raw !== null) {
+        const saved = JSON.parse(raw);
+        if (!saved || typeof saved !== "object" || Array.isArray(saved)) {
+          throw new TypeError("Image history must be an object.");
+        }
+        previous = saved;
+      }
+    } catch (error) {
+      console.warn("License Plate Game could not read image history.", error);
+      historyWarning = true;
+    }
+    const selection = {};
+    const history = {};
+    STATES.forEach(([name]) => {
+      const choices = plateImages[name] || [];
+      const alternatives = choices.filter(image => image.id !== previous[name]);
+      const available = alternatives.length ? alternatives : choices;
+      if (available.length) {
+        selection[name] = available[Math.floor(Math.random() * available.length)];
+        history[name] = selection[name].id;
+      }
+    });
+    try {
+      localStorage.setItem(IMAGE_STORAGE_KEY, JSON.stringify(history));
+    } catch (error) {
+      console.warn("License Plate Game could not save image history.", error);
+      historyWarning = true;
+    }
+    const count = Object.keys(selection).length;
+    if (count !== TOTAL) {
+      console.warn(`License Plate Game has images for ${count} of ${TOTAL} states.`);
+      imageStatus.textContent = `Images unavailable for ${TOTAL - count} states. Reload to retry; marking states still works.`;
+    } else {
+      imageStatus.textContent = historyWarning
+        ? "Images randomized for this visit. Image history is unavailable; repeats on later visits are possible."
+        : "Images randomized for this visit; the last image for each state will not repeat on your next visit.";
+    }
+    imageStatus.classList.toggle("warning", historyWarning || count !== TOTAL);
+    return selection;
+  }
+
+  function buildCredits() {
+    const credits = document.getElementById("imageCredits");
+    STATES.forEach(([name]) => {
+      (plateImages[name] || []).forEach(image => {
+        const item = document.createElement("li");
+        const source = document.createElement("a");
+        source.href = image.source;
+        source.textContent = `${name}: ${image.title}`;
+        const license = document.createElement("a");
+        license.href = image.licenseUrl;
+        license.textContent = image.license;
+        const attribution = document.createElement("span");
+        attribution.textContent = ` by ${image.author}. `;
+        const changes = document.createElement("span");
+        changes.textContent = ` ${image.changes}`;
+        item.appendChild(source);
+        item.appendChild(attribution);
+        item.appendChild(license);
+        item.appendChild(changes);
+        credits.appendChild(item);
+      });
+    });
   }
 
   const CHECK_SVG = `<svg viewBox="0 0 100 100" aria-hidden="true">
@@ -274,7 +340,7 @@
 
   function build() {
     grid.innerHTML = "";
-    STATES.forEach(([name, slogan, bg, fg]) => {
+    STATES.forEach(([name]) => {
       const el = document.createElement("div");
       el.className = "plate" + (found.has(name) ? " found" : "");
       el.dataset.state = name;
@@ -282,14 +348,31 @@
       el.tabIndex = 0;
       el.setAttribute("aria-pressed", found.has(name));
       el.setAttribute("aria-label", name + (found.has(name) ? " (found)" : ""));
-      el.style.setProperty("--plate-bg", bg);
-      el.style.setProperty("--plate-fg", fg);
+      const image = imageSelection[name];
       el.innerHTML = `
-        <span class="bolt l"></span><span class="bolt r"></span>
         <div class="state">${name}</div>
-        <div class="number">${plateNumber(name)}</div>
-        <div class="slogan">${slogan}</div>
+        <div class="photo"></div>
+        <div class="era">${image ? (image.era === "modern" ? "Modern-era" : "Historical") + (image.kind === "sample" ? " sample" : " photograph") : "Image unavailable"}</div>
         <div class="check">${CHECK_SVG}</div>`;
+      const photo = el.querySelector(".photo");
+      if (image) {
+        const img = document.createElement("img");
+        img.alt = `${name}: ${image.title}`;
+        img.width = image.width;
+        img.height = image.height;
+        img.loading = "lazy";
+        img.decoding = "async";
+        img.addEventListener("error", () => {
+          console.warn("License Plate Game image failed to load:", image.src);
+          photo.textContent = "Photo unavailable. You can still mark this state.";
+          imageStatus.textContent = "Some images failed to load. Reload to retry; progress and controls still work.";
+          imageStatus.classList.add("warning");
+        });
+        img.src = image.src;
+        photo.appendChild(img);
+      } else {
+        photo.textContent = "Photo unavailable. You can still mark this state.";
+      }
       grid.appendChild(el);
     });
     applyFilters();
@@ -311,7 +394,7 @@
 
   function updateCounter(bump) {
     counter.textContent = `${found.size} / ${TOTAL}`;
-    bar.style.width = (found.size / TOTAL * 100) + "%";
+    bar.style.transform = `scaleX(${found.size / TOTAL})`;
     if (bump) { counter.classList.add("bump"); setTimeout(() => counter.classList.remove("bump"), 150); }
   }
 
@@ -370,7 +453,14 @@
     }
   }
 
+  buildCredits();
   build();
+  window.addEventListener("pageshow", event => {
+    if (event.persisted) {
+      imageSelection = chooseImages();
+      build();
+    }
+  });
 </script>
 </body>
 </html>

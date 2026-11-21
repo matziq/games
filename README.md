@@ -53,6 +53,22 @@ browsers, and clearing site data (or ending a private session) can remove it.
 Run the focused gameplay and persistence checks with
 `node --test scripts/license-plate-game.test.cjs`.
 
+The game includes 100 locally hosted plate photographs and sample images: a
+modern-era and a historical example for each state. Each new page visit selects
+an image per state, avoiding the previous selection when browser storage works.
+Reset and filters do not reroll images. Image history uses `plateGame.images.v1`,
+separate from found-state saves. Source titles, authors, license links, and
+resize/crop notes are in the game's expandable credits and
+`license_plate_assets/plate-images.js`; each image retains its individual license.
+
+This is a mixed-date reference collection, not a complete catalog of the latest
+2026 standard designs. Current standard images with verified reuse permissions
+could not be established for Alabama, Nebraska, Rhode Island, South Dakota, and
+Wyoming in the consulted sources. Their modern entries are explicitly identified
+as an Alabama fleet plate, Nebraska's 2017 base, Rhode Island's 2013 plate, South
+Dakota's 2018 plate, and a 2018 University of Wyoming plate. No invented plate art
+is used when an image is unavailable.
+
 Some browsers restrict features (or run slower) when opening files directly from disk.
 
 ```pwsh
