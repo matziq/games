@@ -35,6 +35,12 @@
     .buttons button[aria-pressed="true"] { border-color: #a7eaff; background: #244b5a; }
     .category { grid-template-columns: repeat(3, 1fr); }
     .category button { text-align: center; }
+    .question-card { padding: 14px; border: 1px solid #495675; border-radius: 12px; background: #10172d; }
+    .question-card p { margin: 0 0 10px; font-weight: 650; }
+    .question-actions { display: flex; gap: 8px; }
+    .question-actions button { min-width: 64px; text-align: center; }
+    .question-actions button[aria-pressed="true"] { opacity: 1; background: #244b5a; border-color: #a7eaff; }
+    .question-status { display: block; min-height: 1.4em; margin-top: 8px; color: #c4cce1; }
     .warning { color: #ffe3a3; border: 1px solid #b78a38; padding: 12px; border-radius: 10px; background: #4a351b; }
     [hidden] { display: none !important; }
     @media (max-width: 400px) { .category { grid-template-columns: 1fr; } }
@@ -85,7 +91,7 @@
 
   <section class="panel" aria-labelledby="questions-heading">
     <h2 id="questions-heading">Questions to ask</h2>
-    <p class="hint">Tap a question after asking it. Every tap counts, even if you ask it again.</p>
+    <p class="hint">After asking a question, choose Yes or No. Each question counts once.</p>
     <div class="buttons" id="questions"></div>
   </section>
 </main>
@@ -104,7 +110,7 @@
     "Is it a type of vehicle?", "Is it used for entertainment?", "Can it move on its own?",
     "Is it made of metal?", "Is it something you can buy?", "Is it associated with a sport?"
   ];
-  const empty = () => ({ answer: "", remaining: 20, category: "", chosen: [] });
+  const empty = () => ({ answer: "", remaining: 20, category: "", chosen: [], responses: {} });
   let state = empty();
   const warning = document.getElementById("storage-warning");
   const sayWarning = message => { warning.textContent = message; warning.hidden = false; };
@@ -115,8 +121,15 @@
       if (!data || typeof data.answer !== "string" || !data.answer.trim() ||
           !Number.isInteger(data.remaining) || data.remaining < 0 || data.remaining > 20 ||
           !["", "Person", "Place", "Thing"].includes(data.category) ||
-          !Array.isArray(data.chosen) || data.chosen.some(q => !prompts.includes(q))) {
+          !Array.isArray(data.chosen) || data.chosen.some(q => !prompts.includes(q)) ||
+          (data.responses !== undefined && (!data.responses || typeof data.responses !== "object" ||
+            Array.isArray(data.responses) || Object.entries(data.responses).some(([q, value]) =>
+              !data.chosen.includes(q) || !["Yes", "No", "Not recorded"].includes(value))))) {
         throw new Error("Invalid saved game");
+      }
+      data.responses = data.responses || {};
+      for (const prompt of data.chosen) {
+        if (!Object.hasOwn(data.responses, prompt)) data.responses[prompt] = "Not recorded";
       }
       state = data;
     }
@@ -131,13 +144,30 @@
   const answer = document.getElementById("answer");
   const questions = document.getElementById("questions");
   const categories = document.getElementById("categories");
-  for (const prompt of prompts) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.textContent = prompt;
-    button.dataset.question = prompt;
-    questions.append(button);
-  }
+  const questionCards = prompts.map(prompt => {
+    const card = document.createElement("div");
+    card.className = "question-card";
+    const label = document.createElement("p");
+    label.textContent = prompt;
+    const actions = document.createElement("div");
+    actions.className = "question-actions";
+    const buttons = ["Yes", "No"].map(response => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = response;
+      button.dataset.question = prompt;
+      button.dataset.response = response;
+      button.setAttribute("aria-label", `${response}: ${prompt}`);
+      actions.append(button);
+      return button;
+    });
+    const status = document.createElement("span");
+    status.className = "question-status";
+    status.setAttribute("aria-live", "polite");
+    card.append(label, actions, status);
+    questions.append(card);
+    return { prompt, buttons, status };
+  });
   function render() {
     const started = Boolean(state.answer);
     document.getElementById("setup").hidden = started;
@@ -149,9 +179,14 @@
       button.disabled = !started || state.remaining === 0;
       button.setAttribute("aria-pressed", String(button.dataset.category === state.category));
     }
-    for (const button of questions.querySelectorAll("button")) {
-      button.disabled = !started || state.remaining === 0;
-      button.setAttribute("aria-pressed", String(state.chosen.includes(button.dataset.question)));
+    for (const card of questionCards) {
+      const response = state.responses[card.prompt];
+      card.status.textContent = response === "Not recorded" ? "Previously asked; answer not recorded." :
+        response ? `Answered: ${response}` : "Not answered";
+      for (const button of card.buttons) {
+        button.disabled = !started || state.remaining === 0 || Boolean(response);
+        button.setAttribute("aria-pressed", String(button.dataset.response === response));
+      }
     }
   }
   form.addEventListener("submit", event => {
@@ -173,9 +208,12 @@
     save(); render();
   });
   questions.addEventListener("click", event => {
-    const button = event.target.closest("button[data-question]");
-    if (!button || !state.answer || state.remaining === 0) return;
-    if (!state.chosen.includes(button.dataset.question)) state.chosen.push(button.dataset.question);
+    const button = event.target.closest("button[data-question][data-response]");
+    if (!button || !state.answer || state.remaining === 0 ||
+        state.responses[button.dataset.question] || !prompts.includes(button.dataset.question) ||
+        !["Yes", "No"].includes(button.dataset.response)) return;
+    state.chosen.push(button.dataset.question);
+    state.responses[button.dataset.question] = button.dataset.response;
     state.remaining--;
     save(); render();
   });

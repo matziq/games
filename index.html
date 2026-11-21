@@ -65,6 +65,20 @@
             margin-bottom: 22px;
         }
 
+        .home-link {
+            justify-self: start;
+            display: inline-flex;
+            align-items: center;
+            min-height: 44px;
+            color: #b8eaff;
+            font-weight: 700;
+        }
+
+        .home-link:focus-visible {
+            outline: 3px solid #75e6ff;
+            outline-offset: 3px;
+        }
+
         .kicker {
             display: inline-flex;
             align-items: center;
@@ -350,6 +364,7 @@
         <div class="float" aria-hidden="true"></div>
 
         <header>
+            <a class="home-link" href="https://memconfigmgr.org/">&#8592; Home</a>
             <div class="kicker"><span class="dot"></span> Play &middot; explore &middot; create</div>
             <h1>Fun &amp; Games</h1>
             <p class="sub">
@@ -359,6 +374,8 @@
         </header>
 
         <section class="grid" aria-label="Games">
+            <h2 class="section-title">Road Games</h2>
+
             <a class="card" href="./20_questions.html" target="_self" rel="noopener">
                 <div class="icon" aria-hidden="true">20?</div>
                 <div class="meta">
@@ -369,31 +386,6 @@
                     <p class="desc">Think of a person, place, or thing and guess it in 20 questions.</p>
                 </div>
             </a>
-            <h2 class="section-title">Apps</h2>
-
-            <a class="card" href="./neon_pulse/" target="_self" rel="noopener">
-                <div class="icon ineonpulse" aria-hidden="true">
-                    <svg viewBox="0 0 24 24">
-                        <defs>
-                            <linearGradient id="gneonpulse" x1="0" y1="0" x2="1" y2="1">
-                                <stop offset="0" stop-color="var(--c1)" />
-                                <stop offset="1" stop-color="var(--c2)" />
-                            </linearGradient>
-                        </defs>
-                        <path class="grad" stroke="url(#gneonpulse)" d="M2 13h4l2-7 4 13 3-10 2 4h5" />
-                        <circle class="grad" stroke="url(#gneonpulse)" cx="12" cy="12" r="9" opacity=".45" />
-                    </svg>
-                </div>
-                <div class="meta">
-                    <div class="name">
-                        <h2>Neon Pulse</h2>
-                        <span class="pill">Audio</span>
-                    </div>
-                    <p class="desc">Play local MP3, WAV, and FLAC files with reactive sci-fi visualizers.</p>
-                </div>
-            </a>
-
-            <h2 class="section-title">Games</h2>
 
             <a class="card" href="./license_plate_game.html" target="_self" rel="noopener">
                 <div class="icon" style="--c1:#ffc83d;--c2:#22c55e" aria-hidden="true">
@@ -410,6 +402,8 @@
                     <p class="desc">Spot plates from all 50 states and continue your saved trip in this browser.</p>
                 </div>
             </a>
+
+            <h2 class="section-title">Games</h2>
 
             <a class="card" href="./3d_dungeons/">
                 <div class="icon" style="--c1:#edbf72;--c2:#984b36" aria-hidden="true">
