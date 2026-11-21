@@ -17,7 +17,10 @@
       "recentPhotos": 1,
       "historicExamples": 26,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 4
     },
     "Alaska": {
       "count": 28,
@@ -34,7 +37,10 @@
       "recentPhotos": 1,
       "historicExamples": 26,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 2
     },
     "Arizona": {
       "count": 28,
@@ -51,7 +57,10 @@
       "recentPhotos": 0,
       "historicExamples": 26,
       "recentPhotoShortfall": 10,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 2
     },
     "Arkansas": {
       "count": 24,
@@ -68,7 +77,10 @@
       "recentPhotos": 1,
       "historicExamples": 23,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 1
     },
     "California": {
       "count": 21,
@@ -85,7 +97,10 @@
       "recentPhotos": 7,
       "historicExamples": 14,
       "recentPhotoShortfall": 3,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 7
     },
     "Colorado": {
       "count": 29,
@@ -102,7 +117,10 @@
       "recentPhotos": 1,
       "historicExamples": 28,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 1
     },
     "Connecticut": {
       "count": 14,
@@ -119,7 +137,10 @@
       "recentPhotos": 0,
       "historicExamples": 12,
       "recentPhotoShortfall": 10,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 2
     },
     "Delaware": {
       "count": 11,
@@ -136,7 +157,10 @@
       "recentPhotos": 1,
       "historicExamples": 9,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 2
     },
     "Florida": {
       "count": 40,
@@ -153,7 +177,10 @@
       "recentPhotos": 13,
       "historicExamples": 27,
       "recentPhotoShortfall": 0,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 1,
+      "recentDesignShortfall": 9,
+      "unknownDesignEra": 12
     },
     "Georgia": {
       "count": 29,
@@ -170,7 +197,10 @@
       "recentPhotos": 2,
       "historicExamples": 26,
       "recentPhotoShortfall": 8,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 3
     },
     "Hawaii": {
       "count": 8,
@@ -187,7 +217,10 @@
       "recentPhotos": 1,
       "historicExamples": 7,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 1
     },
     "Idaho": {
       "count": 19,
@@ -204,7 +237,10 @@
       "recentPhotos": 1,
       "historicExamples": 18,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 1
     },
     "Illinois": {
       "count": 30,
@@ -221,7 +257,10 @@
       "recentPhotos": 2,
       "historicExamples": 27,
       "recentPhotoShortfall": 8,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 3
     },
     "Indiana": {
       "count": 30,
@@ -238,7 +277,10 @@
       "recentPhotos": 1,
       "historicExamples": 28,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 2
     },
     "Iowa": {
       "count": 27,
@@ -255,7 +297,10 @@
       "recentPhotos": 1,
       "historicExamples": 26,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 1
     },
     "Kansas": {
       "count": 31,
@@ -272,7 +317,10 @@
       "recentPhotos": 4,
       "historicExamples": 25,
       "recentPhotoShortfall": 6,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 6
     },
     "Kentucky": {
       "count": 30,
@@ -289,7 +337,10 @@
       "recentPhotos": 1,
       "historicExamples": 29,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 1
     },
     "Louisiana": {
       "count": 29,
@@ -306,7 +357,10 @@
       "recentPhotos": 1,
       "historicExamples": 28,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 1
     },
     "Maine": {
       "count": 19,
@@ -323,7 +377,10 @@
       "recentPhotos": 1,
       "historicExamples": 18,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 1
     },
     "Maryland": {
       "count": 26,
@@ -340,7 +397,10 @@
       "recentPhotos": 1,
       "historicExamples": 23,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 3
     },
     "Massachusetts": {
       "count": 30,
@@ -357,7 +417,10 @@
       "recentPhotos": 1,
       "historicExamples": 28,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 2
     },
     "Michigan": {
       "count": 28,
@@ -374,7 +437,10 @@
       "recentPhotos": 1,
       "historicExamples": 24,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 4
     },
     "Minnesota": {
       "count": 28,
@@ -391,7 +457,10 @@
       "recentPhotos": 1,
       "historicExamples": 27,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 1
     },
     "Mississippi": {
       "count": 30,
@@ -408,7 +477,10 @@
       "recentPhotos": 3,
       "historicExamples": 27,
       "recentPhotoShortfall": 7,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 1,
+      "recentDesignShortfall": 9,
+      "unknownDesignEra": 2
     },
     "Missouri": {
       "count": 28,
@@ -425,7 +497,10 @@
       "recentPhotos": 1,
       "historicExamples": 26,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 2
     },
     "Montana": {
       "count": 22,
@@ -442,7 +517,10 @@
       "recentPhotos": 1,
       "historicExamples": 21,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 1,
+      "recentDesignShortfall": 9,
+      "unknownDesignEra": 0
     },
     "Nebraska": {
       "count": 31,
@@ -459,7 +537,10 @@
       "recentPhotos": 6,
       "historicExamples": 24,
       "recentPhotoShortfall": 4,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 1,
+      "recentDesignShortfall": 9,
+      "unknownDesignEra": 6
     },
     "Nevada": {
       "count": 15,
@@ -476,7 +557,10 @@
       "recentPhotos": 1,
       "historicExamples": 13,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 2
     },
     "New Hampshire": {
       "count": 23,
@@ -493,7 +577,10 @@
       "recentPhotos": 1,
       "historicExamples": 22,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 1
     },
     "New Jersey": {
       "count": 21,
@@ -510,7 +597,10 @@
       "recentPhotos": 1,
       "historicExamples": 20,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 1
     },
     "New Mexico": {
       "count": 18,
@@ -527,7 +617,10 @@
       "recentPhotos": 4,
       "historicExamples": 14,
       "recentPhotoShortfall": 6,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 1,
+      "recentDesignShortfall": 9,
+      "unknownDesignEra": 3
     },
     "New York": {
       "count": 16,
@@ -544,7 +637,10 @@
       "recentPhotos": 1,
       "historicExamples": 14,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 2
     },
     "North Carolina": {
       "count": 28,
@@ -561,7 +657,10 @@
       "recentPhotos": 2,
       "historicExamples": 26,
       "recentPhotoShortfall": 8,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 2
     },
     "North Dakota": {
       "count": 16,
@@ -578,7 +677,10 @@
       "recentPhotos": 1,
       "historicExamples": 15,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 1
     },
     "Ohio": {
       "count": 29,
@@ -595,7 +697,10 @@
       "recentPhotos": 2,
       "historicExamples": 25,
       "recentPhotoShortfall": 8,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 1,
+      "recentDesignShortfall": 9,
+      "unknownDesignEra": 3
     },
     "Oklahoma": {
       "count": 9,
@@ -612,7 +717,10 @@
       "recentPhotos": 1,
       "historicExamples": 8,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 1
     },
     "Oregon": {
       "count": 5,
@@ -629,7 +737,10 @@
       "recentPhotos": 0,
       "historicExamples": 4,
       "recentPhotoShortfall": 10,
-      "historicShortfall": 1
+      "historicShortfall": 1,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 1
     },
     "Pennsylvania": {
       "count": 9,
@@ -646,7 +757,10 @@
       "recentPhotos": 1,
       "historicExamples": 8,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 1
     },
     "Rhode Island": {
       "count": 18,
@@ -663,7 +777,10 @@
       "recentPhotos": 1,
       "historicExamples": 17,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 1
     },
     "South Carolina": {
       "count": 22,
@@ -680,7 +797,10 @@
       "recentPhotos": 2,
       "historicExamples": 18,
       "recentPhotoShortfall": 8,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 1,
+      "recentDesignShortfall": 9,
+      "unknownDesignEra": 3
     },
     "South Dakota": {
       "count": 29,
@@ -697,7 +817,10 @@
       "recentPhotos": 1,
       "historicExamples": 26,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 3
     },
     "Tennessee": {
       "count": 23,
@@ -714,7 +837,10 @@
       "recentPhotos": 2,
       "historicExamples": 20,
       "recentPhotoShortfall": 8,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 3
     },
     "Texas": {
       "count": 30,
@@ -731,7 +857,10 @@
       "recentPhotos": 1,
       "historicExamples": 24,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 6
     },
     "Utah": {
       "count": 27,
@@ -748,7 +877,10 @@
       "recentPhotos": 2,
       "historicExamples": 23,
       "recentPhotoShortfall": 8,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 4
     },
     "Vermont": {
       "count": 2,
@@ -765,7 +897,10 @@
       "recentPhotos": 1,
       "historicExamples": 1,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 4
+      "historicShortfall": 4,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 1
     },
     "Virginia": {
       "count": 8,
@@ -782,7 +917,10 @@
       "recentPhotos": 1,
       "historicExamples": 7,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 1
     },
     "Washington": {
       "count": 10,
@@ -799,7 +937,10 @@
       "recentPhotos": 1,
       "historicExamples": 9,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 1
     },
     "West Virginia": {
       "count": 8,
@@ -816,7 +957,10 @@
       "recentPhotos": 0,
       "historicExamples": 7,
       "recentPhotoShortfall": 10,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 1
     },
     "Wisconsin": {
       "count": 6,
@@ -833,7 +977,10 @@
       "recentPhotos": 1,
       "historicExamples": 5,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 0
+      "historicShortfall": 0,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 1
     },
     "Wyoming": {
       "count": 4,
@@ -850,12 +997,16 @@
       "recentPhotos": 1,
       "historicExamples": 3,
       "recentPhotoShortfall": 9,
-      "historicShortfall": 2
+      "historicShortfall": 2,
+      "recentDesigns": 0,
+      "recentDesignShortfall": 10,
+      "unknownDesignEra": 1
     }
   },
   "total": 1076,
   "statesMeetingTarget": 31,
   "limitations": [
+    "Recent design counts are conservative and incomplete; unverified eras are shown separately rather than inferred from photo or renewal dates.",
     "Recent counts are photographs dated 2011-2026, not proven plate issue dates. A photograph of a plate in use does not establish when it was issued.",
     "Counts may understate recent examples where the source lacks a reliable photo date; no date was guessed.",
     "Requested 10 recent and 5 historic examples per state were not found for every state. See per-state counts and gaps.",
@@ -1343,5 +1494,8 @@
   "historicTarget": 5,
   "recentPhotoWindow": "2011-2026",
   "recentPhotoDefinition": "Modern plate photographed 2011-2026 with a source-recorded photo date; this does not prove issue date. Dated historic designs are excluded.",
-  "historicDefinition": "Previously reviewed old bases plus newly reviewed designs with visibly dated 1900-1969 issues; renewal stickers alone are not new designs."
+  "historicDefinition": "Previously reviewed old bases plus newly reviewed designs with visibly dated 1900-1969 issues; renewal stickers alone are not new designs.",
+  "recentDesignWindow": "2011-2026",
+  "recentDesignDefinition": "Count only designs with a source-supported introduction or design era starting 2011-2026. A recent photograph, renewal, or number format alone does not establish a design era.",
+  "unknownDesignDefinition": "Non-historic images whose design introduction or era has not been verified; includes recent photographs and older known but unclassified designs."
 }

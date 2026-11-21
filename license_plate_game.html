@@ -79,6 +79,7 @@
   .plate .choices button:disabled { opacity: .5; cursor: default; }
   .plate .version { font-size: .7rem; min-height: 2.5em; color: #c4d4e8; overflow-wrap: anywhere; }
   .coverage { border-collapse: collapse; width: 100%; margin-top: 12px; text-align: left; }
+  .coverage-scroll { overflow-x: auto; }
   .coverage th, .coverage td { padding: 6px; border-bottom: 1px solid #466389; }
   .plate .state {
     font-size: .85rem; font-weight: 800; line-height: 1.2;
@@ -143,7 +144,7 @@
 <details class="credits" id="credits">
   <summary>Design coverage, defaults, image sources, and reuse licenses</summary>
   <p id="coverageSummary"></p>
-  <table class="coverage"><thead><tr><th scope="col">State</th><th scope="col">Recent photos / 10</th><th scope="col">Historic / 5</th><th scope="col">Standard default</th></tr></thead><tbody id="coverageRows"></tbody></table>
+  <div class="coverage-scroll"><table class="coverage"><thead><tr><th scope="col">State</th><th scope="col">Recent designs / 10</th><th scope="col">Historic / 5</th><th scope="col">Unknown design era</th><th scope="col">Recent photos</th><th scope="col">Standard default</th></tr></thead><tbody id="coverageRows"></tbody></table></div>
   <p>Photos and samples are from Wikimedia Commons. Each image keeps its own license; the game does not relicense them. Sample plates do not represent an active vehicle registration. Dates in source titles may refer to a base design or a renewal sticker. Resizing and any crop are noted below.</p>
   <ul id="imageCredits"></ul>
 </details>
@@ -354,6 +355,11 @@
         item.appendChild(attribution);
         item.appendChild(license);
         item.appendChild(changes);
+        const period = document.createElement("span");
+        period.textContent = image.recentDesignEvidence
+          ? ` Recent design evidence: ${image.recentDesignEvidence.note}`
+          : image.designPeriod === "unknown" ? " Design era not verified." : "";
+        item.appendChild(period);
         credits.appendChild(item);
       });
     });
@@ -363,20 +369,22 @@
     let historicComplete = 0;
     STATES.forEach(([name]) => {
       const choices = plateImages[name] || [];
-      const recent = choices.filter(image => image.recentPhotoDate).length;
-      const historic = choices.filter(image => image.era === "historical").length;
+      const recent = choices.filter(image => image.designPeriod === "recent").length;
+      const historic = choices.filter(image => image.designPeriod === "historic").length;
+      const unknown = choices.filter(image => image.designPeriod === "unknown").length;
+      const recentPhotos = choices.filter(image => image.recentPhotoDate).length;
       total += choices.length;
       if (recent >= 10) recentComplete++;
       if (historic >= 5) historicComplete++;
       const row = document.createElement("tr");
-      for (const value of [name, `${recent} / 10${recent < 10 ? " - shortfall" : ""}`, `${historic} / 5${historic < 5 ? " - shortfall" : ""}`, plateDefaults[name]?.label || "Unavailable"]) {
+      for (const value of [name, `${recent} / 10${recent < 10 ? " - shortfall" : ""}`, `${historic} / 5${historic < 5 ? " - shortfall" : ""}`, String(unknown), String(recentPhotos), plateDefaults[name]?.label || "Unavailable"]) {
         const cell = document.createElement("td");
         cell.textContent = value;
         row.appendChild(cell);
       }
       rows.appendChild(row);
     });
-    document.getElementById("coverageSummary").textContent = `${total} designs; ${recentComplete} of 50 states have 10 recent photos, and ${historicComplete} have 5 historic examples. Recent means a source-dated photograph from 2011-2026 of a modern plate, not a verified plate issue date. Annual historical issues count only when the plate design, color, or embossed date differs; serial-only and sticker-only variants are excluded.`;
+    document.getElementById("coverageSummary").textContent = `${total} designs; ${recentComplete} of 50 states have 10 verified recent designs, and ${historicComplete} have 5 historic examples. Recent designs have source-supported eras beginning in 2011-2026. A recent photograph is not proof of a recent issue or design date; unverified design eras are counted separately. Annual historical issues count only when the plate design, color, or embossed date differs; serial-only and sticker-only variants are excluded.`;
   }
 
   const CHECK_SVG = `<svg viewBox="0 0 100 100" aria-hidden="true">

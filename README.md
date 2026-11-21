@@ -71,10 +71,11 @@ Images are local and lazy-loaded only when selected; complete source credits and
 coverage tables are built when their disclosure is opened.
 
 The collection includes recent photographs and historical plates where available.
-The coverage table reports each state's count against goals of 10 recent photos
-and 5 historic examples. "Recent" means a source-dated photograph from 2011–2026
-of a modern plate; it does not prove that the plate was issued in that period.
-Some states fall short, and undated images are not counted as recent. Dated
+The coverage table reports each state's count against goals of 10 verified recent
+designs and 5 historic examples. Recent designs have source-supported eras
+starting in 2011–2026. It separately counts unknown design eras and photographs
+dated 2011–2026; a recent photograph does not establish a plate's issue date.
+Some states fall short, and unverified design eras are not counted as recent. Dated
 defaults are disclosed, including older standards where a newer reusable image
 was unavailable.
 

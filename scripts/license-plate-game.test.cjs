@@ -201,6 +201,12 @@ test("catalog coverage, standard defaults and attributed local assets match the 
     assert.equal(coverage.states[state].recentPhotoShortfall, Math.max(0, 10 - recent));
     assert.equal(coverage.states[state].historicExamples, historic);
     assert.equal(coverage.states[state].historicShortfall, Math.max(0, 5 - historic));
+    const recentDesigns = choices.filter(image => image.designPeriod === "recent").length;
+    const unknown = choices.filter(image => image.designPeriod === "unknown").length;
+    assert.equal(coverage.states[state].recentDesigns, recentDesigns);
+    assert.equal(coverage.states[state].recentDesignShortfall, Math.max(0, 10 - recentDesigns));
+    assert.equal(coverage.states[state].unknownDesignEra, unknown);
+    assert.equal(recentDesigns + historic + unknown, choices.length);
     assert.ok(choices.some(image => image.id === defaults[state].id && image.standard));
     assert.ok(defaults[state].label && defaults[state].evidence);
     assert.equal(new Set(choices.map(image => image.designKey)).size, choices.length);
@@ -220,6 +226,11 @@ test("catalog coverage, standard defaults and attributed local assets match the 
       if (image.recentPhotoDate) {
         assert.match(image.recentPhotoDate, /^(?:201[1-9]|202[0-6])(?:-|$)/);
         assert.notEqual(image.era, "historical");
+      }
+      if (image.designPeriod === "recent") {
+        assert.ok(image.recentDesignEvidence.startYear >= 2011 && image.recentDesignEvidence.startYear <= 2026);
+        assert.equal(image.recentDesignEvidence.source, image.source);
+        assert.ok(image.recentDesignEvidence.note);
       }
     }
   }
@@ -306,9 +317,10 @@ test("credits are built only on first expansion and images are lazy", () => {
   assert.equal(game.elements.get("coverageRows").children.length, 50);
   const firstRow = game.elements.get("coverageRows").children[0].children.map(cell => cell.textContent);
   assert.equal(firstRow[0], "Alabama");
-  assert.match(firstRow[1], new RegExp(`^${coverage.states.Alabama.recentPhotos} / 10`));
+  assert.match(firstRow[1], new RegExp(`^${coverage.states.Alabama.recentDesigns} / 10`));
   assert.match(firstRow[2], new RegExp(`^${coverage.states.Alabama.historicExamples} / 5`));
-  assert.match(game.elements.get("coverageSummary").textContent, /not a verified plate issue date/);
+  assert.equal(firstRow[3], String(coverage.states.Alabama.unknownDesignEra));
+  assert.match(game.elements.get("coverageSummary").textContent, /not proof of a recent issue or design date/);
   const count = game.elements.get("imageCredits").children.length;
   assert.equal(count, coverage.total);
   credits.handlers.toggle({ target: credits });
