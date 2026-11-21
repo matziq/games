@@ -178,6 +178,7 @@
         <li>Move with A / D or the arrow keys. Press Space / W to flap. On a touch screen, hold the arrows to move and tap or hold FLAP to fly; tapping the arena also flaps.</li>
         <li>Collide with an enemy from above to win. Equal-height jousters bounce apart.</li>
         <li>Collect dropped eggs for 250 points before they hatch. Clear all enemies and eggs to advance.</li>
+        <li>Platforms are solid on every side. Enemies must rest for one second after five flaps.</li>
         <li>Avoid lava and escape the fiery hands by flapping. You have three lives.</li>
         <li>Use Pause or Escape to pause. Sound settings are available from the main menu.</li>
       </ul>
@@ -254,7 +255,7 @@
             t.y = t.ent ? t.ent.y : t.y * H / oldH;
           }
           if (spawnPos) { spawnPos.x *= W / oldW; spawnPos.y *= H / oldH; }
-          for (const part of [...bloods, ...gores, ...bones, ...embers, ...lavaPx]) {
+          for (const part of [...bloods, ...gores, ...bones, ...fragments, ...embers, ...lavaPx]) {
             part.x *= W / oldW; part.y *= H / oldH;
           }
           for (const hand of lavaHands) {
@@ -280,6 +281,8 @@
       const P_LIM = 900;
       const RESPAWN_T = 90;
       const INVULN_T = 180;
+      const GAME_SPEED = .8;
+      const ENEMY_REST_T = 48;
 
       // ─── State ─────────────────────────────────────────────────────────
       let state = 'title', pausedFrom = null;
@@ -298,7 +301,7 @@
       let player = null, enemies = [], respawnT = 0, invulnT = 0;
 
       // Particles
-      let bloods = [], gores = [], bones = [], embers = [], lavaPx = [];
+      let bloods = [], gores = [], bones = [], fragments = [], embers = [], lavaPx = [];
       let stains = [];
 
       // Teleport spawn effects
@@ -643,10 +646,9 @@
         px(cx, 11, 2, 5, 2, col.helm);
         px(cx, 12, 1, 3, 1, col.helm);
 
-        // Lance — extending forward from rider
-        px(cx, 1, 8, 10, 1, col.lance || '#ccc');
-        px(cx, 0, 8, 1, 1, '#fff');       // lance tip
-        px(cx, 0, 7, 1, 2, '#eee');
+        // Lance points toward the bird's beak; the sprite is mirrored for right-facing riders.
+        px(cx, 2, 8, 9, 1, col.lance || '#ccc');
+        px(cx, 1, 7, 1, 2, '#eee');
 
         cx.restore();
       }
@@ -673,6 +675,7 @@
         return {
           type, x, y, vx: 0, vy: 0, w: spW, h: spH,
           left: false, flap: 0, flapT: 0, flapCD: 0,
+          flapCount: 0, restT: 0,
           ground: false, gPlat: -1, alive: true,
           speed: 1, aggro: 0,
           // AI state
@@ -940,11 +943,21 @@
           });
       }
 
-      function killFX(x, y) {
+      function killFX(x, y, ent) {
         // OVER-THE-TOP COMEDIC GORE
         addBlood(x, y, 120 + (Math.random() * 60 | 0));
         addGore(x, y, 25 + (Math.random() * 15 | 0));
         addBone(x, y, 12 + (Math.random() * 8 | 0));
+        for (const part of ['head', 'arm', 'arm', 'leg', 'leg', 'wing', 'wing']) {
+          if (fragments.length >= 140) break;
+          fragments.push({
+            x, y, part, type: ent.type,
+            vx: (Math.random() - .5) * 12,
+            vy: -2 - Math.random() * 7,
+            rot: Math.random() * Math.PI * 2, rv: (Math.random() - .5) * .35,
+            life: 3 + Math.random() * 2
+          });
+        }
         // Extra blood fountains in multiple directions
         for (let d = 0; d < 8; d++) {
           const a = d * Math.PI / 4;
@@ -970,15 +983,57 @@
       }
 
       // ─── Physics ───────────────────────────────────────────────────────
+      function separateFromPlatforms(e) {
+        for (let pass = 0; pass < plats.length * 2; pass++) {
+          const p = plats.find(p => e.x < p.x + p.w && e.x + e.w > p.x &&
+            e.y < p.y + p.h && e.y + e.h > p.y);
+          if (!p) return;
+          const options = [
+            { axis: 'y', pos: p.y - e.h, dist: e.y + e.h - p.y },
+            { axis: 'y', pos: p.y + p.h, dist: p.y + p.h - e.y },
+            { axis: 'x', pos: p.x - e.w, dist: e.x + e.w - p.x },
+            { axis: 'x', pos: p.x + p.w, dist: p.x + p.w - e.x }
+          ];
+          options.sort((a, b) => a.dist - b.dist);
+          const hit = options[0];
+          e[hit.axis] = hit.pos;
+          if (hit.axis === 'x') e.vx = 0; else e.vy = 0;
+        }
+      }
+
       function physEnt(e, isP) {
         if (!e.alive) return;
         if (e.flapT > 0) e.flapT--;
         if (e.flapCD > 0) e.flapCD--;
 
+        separateFromPlatforms(e);
         e.vy += G * dt;
         if (e.vy > MAXVY) e.vy = MAXVY;
-        e.x += e.vx * dt;
-        e.y += e.vy * dt;
+        const oldX = e.x, nextX = e.x + e.vx * dt;
+        let resolvedX = nextX;
+        for (const p of plats) {
+          if (e.y >= p.y + p.h || e.y + e.h <= p.y) continue;
+          if (e.vx > 0 && oldX + e.w <= p.x && nextX + e.w > p.x)
+            resolvedX = Math.min(resolvedX, p.x - e.w);
+          if (e.vx < 0 && oldX >= p.x + p.w && nextX < p.x + p.w)
+            resolvedX = Math.max(resolvedX, p.x + p.w);
+        }
+        e.x = resolvedX;
+        if (resolvedX !== nextX) e.vx = 0;
+        const oldY = e.y, nextY = e.y + e.vy * dt;
+        let resolvedY = nextY, landed = -1;
+        for (let i = 0; i < plats.length; i++) {
+          const p = plats[i];
+          if (e.x >= p.x + p.w || e.x + e.w <= p.x) continue;
+          if (e.vy >= 0 && oldY + e.h <= p.y && nextY + e.h >= p.y && p.y - e.h <= resolvedY) {
+            resolvedY = p.y - e.h; landed = i;
+          }
+          if (e.vy < 0 && oldY >= p.y + p.h && nextY < p.y + p.h)
+            resolvedY = Math.max(resolvedY, p.y + p.h);
+        }
+        e.y = resolvedY;
+        if (resolvedY !== nextY || landed !== -1) e.vy = 0;
+        e.ground = landed !== -1; e.gPlat = landed;
         e.vx *= HDRAG;
 
         // Flap animation
@@ -994,19 +1049,10 @@
           e.vy = Math.abs(e.vy) * .6 + 2; // bounce back down
         }
 
-        // Platform landing
-        e.ground = false; e.gPlat = -1;
-        const el = e.x + e.w * .15, er = e.x + e.w * .85, eb = e.y + e.h;
-        for (let i = 0; i < plats.length; i++) {
-          const p = plats[i];
-          if (er > p.x && el < p.x + p.w && e.vy >= 0 && eb >= p.y && eb - e.vy * dt <= p.y + 6) {
-            e.y = p.y - e.h; e.vy = 0; e.ground = true; e.gPlat = i; break;
-          }
-        }
-
         // Lava
         if (e.y + e.h > H - LAVA_H) {
           e.alive = false;
+          killFX(e.x + e.w / 2, e.y + e.h / 2, e);
           for (let i = 0; i < 10; i++)
             lavaPx.push({
               x: e.x + e.w / 2 + (Math.random() - .5) * 50,
@@ -1021,8 +1067,11 @@
       }
 
       function doFlap(e) {
-        if (e.flapCD > 0) return;
+        if (e.flapCD > 0 || (e.type !== 'player' && e.restT > 0)) return;
         e.vy = FLAP; e.flapT = 13; e.flapCD = 8; e.ground = false;
+        if (e.type !== 'player' && ++e.flapCount === 5) {
+          e.flapCount = 0; e.restT = ENEMY_REST_T;
+        }
         if (e === player) sfx('flap');
       }
 
@@ -1040,62 +1089,36 @@
       // ─── Enemy AI ──────────────────────────────────────────────────────
       function aiUpdate(e) {
         if (!e.alive) return;
-
-        // Avoid lava
-        if (e.y > H - LAVA_H - 90) { doFlap(e); return; }
-
         e.aiTimer--;
         const hasTarget = player && player.alive;
 
         if (e.aiTimer <= 0) {
-          if (!hasTarget) {
-            e.aiMode = 'patrol';
-            e.patrolY = H * (.3 + Math.random() * .35);
-            e.aiTimer = 60 + Math.random() * 60 | 0;
-          } else {
-            // Heavily biased toward chasing the player — 85% chase
-            e.aiMode = Math.random() < .15 ? 'patrol' : 'chase';
-            e.patrolY = H * (.25 + Math.random() * .4);
-            e.patrolDir = Math.random() < .5 ? 1 : -1;
-            e.aiTimer = e.aiMode === 'chase' ? (80 + Math.random() * 100 | 0) : (30 + Math.random() * 40 | 0);
-          }
+          e.aiMode = hasTarget && Math.random() < .6 ? 'chase' : 'patrol';
+          e.patrolY = H * (.24 + Math.random() * .43);
+          e.patrolDir = Math.random() < .5 ? 1 : -1;
+          e.aiTimer = 90 + Math.random() * 120 | 0;
         }
 
         const spdF = e.speed;
+        const chasing = e.aiMode === 'chase' && hasTarget;
+        const targetY = chasing
+          ? Math.max(H * .18, Math.min(H * .7, player.y + (e.patrolY - H * .45) * .45))
+          : e.patrolY;
+        let direction = chasing && Math.abs(player.x - e.x) > 8
+          ? Math.sign(player.x - e.x) : e.patrolDir;
 
-        if (e.aiMode === 'patrol') {
-          e.vx += e.patrolDir * HACC * spdF * .35;
-          e.left = e.patrolDir < 0;
-          if (Math.abs(e.vx) > MAXVX * spdF * .6) e.vx = Math.sign(e.vx) * MAXVX * spdF * .6;
-          if (e.y > e.patrolY + 15 && Math.random() < .12) doFlap(e);
-          if (e.y < e.patrolY - 30) { /* descend */ }
-          else if (e.vy > 3) doFlap(e);
-          if (Math.random() < .01) e.patrolDir *= -1;
-          if (e.x < 30) e.patrolDir = 1;
-          if (e.x > W - 30 - e.w) e.patrolDir = -1;
-          // Interrupt patrol if player nearby
-          if (hasTarget && Math.hypot(player.x - e.x, player.y - e.y) < 200) {
-            e.aiMode = 'chase';
-            e.aiTimer = 80 + Math.random() * 80 | 0;
-          }
-        } else {
-          // CHASE mode — aggressive pursuit
-          if (!hasTarget) { e.aiMode = 'patrol'; return; }
-          const dx = player.x - e.x, dy = player.y - e.y;
-          if (Math.abs(dx) > 8) {
-            e.vx += Math.sign(dx) * HACC * spdF * .7;
-            e.left = dx < 0;
-          }
-          if (Math.abs(e.vx) > MAXVX * spdF * 1.1) e.vx = Math.sign(e.vx) * MAXVX * spdF * 1.1;
-          // Match player height — slightly above
-          const targetY = player.y - 20;
-          if (e.y > targetY + 10 && Math.random() < .2 + e.aggro * .1) doFlap(e);
-          if (e.y < targetY - 40) { /* descend naturally */ }
-          else if (e.vy > 3.5) doFlap(e);
-          // Don't hover at top
-          if (e.y < H * .08) { /* let gravity pull down */ }
+        // Fly around a ledge when the target is above its solid underside.
+        if (e.y > targetY) {
+          const overhead = plats.find(p => e.x < p.x + p.w && e.x + e.w > p.x &&
+            e.y >= p.y + p.h && e.y - (p.y + p.h) < 70);
+          if (overhead) direction = e.x + e.w / 2 < overhead.x + overhead.w / 2 ? -1 : 1;
         }
-
+        e.vx += direction * HACC * spdF * (chasing ? .7 : .35);
+        e.left = direction < 0;
+        if (Math.abs(e.vx) > MAXVX * spdF) e.vx = Math.sign(e.vx) * MAXVX * spdF;
+        if (e.x < 30) e.patrolDir = 1;
+        if (e.x > W - 30 - e.w) e.patrolDir = -1;
+        if ((e.y > targetY + 20 && e.vy >= -1) || e.y > H - LAVA_H - 90) doFlap(e);
         if (Math.random() < .02) e.vx += (Math.random() - .5) * 1.5;
       }
 
@@ -1113,7 +1136,7 @@
           if (pcy < ecy - 5) {
             // Player wins — enemy becomes an egg
             e.alive = false;
-            killFX(ecx, ecy);
+            killFX(ecx, ecy, e);
             score += e.type === 'deathLord' ? 500 : e.type === 'shadowRider' ? 250 : 100;
             player.vy = -4.5;
             // Spawn egg with enemy's momentum
@@ -1126,7 +1149,7 @@
           } else if (ecy < pcy - 5) {
             // Enemy wins
             player.alive = false;
-            killFX(pcx, pcy); sfx('die');
+            killFX(pcx, pcy, player); sfx('die');
             loseLife();
             break;
           } else {
@@ -1175,6 +1198,12 @@
             }
           }
           if (b.life <= 0 || b.y > H) bones.splice(i, 1);
+        }
+        for (let i = fragments.length - 1; i >= 0; i--) {
+          const part = fragments[i];
+          part.vy += G * .45; part.x += part.vx; part.y += part.vy;
+          part.rot += part.rv; part.life -= .017;
+          if (part.life <= 0 || part.y > H) fragments.splice(i, 1);
         }
         // Embers
         tickEmbers();
@@ -1411,6 +1440,22 @@
           X.beginPath(); X.moveTo(-b.sz / 2, 0); X.lineTo(0, -b.sz / 2);
           X.lineTo(b.sz / 2, 0); X.lineTo(0, b.sz / 3); X.fill(); X.restore();
         }
+        for (const part of fragments) {
+          const col = PAL[part.type];
+          X.save(); X.translate(part.x, part.y); X.rotate(part.rot);
+          X.globalAlpha = Math.min(1, part.life);
+          if (part.part === 'head') {
+            X.fillStyle = col.rider; X.fillRect(-4, -3, 8, 7);
+            X.fillStyle = col.helm; X.fillRect(-5, -5, 10, 3);
+          } else if (part.part === 'wing') {
+            X.fillStyle = col.wing; X.fillRect(-8, -3, 14, 5); X.fillRect(-5, 2, 8, 3);
+          } else if (part.part === 'arm') {
+            X.fillStyle = col.rider; X.fillRect(-2, -5, 4, 10); X.fillRect(-2, 3, 6, 3);
+          } else {
+            X.fillStyle = '#c80'; X.fillRect(-2, -5, 4, 10); X.fillRect(-4, 3, 8, 3);
+          }
+          X.restore();
+        }
         X.globalAlpha = 1;
         for (const e of embers) {
           const a = e.life / (e.life + 2);
@@ -1609,7 +1654,7 @@
       }
 
       function drawWaveScreen() {
-        drawBG(); drawLava(); drawPlats();
+        drawBG(); drawLava(); drawPlats(); drawParts();
         drawTeleports();
         for (const e of enemies) drawEnt(e);
         if (player) drawEnt(player);
@@ -1669,13 +1714,13 @@
             if (K.Space || K.Escape) { K.Space = 0; K.Escape = 0; state = 'title'; }
             break;
           case 'waveAnnounce':
-            tickEmbers();
+            tickParts();
             tickTeleports();
             waveT--;
             if (waveT <= 0) state = 'playing';
             break;
           case 'gameOver':
-            tickEmbers();
+            tickParts();
             if (K.Space) { K.Space = 0; startGame(); }
             break;
           case 'playing':
@@ -1687,7 +1732,7 @@
       function startGame() {
         clearInput(); spawnSoundOff(); droneOn();
         state = 'waveAnnounce'; wave = 1; score = 0; lives = 3;
-        stains = []; bloods = []; gores = []; bones = []; teleports = []; eggs = []; lavaHands = [];
+        stains = []; bloods = []; gores = []; bones = []; fragments = []; teleports = []; eggs = []; lavaHands = [];
         mkPlayer(); spawnWave(); waveT = 130; sfx('wave');
       }
 
@@ -1716,7 +1761,10 @@
         if (invulnT > 0) invulnT--;
 
         for (const e of enemies) {
-          if (e.alive && !e.spawning) { aiUpdate(e); physEnt(e, false); }
+          if (e.alive && !e.spawning) {
+            if (e.restT > 0) e.restT--;
+            aiUpdate(e); physEnt(e, false);
+          }
         }
         collisions();
         if (state !== 'playing') return;
@@ -1738,8 +1786,9 @@
           case 'title':
           case 'help':
           case 'sound':
-          case 'gameOver':
             drawBG(); drawLava(); drawPlats(); drawScanlines(); break;
+          case 'gameOver':
+            drawBG(); drawLava(); drawPlats(); drawParts(); drawScanlines(); break;
           case 'waveAnnounce': drawWaveScreen(); break;
           case 'paused':
           case 'playing':
@@ -1771,7 +1820,8 @@
 
       function loop(t) {
         if (!lastT) lastT = t;
-        accumulator += Math.min(t - lastT, 100);
+        accumulator += Math.min(t - lastT, 100) *
+          (state === 'playing' || state === 'waveAnnounce' ? GAME_SPEED : 1);
         lastT = t;
         while (accumulator >= 1000 / 60) {
           update(); accumulator -= 1000 / 60;

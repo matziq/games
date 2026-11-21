@@ -2,9 +2,13 @@
 
 Blood Joust is a single-page arcade game about battling flying enemies in successive waves. Flap to gain height, then collide from above to win a joust. Defeated enemies drop eggs: collect them for bonus points before they hatch, and avoid the lava and other hazards.
 
+Platforms are solid on all sides. Enemies rest for one second after every five flaps, giving you an opportunity to gain height while they descend.
+
 ## Run
 
 Open `blood_joust.html` in a browser, or launch it from the repository menu at `../gamemenu.html`. No build step is required.
+
+Run the gameplay regression checks with `node --test blood_joust\tests\game.test.cjs` from the repository root.
 
 ## Controls
 
