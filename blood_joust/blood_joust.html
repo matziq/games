@@ -5,8 +5,7 @@
   <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
   <link rel="apple-touch-icon" href="../favicon.svg" />
   <meta charset="utf-8" />
-  <meta name="viewport"
-    content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Blood Joust</title>
   <style>
     * {
@@ -29,45 +28,80 @@
       width: 100vw;
       height: 100vh;
       height: 100dvh;
+      object-fit: contain;
       image-rendering: pixelated;
       image-rendering: crisp-edges;
+      touch-action: manipulation;
     }
 
-    position: fixed;
-    top: 10px;
-    left: 12px;
-    z-index: 9999;
-    text-decoration: none;
-    font-weight: 700;
-    font-size: 13px;
-    color: #c0392b;
-    transition: color .15s;
-    letter-spacing: .3px
+    button:focus-visible, input:focus-visible {
+      outline: 3px solid #ffdc70;
+      outline-offset: 3px;
     }
 
-    color: #e74c3c
+    .menu {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+      overflow: auto;
+      color: #fff;
+    }
+    .menu[hidden], .touch-controls[hidden], .pause-button[hidden] { display: none; }
+    .panel {
+      width: min(100%, 560px);
+      max-height: 100%;
+      overflow: auto;
+      padding: clamp(16px, 3vh, 28px);
+      border: 1px solid #a93a30;
+      border-radius: 12px;
+      background: rgba(15, 5, 9, .94);
+      text-align: center;
+      line-height: 1.45;
+    }
+    .panel h1, .panel h2 { color: #ff6860; margin-bottom: .35em; }
+    .panel p { margin: .55em 0; }
+    .panel ul { text-align: left; padding-left: 1.4em; }
+    .menu-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; }
+    .menu button, .pause-button {
+      min-height: 44px;
+      padding: 8px 16px;
+      border: 1px solid #e97165;
+      border-radius: 8px;
+      background: #651a1a;
+      color: white;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .menu button:hover, .pause-button:hover { background: #8e2924; }
+    .sound-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 12px 0; }
+    .sound-row input { width: min(55vw, 260px); }
+    .pause-button {
+      position: fixed;
+      z-index: 11;
+      top: max(50px, env(safe-area-inset-top));
+      right: max(10px, env(safe-area-inset-right));
     }
 
-    outline: 3px solid rgba(192, 57, 43, .5);
-    outline-offset: 2px
-    }
-
-    /* ── On-screen mobile controls ────────────────────────── */
     .touch-controls {
       display: none;
       position: fixed;
-      top: 0;
+      bottom: 0;
       left: 0;
       right: 0;
       z-index: 9000;
       pointer-events: none;
-      padding: max(14px, env(safe-area-inset-top, 14px)) 12px 0;
+      padding: 0 max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: flex-end;
     }
 
-    @media (pointer: coarse) {
-      .touch-controls {
+    @media (any-pointer: coarse) {
+      .touch-controls:not([hidden]) {
         display: flex;
       }
     }
@@ -92,7 +126,7 @@
       justify-content: center;
       user-select: none;
       -webkit-user-select: none;
-      touch-action: manipulation;
+      touch-action: none;
       backdrop-filter: blur(4px);
       -webkit-backdrop-filter: blur(4px);
     }
@@ -111,14 +145,67 @@
       letter-spacing: 1px;
       text-transform: uppercase;
     }
+    @media (max-height: 480px) {
+      .tc-btn { width: 56px; height: 56px; }
+      .tc-btn.tc-flap { width: 66px; height: 66px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .tc-btn { backdrop-filter: none; -webkit-backdrop-filter: none; }
+    }
   </style>
 </head>
 
 <body>
-  <canvas id="game"></canvas>
+  <canvas id="game" aria-label="Blood Joust game arena"></canvas>
+
+  <section class="menu" id="title-menu" aria-label="Main menu">
+    <div class="panel">
+      <h1>Blood Joust</h1>
+      <p>Only the highest shall survive.</p>
+      <p>Fly above your enemies to win each joust.</p>
+      <div class="menu-actions">
+        <button id="start" type="button">Start game</button>
+        <button id="help" type="button">How to play</button>
+        <button id="sound" type="button">Sound settings</button>
+      </div>
+      <p>Keyboard: A / D or arrow keys to move; Space / W to flap.</p>
+    </div>
+  </section>
+  <section class="menu" id="help-menu" aria-label="How to play" hidden>
+    <div class="panel">
+      <h2>How to play</h2>
+      <ul>
+        <li>Move with A / D or the arrow keys. Press Space / W to flap. On a touch screen, hold the arrows to move and tap or hold FLAP to fly; tapping the arena also flaps.</li>
+        <li>Collide with an enemy from above to win. Equal-height jousters bounce apart.</li>
+        <li>Collect dropped eggs for 250 points before they hatch. Clear all enemies and eggs to advance.</li>
+        <li>Avoid lava and escape the fiery hands by flapping. You have three lives.</li>
+        <li>Use Pause or Escape to pause. Sound settings are available from the main menu.</li>
+      </ul>
+      <div class="menu-actions"><button class="back" type="button">Back</button></div>
+    </div>
+  </section>
+  <section class="menu" id="sound-menu" aria-label="Sound settings" hidden>
+    <div class="panel">
+      <h2>Sound settings</h2>
+      <label class="sound-row" for="volume">Volume <input id="volume" type="range" min="0" max="100" step="10"><output id="volume-value"></output></label>
+      <div class="menu-actions">
+        <button id="sfx-toggle" type="button"></button>
+        <button id="music-toggle" type="button"></button>
+        <button class="back" type="button">Back</button>
+      </div>
+      <p>Keyboard: Left / Right adjust volume; F toggles effects; M toggles music; Escape returns.</p>
+    </div>
+  </section>
+  <section class="menu" id="paused-menu" aria-label="Game paused" hidden>
+    <div class="panel"><h2>Paused</h2><p>Release any held controls, then press them again after resuming.</p><div class="menu-actions"><button id="resume" type="button">Resume</button></div></div>
+  </section>
+  <section class="menu" id="game-over-menu" aria-label="Game over" hidden>
+    <div class="panel"><h2>Game over</h2><p id="result" aria-live="polite"></p><div class="menu-actions"><button id="restart" type="button">Play again</button><button id="main-menu" type="button">Main menu</button></div></div>
+  </section>
+  <button class="pause-button" id="pause" type="button" hidden>Pause</button>
 
   <!-- Mobile on-screen controls -->
-  <div class="touch-controls" id="touch-controls">
+  <div class="touch-controls" id="touch-controls" hidden>
     <div class="tc-group">
       <button class="tc-btn" id="tc-left" aria-label="Move left">◀</button>
       <button class="tc-btn" id="tc-right" aria-label="Move right">▶</button>
@@ -142,9 +229,43 @@
       let W, H;
       let plats = [];
       function resize() {
-        W = C.width = innerWidth; H = C.height = innerHeight;
+        const oldW = W, oldH = H, oldPlats = plats;
+        const ratio = innerWidth / innerHeight;
+        const newW = Math.round(ratio >= 1 ? Math.min(1440, Math.max(960, 640 * ratio)) : 720);
+        const newH = Math.round(ratio >= 1 ? 640 : Math.min(960, Math.max(800, 720 / ratio)));
+        if (newW === oldW && newH === oldH) return;
+        W = C.width = newW; H = C.height = newH;
         X.imageSmoothingEnabled = false;
         buildPlatforms();
+        if (oldW && oldH) {
+          for (const e of [player, ...enemies]) {
+            if (!e) continue;
+            e.x *= W / oldW;
+            e.y *= H / oldH;
+            if (e.ground && plats[e.gPlat]) e.y = plats[e.gPlat].y - e.h;
+          }
+          for (const egg of eggs) {
+            egg.x *= W / oldW;
+            egg.y *= H / oldH;
+            if (egg.landed && plats[egg.onPlat]) egg.y = plats[egg.onPlat].y - EGG_H;
+          }
+          for (const t of teleports) {
+            t.x = t.ent ? t.ent.x : t.x * W / oldW;
+            t.y = t.ent ? t.ent.y : t.y * H / oldH;
+          }
+          if (spawnPos) { spawnPos.x *= W / oldW; spawnPos.y *= H / oldH; }
+          for (const part of [...bloods, ...gores, ...bones, ...embers, ...lavaPx]) {
+            part.x *= W / oldW; part.y *= H / oldH;
+          }
+          for (const hand of lavaHands) {
+            hand.x *= W / oldW;
+            hand.reachY += H - oldH;
+          }
+          for (const stain of stains) {
+            if (oldPlats[stain.pi] && plats[stain.pi])
+              stain.rx *= plats[stain.pi].w / oldPlats[stain.pi].w;
+          }
+        }
       }
       addEventListener('resize', resize);
 
@@ -161,11 +282,19 @@
       const INVULN_T = 180;
 
       // ─── State ─────────────────────────────────────────────────────────
-      let state = 'title';
-      let score = 0, hiScore = +(localStorage.getItem('bjHi')) || 0;
+      let state = 'title', pausedFrom = null;
+      function readSetting(key) {
+        try { return localStorage.getItem(key); }
+        catch (error) { console.warn('Unable to read game settings:', error); return null; }
+      }
+      function writeSetting(key, value) {
+        try { localStorage.setItem(key, value); }
+        catch (error) { console.warn('Unable to save game settings:', error); }
+      }
+      let score = 0, hiScore = +readSetting('bjHi') || 0;
       let lives = 3, wave = 0, waveT = 0;
       let shakeT = 0, shakeI = 0, flashT = 0;
-      let frame = 0, dt = 1, lastT = 0;
+      let frame = 0, dt = 1, lastT = 0, accumulator = 0;
       let player = null, enemies = [], respawnT = 0, invulnT = 0;
 
       // Particles
@@ -183,78 +312,133 @@
 
       // ─── Input ─────────────────────────────────────────────────────────
       const K = {};
-      onkeydown = e => { K[e.code] = 1; if (e.code === 'Space') e.preventDefault(); };
+      let touchFlapHeld = false;
+      onkeydown = e => {
+        if (e.target instanceof HTMLInputElement && e.code !== 'Escape') return;
+        if (e.target instanceof HTMLButtonElement && ['Space', 'Enter'].includes(e.code)) return;
+        unlockAudio();
+        if (e.code === 'Escape' && (state === 'playing' || state === 'waveAnnounce')) {
+          e.preventDefault(); pauseGame(); return;
+        }
+        if (e.code === 'Escape' && state === 'paused') {
+          e.preventDefault(); resumeGame(); return;
+        }
+        K[e.code] = 1;
+        if (['Space', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+      };
       onkeyup = e => { K[e.code] = 0; };
 
       // ─── Touch Controls ────────────────────────────────────────────────
+      const clearTouchControls = [];
       function tcBind(id, code) {
         const el = document.getElementById(id);
-        if (!el) return;
-        el.addEventListener('touchstart', e => { e.preventDefault(); K[code] = 1; el.classList.add('pressed'); }, { passive: false });
-        el.addEventListener('touchend', e => { e.preventDefault(); K[code] = 0; el.classList.remove('pressed'); }, { passive: false });
-        el.addEventListener('touchcancel', () => { K[code] = 0; el.classList.remove('pressed'); });
+        const active = new Set();
+        clearTouchControls.push(() => active.clear());
+        const release = e => {
+          active.delete(e.pointerId);
+          if (!active.size) {
+            if (code === 'Space') touchFlapHeld = false; else K[code] = 0;
+            el.classList.remove('pressed');
+          }
+        };
+        el.addEventListener('pointerdown', e => {
+          e.preventDefault(); unlockAudio();
+          active.add(e.pointerId); el.setPointerCapture(e.pointerId);
+          if (code === 'Space') touchFlapHeld = true; else K[code] = 1;
+          el.classList.add('pressed');
+        });
+        el.addEventListener('pointerup', release);
+        el.addEventListener('pointercancel', release);
+        el.addEventListener('lostpointercapture', release);
       }
       tcBind('tc-left', 'ArrowLeft');
       tcBind('tc-right', 'ArrowRight');
-      // Flap button: set Space, game loop clears it each frame
-      {
-        const el = document.getElementById('tc-flap');
-        if (el) {
-          el.addEventListener('touchstart', e => {
-            e.preventDefault(); K.Space = 1; el.classList.add('pressed');
-          }, { passive: false });
-          el.addEventListener('touchend', e => { e.preventDefault(); el.classList.remove('pressed'); }, { passive: false });
-          el.addEventListener('touchcancel', () => el.classList.remove('pressed'));
+      tcBind('tc-flap', 'Space');
+      C.addEventListener('pointerdown', e => {
+        if (e.pointerType === 'touch' && state === 'playing') {
+          e.preventDefault(); unlockAudio(); K.Space = 1;
         }
+      });
+
+      function clearInput() {
+        for (const key of Object.keys(K)) K[key] = 0;
+        touchFlapHeld = false;
+        clearTouchControls.forEach(clear => clear());
+        document.querySelectorAll('.tc-btn').forEach(button => button.classList.remove('pressed'));
       }
-      // Tap anywhere on canvas to flap (during gameplay) or start/restart
-      C.addEventListener('touchstart', e => {
-        if (e.target.closest('.touch-controls')) return;
-        e.preventDefault();
-        if (state === 'help') { K.Space = 1; }
-        else if (state === 'sound') {
-          // Tap left/right half to adjust volume, or center to exit
-          const tx = e.touches[0].clientX;
-          if (tx < W * .33) { setVolume(masterVol - .1); }
-          else if (tx > W * .67) { setVolume(masterVol + .1); }
-          else { K.Space = 1; }
-        }
-        else if (state === 'title' || state === 'gameOver') {
-          const ty = e.touches[0].clientY;
-          const tx = e.touches[0].clientX;
-          if (state === 'title' && ty > H * .82) {
-            // Bottom area — help or sound
-            if (tx < W / 2) { K.KeyH = 1; }
-            else { K.KeyS = 1; }
-          } else {
-            K.Space = 1;
-          }
-        }
-        else if (state === 'playing') { K.Space = 1; }
-      }, { passive: false });
+      function pauseGame() {
+        if (state !== 'playing' && state !== 'waveAnnounce') return;
+        pausedFrom = state; state = 'paused'; clearInput(); droneOff(); spawnSoundOff();
+      }
+      function resumeGame() {
+        if (state !== 'paused') return;
+        unlockAudio(); state = pausedFrom; pausedFrom = null; lastT = 0; accumulator = 0; droneOn();
+      }
+      addEventListener('blur', pauseGame);
+      document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
+
+      document.getElementById('start').addEventListener('click', () => { unlockAudio(); startGame(); });
+      document.getElementById('help').addEventListener('click', () => { clearInput(); state = 'help'; });
+      document.getElementById('sound').addEventListener('click', () => { unlockAudio(); clearInput(); state = 'sound'; });
+      document.querySelectorAll('.back').forEach(button => button.addEventListener('click', () => { clearInput(); state = 'title'; }));
+      document.getElementById('pause').addEventListener('click', pauseGame);
+      document.getElementById('resume').addEventListener('click', resumeGame);
+      document.getElementById('restart').addEventListener('click', () => { unlockAudio(); startGame(); });
+      document.getElementById('main-menu').addEventListener('click', () => { clearInput(); state = 'title'; });
+      document.getElementById('volume').addEventListener('input', e => setVolume(Number(e.target.value) / 100));
+      document.getElementById('sfx-toggle').addEventListener('click', () => { sfxMuted = !sfxMuted; syncSoundUI(); if (!sfxMuted) sfx('eggPop'); });
+      document.getElementById('music-toggle').addEventListener('click', () => { musicMuted = !musicMuted; syncSoundUI(); });
 
       // ─── Audio ─────────────────────────────────────────────────────────
       let ac = null;
       let masterGain = null;
-      let masterVol = +(localStorage.getItem('bjVol') || 1);
+      let audioUnavailable = false;
+      const storedVolume = readSetting('bjVol');
+      let masterVol = storedVolume === null || !Number.isFinite(+storedVolume) ? 1 : Math.max(0, Math.min(1, +storedVolume));
       let sfxMuted = false;
       let musicMuted = false;
 
       function audio() {
-        if (!ac) {
-          ac = new (AudioContext || webkitAudioContext)();
-          masterGain = ac.createGain();
-          masterGain.gain.value = masterVol;
-          masterGain.connect(ac.destination);
+        if (!ac && !audioUnavailable) {
+          try {
+            const Audio = window.AudioContext || window.webkitAudioContext;
+            if (!Audio) { audioUnavailable = true; console.warn('Web Audio is not available.'); return null; }
+            ac = new Audio();
+            masterGain = ac.createGain();
+            masterGain.gain.value = masterVol;
+            masterGain.connect(ac.destination);
+          } catch (error) {
+            audioUnavailable = true;
+            console.warn('Unable to initialize audio:', error);
+            return null;
+          }
         }
         return ac;
+      }
+      function unlockAudio() {
+        try {
+          const a = audio();
+          if (a && a.state === 'suspended') a.resume().catch(error => console.warn('Unable to resume audio:', error));
+        } catch (error) { console.warn('Unable to initialize audio:', error); }
       }
       function getMaster() { audio(); return masterGain; }
       function setVolume(v) {
         masterVol = Math.round(Math.max(0, Math.min(1, v)) * 100) / 100;
-        localStorage.setItem('bjVol', masterVol);
+        writeSetting('bjVol', masterVol);
         if (masterGain) masterGain.gain.value = masterVol;
+        syncSoundUI();
       }
+      function syncSoundUI() {
+        document.getElementById('volume').value = Math.round(masterVol * 100);
+        document.getElementById('volume-value').textContent = Math.round(masterVol * 100) + '%';
+        const effects = document.getElementById('sfx-toggle');
+        const music = document.getElementById('music-toggle');
+        effects.textContent = 'Sound effects: ' + (sfxMuted ? 'Off' : 'On');
+        effects.setAttribute('aria-pressed', String(!sfxMuted));
+        music.textContent = 'Music: ' + (musicMuted ? 'Off' : 'On');
+        music.setAttribute('aria-pressed', String(!musicMuted));
+      }
+      syncSoundUI();
 
       function noise(len, decay, vol, mod) {
         const a = audio(), g = a.createGain(), b = a.createBuffer(1, len, a.sampleRate), d = b.getChannelData(0);
@@ -272,14 +456,15 @@
       function sfx(id) {
         if (sfxMuted) return;
         try {
-          const a = audio(), n = a.currentTime, g = a.createGain(); g.connect(getMaster());
+          const a = audio(); if (!a) return;
+          const n = a.currentTime, g = a.createGain(); g.connect(getMaster());
           switch (id) {
             case 'flap': noise(2400, 2, .12); break;
             case 'kill': {
               noise(9000, 4, .5, 80);
               const o = a.createOscillator(); o.type = 'sine';
               o.frequency.setValueAtTime(150, n); o.frequency.exponentialRampToValueAtTime(30, n + .2);
-              const g2 = a.createGain(); g2.connect(a.destination);
+              const g2 = a.createGain(); g2.connect(getMaster());
               g2.gain.setValueAtTime(.3, n); g2.gain.exponentialRampToValueAtTime(.001, n + .25);
               o.connect(g2); o.start(n); o.stop(n + .3); break;
             }
@@ -314,7 +499,7 @@
               o.connect(g); o.start(n); o.stop(n + .15); break;
             }
           }
-        } catch (e) { }
+        } catch (e) { console.warn('Unable to play sound effect:', e); }
       }
 
       // ─── Teleport Spawn Sound ──────────────────────────────────────────
@@ -325,6 +510,7 @@
         if (spawnSound) return;
         try {
           const a = audio();
+          if (!a || sfxMuted) return;
           const g = a.createGain(); g.gain.value = .12; g.connect(getMaster());
           // Warbling electronic tone
           const o1 = a.createOscillator(); o1.type = 'sine'; o1.frequency.value = 440; o1.connect(g); o1.start();
@@ -334,7 +520,7 @@
           const lfoG = a.createGain(); lfoG.gain.value = 30;
           lfo.connect(lfoG); lfoG.connect(o1.frequency); lfoG.connect(o2.frequency); lfo.start();
           spawnSound = { g, o1, o2, lfo };
-        } catch (e) { }
+        } catch (e) { console.warn('Unable to play spawn sound:', e); }
       }
 
       function spawnSoundOff() {
@@ -348,7 +534,8 @@
       let drone = null;
       function droneOn() {
         if (drone || musicMuted) return;
-        const a = audio(), g = a.createGain(); g.gain.value = .032; g.connect(getMaster());
+        const a = audio(); if (!a) return;
+        const g = a.createGain(); g.gain.value = .032; g.connect(getMaster());
         const o1 = a.createOscillator(); o1.type = 'sawtooth'; o1.frequency.value = 38; o1.connect(g); o1.start();
         const o2 = a.createOscillator(); o2.type = 'sine'; o2.frequency.value = 57; o2.connect(g); o2.start();
         drone = { g, o1, o2 };
@@ -551,6 +738,7 @@
       function tickTeleports() {
         for (let i = teleports.length - 1; i >= 0; i--) {
           const t = teleports[i];
+          if (t.ent && t.ent.spawnDelay > 0) { t.ent.spawnDelay--; continue; }
           t.life--;
           if (t.life <= 0) {
             // Reveal entity
@@ -562,6 +750,7 @@
 
       function drawTeleports() {
         for (const t of teleports) {
+          if (t.ent && t.ent.spawnDelay > 0) continue;
           const prog = 1 - t.life / t.maxLife; // 0→1
           const cx = t.x + t.w / 2;
           const cy = t.y + t.h / 2;
@@ -842,7 +1031,7 @@
         spawnSoundOff(); spawnPos = null;
         if (lives <= 0) {
           state = 'gameOver'; droneOff();
-          if (score > hiScore) { hiScore = score; localStorage.setItem('bjHi', hiScore); saveRemote(); }
+          if (score > hiScore) { hiScore = score; writeSetting('bjHi', hiScore); saveRemote(); }
         } else {
           respawnT = RESPAWN_T;
         }
@@ -939,10 +1128,11 @@
             player.alive = false;
             killFX(pcx, pcy); sfx('die');
             loseLife();
+            break;
           } else {
             // Tie — both bounce
             const sign = Math.sign(pcx - ecx) || 1;
-            player.vx = -sign * 4; e.vx = sign * 4;
+            player.vx = sign * 4; e.vx = -sign * 4;
             player.vy = -3.5; e.vy = -3.5;
           }
         }
@@ -1258,14 +1448,18 @@
       // ─── Screen FX ─────────────────────────────────────────────────────
       function applyShake() {
         if (shakeT > 0) {
-          X.translate((Math.random() - .5) * shakeI, (Math.random() - .5) * shakeI);
+          if (!matchMedia('(prefers-reduced-motion: reduce)').matches)
+            X.translate((Math.random() - .5) * shakeI, (Math.random() - .5) * shakeI);
           shakeT--; shakeI *= .84;
         }
       }
       function drawFlash() {
         if (flashT > 0) {
-          X.fillStyle = `rgba(170,15,15,${flashT * .055})`;
-          X.fillRect(-20, -20, W + 40, H + 40); flashT--;
+          if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            X.fillStyle = `rgba(170,15,15,${flashT * .055})`;
+            X.fillRect(-20, -20, W + 40, H + 40);
+          }
+          flashT--;
         }
       }
 
@@ -1470,8 +1664,8 @@
             tickEmbers();
             if (K.ArrowLeft) { K.ArrowLeft = 0; setVolume(masterVol - .1); }
             if (K.ArrowRight) { K.ArrowRight = 0; setVolume(masterVol + .1); }
-            if (K.KeyF) { K.KeyF = 0; sfxMuted = !sfxMuted; }
-            if (K.KeyM) { K.KeyM = 0; musicMuted = !musicMuted; if (musicMuted) droneOff(); }
+            if (K.KeyF) { K.KeyF = 0; sfxMuted = !sfxMuted; syncSoundUI(); }
+            if (K.KeyM) { K.KeyM = 0; musicMuted = !musicMuted; if (musicMuted) droneOff(); syncSoundUI(); }
             if (K.Space || K.Escape) { K.Space = 0; K.Escape = 0; state = 'title'; }
             break;
           case 'waveAnnounce':
@@ -1482,7 +1676,7 @@
             break;
           case 'gameOver':
             tickEmbers();
-            if (K.Space) { K.Space = 0; state = 'title'; }
+            if (K.Space) { K.Space = 0; startGame(); }
             break;
           case 'playing':
             updatePlaying();
@@ -1491,7 +1685,7 @@
       }
 
       function startGame() {
-        audio(); droneOn();
+        clearInput(); spawnSoundOff(); droneOn();
         state = 'waveAnnounce'; wave = 1; score = 0; lives = 3;
         stains = []; bloods = []; gores = []; bones = []; teleports = []; eggs = []; lavaHands = [];
         mkPlayer(); spawnWave(); waveT = 130; sfx('wave');
@@ -1502,8 +1696,9 @@
           if (K.KeyA || K.ArrowLeft) { player.vx -= HACC; player.left = true; }
           if (K.KeyD || K.ArrowRight) { player.vx += HACC; player.left = false; }
           if (Math.abs(player.vx) > MAXVX) player.vx = Math.sign(player.vx) * MAXVX;
-          if (K.Space || K.KeyW) { doFlap(player); K.Space = 0; K.KeyW = 0; }
+          if (K.Space || K.KeyW || touchFlapHeld) { doFlap(player); K.Space = 0; K.KeyW = 0; }
           physEnt(player, true);
+          if (state !== 'playing') return;
 
           // Stop spawn sound when player moves away from spawn point
           if (spawnPos && spawnSound) {
@@ -1524,13 +1719,14 @@
           if (e.alive && !e.spawning) { aiUpdate(e); physEnt(e, false); }
         }
         collisions();
+        if (state !== 'playing') return;
         tickParts();
         tickTeleports();
         tickEggs();
         tickLavaHands();
 
         // Wave complete when all enemies dead AND no eggs remain
-        if (enemies.every(e => !e.alive) && eggs.length === 0) {
+        if (state === 'playing' && enemies.every(e => !e.alive) && eggs.length === 0) {
           wave++; state = 'waveAnnounce'; waveT = 130; spawnWave(); sfx('wave');
           spawnSoundOff(); spawnPos = null;
         }
@@ -1539,13 +1735,16 @@
       function draw() {
         X.save();
         switch (state) {
-          case 'title': drawTitle(); break;
-          case 'help': drawHelp(); break;
-          case 'sound': drawSoundMenu(); break;
-          case 'gameOver': drawGameOver(); break;
+          case 'title':
+          case 'help':
+          case 'sound':
+          case 'gameOver':
+            drawBG(); drawLava(); drawPlats(); drawScanlines(); break;
           case 'waveAnnounce': drawWaveScreen(); break;
+          case 'paused':
           case 'playing':
-            applyShake(); drawBG(); drawLava(); drawLavaHands(); drawPlats();
+            if (state === 'playing') applyShake();
+            drawBG(); drawLava(); drawLavaHands(); drawPlats();
             drawTeleports(); drawEggs();
             for (const e of enemies) drawEnt(e);
             if (player) drawEnt(player);
@@ -1555,11 +1754,29 @@
         X.restore();
       }
 
+      let shownState = null;
+      function syncUI() {
+        if (shownState === state) return;
+        shownState = state;
+        const menus = { title: 'title-menu', help: 'help-menu', sound: 'sound-menu', paused: 'paused-menu', gameOver: 'game-over-menu' };
+        for (const id of Object.values(menus)) document.getElementById(id).hidden = id !== menus[state];
+        const active = state === 'playing' || state === 'waveAnnounce';
+        document.getElementById('touch-controls').hidden = !active;
+        document.getElementById('pause').hidden = !active;
+        if (state === 'gameOver') document.getElementById('result').textContent =
+          `Score: ${score.toLocaleString()} | High score: ${hiScore.toLocaleString()} | Wave: ${wave}`;
+        if (menus[state]) document.querySelector(`#${menus[state]} button`).focus({ preventScroll: true });
+        else if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+      }
+
       function loop(t) {
         if (!lastT) lastT = t;
-        dt = Math.min((t - lastT) / 16.67, 2.5);
+        accumulator += Math.min(t - lastT, 100);
         lastT = t;
-        update(); draw();
+        while (accumulator >= 1000 / 60) {
+          update(); accumulator -= 1000 / 60;
+        }
+        syncUI(); draw();
         requestAnimationFrame(loop);
       }
       requestAnimationFrame(loop);
