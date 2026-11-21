@@ -107,24 +107,34 @@ FORM: Brief-pinned Apple II chamber grammar; no randomized concept or copied tit
       h2 { font-size: 20px; }
       .end-text { font-size: 12px; margin-bottom: 10px; }
     }
-    @media (max-height: 500px) and (min-width: 600px) and (max-width: 1000px) {
-      .cabinet { width: calc(100% - 24px); margin: 8px auto; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 8px 12px; }
+    @media (orientation: landscape) and (pointer: coarse), (orientation: landscape) and (max-width: 760px) {
+      .cabinet {
+        width: auto;
+        margin: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+        display: grid;
+        grid-template-columns: 152px minmax(0, 1fr) 100px;
+        gap: 6px;
+      }
       .toolbar { grid-column: 1 / -1; margin: 0; }
       .brand span { display: none; }
       .tools button { min-height: 44px; }
-      .screen { grid-column: 1; grid-row: 2; align-self: start; }
-      .touch { display: grid; grid-column: 2; grid-row: 2; margin: 0; align-self: center; grid-template-columns: 140px minmax(0, 1fr); gap: 6px; }
+      .screen { grid-column: 2; grid-row: 2; align-self: center; justify-self: center; width: min(100%, max(0px, calc(175dvh - 228px - env(safe-area-inset-top) - env(safe-area-inset-bottom)))); }
+      .touch { display: contents; }
+      .dpad { grid-column: 1; grid-row: 2; align-self: center; }
+      .touch-actions { grid-column: 3; grid-row: 2; align-self: center; grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .readout { grid-column: 1 / -1; padding: 4px 0; min-height: 30px; }
       .mobile-status { display: block; grid-column: 1 / -1; color: var(--jade); font-size: 12px; margin: 0; }
       .key-strip, .footer, #objective { display: none; }
-      .screen:has(#setup:not([hidden])) { grid-column: 1 / -1; }
+      .screen:has(#setup:not([hidden])) { grid-column: 1 / -1; width: 100%; }
       .screen:has(#setup:not([hidden])) #game { display: none; }
-      .screen:has(#setup:not([hidden])) .panel { position: relative; padding: 16px; }
+      .screen:has(#setup:not([hidden])) .panel { position: relative; min-height: 0; padding: 12px; }
       .cabinet:has(#setup:not([hidden])) .touch { display: none; }
-      h1 { font-size: 48px; }
+      h1 { font-size: clamp(32px, 8vh, 48px); }
       .title-rule { margin: 10px 0; }
       .mission { margin-bottom: 12px; }
-      #ending, #paused { padding: 10px; }
+      .small { margin-top: 10px; }
+      .setup-actions { margin-top: 10px; }
+      #ending, #paused { position: absolute; min-height: 0; padding: 8px; align-content: safe center; }
       h2 { font-size: 20px; }
       .end-text { font-size: 12px; margin-bottom: 8px; }
     }

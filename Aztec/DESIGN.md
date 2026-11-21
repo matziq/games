@@ -138,9 +138,10 @@ supports the smaller canvas. Setup becomes an in-flow panel and hides the
 preview chamber so its form stays legible.
 
 Up to 420px, the D-pad occupies 140px and action controls take the remaining
-width; zero-minimum D-pad tracks prevent label-driven overlap. At heights up to
-500px and widths 600–1000px, the game and a 300px control column sit side by side,
-with status below; nonessential footer and keyboard hints disappear.
+width; zero-minimum D-pad tracks prevent label-driven overlap. In touch or narrow
+landscape layouts, the game sits between the direction and action groups, with
+status below and safe-area insets around the cabinet; nonessential footer and
+keyboard hints disappear.
 
 Spacing uses compact 4–14px control gaps and larger 20–24px panel separations.
 These are observed component values, not an invented global spacing scale.

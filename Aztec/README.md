@@ -110,6 +110,9 @@ restore keyboard play if needed. Touch controls use held movement with either
 keyboard style. Down ducks and attempts a downward climb; STAIR selects the
 nearest endpoint. Moving and jumping support simultaneous touches. STOP cancels
 held and command movement.
+In landscape, the playfield sits between the direction and action controls, with
+safe-area insets honored on notched devices. Hold Space or Enter on a focused
+direction button to move or duck; release it to stop.
 
 Help, map, pause, setup, and focus loss stop the simulation and reward timer.
 Closing help/map preserves the previous pause state. Sound starts off and can be

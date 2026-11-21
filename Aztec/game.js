@@ -450,6 +450,22 @@
     button.addEventListener("click", event => {
       if (event.detail === 0 && button.dataset.action) playAction(button.dataset.action);
     });
+    const keySource = `control:${button.dataset.hold}`;
+    if (button.dataset.hold) {
+      button.addEventListener("keydown", event => {
+        if (event.key !== " " && event.key !== "Enter") return;
+        if (!state || state.paused || state.status !== "playing" || !$("setup").hidden || $("help").open || $("map").open) return;
+        event.preventDefault();
+        touchUsed = true;
+        pointers.set(keySource, button.dataset.hold);
+        if (button.dataset.action && !event.repeat) playAction(button.dataset.action);
+      });
+      const releaseKey = () => pointers.delete(keySource);
+      button.addEventListener("keyup", event => {
+        if (event.key === " " || event.key === "Enter") { event.preventDefault(); releaseKey(); }
+      });
+      button.addEventListener("blur", releaseKey);
+    }
   });
   window.addEventListener("keydown", onKey);
   window.addEventListener("keyup", event => held.delete(event.key));
