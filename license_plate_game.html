@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1e3a5f">
+<title>50 States License Plate Game</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='7' width='28' height='18' rx='4' fill='%23ffc83d'/%3E%3Cpath d='M7 13h18M9 19h14' stroke='%231e3a5f' stroke-width='3'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #0f1b2d;
+    --panel: #1e3a5f;
+    --accent: #ffc83d;
+    --green: #22c55e;
+    --text: #f5f7fa;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+
+  header {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--panel); padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.4);
+  }
+  header h1 { font-size: 1.1rem; margin: 0; letter-spacing: .5px; line-height: 1.2; }
+  header h1 small { display: block; font-weight: 400; font-size: .75rem; opacity: .8; }
+  .counter {
+    background: var(--accent); color: #1a1a1a; font-weight: 800;
+    font-size: 1.25rem; padding: 8px 14px; border-radius: 999px; min-width: 90px; text-align: center;
+    transition: transform .15s;
+  }
+  .counter.bump { transform: scale(1.18); }
+  .progress { height: 6px; background: #0b1424; }
+  .progress > div { height: 100%; width: 0; background: var(--green); transition: width .3s; }
+
+  .toolbar { display: flex; gap: 8px; padding: 10px 16px; align-items: center; flex-wrap: wrap; }
+  .toolbar input {
+    flex: 1; min-width: 140px; padding: 10px 12px; border-radius: 8px; border: none;
+    font-size: 1rem; background: #243b5c; color: var(--text);
+  }
+  .toolbar input::placeholder { color: #9fb3cc; }
+  .toolbar button {
+    padding: 10px 14px; border-radius: 8px; border: none; font-size: .9rem; font-weight: 600;
+    background: #2f4f7a; color: var(--text); cursor: pointer;
+  }
+  .toolbar button.danger { background: #7a2f2f; }
+  .toolbar a { color: var(--accent); padding: 10px 0; }
+  .save-status { padding: 0 16px 8px; margin: 0; font-size: .85rem; color: #c4d4e8; }
+  .save-status.warning { color: var(--accent); }
+
+  .grid {
+    display: grid; gap: 12px; padding: 8px 16px 40px;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+  @media (min-width: 600px) { .grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); } }
+
+  /* ---- License plate ---- */
+  .plate {
+    position: relative; aspect-ratio: 2 / 1; border-radius: 10px; cursor: pointer;
+    border: 3px solid rgba(255,255,255,.85);
+    box-shadow: inset 0 0 0 2px rgba(0,0,0,.25), 0 4px 10px rgba(0,0,0,.45);
+    overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;
+    padding: 5% 6%; text-align: center; transition: transform .1s, filter .3s;
+    color: var(--plate-fg, #111);
+    background: var(--plate-bg, #fff);
+  }
+  .plate:active { transform: scale(.96); }
+  .plate .bolt {
+    position: absolute; width: 6%; aspect-ratio: 1; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ddd, #555); top: 6%;
+  }
+  .plate .bolt.l { left: 6%; } .plate .bolt.r { right: 6%; }
+  .plate .state {
+    font-size: clamp(.6rem, 2.9vw, .85rem); font-weight: 800; text-transform: uppercase;
+    letter-spacing: .12em; line-height: 1.1;
+  }
+  .plate .number {
+    font-family: "Courier New", Courier, monospace; font-weight: 700;
+    font-size: clamp(1.2rem, 6.5vw, 2rem); letter-spacing: .08em; line-height: 1;
+    text-shadow: 0 1px 0 rgba(255,255,255,.25);
+  }
+  .plate .slogan {
+    font-size: clamp(.5rem, 2.3vw, .7rem); font-style: italic; font-weight: 600; opacity: .9;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* Found state */
+  .plate.found { filter: saturate(.55) brightness(.85); }
+  .plate .check {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(34,197,94,.28); opacity: 0; transform: scale(.4); transition: all .25s cubic-bezier(.2,1.4,.5,1);
+    pointer-events: none;
+  }
+  .plate.found .check { opacity: 1; transform: scale(1); }
+  .plate .check svg { width: 55%; height: 55%; filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)); }
+
+  .hidden { display: none !important; }
+
+  /* Celebration overlay */
+  .celebrate {
+    position: fixed; inset: 0; background: rgba(15,27,45,.94); z-index: 100;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 30px; animation: fadeIn .4s;
+  }
+  @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+  .celebrate h2 { font-size: 2.2rem; margin: 0 0 8px; color: var(--accent); }
+  .celebrate p { font-size: 1.1rem; margin: 0 0 24px; opacity: .9; }
+  .celebrate button {
+    padding: 14px 28px; font-size: 1.1rem; border-radius: 999px; border: none;
+    background: var(--green); color: #fff; font-weight: 700; cursor: pointer;
+  }
+  .confetti { position: fixed; top: -10px; width: 10px; height: 16px; z-index: 101; pointer-events: none;
+    animation: fall linear forwards; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(720deg); opacity: .8; } }
+
+  footer { text-align: center; font-size: .75rem; opacity: .6; padding: 0 16px 24px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>License Plate Game<small>Tap a plate when you spot it</small></h1>
+  <div class="counter" id="counter">0 / 50</div>
+</header>
+<div class="progress"><div id="bar"></div></div>
+
+<div class="toolbar">
+  <a href="./index.html">Games menu</a>
+  <input type="search" id="search" placeholder="Find a state..." autocomplete="off">
+  <button id="toggleFound">Hide found</button>
+  <button id="reset" class="danger">Reset</button>
+</div>
+<p id="saveStatus" class="save-status" role="status" aria-live="polite"></p>
+
+<main class="grid" id="grid"></main>
+
+<footer>Continue in the same browser on this device. Clearing site data clears saved progress; private browsing may not retain it.</footer>
+
+<script>
+  // name, slogan, background, foreground
+  const STATES = [
+    ["Alabama","Sweet Home Alabama","linear-gradient(#fff, #e8eef9)","#9b1c1c"],
+    ["Alaska","The Last Frontier","linear-gradient(#ffd54a, #f4b400)","#0b2a6b"],
+    ["Arizona","Grand Canyon State","linear-gradient(#5a2d82 0%, #c0392b 55%, #f39c12 100%)","#fff"],
+    ["Arkansas","The Natural State","linear-gradient(#fff, #e3f0d8)","#1d4d2b"],
+    ["California","California","linear-gradient(#fff, #f3f3f3)","#1f3fbf"],
+    ["Colorado","Colorado","linear-gradient(#1f7a3a 0%, #1f7a3a 45%, #fff 45%)","#fff"],
+    ["Connecticut","Constitution State","linear-gradient(#bfe0ff, #fff)","#0a2d6b"],
+    ["Delaware","The First State","linear-gradient(#0b2a6b, #123a8a)","#ffd54a"],
+    ["Florida","Sunshine State","linear-gradient(#fff, #e8fbe8)","#0e6b2e"],
+    ["Georgia","Peach State","linear-gradient(#ffe0b5, #ffb366)","#222"],
+    ["Hawaii","Aloha State","linear-gradient(#fff 0%, #fff 70%, #ff6a9a 100%)","#333"],
+    ["Idaho","Famous Potatoes","linear-gradient(#cfe9ff, #fff)","#b11c1c"],
+    ["Illinois","Land of Lincoln","linear-gradient(#fff, #dde6ff)","#1a3e8f"],
+    ["Indiana","Crossroads of America","linear-gradient(#2a5caa, #5aa0e6)","#fff"],
+    ["Iowa","Iowa","linear-gradient(#1b3a6a, #0f2444)","#fff"],
+    ["Kansas","Kansas","linear-gradient(#5d8fd6 0%, #cde3ff 60%, #e8d08a 100%)","#0b2a6b"],
+    ["Kentucky","Unbridled Spirit","linear-gradient(#fff, #eef4ff)","#0b2a6b"],
+    ["Louisiana","Sportsman's Paradise","linear-gradient(#fff, #f1f1f1)","#0b3d91"],
+    ["Maine","Vacationland","linear-gradient(#fff, #e9f3e9)","#0b4d2e"],
+    ["Maryland","Maryland","linear-gradient(#fff, #f5f5f5)","#111"],
+    ["Massachusetts","The Spirit of America","linear-gradient(#fff, #f3f3f3)","#b11c1c"],
+    ["Michigan","Great Lakes","linear-gradient(#fff, #eef4ff)","#0b3d91"],
+    ["Minnesota","10,000 Lakes","linear-gradient(#cfeeff, #fff)","#0b3d91"],
+    ["Mississippi","Mississippi","linear-gradient(#fff, #f3f3f3)","#0b2a6b"],
+    ["Missouri","Show-Me State","linear-gradient(#fff, #eef)","#0b2a6b"],
+    ["Montana","Big Sky Country","linear-gradient(#1a4b8f 0%, #cfe6ff 70%, #fff 100%)","#0b2a6b"],
+    ["Nebraska","Nebraska","linear-gradient(#fff, #fff8e1)","#b11c1c"],
+    ["Nevada","The Silver State","linear-gradient(#cfcfcf, #8a8f98)","#0b2a6b"],
+    ["New Hampshire","Live Free or Die","linear-gradient(#fff, #f3f3f3)","#0b4d2e"],
+    ["New Jersey","Garden State","linear-gradient(#fff3c4, #ffe08a)","#111"],
+    ["New Mexico","Land of Enchantment","linear-gradient(#ffd54a, #f4b400)","#b11c1c"],
+    ["New York","Empire State","linear-gradient(#ffd54a, #f4b400)","#0b2a6b"],
+    ["North Carolina","First in Flight","linear-gradient(#fff, #f1f1f1)","#b11c1c"],
+    ["North Dakota","Peace Garden State","linear-gradient(#cfe9ff, #fff)","#0b2a6b"],
+    ["Ohio","Ohio","linear-gradient(#fff, #e8f2ff)","#0b2a6b"],
+    ["Oklahoma","Oklahoma","linear-gradient(#fff, #f3f3f3)","#0b2a6b"],
+    ["Oregon","Pacific Wonderland","linear-gradient(#cfe9ff 0%, #fff 60%, #a7d49b 100%)","#0b4d2e"],
+    ["Pennsylvania","Pennsylvania","linear-gradient(#0b2a6b 0%, #0b2a6b 30%, #fff 30%, #fff 70%, #f4b400 70%)","#111"],
+    ["Rhode Island","Ocean State","linear-gradient(#fff 0%, #fff 50%, #cfe9ff 100%)","#0b2a6b"],
+    ["South Carolina","South Carolina","linear-gradient(#fff, #f1f1f1)","#0b2a6b"],
+    ["South Dakota","Great Faces. Great Places.","linear-gradient(#cfe9ff 0%, #fff 70%, #d9d9d9 100%)","#0b2a6b"],
+    ["Tennessee","Volunteer State","linear-gradient(#cfe9ff 0%, #fff 55%, #bfe3b4 100%)","#1a4b8f"],
+    ["Texas","The Lone Star State","linear-gradient(#fff, #f3f3f3)","#111"],
+    ["Utah","Life Elevated","linear-gradient(#fff 0%, #fff 55%, #e06a3a 100%)","#0b2a6b"],
+    ["Vermont","Green Mountain State","linear-gradient(#1f7a3a, #15592a)","#fff"],
+    ["Virginia","Virginia is for Lovers","linear-gradient(#fff, #f3f3f3)","#0b2a6b"],
+    ["Washington","Evergreen State","linear-gradient(#fff 0%, #fff 60%, #bfe3b4 100%)","#0b2a6b"],
+    ["West Virginia","Wild, Wonderful","linear-gradient(#ffd54a, #f4b400)","#0b2a6b"],
+    ["Wisconsin","America's Dairyland","linear-gradient(#fff, #fff7d6)","#b11c1c"],
+    ["Wyoming","Wyoming","linear-gradient(#fff 0%, #e6f0fb 60%, #d9c7a0 100%)","#0b2a6b"]
+  ];
+
+  const STORAGE_KEY = "plateGame.found.v1";
+  const TOTAL = STATES.length;
+  const stateNames = new Set(STATES.map(([name]) => name));
+  const saveStatus = document.getElementById("saveStatus");
+  let found = loadProgress();
+  let hideFound = false;
+
+  function showSaveStatus(message, warning = false) {
+    saveStatus.textContent = message;
+    saveStatus.classList.toggle("warning", warning);
+  }
+
+  function loadProgress() {
+    let raw;
+    try {
+      raw = localStorage.getItem(STORAGE_KEY);
+    } catch (error) {
+      console.warn("License Plate Game could not read saved progress.", error);
+      showSaveStatus("Storage is unavailable. You can play, but progress may not survive leaving this page.", true);
+      return new Set();
+    }
+    if (raw === null) {
+      showSaveStatus("Plates are saved automatically when you mark them.");
+      return new Set();
+    }
+    try {
+      const saved = JSON.parse(raw);
+      if (!Array.isArray(saved)) throw new TypeError("Saved progress must be an array.");
+      const valid = saved.filter(name => stateNames.has(name));
+      const restored = new Set(valid);
+      if (valid.length !== saved.length) {
+        showSaveStatus("Recovered valid saved plates; unrecognized entries were ignored.", true);
+      } else {
+        showSaveStatus(`Restored ${restored.size} saved plates from this browser.`);
+      }
+      return restored;
+    } catch (error) {
+      console.warn("License Plate Game could not decode saved progress.", error);
+      showSaveStatus("Saved progress could not be read. Mark a plate or reset to replace the damaged save.", true);
+      return new Set();
+    }
+  }
+
+  function saveProgress() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([...found]));
+      showSaveStatus(`Saved ${found.size} plates in this browser.`);
+    } catch (error) {
+      console.warn("License Plate Game could not save progress.", error);
+      showSaveStatus("Progress could not be saved. You can keep playing, but changes (including reset) may be lost when you leave.", true);
+    }
+  }
+
+  function resetProgress() {
+    found.clear();
+    saveProgress();
+    build();
+  }
+
+  // Deterministic pseudo plate number per state
+  function plateNumber(name) {
+    let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+    const L = "ABCDEFGHJKLMNPRSTUVWXYZ";
+    const letters = L[h % 23] + L[(h >> 5) % 23] + L[(h >> 10) % 23];
+    const digits = String(100 + (h >> 15) % 900);
+    return letters + " " + digits;
+  }
+
+  const CHECK_SVG = `<svg viewBox="0 0 100 100" aria-hidden="true">
+    <circle cx="50" cy="50" r="46" fill="#22c55e" stroke="#fff" stroke-width="5"/>
+    <path d="M28 52 L44 68 L74 36" fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+
+  const grid = document.getElementById("grid");
+  const counter = document.getElementById("counter");
+  const bar = document.getElementById("bar");
+
+  function build() {
+    grid.innerHTML = "";
+    STATES.forEach(([name, slogan, bg, fg]) => {
+      const el = document.createElement("div");
+      el.className = "plate" + (found.has(name) ? " found" : "");
+      el.dataset.state = name;
+      el.setAttribute("role", "button");
+      el.tabIndex = 0;
+      el.setAttribute("aria-pressed", found.has(name));
+      el.setAttribute("aria-label", name + (found.has(name) ? " (found)" : ""));
+      el.style.setProperty("--plate-bg", bg);
+      el.style.setProperty("--plate-fg", fg);
+      el.innerHTML = `
+        <span class="bolt l"></span><span class="bolt r"></span>
+        <div class="state">${name}</div>
+        <div class="number">${plateNumber(name)}</div>
+        <div class="slogan">${slogan}</div>
+        <div class="check">${CHECK_SVG}</div>`;
+      grid.appendChild(el);
+    });
+    applyFilters();
+    updateCounter(false);
+  }
+
+  function toggle(name, el) {
+    if (found.has(name)) found.delete(name); else found.add(name);
+    const isFound = found.has(name);
+    el.classList.toggle("found", isFound);
+    el.setAttribute("aria-pressed", isFound);
+    el.setAttribute("aria-label", name + (isFound ? " (found)" : ""));
+    saveProgress();
+    updateCounter(true);
+    if (hideFound) applyFilters();
+    if (found.size === TOTAL) celebrate();
+    if (navigator.vibrate) navigator.vibrate(isFound ? 25 : 10);
+  }
+
+  function updateCounter(bump) {
+    counter.textContent = `${found.size} / ${TOTAL}`;
+    bar.style.width = (found.size / TOTAL * 100) + "%";
+    if (bump) { counter.classList.add("bump"); setTimeout(() => counter.classList.remove("bump"), 150); }
+  }
+
+  function applyFilters() {
+    const q = document.getElementById("search").value.trim().toLowerCase();
+    grid.querySelectorAll(".plate").forEach(el => {
+      const name = el.dataset.state;
+      const matches = !q || name.toLowerCase().includes(q);
+      const hidden = !matches || (hideFound && found.has(name));
+      el.classList.toggle("hidden", hidden);
+    });
+  }
+
+  // Single pointer handler covers touch, mouse, and pen without double-fire
+  grid.addEventListener("pointerup", e => {
+    const el = e.target.closest(".plate");
+    if (el) toggle(el.dataset.state, el);
+  });
+  grid.addEventListener("keydown", e => {
+    const el = e.target.closest(".plate");
+    if (el && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); toggle(el.dataset.state, el); }
+  });
+
+  document.getElementById("search").addEventListener("input", applyFilters);
+  document.getElementById("toggleFound").addEventListener("click", e => {
+    hideFound = !hideFound;
+    e.target.textContent = hideFound ? "Show found" : "Hide found";
+    applyFilters();
+  });
+  document.getElementById("reset").addEventListener("click", () => {
+    if (found.size === 0 || confirm("Start a new trip? This clears all " + found.size + " found plates.")) {
+      resetProgress();
+    }
+  });
+
+  function celebrate() {
+    const o = document.createElement("div");
+    o.className = "celebrate";
+    o.innerHTML = `<h2>All 50 Found!</h2>
+      <p>You spotted every state in the Union. Road trip legend.</p>
+      <button id="again">Start a New Trip</button>`;
+    document.body.appendChild(o);
+    document.getElementById("again").addEventListener("click", () => {
+      o.remove(); resetProgress();
+    });
+    const colors = ["#ffc83d","#22c55e","#3b82f6","#ef4444","#a855f7","#fff"];
+    for (let i = 0; i < 120; i++) {
+      const c = document.createElement("div");
+      c.className = "confetti";
+      c.style.left = Math.random() * 100 + "vw";
+      c.style.background = colors[i % colors.length];
+      c.style.animationDuration = (2 + Math.random() * 2.5) + "s";
+      c.style.animationDelay = (Math.random() * 1.5) + "s";
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 6000);
+    }
+  }
+
+  build();
+</script>
+</body>
+</html>
