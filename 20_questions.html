@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10172d">
+  <title>20 Questions</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #0b1022; color: #f5f6ff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: #10172d; }
+    main { max-width: 860px; padding: 22px 18px 48px; margin: auto; }
+    .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    a { color: #b8eaff; }
+    h1 { font-size: clamp(2.2rem, 8vw, 4rem); margin: 28px 0 4px; line-height: 1; }
+    h2 { font-size: 1.15rem; margin: 0 0 12px; }
+    p { line-height: 1.5; }
+    .intro, .hint { color: #c4cce1; }
+    .panel { margin-top: 20px; padding: 20px; border: 1px solid #495675; border-radius: 18px; background: #ffffff0d; }
+    .hint { margin: 8px 0 0; font-size: .92rem; }
+    form { display: flex; flex-wrap: wrap; gap: 10px; }
+    label { display: block; margin-bottom: 8px; font-weight: 650; }
+    input { flex: 1 1 240px; min-width: 0; padding: 13px; font: inherit; color: #fff; background: #10172d; border: 1px solid #8794b3; border-radius: 10px; }
+    button { font: inherit; font-weight: 650; color: #fff; background: #252e49; border: 1px solid #71809f; border-radius: 10px; padding: 12px 16px; min-height: 48px; cursor: pointer; }
+    button:hover:not(:disabled) { background: #354262; }
+    button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid #75e6ff; outline-offset: 3px; }
+    button:disabled { opacity: .48; cursor: not-allowed; }
+    .primary { color: #101329; background: #a7eaff; border-color: #a7eaff; }
+    .primary:hover:not(:disabled) { background: #d3f6ff; }
+    .count { display: flex; align-items: center; gap: 18px; }
+    .number { font-size: 3.8rem; font-weight: 800; line-height: 1; color: #a7eaff; }
+    .count p { margin: 0; }
+    .buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 10px; }
+    .buttons button { text-align: left; }
+    .buttons button[aria-pressed="true"] { border-color: #a7eaff; background: #244b5a; }
+    .category { grid-template-columns: repeat(3, 1fr); }
+    .category button { text-align: center; }
+    .warning { color: #ffe3a3; border: 1px solid #b78a38; padding: 12px; border-radius: 10px; background: #4a351b; }
+    [hidden] { display: none !important; }
+    @media (max-width: 400px) { .category { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <button id="new-game" type="button" class="primary">New Game</button>
+    <a href="./index.html">All games</a>
+  </div>
+  <h1>20 Questions</h1>
+  <p class="intro">Think of a person, place, or thing. Ask up to 20 questions to figure it out!</p>
+  <p id="storage-warning" class="warning" role="status" hidden></p>
+
+  <section class="panel" aria-labelledby="host-heading">
+    <h2 id="host-heading">Host: choose the answer</h2>
+    <div id="setup">
+      <label for="answer">Word or words to guess</label>
+      <form id="answer-form">
+        <input id="answer" type="text" maxlength="200" autocomplete="off" required>
+        <button type="submit" class="primary">Lock answer</button>
+      </form>
+      <p class="hint">Have the other player look away while you type, then lock the answer.</p>
+    </div>
+    <div id="locked" hidden>
+      <strong>Answer locked and hidden.</strong>
+      <p class="hint">When saving is available, the answer is stored in this browser on this device. It is not protected from browser inspection.</p>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="remaining-heading">
+    <div class="count">
+      <span class="number" id="remaining" aria-hidden="true">20</span>
+      <div><h2 id="remaining-heading">questions left</h2><p id="count-status" aria-live="polite">Lock an answer to start.</p></div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="category-heading">
+    <h2 id="category-heading">Person, place, or thing?</h2>
+    <p class="hint">Each tap uses one question. The most recent category is highlighted.</p>
+    <div class="buttons category" id="categories">
+      <button type="button" data-category="Person">Person</button>
+      <button type="button" data-category="Place">Place</button>
+      <button type="button" data-category="Thing">Thing</button>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="questions-heading">
+    <h2 id="questions-heading">Questions to ask</h2>
+    <p class="hint">Tap a question after asking it. Every tap counts, even if you ask it again.</p>
+    <div class="buttons" id="questions"></div>
+  </section>
+</main>
+<script>
+(() => {
+  const key = "twentyQuestions.v1";
+  const prompts = [
+    "Is it bigger than a bread box?", "Is it alive?", "Is it an animal?",
+    "Is it a real person?", "Is it a fictional character?", "Is it a place you can visit?",
+    "Can you hold it in your hand?", "Is it found indoors?", "Is it found outdoors?",
+    "Is it something you can eat?", "Is it something you can wear?", "Does it have four legs?",
+    "Can it fly?", "Does it live in water?", "Is it made by people?",
+    "Does it use electricity?", "Does it make noise?", "Is it used every day?",
+    "Is it larger than a car?", "Is it found in a house?", "Is it found in nature?",
+    "Is it older than 100 years?", "Is it famous?", "Is it in the United States?",
+    "Is it a type of vehicle?", "Is it used for entertainment?", "Can it move on its own?",
+    "Is it made of metal?", "Is it something you can buy?", "Is it associated with a sport?"
+  ];
+  const empty = () => ({ answer: "", remaining: 20, category: "", chosen: [] });
+  let state = empty();
+  const warning = document.getElementById("storage-warning");
+  const sayWarning = message => { warning.textContent = message; warning.hidden = false; };
+  try {
+    const saved = localStorage.getItem(key);
+    if (saved !== null) {
+      const data = JSON.parse(saved);
+      if (!data || typeof data.answer !== "string" || !data.answer.trim() ||
+          !Number.isInteger(data.remaining) || data.remaining < 0 || data.remaining > 20 ||
+          !["", "Person", "Place", "Thing"].includes(data.category) ||
+          !Array.isArray(data.chosen) || data.chosen.some(q => !prompts.includes(q))) {
+        throw new Error("Invalid saved game");
+      }
+      state = data;
+    }
+  } catch (error) {
+    sayWarning("The saved game could not be loaded. Progress may not persist in this browser.");
+  }
+  const save = () => {
+    try { localStorage.setItem(key, JSON.stringify(state)); }
+    catch (error) { sayWarning("This browser could not save the game. Progress may be lost when you leave or reload."); }
+  };
+  const form = document.getElementById("answer-form");
+  const answer = document.getElementById("answer");
+  const questions = document.getElementById("questions");
+  const categories = document.getElementById("categories");
+  for (const prompt of prompts) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = prompt;
+    button.dataset.question = prompt;
+    questions.append(button);
+  }
+  function render() {
+    const started = Boolean(state.answer);
+    document.getElementById("setup").hidden = started;
+    document.getElementById("locked").hidden = !started;
+    document.getElementById("remaining").textContent = state.remaining;
+    document.getElementById("count-status").textContent = !started ? "Lock an answer to start." :
+      state.remaining === 0 ? "No questions left!" : `${state.remaining} questions left.`;
+    for (const button of categories.querySelectorAll("button")) {
+      button.disabled = !started || state.remaining === 0;
+      button.setAttribute("aria-pressed", String(button.dataset.category === state.category));
+    }
+    for (const button of questions.querySelectorAll("button")) {
+      button.disabled = !started || state.remaining === 0;
+      button.setAttribute("aria-pressed", String(state.chosen.includes(button.dataset.question)));
+    }
+  }
+  form.addEventListener("submit", event => {
+    event.preventDefault();
+    const value = answer.value.trim();
+    if (!value) { answer.setCustomValidity("Enter an answer before starting."); answer.reportValidity(); return; }
+    answer.setCustomValidity("");
+    state.answer = value;
+    answer.value = "";
+    save();
+    render();
+  });
+  answer.addEventListener("input", () => answer.setCustomValidity(""));
+  categories.addEventListener("click", event => {
+    const button = event.target.closest("button[data-category]");
+    if (!button || !state.answer || state.remaining === 0) return;
+    state.category = button.dataset.category;
+    state.remaining--;
+    save(); render();
+  });
+  questions.addEventListener("click", event => {
+    const button = event.target.closest("button[data-question]");
+    if (!button || !state.answer || state.remaining === 0) return;
+    if (!state.chosen.includes(button.dataset.question)) state.chosen.push(button.dataset.question);
+    state.remaining--;
+    save(); render();
+  });
+  document.getElementById("new-game").addEventListener("click", () => {
+    if ((state.answer || answer.value.trim()) && !confirm("Start a new game? The current answer and progress will be cleared.")) return;
+    state = empty();
+    answer.value = "";
+    answer.setCustomValidity("");
+    try { localStorage.removeItem(key); }
+    catch (error) { sayWarning("This browser could not clear the saved game. An older game may return when you reload."); }
+    render();
+    answer.focus();
+  });
+  render();
+})();
+</script>
+</body>
+</html>
