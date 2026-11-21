@@ -53,21 +53,36 @@ browsers, and clearing site data (or ending a private session) can remove it.
 Run the focused gameplay and persistence checks with
 `node --test scripts/license-plate-game.test.cjs`.
 
-The game includes 100 locally hosted plate photographs and sample images: a
-modern-era and a historical example for each state. Each new page visit selects
-an image per state, avoiding the previous selection when browser storage works.
-Reset and filters do not reroll images. Image history uses `plateGame.images.v1`,
-separate from found-state saves. Source titles, authors, license links, and
-resize/crop notes are in the game's expandable credits and
-`license_plate_assets/plate-images.js`; each image retains its individual license.
+### License Plate Game designs
 
-This is a mixed-date reference collection, not a complete catalog of the latest
-2026 standard designs. Current standard images with verified reuse permissions
-could not be established for Alabama, Nebraska, Rhode Island, South Dakota, and
-Wyoming in the consulted sources. Their modern entries are explicitly identified
-as an Alabama fleet plate, Nebraska's 2017 base, Rhode Island's 2013 plate, South
-Dakota's 2018 plate, and a 2018 University of Wyoming plate. No invented plate art
-is used when an image is unavailable.
+Each state has separate Previous, Next (both wrap), and Random buttons. Random
+chooses a different design only for that state; these controls never mark or
+unmark a state. Plate choices use stable IDs in `plateGame.selections.v1`, separate
+from found-state progress. They survive refresh, later visits, and trip reset.
+The old automatic visit-history key (`plateGame.images.v1`) is intentionally
+ignored, not migrated as a player preference. Launch and refresh do not randomize
+or write new preferences.
+
+Without a valid saved choice, each state uses an explicitly reviewed standard
+passenger design from `PLATE_DEFAULTS`, not the newest specialty image. Defaults
+are the most recent verified standard available in this licensed collection, not
+a guarantee of today's issue. Storage failures warn and leave the game playable.
+Images are local and lazy-loaded only when selected; complete source credits and
+coverage tables are built when their disclosure is opened.
+
+The collection contains 1,021 reviewed designs. Thirty states meet the requested
+20 designs; twenty states still have shortfalls because accessible, licensed
+sources could not supply enough distinct bases. The in-game table reports every
+count and dated default, including older standard designs where a newer reusable
+image was unavailable.
+
+Source titles, authors, individual licenses, resize/crop notes, and design keys
+are in `license_plate_assets/plate-images.js`. Exact per-state counts, shortfalls
+against the requested 20, default evidence, and sourcing limitations are recorded
+in `license_plate_assets/coverage.json` and shown in the game. Historical annual
+issues count only when color, artwork, or an embossed date differs; serial-only
+and renewal-sticker-only changes are excluded. Each image retains its original
+license. No invented plate art is used when an image is unavailable.
 
 Some browsers restrict features (or run slower) when opening files directly from disk.
 

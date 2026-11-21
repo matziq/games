@@ -10,7 +10,10 @@ const html = fs.readFileSync(path.join(root, "license_plate_game.html"), "utf8")
 const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 const imageScript = fs.readFileSync(path.join(root, "license_plate_assets", "plate-images.js"), "utf8");
 const catalog = vm.runInNewContext(imageScript + "\nPLATE_IMAGES");
+const defaults = vm.runInNewContext(imageScript + "\nPLATE_DEFAULTS");
+const coverage = JSON.parse(fs.readFileSync(path.join(root, "license_plate_assets", "coverage.json"), "utf8"));
 const key = "plateGame.found.v1";
+const selectionKey = "plateGame.selections.v1";
 
 function boot(storage = new Map(), failures = {}) {
   const elements = new Map();
@@ -32,22 +35,40 @@ function boot(storage = new Map(), failures = {}) {
     }
     set innerHTML(value) {
       this.children = [];
-      if (value.includes('class="photo"')) this.photo = new Element();
+      if (value.includes('class="mark"')) {
+        this.nodes = {};
+        for (const name of ["mark", "photo", "version", "previous", "next", "random"]) {
+          this.nodes[name] = new Element();
+          this.nodes[name].parent = this;
+        }
+        for (const action of ["mark", "previous", "next", "random"]) {
+          this.nodes[action].dataset.action = action;
+        }
+        this.photo = this.nodes.photo;
+      }
       if (value.includes('id="again"')) elements.set("again", new Element());
     }
     setAttribute(name, value) { this.attributes[name] = String(value); }
-    appendChild(element) { this.children.push(element); }
-    querySelectorAll() { return this.children; }
-    querySelector() { return this.photo; }
+    appendChild(element) { this.children.push(element); element.parent = this; }
+    contains(element) { return this.children.includes(element); }
+    querySelectorAll(selector) {
+      return selector === ".choices button" ? ["previous", "random", "next"].map(name => this.nodes[name]) : this.children;
+    }
+    querySelector(selector) { return this.nodes[selector.slice(1)]; }
     addEventListener(name, handler) { this.handlers[name] = handler; }
-    closest() { return this; }
+    closest(selector) {
+      if (selector === "button" && this.dataset.action) return this;
+      if (selector === ".plate" && this.dataset.state) return this;
+      return this.parent?.closest(selector) || null;
+    }
     remove() {}
   }
-  for (const id of ["grid", "counter", "bar", "saveStatus", "search", "toggleFound", "reset", "imageStatus", "imageCredits"]) {
+  for (const id of ["grid", "counter", "bar", "saveStatus", "search", "toggleFound", "reset", "imageStatus", "imageCredits", "credits", "coverageRows", "coverageSummary"]) {
     elements.set(id, new Element());
   }
   const warnings = [];
   const windowHandlers = {};
+  let randomCalls = 0;
   const context = vm.createContext({
     document: {
       getElementById: id => elements.get(id),
@@ -66,7 +87,7 @@ function boot(storage = new Map(), failures = {}) {
     },
     navigator: {},
     window: { addEventListener: (name, handler) => { windowHandlers[name] = handler; } },
-    Math: Object.assign(Object.create(Math), { random: () => 0.25 }),
+    Math: Object.assign(Object.create(Math), { random: () => { randomCalls++; return 0.25; } }),
     console: { warn: (...args) => warnings.push(args) },
     confirm: () => !failures.cancelReset,
     setTimeout: () => 0
@@ -76,9 +97,14 @@ function boot(storage = new Map(), failures = {}) {
   return {
     storage, elements, warnings, windowHandlers,
     run: code => vm.runInContext(code, context),
+    randomCalls: () => randomCalls,
+    select: (index, action) => {
+      const card = elements.get("grid").children[index];
+      elements.get("grid").handlers.click({ target: card.nodes[action] });
+    },
     mark: index => {
       const plate = elements.get("grid").children[index];
-      elements.get("grid").handlers.pointerup({ target: plate });
+      elements.get("grid").handlers.click({ target: plate.nodes.mark });
     },
     count: () => elements.get("counter").textContent
   };
@@ -95,14 +121,16 @@ test("marking, unmarking, filtering, keyboard input, and reload preserve progres
   game.mark(0);
   assert.equal(boot(game.storage).count(), "1 / 50");
   const arizona = game.elements.get("grid").children[2];
-  assert.equal(arizona.tabIndex, 0);
+  assert.match(html, /<button type="button" class="mark"/);
+  assert.equal(arizona.nodes.mark.attributes["aria-pressed"], "true");
   game.elements.get("toggleFound").handlers.click({ target: game.elements.get("toggleFound") });
   assert.ok(arizona.classes.has("hidden"));
   game.elements.get("search").value = "Texas";
   game.elements.get("search").handlers.input();
   assert.equal(game.elements.get("grid").children.filter(el => !el.classes.has("hidden")).length, 1);
   const texas = game.elements.get("grid").children[42];
-  game.elements.get("grid").handlers.keydown({ target: texas, key: "Enter", preventDefault() {} });
+  // Native buttons dispatch the same click for keyboard activation.
+  game.elements.get("grid").handlers.click({ target: texas.nodes.mark });
   assert.equal(game.count(), "2 / 50");
 });
 
@@ -159,15 +187,19 @@ test("menu and return links resolve to existing entry files", () => {
   assert.ok(fs.existsSync(path.join(root, "index.html")));
 });
 
-test("all states have two distinct, local, attributed modern and historical images", () => {
+test("catalog coverage, standard defaults and attributed local assets match the published report", () => {
   assert.equal(Object.keys(catalog).length, 50);
   const sources = new Set();
   for (const choices of Object.values(catalog)) {
-    assert.equal(choices.length, 2);
-    assert.equal(choices[0].era, "modern");
-    assert.equal(choices[1].era, "historical");
+    assert.ok(choices.length >= 2);
+    const state = Object.keys(catalog).find(name => catalog[name] === choices);
+    assert.equal(coverage.states[state].count, choices.length);
+    assert.equal(coverage.states[state].shortfall, Math.max(0, 20 - choices.length));
+    assert.ok(choices.some(image => image.id === defaults[state].id && image.standard));
+    assert.ok(defaults[state].label && defaults[state].evidence);
+    assert.equal(new Set(choices.map(image => image.designKey)).size, choices.length);
     for (const image of choices) {
-      assert.match(image.id, /^[a-z-]+\.jpg$/);
+      assert.match(image.id, /^[a-z0-9-]+\.jpg$/);
       assert.equal(image.src, "./license_plate_assets/" + image.id);
       assert.ok(image.author && image.title && image.changes);
       assert.match(image.license, /^(?:Public domain|CC0|CC BY(?:-SA)? [234]\.0)$/);
@@ -178,40 +210,94 @@ test("all states have two distinct, local, attributed modern and historical imag
       const bytes = fs.readFileSync(path.join(root, "license_plate_assets", image.id));
       assert.equal(bytes.readUInt16BE(0), 0xffd8);
       assert.equal(crypto.createHash("sha256").update(bytes).digest("hex"), image.sha256);
-      assert.ok(image.width >= 150 && image.height >= 75);
+      assert.ok(image.width >= 150 && image.height >= 50);
+    }
+  }
+  assert.equal(coverage.total, Object.values(catalog).reduce((sum, choices) => sum + choices.length, 0));
+});
+
+test("launch and reload use standard defaults without random calls or migrating old visit history", () => {
+  const history = Object.fromEntries(Object.entries(catalog).map(([name, choices]) => [name, choices.at(-1).id]));
+  const storage = new Map([[key, '["Arizona","Texas"]'], ["plateGame.images.v1", JSON.stringify(history)]]);
+  for (let visit = 0; visit < 3; visit++) {
+    const game = boot(storage);
+    assert.equal(game.randomCalls(), 0);
+    assert.equal(game.count(), "2 / 50");
+    assert.equal(storage.has(selectionKey), false);
+    for (const name of Object.keys(catalog)) {
+      assert.equal(game.run(`imageSelection[${JSON.stringify(name)}].id`), defaults[name].id);
     }
   }
 });
 
-test("each page visit changes images but does not alter found saves; reset retains visit images", () => {
-  const storage = new Map([[key, '["Arizona","Texas"]']]);
-  const first = boot(storage);
-  const before = JSON.parse(storage.get("plateGame.images.v1"));
-  assert.equal(first.count(), "2 / 50");
-  first.elements.get("reset").handlers.click();
-  assert.deepEqual(JSON.parse(storage.get("plateGame.images.v1")), before);
-  const second = boot(storage);
-  const after = JSON.parse(storage.get("plateGame.images.v1"));
-  for (const state of Object.keys(catalog)) assert.notEqual(after[state], before[state]);
-  assert.equal(second.count(), "0 / 50");
-  second.windowHandlers.pageshow({ persisted: true });
-  const backVisit = JSON.parse(storage.get("plateGame.images.v1"));
-  for (const state of Object.keys(catalog)) assert.notEqual(backVisit[state], after[state]);
+test("previous and next wrap; random changes only its own state without marking it", () => {
+  const game = boot();
+  const other = game.run("imageSelection.Alaska.id");
+  game.mark(0);
+  const start = game.run("imageSelection.Alabama.id");
+  game.select(0, "next");
+  assert.notEqual(game.run("imageSelection.Alabama.id"), start);
+  game.select(0, "previous");
+  assert.equal(game.run("imageSelection.Alabama.id"), start);
+  for (let index = 0; index < catalog.Alabama.length; index++) game.select(0, "next");
+  assert.equal(game.run("imageSelection.Alabama.id"), start);
+  for (let index = 0; index < catalog.Alabama.length; index++) game.select(0, "previous");
+  assert.equal(game.run("imageSelection.Alabama.id"), start);
+  game.select(0, "random");
+  assert.equal(game.randomCalls(), 1);
+  assert.notEqual(game.run("imageSelection.Alabama.id"), start);
+  assert.equal(game.run("imageSelection.Alaska.id"), other);
+  assert.equal(game.count(), "1 / 50");
+  assert.deepEqual(Object.keys(JSON.parse(game.storage.get(selectionKey))), ["Alabama"]);
+  assert.equal(game.elements.get("grid").children[0].nodes.mark.attributes["aria-pressed"], "true");
 });
 
-test("invalid or blocked image history does not break gameplay or found-state saves", () => {
+test("explicit choices survive visits and both trip resets", () => {
+  const game = boot();
+  game.select(2, "next");
+  const chosen = game.run("imageSelection.Arizona.id");
+  game.mark(0);
+  game.elements.get("reset").handlers.click();
+  assert.equal(game.run("imageSelection.Arizona.id"), chosen);
+  assert.equal(boot(game.storage).run("imageSelection.Arizona.id"), chosen);
+  for (let index = 0; index < 50; index++) game.mark(index);
+  game.elements.get("again").handlers.click();
+  assert.equal(boot(game.storage).run("imageSelection.Arizona.id"), chosen);
+  assert.equal(boot(game.storage).count(), "0 / 50");
+});
+
+test("invalid or blocked selections preserve play and deterministic defaults", () => {
   for (const history of ["null", "[]", "{broken", '{"Arizona":"not-a-real-image"}']) {
-    const storage = new Map([[key, '["Arizona"]'], ["plateGame.images.v1", history]]);
+    const storage = new Map([[key, '["Arizona"]'], [selectionKey, history]]);
     const game = boot(storage);
     assert.equal(game.count(), "1 / 50");
     game.mark(0);
     assert.equal(game.count(), "2 / 50");
-    assert.equal(Object.keys(JSON.parse(storage.get("plateGame.images.v1"))).length, 50);
+    assert.equal(game.run("imageSelection.Arizona.id"), defaults.Arizona.id);
+    assert.equal(game.randomCalls(), 0);
+    game.select(2, "next");
+    assert.equal(Object.keys(JSON.parse(storage.get(selectionKey))).length, 1);
   }
   const blocked = boot(new Map(), { read: true, write: true });
   blocked.mark(0);
   assert.equal(blocked.count(), "1 / 50");
-  assert.match(blocked.elements.get("imageStatus").textContent, /repeats/);
+  blocked.select(2, "next");
+  assert.match(blocked.elements.get("imageStatus").textContent, /could not be saved/);
+  assert.equal(blocked.randomCalls(), 0);
+});
+
+test("credits are built only on first expansion and images are lazy", () => {
+  const game = boot();
+  assert.equal(game.elements.get("imageCredits").children.length, 0);
+  assert.equal(game.elements.get("grid").children[0].photo.children[0].loading, "lazy");
+  const credits = game.elements.get("credits");
+  credits.open = true;
+  credits.handlers.toggle({ target: credits });
+  assert.equal(game.elements.get("coverageRows").children.length, 50);
+  const count = game.elements.get("imageCredits").children.length;
+  assert.equal(count, coverage.total);
+  credits.handlers.toggle({ target: credits });
+  assert.equal(game.elements.get("imageCredits").children.length, count);
 });
 
 test("missing catalog and failed images have explicit fallbacks without invented plates", () => {
@@ -227,4 +313,15 @@ test("missing catalog and failed images have explicit fallbacks without invented
   assert.match(game.elements.get("imageStatus").textContent, /failed to load/);
   game.mark(0);
   assert.equal(game.count(), "1 / 50");
+});
+
+test("late failures from a replaced image cannot remove the newly selected photo", () => {
+  const game = boot();
+  const photo = game.elements.get("grid").children[0].photo;
+  const old = photo.children[0];
+  game.select(0, "next");
+  const selected = photo.children[0];
+  old.handlers.error();
+  assert.equal(photo.children[0], selected);
+  assert.doesNotMatch(game.elements.get("imageStatus").textContent, /failed to load/);
 });

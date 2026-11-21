@@ -64,15 +64,22 @@
   @media (min-width: 600px) { .grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); } }
 
   .plate {
-    position: relative; border-radius: 10px; cursor: pointer;
+    position: relative; border-radius: 10px;
     border: 2px solid #466389;
     box-shadow: 0 4px 10px rgba(0,0,0,.45);
     overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;
-    padding: 8px; gap: 6px; text-align: center; transition: transform .1s, filter .3s;
+    padding: 8px; gap: 6px; text-align: center;
     color: var(--text); background: var(--panel);
   }
-  .plate:active { transform: scale(.96); }
-  .plate:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+  .plate button { color: inherit; font: inherit; cursor: pointer; border: none; border-radius: 6px; }
+  .plate button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .plate .mark { position: relative; background: transparent; padding: 0; display: grid; gap: 6px; text-align: center; width: 100%; }
+  .plate .choices { display: flex; gap: 4px; }
+  .plate .choices button { min-height: 44px; flex: 1; background: #2f4f7a; font-size: .75rem; }
+  .plate .choices button:disabled { opacity: .5; cursor: default; }
+  .plate .version { font-size: .7rem; min-height: 2.5em; color: #c4d4e8; overflow-wrap: anywhere; }
+  .coverage { border-collapse: collapse; width: 100%; margin-top: 12px; text-align: left; }
+  .coverage th, .coverage td { padding: 6px; border-bottom: 1px solid #466389; }
   .plate .state {
     font-size: .85rem; font-weight: 800; line-height: 1.2;
   }
@@ -82,7 +89,7 @@
   .plate .photo-error { font-size: .8rem; padding: 8px; }
 
   /* Found state */
-  .plate.found { filter: saturate(.55) brightness(.85); }
+  .plate.found .mark { filter: saturate(.55) brightness(.85); }
   .plate .check {
     position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
     background: rgba(34,197,94,.28); opacity: 0; transform: scale(.4); transition: opacity .25s, transform .25s ease-out;
@@ -123,18 +130,20 @@
 
 <div class="toolbar">
   <a href="./index.html">Games menu</a>
-  <input type="search" id="search" placeholder="Find a state..." autocomplete="off">
+  <input type="search" id="search" aria-label="Find a state" placeholder="Find a state..." autocomplete="off">
   <button id="toggleFound">Hide found</button>
   <button id="reset" class="danger">Reset</button>
 </div>
 <p id="saveStatus" class="save-status" role="status" aria-live="polite"></p>
 <p id="imageStatus" class="save-status" role="status" aria-live="polite"></p>
-<p class="photo-note">Real plate photographs and sample images, selected anew on each visit. Modern-era examples span different issue dates, not just the latest designs. Alabama shows a fleet plate; Nebraska and South Dakota show 2017/2018 bases; Rhode Island shows a 2013 plate; Wyoming shows a 2018 university plate.</p>
+<p class="photo-note">Tap a plate to mark its state. Previous, Next, and Random change only that state's design and save your choice in this browser. Plates never randomize on launch or refresh; trip reset keeps your designs. Defaults use the most recent verified standard passenger design available, which may be older than today's issue. See coverage and sources for dates and limitations.</p>
 
 <main class="grid" id="grid"></main>
 
-<details class="credits">
-  <summary>Image sources, dates, and reuse licenses (100 examples)</summary>
+<details class="credits" id="credits">
+  <summary>Design coverage, defaults, image sources, and reuse licenses</summary>
+  <p id="coverageSummary"></p>
+  <table class="coverage"><thead><tr><th scope="col">State</th><th scope="col">Designs / 20 requested</th><th scope="col">Standard default</th></tr></thead><tbody id="coverageRows"></tbody></table>
   <p>Photos and samples are from Wikimedia Commons. Each image keeps its own license; the game does not relicense them. Sample plates do not represent an active vehicle registration. Dates in source titles may refer to a base design or a renewal sticker. Resizing and any crop are noted below.</p>
   <ul id="imageCredits"></ul>
 </details>
@@ -202,10 +211,12 @@
   const saveStatus = document.getElementById("saveStatus");
   let found = loadProgress();
   let hideFound = false;
-  const IMAGE_STORAGE_KEY = "plateGame.images.v1";
+  const IMAGE_STORAGE_KEY = "plateGame.selections.v1";
   const imageStatus = document.getElementById("imageStatus");
   const plateImages = typeof PLATE_IMAGES === "undefined" ? {} : PLATE_IMAGES;
-  let imageSelection = chooseImages();
+  const plateDefaults = typeof PLATE_DEFAULTS === "undefined" ? {} : PLATE_DEFAULTS;
+  const selectionPreferences = {};
+  const imageSelection = loadSelections();
 
   function showSaveStatus(message, warning = false) {
     saveStatus.textContent = message;
@@ -259,50 +270,69 @@
     build();
   }
 
-  function chooseImages() {
-    let previous = {};
-    let historyWarning = false;
+  function showImageStatus(message, warning = false) {
+    imageStatus.textContent = message;
+    imageStatus.classList.toggle("warning", warning);
+  }
+
+  function loadSelections() {
+    let saved = {};
+    let warning = false;
     try {
       const raw = localStorage.getItem(IMAGE_STORAGE_KEY);
       if (raw !== null) {
-        const saved = JSON.parse(raw);
+        saved = JSON.parse(raw);
         if (!saved || typeof saved !== "object" || Array.isArray(saved)) {
-          throw new TypeError("Image history must be an object.");
+          throw new TypeError("Plate selections must be an object.");
         }
-        previous = saved;
       }
     } catch (error) {
-      console.warn("License Plate Game could not read image history.", error);
-      historyWarning = true;
+      console.warn("License Plate Game could not read plate selections.", error);
+      saved = {};
+      warning = true;
     }
     const selection = {};
-    const history = {};
     STATES.forEach(([name]) => {
       const choices = plateImages[name] || [];
-      const alternatives = choices.filter(image => image.id !== previous[name]);
-      const available = alternatives.length ? alternatives : choices;
-      if (available.length) {
-        selection[name] = available[Math.floor(Math.random() * available.length)];
-        history[name] = selection[name].id;
-      }
+      const preferred = choices.find(image => image.id === saved[name]);
+      if (Object.hasOwn(saved, name) && !preferred) warning = true;
+      if (preferred) selectionPreferences[name] = preferred.id;
+      selection[name] = preferred || choices.find(image => image.id === plateDefaults[name]?.id);
     });
-    try {
-      localStorage.setItem(IMAGE_STORAGE_KEY, JSON.stringify(history));
-    } catch (error) {
-      console.warn("License Plate Game could not save image history.", error);
-      historyWarning = true;
-    }
-    const count = Object.keys(selection).length;
+    const count = Object.values(selection).filter(Boolean).length;
     if (count !== TOTAL) {
       console.warn(`License Plate Game has images for ${count} of ${TOTAL} states.`);
-      imageStatus.textContent = `Images unavailable for ${TOTAL - count} states. Reload to retry; marking states still works.`;
+      showImageStatus(`Images unavailable for ${TOTAL - count} states. Reload to retry; marking states still works.`, true);
     } else {
-      imageStatus.textContent = historyWarning
-        ? "Images randomized for this visit. Image history is unavailable; repeats on later visits are possible."
-        : "Images randomized for this visit; the last image for each state will not repeat on your next visit.";
+      showImageStatus(warning
+        ? "Some saved plate choices could not be restored. Standard defaults are shown where needed; changes may not persist if storage is blocked."
+        : "Saved plate choices restored where available; otherwise standard defaults are shown. Only Random changes a design randomly.", warning);
     }
-    imageStatus.classList.toggle("warning", historyWarning || count !== TOTAL);
     return selection;
+  }
+
+  function changeImage(name, action, card) {
+    const choices = plateImages[name] || [];
+    if (choices.length < 2) return;
+    const current = choices.findIndex(image => image.id === imageSelection[name]?.id);
+    let next;
+    if (action === "random") {
+      const alternatives = choices.filter(image => image.id !== imageSelection[name]?.id);
+      next = alternatives[Math.floor(Math.random() * alternatives.length)];
+    } else {
+      const offset = action === "previous" ? -1 : 1;
+      next = choices[(current + offset + choices.length) % choices.length];
+    }
+    imageSelection[name] = next;
+    selectionPreferences[name] = next.id;
+    renderImage(name, card);
+    try {
+      localStorage.setItem(IMAGE_STORAGE_KEY, JSON.stringify(selectionPreferences));
+      showImageStatus(`Saved ${name} plate choice. Refresh and trip reset will keep your designs.`);
+    } catch (error) {
+      console.warn("License Plate Game could not save plate selections.", error);
+      showImageStatus("Plate choice could not be saved. It will stay for this page, but may be lost when you leave.", true);
+    }
   }
 
   function buildCredits() {
@@ -327,6 +357,22 @@
         credits.appendChild(item);
       });
     });
+    const rows = document.getElementById("coverageRows");
+    let total = 0;
+    let complete = 0;
+    STATES.forEach(([name]) => {
+      const count = (plateImages[name] || []).length;
+      total += count;
+      if (count >= 20) complete++;
+      const row = document.createElement("tr");
+      for (const value of [name, `${count} / 20${count < 20 ? " - shortfall" : ""}`, plateDefaults[name]?.label || "Unavailable"]) {
+        const cell = document.createElement("td");
+        cell.textContent = value;
+        row.appendChild(cell);
+      }
+      rows.appendChild(row);
+    });
+    document.getElementById("coverageSummary").textContent = `${total} verified designs; ${complete} of 50 states meet the requested 20. Remaining gaps are listed below. Annual historical issues count only when the plate design, color, or embossed date differs; serial-only and sticker-only variants are excluded.`;
   }
 
   const CHECK_SVG = `<svg viewBox="0 0 100 100" aria-hidden="true">
@@ -341,50 +387,71 @@
   function build() {
     grid.innerHTML = "";
     STATES.forEach(([name]) => {
-      const el = document.createElement("div");
+      const el = document.createElement("article");
       el.className = "plate" + (found.has(name) ? " found" : "");
       el.dataset.state = name;
-      el.setAttribute("role", "button");
-      el.tabIndex = 0;
-      el.setAttribute("aria-pressed", found.has(name));
-      el.setAttribute("aria-label", name + (found.has(name) ? " (found)" : ""));
-      const image = imageSelection[name];
+      el.setAttribute("aria-label", name);
       el.innerHTML = `
-        <div class="state">${name}</div>
-        <div class="photo"></div>
-        <div class="era">${image ? (image.era === "modern" ? "Modern-era" : "Historical") + (image.kind === "sample" ? " sample" : " photograph") : "Image unavailable"}</div>
-        <div class="check">${CHECK_SVG}</div>`;
-      const photo = el.querySelector(".photo");
-      if (image) {
-        const img = document.createElement("img");
-        img.alt = `${name}: ${image.title}`;
-        img.width = image.width;
-        img.height = image.height;
-        img.loading = "lazy";
-        img.decoding = "async";
-        img.addEventListener("error", () => {
-          console.warn("License Plate Game image failed to load:", image.src);
-          photo.textContent = "Photo unavailable. You can still mark this state.";
-          imageStatus.textContent = "Some images failed to load. Reload to retry; progress and controls still work.";
-          imageStatus.classList.add("warning");
-        });
-        img.src = image.src;
-        photo.appendChild(img);
-      } else {
-        photo.textContent = "Photo unavailable. You can still mark this state.";
-      }
+        <button type="button" class="mark" data-action="mark">
+          <span class="state">${name}</span>
+          <span class="photo"></span>
+          <span class="check">${CHECK_SVG}</span>
+        </button>
+        <div class="version" aria-live="polite"></div>
+        <div class="choices" role="group" aria-label="${name} plate designs">
+          <button type="button" data-action="previous" aria-label="Previous ${name} plate">Prev</button>
+          <button type="button" data-action="random" aria-label="Random ${name} plate">Random</button>
+          <button type="button" data-action="next" aria-label="Next ${name} plate">Next</button>
+        </div>`;
+      const mark = el.querySelector(".mark");
+      mark.setAttribute("aria-pressed", found.has(name));
+      mark.setAttribute("aria-label", name + (found.has(name) ? " (found)" : " (not found)") + ". Mark or unmark state.");
+      el.querySelectorAll(".choices button").forEach(button => {
+        button.disabled = (plateImages[name] || []).length < 2;
+      });
+      renderImage(name, el);
       grid.appendChild(el);
     });
     applyFilters();
     updateCounter(false);
   }
 
+  function renderImage(name, card) {
+    const image = imageSelection[name];
+    const photo = card.querySelector(".photo");
+    photo.innerHTML = "";
+    const version = card.querySelector(".version");
+    const choices = plateImages[name] || [];
+    version.textContent = image
+      ? `${choices.indexOf(image) + 1} / ${choices.length}: ${image.design || image.title}`
+      : "Image unavailable";
+    if (image) {
+      const img = document.createElement("img");
+      img.alt = `${name}: ${image.title}`;
+      img.width = image.width;
+      img.height = image.height;
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.addEventListener("error", () => {
+        if (imageSelection[name] !== image || !photo.contains(img)) return;
+        console.warn("License Plate Game image failed to load:", image.src);
+        photo.textContent = "Photo unavailable. You can still mark this state.";
+        showImageStatus("Some images failed to load. Reload to retry; progress and controls still work.", true);
+      });
+      img.src = image.src;
+      photo.appendChild(img);
+    } else {
+      photo.textContent = "Photo unavailable. You can still mark this state.";
+    }
+  }
+
   function toggle(name, el) {
     if (found.has(name)) found.delete(name); else found.add(name);
     const isFound = found.has(name);
     el.classList.toggle("found", isFound);
-    el.setAttribute("aria-pressed", isFound);
-    el.setAttribute("aria-label", name + (isFound ? " (found)" : ""));
+    const mark = el.querySelector(".mark");
+    mark.setAttribute("aria-pressed", isFound);
+    mark.setAttribute("aria-label", name + (isFound ? " (found)" : " (not found)") + ". Mark or unmark state.");
     saveProgress();
     updateCounter(true);
     if (hideFound) applyFilters();
@@ -408,14 +475,13 @@
     });
   }
 
-  // Single pointer handler covers touch, mouse, and pen without double-fire
-  grid.addEventListener("pointerup", e => {
-    const el = e.target.closest(".plate");
-    if (el) toggle(el.dataset.state, el);
-  });
-  grid.addEventListener("keydown", e => {
-    const el = e.target.closest(".plate");
-    if (el && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); toggle(el.dataset.state, el); }
+  grid.addEventListener("click", e => {
+    const button = e.target.closest("button");
+    const card = button?.closest(".plate");
+    if (!card || button.disabled) return;
+    const action = button.dataset.action;
+    if (action === "mark") toggle(card.dataset.state, card);
+    else if (["previous", "next", "random"].includes(action)) changeImage(card.dataset.state, action, card);
   });
 
   document.getElementById("search").addEventListener("input", applyFilters);
@@ -453,14 +519,14 @@
     }
   }
 
-  buildCredits();
-  build();
-  window.addEventListener("pageshow", event => {
-    if (event.persisted) {
-      imageSelection = chooseImages();
-      build();
+  let creditsBuilt = false;
+  document.getElementById("credits").addEventListener("toggle", event => {
+    if (event.target.open && !creditsBuilt) {
+      buildCredits();
+      creditsBuilt = true;
     }
   });
+  build();
 </script>
 </body>
 </html>

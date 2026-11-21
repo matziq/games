@@ -1,0 +1,1143 @@
+{
+  "requestedPerState": 20,
+  "requestedTotal": 1000,
+  "states": {
+    "Alabama": {
+      "count": 30,
+      "shortfall": 0,
+      "default": {
+        "id": "alabama-fc9872dffaf5.jpg",
+        "label": "1997 standard passenger base (photo with 2000 renewal); newer reusable standard unavailable",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:AL_1997.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Alabama"
+        ]
+      },
+      "limitation": "newer reusable standard unavailable"
+    },
+    "Alaska": {
+      "count": 28,
+      "shortfall": 0,
+      "default": {
+        "id": "alaska-modern.jpg",
+        "label": "Standard passenger, Last Frontier base (2020 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Alaska_2020_License_Plate.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Alaska"
+        ]
+      },
+      "limitation": ""
+    },
+    "Arizona": {
+      "count": 28,
+      "shortfall": 0,
+      "default": {
+        "id": "arizona-modern.jpg",
+        "label": "Standard passenger, desert base (2005 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:2005_Arizona_License_Plate.png",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Arizona"
+        ]
+      },
+      "limitation": ""
+    },
+    "Arkansas": {
+      "count": 24,
+      "shortfall": 0,
+      "default": {
+        "id": "arkansas-modern.jpg",
+        "label": "Standard passenger, Natural State base (2011 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Arkansas_2011_license_plate.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Arkansas"
+        ]
+      },
+      "limitation": ""
+    },
+    "California": {
+      "count": 16,
+      "shortfall": 4,
+      "default": {
+        "id": "california-modern.jpg",
+        "label": "Standard passenger, red script base (2024 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Californian_2024_license_plate.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_California"
+        ]
+      },
+      "limitation": ""
+    },
+    "Colorado": {
+      "count": 29,
+      "shortfall": 0,
+      "default": {
+        "id": "colorado-modern.jpg",
+        "label": "Standard passenger, green mountains base (2018 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Colorado_2018_License_Plate.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Colorado"
+        ]
+      },
+      "limitation": ""
+    },
+    "Connecticut": {
+      "count": 14,
+      "shortfall": 6,
+      "default": {
+        "id": "connecticut-modern.jpg",
+        "label": "Standard passenger, blue gradient base (2004 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Connecticut_license_plate,_2004_-_784-PAJ.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Connecticut"
+        ]
+      },
+      "limitation": ""
+    },
+    "Delaware": {
+      "count": 11,
+      "shortfall": 9,
+      "default": {
+        "id": "delaware-modern.jpg",
+        "label": "Standard passenger, blue/gold First State base (2013 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:2013_Delaware_license_plate_122222.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Delaware"
+        ]
+      },
+      "limitation": ""
+    },
+    "Florida": {
+      "count": 30,
+      "shortfall": 0,
+      "default": {
+        "id": "florida-modern.jpg",
+        "label": "Standard passenger, orange map base (2026 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Florida_License_Plate_2026-present.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Florida"
+        ]
+      },
+      "limitation": ""
+    },
+    "Georgia": {
+      "count": 29,
+      "shortfall": 0,
+      "default": {
+        "id": "georgia-modern.jpg",
+        "label": "Standard passenger, white base (2024 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:2024_Georgian_license_plate_(TDA9755).jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Georgia"
+        ]
+      },
+      "limitation": ""
+    },
+    "Hawaii": {
+      "count": 8,
+      "shortfall": 12,
+      "default": {
+        "id": "hawaii-modern.jpg",
+        "label": "Standard passenger, rainbow base (2025 sample)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Hawaiian_sample_license_plate,_2025.png",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Hawaii"
+        ]
+      },
+      "limitation": ""
+    },
+    "Idaho": {
+      "count": 19,
+      "shortfall": 1,
+      "default": {
+        "id": "idaho-modern.jpg",
+        "label": "Standard passenger, scenic Famous Potatoes base (sample)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Idaho_Sample_Plate.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Idaho"
+        ]
+      },
+      "limitation": ""
+    },
+    "Illinois": {
+      "count": 30,
+      "shortfall": 0,
+      "default": {
+        "id": "illinois-caa4a58e9a28.jpg",
+        "label": "Standard passenger, Land of Lincoln base",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Illinois_license_plate.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Illinois"
+        ]
+      },
+      "limitation": ""
+    },
+    "Indiana": {
+      "count": 30,
+      "shortfall": 0,
+      "default": {
+        "id": "indiana-modern.jpg",
+        "label": "Standard passenger, covered bridge base",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Indiana_license_plate.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Indiana"
+        ]
+      },
+      "limitation": ""
+    },
+    "Iowa": {
+      "count": 27,
+      "shortfall": 0,
+      "default": {
+        "id": "iowa-modern.jpg",
+        "label": "Standard passenger, county landscape base",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Iowa_license_plate.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Iowa"
+        ]
+      },
+      "limitation": ""
+    },
+    "Kansas": {
+      "count": 28,
+      "shortfall": 0,
+      "default": {
+        "id": "kansas-modern.jpg",
+        "label": "Standard passenger, state seal base; newer reusable standard unavailable",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Kansas_1234ABC.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Kansas"
+        ]
+      },
+      "limitation": "newer reusable standard unavailable"
+    },
+    "Kentucky": {
+      "count": 30,
+      "shortfall": 0,
+      "default": {
+        "id": "kentucky-modern.jpg",
+        "label": "Standard passenger, white/blue base (2021 photograph); newer reusable standard unavailable",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Kentucky_License_Plate_2021.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Kentucky"
+        ]
+      },
+      "limitation": "newer reusable standard unavailable"
+    },
+    "Louisiana": {
+      "count": 29,
+      "shortfall": 0,
+      "default": {
+        "id": "louisiana-modern.jpg",
+        "label": "Standard passenger, Sportsman's Paradise base (2026 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Louisiana_2026_license_plate.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Louisiana"
+        ]
+      },
+      "limitation": ""
+    },
+    "Maine": {
+      "count": 19,
+      "shortfall": 1,
+      "default": {
+        "id": "maine-modern.jpg",
+        "label": "Standard passenger, white Vacationland base (sample)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Sample_license_plate_of_Maine,_2025.png",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Maine"
+        ]
+      },
+      "limitation": ""
+    },
+    "Maryland": {
+      "count": 26,
+      "shortfall": 0,
+      "default": {
+        "id": "maryland-modern.jpg",
+        "label": "Standard passenger, state flag base (2016 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Maryland_2016_License_Plate.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Maryland"
+        ]
+      },
+      "limitation": ""
+    },
+    "Massachusetts": {
+      "count": 30,
+      "shortfall": 0,
+      "default": {
+        "id": "massachusetts-modern.jpg",
+        "label": "Standard passenger, Spirit of America base (2011 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Massachusetts_2011_license_plate.png",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Massachusetts"
+        ]
+      },
+      "limitation": ""
+    },
+    "Michigan": {
+      "count": 28,
+      "shortfall": 0,
+      "default": {
+        "id": "michigan-modern.jpg",
+        "label": "Standard passenger, Pure Michigan base (2018 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Michigan_2018_license_plate_(USA).jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Michigan"
+        ]
+      },
+      "limitation": ""
+    },
+    "Minnesota": {
+      "count": 28,
+      "shortfall": 0,
+      "default": {
+        "id": "minnesota-modern.jpg",
+        "label": "Standard passenger, 10,000 Lakes base (2011 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Minnesota_2011_license_plate.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Minnesota"
+        ]
+      },
+      "limitation": ""
+    },
+    "Mississippi": {
+      "count": 30,
+      "shortfall": 0,
+      "default": {
+        "id": "mississippi-modern.jpg",
+        "label": "Standard passenger, magnolia base (2024 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Mississippi_2024_license_plate.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Mississippi"
+        ]
+      },
+      "limitation": ""
+    },
+    "Missouri": {
+      "count": 28,
+      "shortfall": 0,
+      "default": {
+        "id": "missouri-modern.jpg",
+        "label": "Standard passenger, bicentennial base (2020 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Missouri_Passenger_Car_License_Plate_2020.png",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Missouri"
+        ]
+      },
+      "limitation": ""
+    },
+    "Montana": {
+      "count": 22,
+      "shortfall": 0,
+      "default": {
+        "id": "montana-modern.jpg",
+        "label": "Standard passenger, 2010 blue state-outline base",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Montana_2010-present_standard_plate_(new_font).jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Montana"
+        ]
+      },
+      "limitation": ""
+    },
+    "Nebraska": {
+      "count": 30,
+      "shortfall": 0,
+      "default": {
+        "id": "nebraska-modern.jpg",
+        "label": "Standard passenger, 2017 base; 2023 standard not available with verified reuse",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:2017_Nebraska_License_Plate.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Nebraska"
+        ]
+      },
+      "limitation": "2023 standard not available with verified reuse"
+    },
+    "Nevada": {
+      "count": 15,
+      "shortfall": 5,
+      "default": {
+        "id": "nevada-modern.jpg",
+        "label": "Standard passenger, Home Means Nevada base (2016 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Nevada_2016_License_Plate.png",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Nevada"
+        ]
+      },
+      "limitation": ""
+    },
+    "New Hampshire": {
+      "count": 23,
+      "shortfall": 0,
+      "default": {
+        "id": "new-hampshire-modern.jpg",
+        "label": "Standard passenger, Old Man of the Mountain base",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:New_Hampshire_license_plate.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_New_Hampshire"
+        ]
+      },
+      "limitation": ""
+    },
+    "New Jersey": {
+      "count": 21,
+      "shortfall": 0,
+      "default": {
+        "id": "new-jersey-modern.jpg",
+        "label": "Standard passenger, yellow Garden State base (2023 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:2023-08-27_10_54_00_New_Jersey_license_plate_in_Ewing_Township,_Mercer_County,_New_Jersey.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_New_Jersey"
+        ]
+      },
+      "limitation": ""
+    },
+    "New Mexico": {
+      "count": 17,
+      "shortfall": 3,
+      "default": {
+        "id": "new-mexico-modern.jpg",
+        "label": "Standard passenger, turquoise Land of Enchantment base (2019 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:2019_New_Mexico_License_Plate.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_New_Mexico"
+        ]
+      },
+      "limitation": ""
+    },
+    "New York": {
+      "count": 16,
+      "shortfall": 4,
+      "default": {
+        "id": "new-york-modern.jpg",
+        "label": "Standard passenger, Empire Gold base; newer reusable standard unavailable",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:HUY_2444.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_New_York"
+        ]
+      },
+      "limitation": "newer reusable standard unavailable"
+    },
+    "North Carolina": {
+      "count": 28,
+      "shortfall": 0,
+      "default": {
+        "id": "north-carolina-modern.jpg",
+        "label": "Standard passenger, First in Flight base (2020 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:2020_North_Carolina_License_Plate.png",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_North_Carolina"
+        ]
+      },
+      "limitation": ""
+    },
+    "North Dakota": {
+      "count": 16,
+      "shortfall": 4,
+      "default": {
+        "id": "north-dakota-modern.jpg",
+        "label": "Standard passenger, older buffalo/landscape base (2012 renewal); newer reusable standard unavailable",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:North_Dakota_license_plate.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_North_Dakota"
+        ]
+      },
+      "limitation": "newer reusable standard unavailable"
+    },
+    "Ohio": {
+      "count": 29,
+      "shortfall": 0,
+      "default": {
+        "id": "ohio-55e1c8a7886c.jpg",
+        "label": "Standard passenger, Sunrise in Ohio base (2021 sample)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:2021_Ohio_License_Plate.png",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Ohio"
+        ]
+      },
+      "limitation": ""
+    },
+    "Oklahoma": {
+      "count": 9,
+      "shortfall": 11,
+      "default": {
+        "id": "oklahoma-modern.jpg",
+        "label": "Standard passenger, 2009 Sacred Rain Arrow base; newer reusable standard unavailable",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:PND742.png",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Oklahoma"
+        ]
+      },
+      "limitation": "newer reusable standard unavailable"
+    },
+    "Oregon": {
+      "count": 2,
+      "shortfall": 18,
+      "default": {
+        "id": "oregon-modern.jpg",
+        "label": "Standard passenger, tree base (2003 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:2003_Oregon_License_Plate.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Oregon"
+        ]
+      },
+      "limitation": ""
+    },
+    "Pennsylvania": {
+      "count": 3,
+      "shortfall": 17,
+      "default": {
+        "id": "pennsylvania-modern.jpg",
+        "label": "Standard passenger, Let Freedom Ring base (2025 sample)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:PA_RegistrationPlate_New.png",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Pennsylvania"
+        ]
+      },
+      "limitation": ""
+    },
+    "Rhode Island": {
+      "count": 18,
+      "shortfall": 2,
+      "default": {
+        "id": "rhode-island-modern.jpg",
+        "label": "Standard passenger, old wave base (2013 photograph); newer reusable standard unavailable",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Rhode_Island_2013_License_Plate.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Rhode_Island"
+        ]
+      },
+      "limitation": "newer reusable standard unavailable"
+    },
+    "South Carolina": {
+      "count": 22,
+      "shortfall": 0,
+      "default": {
+        "id": "south-carolina-modern.jpg",
+        "label": "Standard passenger, palmetto base (2023 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:2023_South_Carolina_mail-out_series_passenger_car_rear_license_plate.png",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_South_Carolina"
+        ]
+      },
+      "limitation": ""
+    },
+    "South Dakota": {
+      "count": 29,
+      "shortfall": 0,
+      "default": {
+        "id": "south-dakota-modern.jpg",
+        "label": "Standard passenger, older Rushmore base (2018 photograph); newer reusable standard unavailable",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:South_Dakota_2018_License_Plate.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_South_Dakota"
+        ]
+      },
+      "limitation": "newer reusable standard unavailable"
+    },
+    "Tennessee": {
+      "count": 23,
+      "shortfall": 0,
+      "default": {
+        "id": "tennessee-modern.jpg",
+        "label": "Standard passenger, blue 2022 base",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:2022_Tenn_Tag.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Tennessee"
+        ]
+      },
+      "limitation": ""
+    },
+    "Texas": {
+      "count": 30,
+      "shortfall": 0,
+      "default": {
+        "id": "texas-modern.jpg",
+        "label": "Standard passenger, Lone Star base (2020 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Texas_Passenger_Car_License_Plate_2020.png",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Texas"
+        ]
+      },
+      "limitation": ""
+    },
+    "Utah": {
+      "count": 27,
+      "shortfall": 0,
+      "default": {
+        "id": "utah-modern.jpg",
+        "label": "Standard passenger, Life Elevated arch base (2021 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:2021_Utah_Arch_License_Plate.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Utah"
+        ]
+      },
+      "limitation": ""
+    },
+    "Vermont": {
+      "count": 2,
+      "shortfall": 18,
+      "default": {
+        "id": "vermont-modern.jpg",
+        "label": "Standard passenger, green base (2017 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Vermont_2017_License_Plate.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Vermont"
+        ]
+      },
+      "limitation": ""
+    },
+    "Virginia": {
+      "count": 2,
+      "shortfall": 18,
+      "default": {
+        "id": "virginia-modern.jpg",
+        "label": "Standard passenger, Virginia Is for Lovers base (2016 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Virginia_2016_License_Plate.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Virginia"
+        ]
+      },
+      "limitation": ""
+    },
+    "Washington": {
+      "count": 2,
+      "shortfall": 18,
+      "default": {
+        "id": "washington-modern.jpg",
+        "label": "Standard passenger, Mount Rainier base (2019 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:Washington_License_Plate_2019.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Washington"
+        ]
+      },
+      "limitation": ""
+    },
+    "West Virginia": {
+      "count": 2,
+      "shortfall": 18,
+      "default": {
+        "id": "west-virginia-modern.jpg",
+        "label": "Standard passenger, blue/gold borders base (2008 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:2008_West_Virginia_license_plate_-_NAD_434.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_West_Virginia"
+        ]
+      },
+      "limitation": ""
+    },
+    "Wisconsin": {
+      "count": 2,
+      "shortfall": 18,
+      "default": {
+        "id": "wisconsin-modern.jpg",
+        "label": "Standard passenger, Dairyland base (2024 photograph)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:2024_Wisconsin_Passenger_AXS-2802.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Wisconsin"
+        ]
+      },
+      "limitation": ""
+    },
+    "Wyoming": {
+      "count": 2,
+      "shortfall": 18,
+      "default": {
+        "id": "wyoming-historical.jpg",
+        "label": "1960 standard passenger base; newer reusable standard unavailable (university plate is not the default)",
+        "evidence": [
+          "https://commons.wikimedia.org/wiki/File:1960_Wyoming_license_plate.jpg",
+          "https://en.wikipedia.org/wiki/Vehicle_registration_plates_of_Wyoming"
+        ]
+      },
+      "limitation": "newer reusable standard unavailable (university plate is not the default)"
+    }
+  },
+  "total": 1021,
+  "statesMeetingTarget": 30,
+  "limitations": [
+    "Requested 20 distinct designs per state is not fulfilled for all states. See exact counts and shortfalls.",
+    "Commons returned sustained HTTP 429 responses during both bounded bulk sourcing attempts. Unavailable images were excluded.",
+    "Plate Shack requires permission before image reuse; no permission was inferred. PICRYL's collection was inaccessible (HTTP 403) and did not establish statewide design coverage.",
+    "Defaults use reviewed standard passenger designs in the available reusable library, not newer fleet, municipal, university or other specialty plates.",
+    "Image title dates can describe a renewal sticker or photo date, not an issue date; design labels identify the actual base where verified.",
+    "Annual colors or embossed dates are distinct historical designs. Different serials and renewal stickers on the same base are not counted as new designs."
+  ],
+  "rejectedCandidates": {
+    "Alaska": [
+      {
+        "title": "2005 Alaska license plate ETU 870.jpg",
+        "reason": "Same flag base as the 2007 photograph; serial/sticker variation."
+      },
+      {
+        "title": "2005 Alaska license plate 4X4MUD.jpg",
+        "reason": "Same standard base as the 2020 photograph."
+      }
+    ],
+    "Arizona": [
+      {
+        "title": "Placa de Arizona, 31 de diciembre de 2023.jpg",
+        "reason": "Vehicle photo, not plate-only."
+      },
+      {
+        "title": "Coche con placa de Arizona, 27 de octubre de 2025.jpg",
+        "reason": "Vehicle photo, not plate-only."
+      },
+      {
+        "title": "1960 Arizona sample license plate.jpg",
+        "reason": "1959 base with a 1960 sticker; duplicates the 1959 base."
+      }
+    ],
+    "Arkansas": [
+      {
+        "title": "2004 Arkansas license plate 706 BSZ.jpg",
+        "reason": "Same standard base as the 2011 photograph."
+      },
+      {
+        "title": "1996\u20132006 series Arkansas license plate, 1998.png",
+        "reason": "Same standard base as the 2011 photograph."
+      }
+    ],
+    "California": [
+      {
+        "title": "Californian sample license plate, 2000\u20132011.png",
+        "reason": "Same current script base as the 2024 photograph."
+      },
+      {
+        "title": "California license plate, August 2012.png",
+        "reason": "Same current script base as the 2024 photograph."
+      },
+      {
+        "title": "1960 California license plate.jpg",
+        "reason": "1956 base with a later sticker; duplicate base."
+      },
+      {
+        "title": "1959 California license plate 01.jpg",
+        "reason": "1956 base with a later sticker; duplicate base."
+      },
+      {
+        "title": "1955 California license plate tab.jpg",
+        "reason": "Validation tab only, not a complete plate."
+      },
+      {
+        "title": "1954 California license plate.jpg",
+        "reason": "1951 base with a later validation tab; duplicate base."
+      },
+      {
+        "title": "1953 California license plate tab.jpg",
+        "reason": "Validation tab only."
+      },
+      {
+        "title": "1952 California license plate tab.jpg",
+        "reason": "Validation tab only."
+      },
+      {
+        "title": "1950 California license plate tab.jpg",
+        "reason": "Validation tab only."
+      },
+      {
+        "title": "1949 California license plate tab.jpg",
+        "reason": "Validation tab only."
+      },
+      {
+        "title": "1948 California license plate tab.jpg",
+        "reason": "Validation tab only."
+      },
+      {
+        "title": "1946 California license plate tab.jpg",
+        "reason": "Validation tab only."
+      },
+      {
+        "title": "1943 California license plate tab.jpg",
+        "reason": "Validation tab only."
+      },
+      {
+        "title": "1941 California passenger license plate.jpg",
+        "reason": "1940 base with a later validation tab; duplicate base."
+      }
+    ],
+    "Colorado": [
+      {
+        "title": "Colorado 1952 license plate - Number 7-4796.png",
+        "reason": "1951 base with a 1952 sticker; duplicates the 1951 base."
+      }
+    ],
+    "Connecticut": [
+      {
+        "title": "Connecticut 1965 license plate.jpg",
+        "reason": "Same undated blue base as the 1967 photograph."
+      },
+      {
+        "title": "1963 Connecticut license plate.JPG",
+        "reason": "Same undated blue base."
+      },
+      {
+        "title": "1960 Connecticut license plate.jpg",
+        "reason": "Same undated blue base."
+      },
+      {
+        "title": "1959 Connecticut license plate.JPG",
+        "reason": "Same undated blue base."
+      },
+      {
+        "title": "1954 Connecticut plate A-A 8667.png",
+        "reason": "Same gray undated base; serial/sticker variation."
+      },
+      {
+        "title": "1953 Connecticut license plate.jpg",
+        "reason": "Same gray undated base."
+      },
+      {
+        "title": "1948 Connecticut license plate.JPG",
+        "reason": "Same gray undated base."
+      },
+      {
+        "title": "1942 Connecticut license plate.jpg",
+        "reason": "Same gray undated base."
+      }
+    ],
+    "Delaware": [
+      {
+        "title": "Delaware plate, 2008 series with 2013 sticker.png",
+        "reason": "Same photograph/base as the 2013 image."
+      },
+      {
+        "title": "Delaware license plate, 2008.png",
+        "reason": "Same current base, sample serial."
+      },
+      {
+        "title": "2001 Delaware license plate 532484.jpg",
+        "reason": "Same reflective First State base."
+      },
+      {
+        "title": "1967 Delaware license plate.jpg",
+        "reason": "Same reflective First State base."
+      },
+      {
+        "title": "Delaware 1965 License Plate.jpg",
+        "reason": "Same reflective First State base."
+      },
+      {
+        "title": "1959 Delaware license plate.jpg",
+        "reason": "Undated stainless base with a later date tab."
+      }
+    ],
+    "Georgia": [
+      {
+        "title": "2007 Georgia license plate AXT 5757.jpg",
+        "reason": "Same peach base as the 2011 photograph."
+      }
+    ],
+    "Hawaii": [
+      {
+        "title": "1969 Hawaii license plate 9B-90.jpg",
+        "reason": "Same yellow 1969 base as the other photograph."
+      },
+      {
+        "title": "Hawaii 1965 Plate.jpg",
+        "reason": "1961 green base with a 1965 sticker."
+      },
+      {
+        "title": "Hawaii 1954 license plate.jpg",
+        "reason": "1953 blue base with a 1954 renewal sticker."
+      }
+    ],
+    "Illinois": [
+      {
+        "title": "ILLINOIS 1960 LICENSE PLATE 282-662 - Flickr - woody1778a.jpg",
+        "reason": "Second serial of the 1960 annual passenger issue."
+      }
+    ],
+    "Iowa": [
+      {
+        "title": "1921 Hudson Phaeton red-black AACA Iowa 2012 ho.jpg",
+        "reason": "Vehicle photo, not plate-only."
+      },
+      {
+        "title": "Iowa 1951 license plate - Number 91-6667.jpg",
+        "reason": "1950 base with a 1951 renewal tab."
+      },
+      {
+        "title": "Iowa 1948 license plate - Number 23-1487.jpg",
+        "reason": "1947 base with a 1948 renewal tab."
+      }
+    ],
+    "Kansas": [
+      {
+        "title": "Kansas Standard License Plate 2018-Present.jpg",
+        "reason": "Same state seal base as the other modern photograph."
+      },
+      {
+        "title": "1953 Kansas license plate.jpg",
+        "reason": "1951 base with a 1953 renewal sticker."
+      }
+    ],
+    "Louisiana": [
+      {
+        "title": "Louisiana 1965 License Plate.jpg",
+        "reason": "Second photograph of the 1964-65 base; color aging is not a new design."
+      }
+    ],
+    "Maine": [
+      {
+        "title": "1967 Maine license plate.jpg",
+        "reason": "Undated gray Vacationland base with a later sticker."
+      },
+      {
+        "title": "Maine 1965 License Plate.jpg",
+        "reason": "Undated gray Vacationland base with a later sticker."
+      },
+      {
+        "title": "Maine 1963 license plate.jpg",
+        "reason": "Undated gray Vacationland base with a later sticker."
+      },
+      {
+        "title": "1960 Maine license plate.jpg",
+        "reason": "Yellow 1956 base with a later renewal sticker."
+      },
+      {
+        "title": "1955 Maine licence plate.jpg",
+        "reason": "Undated gray Vacationland base with a different sticker."
+      },
+      {
+        "title": "1954 Maine license plate.jpg",
+        "reason": "Undated gray Vacationland base with a different sticker."
+      }
+    ],
+    "Maryland": [
+      {
+        "title": "Maryland multi-purpose vehicle license plate, 1986\u20131997 with October 2003 sticker.png",
+        "reason": "Same shield base; serial suffix only."
+      },
+      {
+        "title": "Maryland license plate, 2016-series (7DC0657).png",
+        "reason": "Same flag-base photograph."
+      },
+      {
+        "title": "Maryland license plate, 2004.jpg",
+        "reason": "Same shield-base photograph."
+      },
+      {
+        "title": "Maryland license plate, 1938\u20131939.png",
+        "reason": "Same expiration-1939 base as the other photograph."
+      }
+    ],
+    "Massachusetts": [
+      {
+        "title": "1954 Massachusetts vehicle registration sticker.jpg",
+        "reason": "Paper windshield permit, not a license plate."
+      }
+    ],
+    "Michigan": [
+      {
+        "title": "Michigan sample license plate, 2013.png",
+        "reason": "Same Pure Michigan base as the photograph."
+      },
+      {
+        "title": "Michigan license plate 2012.jpg",
+        "reason": "Same Pure Michigan sample base."
+      }
+    ],
+    "Minnesota": [
+      {
+        "title": "Minnesota 1967 license plate - Number 4HF 401.jpg",
+        "reason": "1965 base with a 1967 renewal sticker."
+      },
+      {
+        "title": "1964 Minnesota license plate.jpg",
+        "reason": "1962 base with a 1964 renewal sticker."
+      }
+    ],
+    "Missouri": [
+      {
+        "title": "2008 Missouri license plate - 488 WC1.jpg",
+        "reason": "Same green Show-Me State base as the other photograph."
+      },
+      {
+        "title": "1960 Missouri license plate.jpg",
+        "reason": "Same undated black/gold base with a later renewal."
+      }
+    ],
+    "Montana": [
+      {
+        "title": "Montana 2010\u20132016 standard license plate (old font).png",
+        "reason": "Same current blue state-outline base."
+      },
+      {
+        "title": "1965 Montana License Plate.jpg",
+        "reason": "Same undated gray outline base with later renewal."
+      },
+      {
+        "title": "1963 Montana license plate.jpg",
+        "reason": "Same undated gray outline base with later renewal."
+      },
+      {
+        "title": "1960 Montana license plate.jpg",
+        "reason": "Same undated gray outline base."
+      }
+    ],
+    "Nevada": [
+      {
+        "title": "Nevada 1967 license plate.jpg",
+        "reason": "1965 base with a 1967 sticker."
+      },
+      {
+        "title": "Nevada 1966 license plate - Number CH1055.jpg",
+        "reason": "1965 base with a 1966 sticker."
+      }
+    ],
+    "New Hampshire": [
+      {
+        "title": "New Hampshire 1937 boat license plate.jpg",
+        "reason": "Boat registration, not an automobile plate."
+      }
+    ],
+    "New Jersey": [
+      {
+        "title": "New Jersey sample license plate, 2019.png",
+        "reason": "Same Garden State base as the 2023 photograph."
+      },
+      {
+        "title": "New Jersey license plate 2014.jpg",
+        "reason": "Same Garden State base, serial/renewal variation."
+      },
+      {
+        "title": "New Jersey 2017 Temporary License Plate - \"M\".jpg",
+        "reason": "Paper temporary permit."
+      },
+      {
+        "title": "New Jersey 2016 Temporary License Plate - \"L\".jpg",
+        "reason": "Same paper temporary permit."
+      },
+      {
+        "title": "New Jersey 2014 Temporary License Plate - \"F\" .jpg",
+        "reason": "Same paper temporary permit."
+      },
+      {
+        "title": "1956 New Jersey passenger license plate.jpg",
+        "reason": "Same 1952 orange-letter base with a later sticker."
+      },
+      {
+        "title": "Migrant Workers July 1940 from Florida to New Jersey.jpg",
+        "reason": "People/vehicle photograph, not a plate-only image."
+      }
+    ],
+    "New Mexico": [
+      {
+        "title": "2012 New Mexico license plate WELCOME sample.jpg",
+        "reason": "Same Centennial base as the retained sample."
+      },
+      {
+        "title": "1960 New Mexico license plate.jpg",
+        "reason": "1959 base with a 1960 renewal sticker."
+      }
+    ],
+    "New York": [
+      {
+        "title": "New York organizational license plate, c. 2012.png",
+        "reason": "Incomplete organizational template with an IMAGE placeholder."
+      },
+      {
+        "title": "New York license plate 2010.jpg",
+        "reason": "Same Empire Gold base as the cropped photograph."
+      },
+      {
+        "title": "2001 to 2010 New York organizational plate.png",
+        "reason": "Incomplete organizational template with an IMAGE placeholder."
+      },
+      {
+        "title": "14th St 6th Av td (2019-10-28) 30 - New York City Streets (112-114 West 14th Street).jpg",
+        "reason": "Building photograph, not a license plate."
+      },
+      {
+        "title": "1954 New York license plate.jpg",
+        "reason": "1953 base with a 1954 renewal tab."
+      },
+      {
+        "title": "1952 New York license plate.JPG",
+        "reason": "1951 base with a 1952 renewal tab."
+      }
+    ],
+    "North Carolina": [
+      {
+        "title": "North Carolina 2017 License Plate.jpg",
+        "reason": "Same First in Flight base as the 2020 photograph."
+      },
+      {
+        "title": "North Carolina 2013 License Plate.jpg",
+        "reason": "Same First in Flight base, different serial."
+      }
+    ],
+    "North Dakota": [
+      {
+        "title": "North Dakota 1965 license plate - Number 168-761.jpg",
+        "reason": "1962 base with a 1965 renewal sticker; color aging is not a new base."
+      },
+      {
+        "title": "1960 North Dakota license plate.jpg",
+        "reason": "1958 base with a 1960 renewal sticker."
+      }
+    ],
+    "Ohio": [
+      {
+        "title": "Ohio license plate sample 2001.jpg",
+        "reason": "Same Bicentennial base as the retained photograph."
+      }
+    ],
+    "Rhode Island": [
+      {
+        "title": "1965 Rhode Island License Plate.jpg",
+        "reason": "Same undated white base with a different sticker."
+      },
+      {
+        "title": "1960 Rhode Island license plate.jpg",
+        "reason": "Same undated black base and serial with a different sticker."
+      },
+      {
+        "title": "Rhode Island 1957 license plate.jpg",
+        "reason": "Same undated white base with a different sticker."
+      }
+    ],
+    "South Carolina": [
+      {
+        "title": "2020 South Carolina passenger car rear license plate.png",
+        "reason": "Same palmetto/crescent base as the other current photograph."
+      }
+    ],
+    "South Dakota": [
+      {
+        "title": "South Dakota 2003 license plate - 4AA 656.jpg",
+        "reason": "Same red-header Rushmore base, serial/renewal variation."
+      }
+    ],
+    "Tennessee": [
+      {
+        "title": "Tennessee \u2018IGWT\u2019 2022 license plate.jpg",
+        "reason": "Same blue In God We Trust base, different serial."
+      },
+      {
+        "title": "2022 Tennessee \u201cIn God We Trust\u201d license plate.jpg",
+        "reason": "Same blue In God We Trust base, different serial."
+      },
+      {
+        "title": "1966 Tennessee license plate DR-8339.jpg",
+        "reason": "1962 base with a 1966 renewal sticker."
+      }
+    ],
+    "Utah": [
+      {
+        "title": "Utah 2004 Temporary Motor Vehicle Registration.jpg",
+        "reason": "Paper temporary permit, not a plate."
+      },
+      {
+        "title": "Utah \"Life Elevated\" 2025 plate.png",
+        "reason": "Same Life Elevated arch base as the 2021 photograph."
+      },
+      {
+        "title": "Utah 1969 license plate.jpg",
+        "reason": "1968 base with a 1969 renewal sticker."
+      }
+    ]
+  },
+  "reviewedAt": "2026-11-21"
+}
