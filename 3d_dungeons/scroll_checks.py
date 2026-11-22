@@ -35,11 +35,11 @@ with sync_playwright() as p:
         page.keyboard.press("t")
         assert page.evaluate("player.selectedScroll==='light'")
         page.locator("#game").focus()
-        page.evaluate("player.weapon.kind='crossbow';player.ammo.crossbow={fire:0,poison:5,explosive:0,light:5};player.ammoChoice.crossbow='regular'")
-        for expected in ["poison", "light", "regular"]:
+        page.evaluate("player.weapon.kind='crossbow';Object.assign(player.ammoShared,{fire:0,poison:5,explosion:0,light:5,lightning:0,web:0,charm:0});selectedAmmo='regular'")
+        for expected in ["light", "poison", "regular"]:
             page.keyboard.press("c")
-            assert page.evaluate("player.ammoChoice.crossbow") == expected
-        assert page.evaluate("player.ammo.crossbow.poison===5&&player.ammo.crossbow.light===5&&heroShots.length===cycleShotCount")
+            assert page.evaluate("selectedAmmo") == expected
+        assert page.evaluate("player.ammoShared.poison===5&&player.ammoShared.light===5&&heroShots.length===cycleShotCount")
         page.keyboard.press("p")
         page.keyboard.press("t")
         assert page.evaluate("player.selectedScroll==='light'")

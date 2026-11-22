@@ -80,6 +80,8 @@ Fireball bursts at the first creature, intact obstacle, wall, or maximum range (
 
 Run `python 3d_dungeons\scroll_checks.py` for actual Edge desktop/phone/landscape right-click, R, selection and touch casting, all four effects, pickup, consumption, pause guards, context-menu scope and screenshots. It accepts a deployed `?test` URL. The Node suite covers scroll loot, new-run reset/floor persistence, wall/obstacle blocking, late-arriving poison targets, and Light expiry.
 
+Fireball bursts into layered flame and sparks; Lightning flashes as a branching, glowing bolt. These are visual effects only: damage, range, targeting, and consumption are unchanged. Run `python 3d_dungeons\spell_visual_checks.py` for desktop/phone cast and pixel checks, with screenshots in `D:\AI_Output\Emberkeep\checks`; an optional deployed `?test` URL tests the live page.
+
 ## Traps and torchlight
 
 Each generated hidden glint has an 8% seeded chance to contain a **Hidden Hoard** weapon when safely inspected. Its floor-level weapon roll gains exactly +5 strike power; the gold reveal and normal selectable pickup invite inspection. A treasure reveal permanently consumes the trap without arming, damage, spawning creatures, or descent. Walking onto an uninspected glint still triggers the original trap and forfeits its hidden reward. Rewards cannot repeat; eighth-floor boss gates remain sealed.

@@ -1343,14 +1343,29 @@ function drawScrollMagic(){
   ctx.fillStyle=scrollTypes.poison.color;ctx.beginPath();ctx.arc(zone.x,zone.y,zone.radius,0,TAU);ctx.fill();ctx.restore();
  }
  for(const flash of world.scrollFlashes){
-  ctx.save();ctx.globalAlpha=flash.life/.45;ctx.strokeStyle=scrollTypes[flash.kind].color;ctx.lineWidth=4;
-  ctx.beginPath();
-  if(flash.kind==='lightning'){
-   ctx.moveTo(flash.from.x,flash.from.y);
-   for(let i=1;i<8;i++){const f=i/8;ctx.lineTo(flash.from.x+(flash.x-flash.from.x)*f+(i%2?7:-7),flash.from.y+(flash.y-flash.from.y)*f)}
-   ctx.lineTo(flash.x,flash.y);
-  }else ctx.arc(flash.x,flash.y,(1-flash.life/.45)*65+8,0,TAU);
-  ctx.stroke();ctx.restore();
+  ctx.save();const fade=Math.max(0,Math.min(1,flash.life/.45)),progress=1-fade;
+  if(flash.kind==='fireball'){
+   const r=18+progress*64;
+   glow(flash.x,flash.y,r*1.65,'#ff6a2855');glow(flash.x,flash.y,r*.7,'#ffd06c88');
+   ctx.globalAlpha=fade*.8;
+   const flame=[];for(let i=0;i<24;i++){const a=i*TAU/24+progress*.3,reach=r*(i%2?.58:1.05+(i%5)*.07);flame.push([flash.x+Math.cos(a)*reach,flash.y+Math.sin(a)*reach])}
+   polygon(flame,'#d9421d');circle(flash.x,flash.y,r*.66,'#ff852a');circle(flash.x,flash.y,r*.32,'#fff0aa');
+   ctx.strokeStyle='#ffce6d';ctx.lineWidth=3;ctx.beginPath();ctx.arc(flash.x,flash.y,r*.88,0,TAU);ctx.stroke();
+   for(let i=0;i<14;i++){const a=i*TAU/14+progress*.65,dist=r*(.65+(i%3)*.38);circle(flash.x+Math.cos(a)*dist,flash.y+Math.sin(a)*dist,2+(i%3),'#ffe090')}
+  }else if(flash.kind==='lightning'){
+   const dx=flash.x-flash.from.x,dy=flash.y-flash.from.y,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len;
+   const points=[flash.from];for(let i=1;i<12;i++){const t=i/12,offset=Math.sin(i*12.7+Math.floor(progress*4)*2.1)*12*Math.sin(t*Math.PI);points.push({x:flash.from.x+dx*t+nx*offset,y:flash.from.y+dy*t+ny*offset})}points.push(flash);
+   const bolt=()=>{ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke()};
+   ctx.lineJoin='round';ctx.lineCap='round';ctx.globalAlpha=fade*.28;ctx.strokeStyle='#68aaff';ctx.lineWidth=18;bolt();
+   ctx.globalAlpha=fade*.8;ctx.strokeStyle='#91bfff';ctx.lineWidth=7;bolt();ctx.globalAlpha=fade;ctx.strokeStyle='#f6ffff';ctx.lineWidth=2.5;bolt();
+   ctx.strokeStyle='#c9e6ff';ctx.lineWidth=2;
+   for(const i of [3,6,9]){const p=points[i],side=i%2?1:-1;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+nx*side*20+dx/len*10,p.y+ny*side*20+dy/len*10);ctx.lineTo(p.x+nx*side*30+dx/len*20,p.y+ny*side*30+dy/len*20);ctx.stroke()}
+   glow(flash.x,flash.y,60,'#8bc5ff88');circle(flash.x,flash.y,8+fade*8,'#e7faff');
+   ctx.strokeStyle='#cbeaff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(flash.x,flash.y,12+progress*30,0,TAU);ctx.stroke();
+  }else{
+   ctx.globalAlpha=fade;ctx.strokeStyle=scrollTypes[flash.kind].color;ctx.lineWidth=4;ctx.beginPath();ctx.arc(flash.x,flash.y,progress*65+8,0,TAU);ctx.stroke();
+  }
+  ctx.restore();
  }
 }
 for(const kind of Object.keys(scrollTypes))$('scroll-'+kind).onclick=()=>{player.selectedScroll=kind;refreshScrollHUD();canvas.focus()};
