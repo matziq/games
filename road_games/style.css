@@ -2,7 +2,10 @@
 * { box-sizing: border-box; }
 body { margin: 0; }
 main { max-width: 800px; margin: auto; padding: 18px 16px 48px; }
-.back { display: inline-flex; min-height: 44px; align-items: center; color: #b8eaff; font-weight: 700; }
+.back { position: fixed; top: max(4px, env(safe-area-inset-top)); left: max(8px, env(safe-area-inset-left)); z-index: 20; display: inline-flex; min-height: 44px; align-items: center; padding: 0 10px; border: 1px solid #71809f; border-radius: 8px; background: #10172d; color: #b8eaff; font-weight: 700; }
+main { padding-top: 70px; }
+.game-links { display: grid; gap: 10px; }
+.game-links a { display: flex; align-items: center; min-height: 56px; padding: 14px 16px; border: 1px solid #71809f; border-radius: 10px; background: #252e49; color: #fff; font-weight: 700; }
 header { margin: 14px 0 22px; }
 .eyebrow { color: #a7eaff; letter-spacing: .16em; font-weight: 750; font-size: .75rem; }
 h1 { margin: 0; font-size: clamp(2.2rem, 8vw, 3.5rem); line-height: 1.05; }
@@ -11,9 +14,7 @@ button, select { font: inherit; }
 button { cursor: pointer; color: #fff; background: #252e49; border: 1px solid #71809f; border-radius: 10px; min-height: 44px; font-weight: 700; }
 button:hover { filter: brightness(1.13); }
 button:focus-visible, a:focus-visible, select:focus-visible { outline: 3px solid #75e6ff; outline-offset: 3px; z-index: 2; }
-.tabs { display: flex; flex-wrap: wrap; gap: 8px; }
-.tabs button, #restart { padding: 10px 16px; }
-.tabs button[aria-pressed="true"] { background: #a7eaff; color: #10172d; border-color: #a7eaff; }
+#restart { padding: 10px 16px; }
 .game { margin-top: 16px; padding: clamp(14px, 3vw, 22px); border: 1px solid #495675; border-radius: 18px; background: #ffffff0d; }
 .game-header { display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: 12px; }
 h2 { margin: 0 0 4px; font-size: 1.4rem; }

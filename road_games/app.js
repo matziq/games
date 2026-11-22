@@ -11,7 +11,8 @@ const byId = id => document.getElementById(id);
 const board = byId("board");
 const warning = byId("storage-warning");
 const key = game => `road-board-games.v1.${game}`;
-let current = "tic", selected = null, focusIndex = 0;
+const current = document.body.dataset.game;
+let selected = null, focusIndex = 0;
 const states = { tic: newTicTacToe(), checkers: newCheckers(), chess: new Chess() };
 
 function warn(message) {
@@ -34,7 +35,7 @@ function validCheckers(data) {
     Object.values(data.positions).every(n => Number.isInteger(n) && n > 0);
 }
 
-for (const game of Object.keys(states)) {
+for (const game of [current]) {
   try {
     const saved = localStorage.getItem(key(game));
     if (saved === null) continue;
@@ -86,9 +87,6 @@ function legalMoves() {
 
 function render(restoreFocus = false) {
   const game = states[current], size = current === "tic" ? 3 : 8;
-  for (const button of document.querySelectorAll("[data-game]")) {
-    button.setAttribute("aria-pressed", String(button.dataset.game === current));
-  }
   byId("game-title").textContent = names[current];
   byId("promotion-wrap").hidden = current !== "chess";
   let result, status, cells;
@@ -193,15 +191,6 @@ board.addEventListener("keydown", event => {
   next.focus();
 });
 
-document.querySelector(".tabs").addEventListener("click", event => {
-  const button = event.target.closest("button[data-game]");
-  if (!button || !Object.hasOwn(states, button.dataset.game)) return;
-  current = button.dataset.game;
-  selected = current === "checkers" ? states.checkers.forced : null;
-  focusIndex = 0;
-  render();
-});
-
 byId("restart").addEventListener("click", () => {
   if (!confirm(`Start a new ${names[current]} game? This will clear its current progress.`)) return;
   states[current] = current === "tic" ? newTicTacToe() : current === "checkers" ? newCheckers() : new Chess();
@@ -211,4 +200,5 @@ byId("restart").addEventListener("click", () => {
   render();
 });
 
+if (current === "checkers") selected = states.checkers.forced;
 render();
