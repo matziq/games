@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10172d">
+  <title>Road Games: Board Games</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<main>
+  <a class="back" href="https://memconfigmgr.org/games/">&#8592; Games menu</a>
+  <header>
+    <p class="eyebrow">PASS &amp; PLAY</p>
+    <h1>Road Games</h1>
+    <p>Two players, one device. Choose a game and take turns.</p>
+  </header>
+  <nav class="tabs" aria-label="Choose a game">
+    <button type="button" data-game="tic">Tic-Tac-Toe</button>
+    <button type="button" data-game="checkers">Checkers</button>
+    <button type="button" data-game="chess">Chess</button>
+  </nav>
+  <p id="storage-warning" class="warning" role="status" hidden></p>
+  <section class="game" aria-labelledby="game-title">
+    <div class="game-header">
+      <div>
+        <h2 id="game-title">Loading games...</h2>
+        <p id="status" role="status" aria-live="polite"></p>
+      </div>
+      <button type="button" id="restart">New game</button>
+    </div>
+    <p id="instructions" class="instructions"></p>
+    <div id="promotion-wrap" class="promotion" hidden>
+      <label for="promotion">Pawn promotion:</label>
+      <select id="promotion">
+        <option value="q">Queen</option>
+        <option value="r">Rook</option>
+        <option value="b">Bishop</option>
+        <option value="n">Knight</option>
+      </select>
+      <span>Choose before moving a pawn to the last rank.</span>
+    </div>
+    <div id="board" class="board" role="group" aria-label="Game board"></div>
+    <p class="keyboard">Keyboard: use arrow keys to move around the board, then Enter or Space to select.</p>
+    <p class="saved">Each game is saved separately on this browser and device when storage is available.</p>
+  </section>
+</main>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
