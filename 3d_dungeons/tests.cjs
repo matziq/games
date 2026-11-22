@@ -44,17 +44,20 @@ check('ordinary swarm creatures target only player while activated trap creature
   run('begin()');
 });
 check('eighth-floor boss locks descent, drops a full reward cache, and later boss cycle preserves progression', () => {
-  run("begin();loadFloor(8,604);world.traps=[];props=[];var dragon=enemies.find(e=>e.boss);player.gold=100;var keptWeapon=player.weapon;var keptScrolls=JSON.stringify(player.scrolls);var sealedFall=fallToFloor(9,'test');hurtEnemy(dragon,10000);var goldAfterBoss=player.gold;var killsAfterBoss=kills;var rankAfterBoss=player.level;var spoils=loot.slice()");
-  assert.equal(run("sealedFall===false&&state==='victory'&&player.crowns===1&&bossDefeated&&loot.some(i=>i.type==='gold'&&i.value===1000)&&loot.some(i=>i.type==='weapon')&&loot.some(i=>i.type==='armor')&&loot.some(i=>i.type==='scroll')&&loot.some(i=>i.type==='ammo')"),true);
+  run("begin();loadFloor(8,604);world.traps=[];props=[];var dragon=enemies.find(e=>e.boss);player.gold=100;var keptWeapon=player.weapon;var keptScrolls=JSON.stringify(player.scrolls);var sealedFall=fallToFloor(9,'test');var victorySounds=window.DungeonAudio.diagnostic().events.victory||0;keys.add('w');mouse.down=true;hurtEnemy(dragon,10000);var goldAfterBoss=player.gold;var killsAfterBoss=kills;var rankAfterBoss=player.level;var spoils=loot.slice()");
+  assert.equal(run("sealedFall===false&&state==='playing'&&$('overlay').hidden&&keys.has('w')&&mouse.down&&player.crowns===1&&bossDefeated&&loot.some(i=>i.type==='gold'&&i.value===1000)&&loot.some(i=>i.type==='weapon')&&loot.some(i=>i.type==='armor')&&loot.some(i=>i.type==='scroll')&&loot.some(i=>i.type==='ammo')"),true);
+  assert.equal(run("effects.filter(p=>p.coin).length"),32);
+  assert.equal(run("window.DungeonAudio.diagnostic().events.victory"),run("victorySounds+1"));
   run('hurtEnemy(dragon,10000)');
-  assert.equal(run('player.crowns===1&&player.gold===goldAfterBoss&&kills===killsAfterBoss'),true);
-  run('continueAfterVictory()');
+  assert.equal(run('player.crowns===1&&player.gold===goldAfterBoss&&kills===killsAfterBoss&&window.DungeonAudio.diagnostic().events.victory===victorySounds+1'),true);
   assert.equal(run("state==='playing'&&depth===8&&loot.length===spoils.length&&spoils.every(i=>loot.includes(i))&&player.weapon===keptWeapon"),true);
+  run("keys.clear();mouse.down=false;for(let i=0;i<55;i++)update(.04)");
+  assert.equal(run('effects.some(p=>p.coin)'),false);
   run("selectedWorldItem=null;player.x=world.end.x;player.y=world.end.y;interact()");
   assert.equal(run("depth===9&&state==='playing'&&!bossDefeated"),true);
   run("loadFloor(16,604);var secondDragon=enemies.find(e=>e.boss)");
   assert.equal(run("secondDragon&&secondDragon.bossName==='The Grave Necromancer'&&world.rooms.every(r=>!r.collapse)&&world.pits.length===0"),true);
-  run('hurtEnemy(secondDragon,10000);continueAfterVictory();selectedWorldItem=null;player.x=world.end.x;player.y=world.end.y;interact()');
+  run('hurtEnemy(secondDragon,10000);selectedWorldItem=null;player.x=world.end.x;player.y=world.end.y;interact()');
   assert.equal(run("runCycle===2&&depth===1&&state==='playing'&&!bossDefeated&&player.weapon===keptWeapon&&player.gold===goldAfterBoss&&player.level===rankAfterBoss&&player.crowns===2&&JSON.stringify(player.scrolls)===keptScrolls"),true);
   assert.equal(run("makeEnemy('slime',player).damage"),run('creatures.slime.damage*1.25'));
   run('begin()');assert.equal(run('runCycle===1&&!player.crowns&&player.gold===0'),true);
@@ -586,7 +589,7 @@ check('floating combat and pickup feedback reports actual values without duplica
   run('floatingTexts=[];player.hp=10;player.potions=1;potion()');
   assert.equal(sandbox.window.emberkeep.snapshot().floatingTexts[0].text,'+65 HP');
 });
-check('fourteen coherent melee and ranged weapon types drop with valid stats', () => {
+check('thirteen coherent melee and ranged weapon types drop with valid stats and no whips', () => {
   const kinds = new Set();
   for (let i=0;i<200;i++) {
     const w=run('makeWeapon()'); kinds.add(w.kind);
@@ -594,7 +597,19 @@ check('fourteen coherent melee and ranged weapon types drop with valid stats', (
     run(`heroShots=[];player.weapon=${JSON.stringify(w)};player.cool=0;attack()`);
     assert.equal(run('player.cool'),w.cooldown);
   }
-  assert.equal(kinds.size,14);
+  assert.equal(kinds.size,13);
+  assert.equal([...kinds].some(kind=>kind.includes('whip')),false);
+});
+check('rifles and pistols are ranged for classification, preference, and projectile combat', () => {
+  for(const kind of ['rifle','pistol']){
+    run(`begin();world.tiles.fill(1);props=[];enemies=[];player.weapon={...weaponTypes.${kind},kind:'${kind}',name:'Test gun',damage:30};player.cool=0;gearPreferences.prefer='ranged';var gunUpgrade={type:'weapon',weapon:{...player.weapon,damage:31}};heroShots=[]`);
+    assert.equal(run(`rangedKinds.includes('${kind}')&&betterAutoGear(gunUpgrade)`),true);
+    run("gearPreferences.prefer='melee'");
+    assert.equal(run('betterAutoGear(gunUpgrade)'),false);
+    run('attack()');
+    assert.equal(run(`heroShots.length===1&&heroShots[0].kind==='${kind}'`),true);
+  }
+  run('begin()');
 });
 check('armor drops from all loot sources, equips, swaps and reduces damage with a cap', () => {
   for (const type of ['slime','barrel','crate','chest']) {
@@ -792,9 +807,8 @@ check('dragon alternates telegraphed cone and radial attacks', () => {
   assert.ok(run('enemies[0].wind>1')); run('player.inv=10;for(let i=0;i<29;i++)update(.04)'); assert.ok(run('shots.length>=10')); assert.equal(run('enemies[0].phase'), 1);
   run('shots=[];enemies[0].cool=0;update(.01);for(let i=0;i<29;i++)update(.04)'); assert.equal(run('shots.length'), 12); assert.equal(run('enemies[0].phase'), 2);
 });
-check('boss victory, death, restart and pause transitions', () => {
-  run('hurtEnemy(enemies[0],10000)'); assert.equal(run('state'), 'victory'); assert.ok(run('player.gold>=500'));
-  run('continueAfterVictory()');assert.equal(run('state'),'playing');
+check('boss celebration, death, restart and pause transitions', () => {
+  run('hurtEnemy(enemies[0],10000)'); assert.equal(run('state'), 'playing'); assert.ok(run('player.gold>=500'));
   run('begin();player.inv=0;damagePlayer(10000)'); assert.equal(run('state'), 'dead');
   run('begin();togglePause()'); assert.equal(run('state'), 'paused'); run('togglePause()'); assert.equal(run('state'), 'playing');
 });
