@@ -16,8 +16,16 @@
 .logs p{border-left:0;padding-left:0}.gallery img{max-height:145px;object-fit:contain;background:#070e12}
 .audio-controls{display:flex;align-items:center;gap:7px}.audio-controls input{width:75px;accent-color:var(--gold)}#audioStatus{position:absolute;bottom:43px;left:22px;font-size:10px;color:#b1c5c7;pointer-events:none}@media(max-width:850px){header nav{gap:5px}.audio-controls input{width:48px}header button{padding:8px;font-size:11px}}@media(max-width:620px){header{height:auto;min-height:100px;flex-wrap:wrap;gap:7px;padding:10px 15px}main{height:calc(100vh - 134px)}.audio-controls input{width:55px}#audioStatus{bottom:8px}}
 </style>
+
+<style>
+  #return-menu-link { position: fixed; top: max(4px, env(safe-area-inset-top)); left: max(8px, env(safe-area-inset-left)); z-index: 2147483647; display: inline-flex; align-items: center; min-height: 44px; padding: 0 10px; border: 1px solid #71809f; border-radius: 8px; background: #10172d; color: #e8f7ff; font: 700 14px/1.2 system-ui, sans-serif; text-decoration: none; touch-action: manipulation; }
+  #return-menu-link:hover { background: #25375c; }
+  #return-menu-link:focus-visible { outline: 3px solid #75e6ff; outline-offset: 2px; }
+</style>
+<style>body > header { padding-top: 54px; height: auto; min-height: 124px; } body > main { height: calc(100vh - 158px); } @media(max-width:620px) { body > header { min-height: 148px; } body > main { height: calc(100vh - 182px); } }</style>
 </head>
 <body>
+<a id="return-menu-link" href="https://memconfigmgr.org/games/index.html">&#8592; Games Menu</a>
 <header><div><h1>EMBERKEEP</h1><small>THE ASHEN CROWN</small></div><nav><div class="audio-controls"><button id="mute" aria-pressed="false">Sound effects on</button><button id="music" aria-pressed="false">Music on</button><label for="volume" class="label">Volume</label><input id="volume" type="range" min="0" max="100" value="55" aria-label="Master audio volume"></div><button id="art">Source art</button><button id="pause">Pause [P]</button><button id="restart">New run</button></nav></header>
 <main>
 <div class="viewport"><canvas id="game" tabindex="0" aria-label="Overhead action RPG. Move with WASD or arrows; attack with Space or mouse; E interacts; Shift dodges; Q heals."></canvas>

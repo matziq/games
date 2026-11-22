@@ -45,12 +45,19 @@
     [hidden] { display: none !important; }
     @media (max-width: 400px) { .category { grid-template-columns: 1fr; } }
   </style>
+
+<style>
+  #return-menu-link { position: fixed; top: max(4px, env(safe-area-inset-top)); left: max(8px, env(safe-area-inset-left)); z-index: 2147483647; display: inline-flex; align-items: center; min-height: 44px; padding: 0 10px; border: 1px solid #71809f; border-radius: 8px; background: #10172d; color: #e8f7ff; font: 700 14px/1.2 system-ui, sans-serif; text-decoration: none; touch-action: manipulation; }
+  #return-menu-link:hover { background: #25375c; }
+  #return-menu-link:focus-visible { outline: 3px solid #75e6ff; outline-offset: 2px; }
+</style>
+<style>main { padding-top: 56px; }</style>
 </head>
 <body>
+<a id="return-menu-link" href="https://memconfigmgr.org/games/index.html">&#8592; Games Menu</a>
 <main>
   <div class="top">
     <button id="new-game" type="button" class="primary">New Game</button>
-    <a href="./index.html">All games</a>
   </div>
   <h1>20 Questions</h1>
   <p class="intro">Think of a person, place, or thing. Ask up to 20 questions to figure it out!</p>

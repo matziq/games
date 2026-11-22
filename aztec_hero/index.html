@@ -263,8 +263,16 @@
         outline-offset: 3px;
       }
     </style>
-  </head>
+  
+<style>
+  #return-menu-link { position: fixed; top: max(4px, env(safe-area-inset-top)); left: max(8px, env(safe-area-inset-left)); z-index: 2147483647; display: inline-flex; align-items: center; min-height: 44px; padding: 0 10px; border: 1px solid #71809f; border-radius: 8px; background: #10172d; color: #e8f7ff; font: 700 14px/1.2 system-ui, sans-serif; text-decoration: none; touch-action: manipulation; }
+  #return-menu-link:hover { background: #25375c; }
+  #return-menu-link:focus-visible { outline: 3px solid #75e6ff; outline-offset: 2px; }
+</style>
+<style>#debug { top: calc(54px + var(--safe-top)); }</style>
+</head>
   <body>
+<a id="return-menu-link" href="https://memconfigmgr.org/games/index.html">&#8592; Games Menu</a>
     <div id="app"></div>
     <div id="debug">Booting…</div>
     <div class="hint">Move: <kbd>A</kbd>/<kbd>D</kbd> or <kbd>←</kbd>/<kbd>→</kbd> · Jump: <kbd>Space</kbd> · Interact: <kbd>E</kbd></div>
