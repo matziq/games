@@ -1,4 +1,4 @@
-"""Verify enemy-friendly-fire protection and actual victory/continue controls."""
+"""Verify enemy-friendly-fire protection and uninterrupted boss celebrations."""
 import json
 import sys
 from pathlib import Path
@@ -46,20 +46,25 @@ with sync_playwright() as p:
           player.x=boss.x-60;player.y=boss.y;player.angle=0;player.cool=0;player.inv=1000;
           player.weapon={...weaponTypes.sword,kind:'sword',name:'Crowned sword',damage:30,color:'#ddd'};
           window.keptWeapon=player.weapon;window.goldBeforeBoss=player.gold;window.keptScrolls=JSON.stringify(player.scrolls);
-          window.keptAmmo=JSON.stringify(player.ammo);mouse.active=false;
+          window.keptAmmo=JSON.stringify(player.ammo);window.victorySounds=window.DungeonAudio.diagnostic().events.victory||0;mouse.active=false;
         }""")
         if touch:
             page.locator("#touchAttack").tap()
         else:
             page.keyboard.press("Space")
-        page.wait_for_function("state==='victory'&&player.crowns===1")
-        assert page.locator("#start").inner_text() == "Continue adventuring"
-        assert page.evaluate("loot.some(item=>item.type==='gold'&&item.value===1000)&&bossDefeated")
+        page.wait_for_function("bossDefeated&&player.crowns===1")
+        celebration = page.evaluate("""() => ({state,overlayHidden:overlay.hidden,coins:effects.filter(p=>p.coin).length,
+          sounds:window.DungeonAudio.diagnostic().events.victory-victorySounds,
+          gold:player.gold-goldBeforeBoss, goldDrop:loot.some(item=>item.type==='gold'&&item.value===1000)})""")
+        assert celebration["state"] == "playing" and celebration["overlayHidden"], celebration
+        assert celebration["coins"] > 0 and celebration["sounds"] == 1, celebration
+        assert celebration["gold"] >= 1000 or celebration["goldDrop"], celebration
         page.screenshot(path=str(OUT / f"{PREFIX}-{name}-victory.png"))
-        page.evaluate("window.spoils=loot.slice();window.goldAfterBoss=player.gold;window.bossKills=kills;window.bossRank=player.level")
-        page.locator("#start").click()
+        page.evaluate("window.spoils=loot.slice()")
         assert page.evaluate("state==='playing'&&depth===16&&player.weapon===keptWeapon&&spoils.every(i=>loot.includes(i)||i.taken)")
-        page.evaluate("player.x=world.end.x;player.y=world.end.y;selectedWorldItem=null;loot=[];player.cool=0")
+        page.evaluate("""() => {loot=[];window.goldAfterBoss=player.gold;window.bossKills=kills;window.bossRank=player.level;
+          window.keptScrolls=JSON.stringify(player.scrolls);window.keptAmmo=JSON.stringify(player.ammo);
+          player.x=world.end.x;player.y=world.end.y;selectedWorldItem=null;player.cool=0}""")
         if touch:
             page.locator("#touchInteract").tap()
         else:
@@ -73,7 +78,7 @@ with sync_playwright() as p:
         assert not errors, errors
         report["layouts"].append({"name": name, "enemy_shots_no_friendly_damage_or_status": True,
                                   "player_and_activated_trap_damage_preserved": True,
-                                  "floor_16_boss_kill_continue_and_next_cycle": True, "progression_preserved": True, "errors": errors})
+                                  "floor_16_boss_uninterrupted_celebration_and_next_cycle": True, "progression_preserved": True, "errors": errors})
         context.close()
     browser.close()
 (OUT / f"{PREFIX}-checks.json").write_text(json.dumps(report, indent=2), encoding="utf-8")

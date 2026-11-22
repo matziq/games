@@ -173,7 +173,6 @@ window.DungeonAudio=(()=>{
   else if(text.startsWith('Equipped '))play('equip');
   else if(text.startsWith('Healing draught'))play('heal');
   else if(text.startsWith('Knight rank'))play('rank');
-  else if(text.startsWith('Varkhos has fallen'))play('victory');
  }
  button.addEventListener('click',()=>{muted=!muted;gain();ui();if(!muted)unlock()});
  musicButton.addEventListener('click',()=>{musicMuted=!musicMuted;gain();ui();if(!musicMuted){if(context)nextBeat=context.currentTime;unlock()}});
@@ -286,17 +285,18 @@ function weaponKind(w){return w.kind||(w.name.includes('Axe')?'axe':w.name.inclu
 function makeWeapon(){const tier=integer(0,99),rarity=tier>88?2:tier>55?1:0,kinds=Object.keys(weaponTypes),kind=kinds[integer(0,kinds.length-1)],type=weaponTypes[kind];return {name:['Tempered','Knight\'s','Runed'][rarity]+' '+type.label,kind,damage:15+depth*5+rarity*9+type.bonus+(runCycle-1)*5,range:type.range+rarity*4,cooldown:type.cooldown,color:['#c5d4d4','#78c8e0','#c6a0ed'][rarity]}}
 function makeArmor(slot=armorSlots[integer(0,armorSlots.length-1)]){const tier=integer(0,2),kind=['leather','chain','plate'][tier];return {name:slot==='armor'?['Hardened Leather','Riveted Chainmail','Knight\'s Plate'][tier]:['Leather','Chain','Plate'][tier]+' '+{boots:'Boots',gloves:'Gloves',helmet:'Helmet'}[slot],kind,slot,reduction:slot==='armor'?Math.min(.4,.08+tier*.08+depth*.025):Math.min(.12,.025+tier*.025+depth*.006),color:['#ad7951','#91adb4','#c8cddd'][tier]}}
 function drops(e,chest=false){if(e.trapSwarm)return;loot.push({x:e.x-12,y:e.y,type:'gold',value:chest?integer(20,40)*depth:integer(3,10)*depth});if(chest||rng()<.25)loot.push({x:e.x+22,y:e.y+12,type:'weapon',weapon:makeWeapon()});if(chest||rng()<.16)loot.push({x:e.x-24,y:e.y+25,type:'armor',armor:makeArmor()});if(rng()<(chest?.65:.14))loot.push({x:e.x,y:e.y-22,type:'potion'})}
-function hurtEnemy(e,amount){if(e.hp<=0)return;window.DungeonAudio.play('hit',e.type);window.DungeonAudio.play('voice',e.type);const actual=Math.min(Math.max(0,e.hp),amount);e.hp-=amount;e.hit=.15;if(actual>0)floatText(e.x,e.y-25,'-'+Math.ceil(actual),'strike');particle(e.x,e.y,e.type==='slime'?'#74b788':'#d4a873');if(e.hp<=0){kills++;drops(e);player.xp+=e.type==='dragon'?250:18+depth*3;log(e.type==='dragon'?'Varkhos has fallen! The crown is yours.':e.type[0].toUpperCase()+e.type.slice(1)+' defeated.');while(player.xp>=player.level*65){player.xp-=player.level*65;player.level++;player.max+=15;player.hp=Math.min(player.max,player.hp+40);log('Knight rank '+player.level+'. Vitality increased.')}if(e.type==='dragon'){bossDefeated=true;player.gold+=500;floatText(player.x,player.y-25,'+500 GOLD','gold');showBossVictory()}}}
+function hurtEnemy(e,amount){if(e.hp<=0)return;window.DungeonAudio.play('hit',e.type);window.DungeonAudio.play('voice',e.type);const actual=Math.min(Math.max(0,e.hp),amount);e.hp-=amount;e.hit=.15;if(actual>0)floatText(e.x,e.y-25,'-'+Math.ceil(actual),'strike');particle(e.x,e.y,e.type==='slime'?'#74b788':'#d4a873');if(e.hp<=0){kills++;drops(e);player.xp+=e.type==='dragon'?250:18+depth*3;log(e.type==='dragon'?'Varkhos has fallen! The crown is yours.':e.type[0].toUpperCase()+e.type.slice(1)+' defeated.');while(player.xp>=player.level*65){player.xp-=player.level*65;player.level++;player.max+=15;player.hp=Math.min(player.max,player.hp+40);log('Knight rank '+player.level+'. Vitality increased.')}if(e.type==='dragon'){bossDefeated=true;player.gold+=500;player.crowns=(player.crowns||0)+1;floatText(player.x,player.y-25,'+500 GOLD','gold');showBossVictory()}}}
 function showBossVictory(){
- player.crowns=(player.crowns||0)+1;state='victory';keys.clear();mouse.down=false;releaseTouchControls();
- $('objective').textContent='Crown claimed! Collect your spoils, then use the final stairway to begin Cycle '+(runCycle+1)+' with your gear and rewards.';
- showOverlay('The Ashen Crown is yours.','Cycle '+runCycle+' conquered! +500 gold and dragon spoils are yours. Continue exploring to collect them, then use the final stairway for a harder ten-floor cycle. Your equipment, inventory, rank, gold and crowns carry forward.','Continue exploring');
+ const origin=world?.boss||player;
+ for(let i=0;i<32;i++)effects.push({x:origin.x,y:origin.y,vx:random(-150,150),vy:random(-220,-40),life:random(1.2,2),color:'#edbf72',coin:true});
+ window.DungeonAudio.play('victory');
+ $('objective').textContent='The stairway is open. Gather the boss spoils, then descend.';
 }
 function continueAfterVictory(){
  if(state!=='victory')return false;
  state='playing';keys.clear();mouse.down=false;player.inv=Math.max(player.inv,2);$('overlay').hidden=true;canvas.focus();return true;
 }
-document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Enemies cannot harm other enemies. Activated traps and their summoned creatures still affect approaching enemies. Every eighth-floor boss summons weaker kin and drops about 1,000 gold, powerful gear, spells, and ammo; continue exploring after the victory message, then take the opened stairs.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Enemies cannot harm other enemies. Activated traps and their summoned creatures still affect approaching enemies. Every eighth-floor boss summons weaker kin and drops about 1,000 gold, powerful gear, spells, and ammo; gather the rewards and take the opened stairs.');
 function canStrikeProp(p){return !p.destroyed&&(p.type==='chest'?p.open:!p.open||p.type==='barrel'||p.type==='crate')}
 function blocksShot(p){return !p.destroyed&&(!p.open||canStrikeProp(p))}
 function breakProp(p,amount){
@@ -401,7 +401,7 @@ function update(dt){
   }
   if(!l.taken&&(l.type==='gold'||l.type==='potion')&&distance(l,player)<32){window.DungeonAudio.play(l.type==='gold'?'gold':'bottle');if(l.type==='gold'){player.gold+=l.value;floatText(l.x,l.y-10,'+'+l.value+' GOLD','gold')}else{player.potions++;floatText(l.x,l.y-10,'+1 HEALING POTION','heal')}l.taken=true;particle(l.x,l.y,l.type==='gold'?'#edbf72':'#7ae4ba',5)}
  }
- loot=loot.filter(l=>!l.taken);for(const p of effects){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt}effects=effects.filter(p=>p.life>0);tickFloatingTexts(dt);updateHUD();
+ loot=loot.filter(l=>!l.taken);for(const p of effects){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;if(p.coin)p.vy+=200*dt}effects=effects.filter(p=>p.life>0);tickFloatingTexts(dt);updateHUD();
  $('prompt').textContent=interactionPrompt(nearby());
 }
 function updateHUD(){$('hp').style.width=player.hp/player.max*100+'%';$('health').textContent=Math.ceil(player.hp)+' / '+player.max;$('stamina').style.width=player.stamina+'%';$('xp').style.width=player.xp/(player.level*65)*100+'%';$('level').textContent=player.level;$('weapon').textContent=player.weapon.name;$('weapon').style.color=player.weapon.color;$('damage').textContent=player.weapon.damage+player.level*2;$('weaponStats').textContent=player.weapon.range+' / '+(player.weapon.cooldown||.36).toFixed(2)+'s';$('armor').style.whiteSpace='pre-line';$('armor').style.fontSize='12px';$('armor').textContent=armorSlots.map(slot=>(slot==='armor'?'Body':slot[0].toUpperCase()+slot.slice(1))+': '+(player[slot]?player[slot].name+' ('+Math.round(player[slot].reduction*100)+'%)':'None')).join('\n');$('armor').style.color='#b9ccce';$('defense').textContent=Math.round(reduction()*100)+'% (40% cap)';$('gold').textContent=player.gold;$('potions').textContent=player.potions;$('kills').textContent=kills;const b=enemies.find(e=>e.type==='dragon'&&distance(e,player)<600);$('boss').hidden=!b;if(b)$('bosshp').style.width=b.hp/b.max*100+'%'}
@@ -513,7 +513,7 @@ function render(){
  for(const s of shots){glow(s.x,s.y,s.type==='fire'?25:18,s.color+'77');if(s.type==='web'){ctx.strokeStyle=s.color;ctx.lineWidth=1;for(let i=0;i<4;i++){const a=i*Math.PI/4;ctx.beginPath();ctx.moveTo(s.x-Math.cos(a)*9,s.y-Math.sin(a)*9);ctx.lineTo(s.x+Math.cos(a)*9,s.y+Math.sin(a)*9);ctx.stroke()}ctx.beginPath();ctx.arc(s.x,s.y,6,0,TAU);ctx.stroke()}else if(s.type==='venom'){ctx.strokeStyle='#c8e88a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(s.x-6,s.y);ctx.lineTo(s.x+6,s.y);ctx.stroke();circle(s.x,s.y,4,s.color)}else if(s.type==='fire'){circle(s.x,s.y,6,'#ffd178');circle(s.x-3,s.y+2,4,s.color)}else circle(s.x,s.y,5,s.color)}
  ctx.globalAlpha=player.inv>0&&Math.floor(clock*18)%2===0?.6:1;drawActor(player,true);ctx.globalAlpha=1;
  if(player.swing>0&&!rangedKinds.includes(weaponKind(player.weapon))){ctx.strokeStyle='#f7ddb3';ctx.lineWidth=5;ctx.beginPath();ctx.arc(player.x,player.y,player.weapon.range-10,player.angle-1.1,player.angle+1.1);ctx.stroke();glow(player.x,player.y,90,'#f4cc6420')}
- for(const p of effects){ctx.globalAlpha=Math.min(1,p.life*3);circle(p.x,p.y,2,p.color)}ctx.globalAlpha=1;
+ for(const p of effects){ctx.globalAlpha=Math.min(1,p.life*3);if(p.coin){circle(p.x,p.y,5,'#a87528');circle(p.x-1,p.y-1,4,p.color);circle(p.x-2,p.y-2,1.3,'#fff0ad')}else circle(p.x,p.y,2,p.color)}ctx.globalAlpha=1;
  ctx.restore();const g=ctx.createRadialGradient(vw/2,vh/2,80,vw/2,vh/2,Math.max(vw,vh)*.62);g.addColorStop(0,'transparent');g.addColorStop(1,'#02070cb0');ctx.fillStyle=g;ctx.fillRect(0,0,vw,vh);
  mini.fillStyle='#081014';mini.fillRect(0,0,225,174);const sx=225/W,sy=174/H;for(let i=0;i<W*H;i++)if(world.seen[i]&&world.tiles[i]){mini.fillStyle=world.theme.accent;mini.fillRect(i%W*sx,Math.floor(i/W)*sy,sx+.2,sy+.2)}mini.fillStyle=world.theme.accent;mini.fillRect(world.end.x/T*sx-2,world.end.y/T*sy-2,4,4);mini.fillStyle='#ffd38a';mini.beginPath();mini.arc(player.x/T*sx,player.y/T*sy,3,0,TAU);mini.fill();
 }
@@ -1695,8 +1695,7 @@ const ammoLabels={light:'Light',fire:'Fire',explosion:'Explosion',poison:'Poison
 Object.defineProperty(ammoColors,'explosive',{configurable:true,get(){return this.explosion},set(value){this.explosion=value},enumerable:false});
 Object.assign(weaponTypes,{
  rifle:{label:'Black Powder Rifle',range:690,cooldown:.92,bonus:16},
- pistol:{label:'Black Powder Pistol',range:475,cooldown:.58,bonus:10},
- spiked_whip:{label:'Spiked Whip',range:142,cooldown:.48,bonus:8}
+ pistol:{label:'Black Powder Pistol',range:475,cooldown:.58,bonus:10}
 });
 rangedKinds.push('rifle','pistol');
 const expansionLoadFloor=loadFloor,expansionAttack=attack,expansionInteract=interact;
@@ -1705,7 +1704,7 @@ const expansionTakeAmmo=takeAmmo,expansionCycleAmmo=cycleAmmo,expansionRefreshSc
 const expansionUpdateHUD=updateHUD,expansionDrawWeapon=drawWeapon,expansionFall=fallToFloor;
 const expansionUpdateEarthquakes=updateEarthquakes,expansionConfigureHazards=configureHazards;
 const expansionTriggerTrap=triggerTrap,expansionHurtEnemy=hurtEnemy,expansionPrompt=interactionPrompt;
-const expansionWorldTargets=worldTargets,expansionNearby=nearby,expansionShowBossVictory=showBossVictory;
+const expansionWorldTargets=worldTargets,expansionNearby=nearby;
 const BOSS_FORMS=[
  {type:'dragon',name:'The Ember Wyrm',minion:'emberling',attack:'dragon',color:'#ff9d44'},
  {type:'crypt_wizard',name:'The Grave Necromancer',minion:'skeleton',attack:'lightning',color:'#b8ccff'},
@@ -1757,7 +1756,6 @@ function dropBossRewards(boss){
  const spells=Object.keys(scrollTypes);
  for(let i=0;i<3;i++)loot.push({x:x-12+i*14,y:y-30,type:'scroll',scroll:spells[integer(0,spells.length-1)]});
  for(let i=0;i<2;i++)loot.push({x:x+12+i*16,y:y-28,type:'ammo',special:ammoKinds[integer(0,ammoKinds.length-1)],ammoKind:'bow',value:5});
- floatText(x,y-48,'BOSS SPOILS: 1,000 GOLD','gold');
  log('The boss drops 1,000 gold, war-forged equipment, spells and special ammunition.');
 }
 loadFloor=function(floor,seed){
@@ -1847,17 +1845,12 @@ attack=function(){
 };
 const baseWeaponKind=weaponKind;
 weaponKind=function(weapon){
- if(weapon?.name?.includes('Spiked Whip')&&!weapon.kind)return 'spiked_whip';
  if(weapon?.name?.includes('Rifle')&&!weapon.kind)return 'rifle';
  if(weapon?.name?.includes('Pistol')&&!weapon.kind)return 'pistol';
  return baseWeaponKind(weapon);
 };
 drawWeapon=function(weapon){
  const kind=weaponKind(weapon);
- if(kind==='spiked_whip'){
-  ctx.strokeStyle=weapon.color;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(22,-12,44,2);ctx.quadraticCurveTo(72,20,112,-4);ctx.stroke();
-  for(let i=0;i<4;i++){const x=40+i*18;polygon([[x,-2],[x+5,-11],[x+8,1]],'#d5d9d0')}return;
- }
  if(kind==='rifle'||kind==='pistol'){
   const length=kind==='rifle'?50:32;ctx.fillStyle='#805b3d';ctx.fillRect(-3,-3,length,7);ctx.fillStyle='#bdc4b8';ctx.fillRect(length-7,-2,kind==='rifle'?24:13,4);
   ctx.fillStyle='#4a352c';ctx.fillRect(7,3,7,15);ctx.fillStyle='#cf9d5c';ctx.fillRect(length-12,-6,5,4);return;
@@ -1991,14 +1984,8 @@ hurtEnemy=function(enemy,amount,source=null){
  if(wasBoss&&enemy.hp<=0&&!enemy.bossRewardDone){
   enemy.bossRewardDone=true;bossDefeated=true;world.end.sealed=false;
   dropBossRewards(enemy);player.crowns=(player.crowns||0)+1;
-  floatText(enemy.x,enemy.y-34,'BOSS DEFEATED — DESCENT OPEN','treasure');showBossVictory();
+  showBossVictory();
  }
-};
-showBossVictory=function(){
- if(!world?.boss)return expansionShowBossVictory();
- state='victory';keys.clear();mouse.down=false;releaseTouchControls();
- $('objective').textContent='The stairway is open. Gather the boss spoils, then descend.';
- showOverlay(activeBossName+' has fallen!','The only way down is now open. The boss left 1,000 gold, powerful equipment, spells, and special ammunition. Continue exploring to gather it.','Continue adventuring');
 };
 update=function(dt){
  for(const enemy of enemies){
@@ -2044,7 +2031,7 @@ render=function(){
  }
  ctx.restore();
 };
-document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Choose one stocked ammo type for every ranged weapon with C / Ammo: Light, Fire, Explosion, Poison, Lightning, Web or Charm. Bow, crossbow, throwing knives, axes, spears, boomerangs, pistols and rifles share their ammo stock; empty packs revert to unlimited regular shots. The Spiked Whip is melee.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Choose one stocked ammo type for every ranged weapon with C / Ammo: Light, Fire, Explosion, Poison, Lightning, Web or Charm. Bow, crossbow, throwing knives, axes, spears, boomerangs, pistols and rifles share their ammo stock; empty packs revert to unlimited regular shots.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>A boss waits every 8 floors. Each boss has ranged and melee attacks, calls weaker kin to help, and drops about 1,000 gold, powerful gear, spells and ammo. Floors 8 and 16 seal every pit, fissure and trapdoor until the boss dies; then the stairway opens.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Watch for subtly mismatched tiles: crossfire sends eight mixed arrows from both sides. Glowing pedestal relics are collectible, but claiming one releases a fast boulder from a random side—move or dodge out of its path.');
 window.emberkeepExpansion={ammoKinds,bossForms:BOSS_FORMS,isBossFloor:bossFloor,snapshot:()=>({floor:depth,bossFloor:bossFloor(),bossName:world?.boss?.bossName||'',bossDefeated,ammo:{...player.ammoShared},selectedAmmo,pedestals:world?.pedestals?.length||0,crossfireShots:world?.crossfireShots?.length||0,boulder:!!world?.boulder})};
