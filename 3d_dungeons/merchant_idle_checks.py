@@ -37,10 +37,14 @@ with sync_playwright() as p:
         page.keyboard.press("e")
         page.get_by_role("dialog").wait_for(state="visible")
         products = page.locator("#shopProducts article")
-        assert products.count() == 11
+        assert products.count() == 26
         prices = page.evaluate(
-            """() => Object.fromEntries(Object.entries(world.merchant.stock).map(([k,v])=>[k,v.price]))"""
+            """() => Object.fromEntries(['weapon','armor','boots','gloves','helmet','potion'].map(k=>[k,world.merchant.stock[k].price]))"""
         )
+        assert page.get_by_role("heading", name="Magic wand", exact=True).count() == 1
+        assert page.get_by_role("heading", name="Charm ammunition", exact=True).count() == 1
+        assert page.locator("#shopProducts article").filter(
+            has=page.get_by_role("heading", name="Charm ammunition", exact=True)).locator("button").is_disabled()
         for index, item in enumerate(prices):
             button = products.nth(index).locator("button")
             assert button.is_enabled(), f"floor {floor} {item} should be affordable"
@@ -55,7 +59,8 @@ with sync_playwright() as p:
         assert state["potions"] == 4
         assert state["weapon"] == "Worn Longsword"
         assert "weapon" in state["loot"] and "armor" in state["loot"]
-        assert state["stock"] == {item: 4 if item == "potion" else 0 for item in prices}
+        assert all(state["stock"][item] == (4 if item == "potion" else 0) for item in prices)
+        assert state["stock"]["wand"] == 1 and state["stock"]["ammo-charm"] == 2
         page.evaluate("player.gold=0;updateShop()")
         potion_button = page.locator("#shopProducts article").filter(
             has=page.get_by_role("heading", name="Healing potion", exact=True)).locator("button")
@@ -94,14 +99,14 @@ with sync_playwright() as p:
     assert page.evaluate("player.hp") < hp, "surfaced zombie did not damage the player"
 
     page.evaluate("loadFloor(1,777);state='playing';enemies=[];props=[];loot=[]")
-    for floor in range(2, 11):
-        page.evaluate("player.x=world.end.x;player.y=world.end.y;props=[];loot=[];player.inv=10")
+    for floor in range(2, 17):
+        page.evaluate("if(world.boss&&!bossDefeated)hurtEnemy(world.boss,world.boss.hp);player.x=world.end.x;player.y=world.end.y;props=[];loot=[];player.inv=10")
         page.keyboard.press("e")
         page.wait_for_function(f"emberkeep.snapshot().depth==={floor}")
         state = page.evaluate("emberkeep.snapshot()")
-        assert state["realm"] == (floor + 1) // 2
-        assert (state["merchant"] is not None) == (floor in (2, 4, 6, 8))
-    assert "dragon" in page.evaluate("emberkeep.snapshot().enemyTypes")
+        assert state["realm"] == page.evaluate("realmForFloor(depth)")
+        assert (state["merchant"] is not None) == (floor % 2 == 0 and floor < 16)
+    assert page.evaluate("world.boss&&world.boss.hp>0")
     assert not errors, errors
 
     report = {
@@ -111,7 +116,7 @@ with sync_playwright() as p:
         "idle_warning": warning,
         "zombie_emergence": emerged,
         "zombie_attack": "Telegraphed melee windup followed by real player damage.",
-        "progression": "Actual E input traversed floors 1 through 10; shops appeared on 2, 4, 6, 8; dragon appeared on 10.",
+        "progression": "Actual E input traversed floors 1 through 16; the floor 8 boss was defeated and the final boss appeared.",
         "console_errors": errors,
         "screenshots": [
             str(ROOT / "Emberkeep-merchant-floor2.png"),

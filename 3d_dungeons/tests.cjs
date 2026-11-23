@@ -14,7 +14,7 @@ function element() {
     showModal() { this.open = true; }, close() { this.open = false; } };
 }
 const sandbox = { console, Uint8Array, Int16Array, Uint32Array, Math, URLSearchParams, structuredClone,
-  crypto: webcrypto, location: { search: '?test' }, requestAnimationFrame() {},
+  crypto: webcrypto, location: { search: '?test' }, requestAnimationFrame() {}, setTimeout() { return 1; }, clearTimeout() {},
   ResizeObserver: class { observe() {} }, Image: class { complete = true; naturalWidth = 120; },
   document: { body: element(), getElementById(id) { if (!elements.has(id)) elements.set(id, element()); return elements.get(id); },
     createElement: element, querySelector: element, addEventListener() {} },
@@ -29,6 +29,55 @@ scripts.forEach(script => vm.runInContext(script, sandbox));
 const run = code => vm.runInContext(code, sandbox);
 let count = 0;
 function check(name, fn) { fn(); count++; console.log('PASS ' + name); }
+check('last special round stays special and falls back to regular rather than another stocked type', () => {
+  run("begin();world.tiles.fill(1);world.torches=[];enemies=[];props=[];player.weapon={...weaponTypes.bow,kind:'bow',damage:20};player.ammoShared.fire=1;player.ammoShared.web=5;selectedAmmo='fire';player.cool=0;attack()");
+  assert.equal(run("heroShots[0].special==='fire'&&selectedAmmo==='regular'&&player.ammoShared.web===5"),true);
+  run("player.cool=0;attack()");
+  assert.equal(run("heroShots[1].special===null&&selectedAmmo==='regular'"),true);
+  run("cycleAmmo()");
+  assert.equal(run("selectedAmmo==='web'"),true);
+});
+check('explosion ammunition produces a smaller fireball and damages nearby enemies', () => {
+  run("begin();world.tiles.fill(1);props=[];world.scrollFlashes=[];var victim=makeEnemy('slime',{x:player.x+40,y:player.y});victim.hp=300;enemies=[victim];impactAmmo({x:victim.x,y:victim.y,special:'explosion'},victim)");
+  assert.equal(run("victim.hp===265&&world.scrollFlashes.some(f=>f.kind==='fireball'&&f.scale>0&&f.scale<1)"),true);
+});
+check('E and touch Use manually activate disarmed traps against monsters only', () => {
+  for(const control of ['interact()', "$('touchInteract').onclick()"]){
+    run(`begin();world.tiles.fill(1);world.merchant=null;props=[];loot=[];world.end.x=2500;world.end.y=1900;player.hp=120;player.inv=0;var manualTrap={x:player.x+40,y:player.y,kind:'explosion',revealed:true,active:0,triggered:false};world.traps=[manualTrap];var target=makeEnemy('slime',{x:manualTrap.x,y:manualTrap.y});target.hp=300;enemies=[target];selectedWorldItem=null;${control}`);
+    assert.equal(run("manualTrap.triggered&&manualTrap.targetFaction==='enemy'&&target.hp===268&&player.hp===120"),true);
+  }
+  run("begin();world.tiles.fill(1);props=[];loot=[];world.merchant=null;world.end.x=2500;world.end.y=1900;world.traps=[{x:player.x+40,y:player.y,kind:'fire',revealed:true,active:0,triggered:false}];enemies=[];saveRun();savedRun=null;restoreSavedRun();interact()");
+  assert.equal(run("world.traps[0].triggered&&world.traps[0].targetFaction==='enemy'"),true);
+});
+check('nearby fragile torches flicker, persist their countdown and relight permanently', () => {
+  run("begin();world.tiles.fill(1);enemies=[];props=[];var fragile={x:player.x+40,y:player.y,room:2,lit:true,fragile:true,burnedOut:false,burnoutRemaining:null};world.torches=[fragile];updateTorchBurnout(1)");
+  assert.equal(run("fragile.burnoutRemaining===5&&torchIntensity(fragile)<1"),true);
+  run("saveRun();savedRun=null;restoreSavedRun();fragile=world.torches[0];updateTorchBurnout(5)");
+  assert.equal(run("!fragile.lit&&fragile.burnedOut"),true);
+  run("strikeTorch(fragile);updateTorchBurnout(20);saveRun();savedRun=null;restoreSavedRun()");
+  assert.equal(run("world.torches[0].lit&&world.torches[0].burnedOut"),true);
+});
+check('charmed melee and ranged enemies hurt other monsters temporarily, not the knight', () => {
+  for(const attackType of ['melee','ranged']){
+    run(`begin();world.tiles.fill(1);world.merchant=null;world.torches=[];world.traps=[];props=[];shots=[];player.inv=0;player.hp=120;var charmer=makeEnemy('slime',{x:player.x+100,y:player.y});var victim=makeEnemy('slime',{x:player.x+130,y:player.y});charmer.attack='${attackType}';charmer.reach=120;charmer.shotSpeed=500;charmer.cool=0;charmer.emerge=0;victim.hp=300;victim.emerge=100;enemies=[charmer,victim];impactAmmo({x:charmer.x,y:charmer.y,special:'charm'},charmer);update(.1);update(.1)`);
+    assert.equal(run("victim.hp<300&&player.hp===120"),true,attackType);
+    run("charmer.charmed=0;var before=victim.hp;hurtEnemy(victim,20,charmer)");
+    assert.equal(run("victim.hp===before"),true);
+  }
+});
+check('merchant stocks varied classes and enforces consumable compatibility', () => {
+  run("begin();loadFloor(2,604);player.gold=10000;state='shop';var stock=world.merchant.stock");
+  assert.equal(run("stock.melee.item.kind==='sword'&&stock.ranged.item.kind==='bow'&&stock.wand.item.kind==='wand'&&stock.robe.item.kind==='robe'&&ammoKinds.every(k=>stock['ammo-'+k])&&Object.keys(scrollTypes).every(k=>stock['scroll-'+k])"),true);
+  assert.equal(run("buyProduct('ammo-fire')"),false);
+  assert.equal(run("buyProduct('scroll-light')"),false);
+  run("player.weapon={kind:'bow',name:'Bow'}");
+  assert.equal(run("buyProduct('ammo-fire')&&player.ammoShared.fire===5"),true);
+  run("player.weapon={kind:'wand',name:'Wand',power:2}");
+  assert.equal(run("buyProduct('scroll-light')&&player.scrolls.light===1"),true);
+  assert.equal(run("buyProduct('wand')&&loot.some(i=>i.type==='weapon'&&i.weapon===stock.wand.item)"),true);
+  run("state='playing';saveRun();savedRun=null;restoreSavedRun()");
+  assert.equal(run("world.merchant.stock['ammo-fire'].quantity===1&&world.merchant.stock['scroll-light'].quantity===1"),true);
+});
 check('accessible game state and essential nonvisual controls initialize', () => {
   run('begin()');
   assert.equal(run("!!document.getElementById('gameEvent')"),true);
@@ -1209,12 +1258,12 @@ check('corridors retain soft ambient light and stone walls block radial light an
   assert.ok(run('torchIllumination({x:8.5*T,y:7.5*T})')>.5);
   run("loadFloor(1,604)");
 });
-check('disarmed traps remain safe until a monster steps on them', () => {
+check('disarmed traps remain safe and trigger when a monster steps on them', () => {
   run("loadFloor(1,604);state='playing';enemies=[];props=[];loot=[];world.traps=[{x:player.x+45,y:player.y,kind:'fire',revealed:true,active:0}];player.hp=120;player.inv=0;world.end.x=2500;world.end.y=1900");
-  assert.equal(run('nearby()'),null);
+  assert.equal(run('nearby()'),run('world.traps[0]'));
   run('player.x=world.traps[0].x;updateTraps(.1,false)');
   assert.equal(run('player.hp'),120);assert.ok(!run('world.traps[0].triggered'));
-  run('player.x-=45;interact();updateTraps(2,false)');
+  run('player.x-=45;updateTraps(2,false)');
   assert.ok(!run('world.traps[0].triggered'));
   run("enemies=[makeEnemy('slime',{x:world.traps[0].x,y:world.traps[0].y})];var victim=enemies[0];updateTraps(.1,false)");
   assert.ok(run('victim.burn>0'));const hp=run('victim.hp');
