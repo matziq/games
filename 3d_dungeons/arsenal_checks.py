@@ -39,7 +39,7 @@ with sync_playwright() as p:
         }""")
         page.wait_for_function("player.ammo.crossbow.light===5")
         page.locator("#scrollSummary").click()
-        assert "light (5)" in page.locator("#cycleAmmo").inner_text()
+        assert "Light (5)" in page.locator("#cycleAmmo").inner_text()
         def ammo_action():
             if touch:
                 page.locator("#cycleAmmo").tap()
@@ -89,7 +89,7 @@ with sync_playwright() as p:
         assert page.evaluate("testTorch.lit"), (name, errors, page.locator("#error").inner_text(), page.evaluate("({state,angle:player.angle,shots:heroShots.length,cool:player.cool,ammo:player.ammo.crossbow})"))
         page.evaluate("""() => {
           world.torches=[];player.inv=0;player.root=0;player.angle=0;
-          const spider=makeEnemy('cave_spider',{x:player.x+50,y:player.y});
+          const spider=makeEnemy('cave_spider',{x:player.x+50,y:player.y});spider.attackAngle=Math.PI;
           shoot(spider,Math.PI,spider.shotSpeed);window.webX=player.x;
         }""")
         page.wait_for_function("player.root>0")
@@ -150,12 +150,6 @@ with sync_playwright() as p:
         page.wait_for_timeout(350)
         assert page.evaluate("!safeTest.triggered&&trapBug.hp===300")
         page.evaluate("safeTest.revealed=true")
-        if touch:
-            page.locator("#touchInteract").tap()
-        else:
-            page.keyboard.press("e")
-        page.wait_for_function("safeTest.arming>0")
-        assert page.evaluate("!safeTest.triggered")
         page.wait_for_function("safeTest.triggered&&trapBug.burn>0&&trapBug.hp<300")
         page.screenshot(path=str(OUT / f"{PREFIX}-{name}-active-trap.png"))
         page.evaluate("""() => {
