@@ -90,17 +90,12 @@ with sync_playwright() as p:
         assert "Inspecting floor glint: 40%" in page.evaluate("interactionPrompt(null)")
         report["checks"].append({"device": label, "no_hidden_glint_hud_leak": True, "inspection_feedback_persists": True})
 
-        # Real Use input discovers the action, waits two simulation seconds, and catches a later arrival.
+        # Inspection automatically resets a trap for the next monster.
         fixture(page, """world.traps=[{x:player.x+45,y:player.y,kind:'fire',inspect:0,active:0}];
           var tacticalTrap=world.traps[0]""")
         page.wait_for_function("tacticalTrap.revealed", timeout=5000)
         assert page.evaluate("!tacticalTrap.triggered&&player.hp===120")
-        assert "Activate safe fire trap" in page.locator("#prompt").inner_text()
-        use()
-        page.wait_for_timeout(1750)
-        assert page.evaluate("tacticalTrap.arming>0&&!tacticalTrap.triggered")
-        picture(page, label+"-arming")
-        page.wait_for_function("tacticalTrap.triggered", timeout=2000)
+        picture(page, label+"-disarmed")
         page.evaluate("""enemies=[makeEnemy('slime',{x:tacticalTrap.x,y:tacticalTrap.y})];
           var approaching=enemies[0];approaching.hp=300;approaching.speed=0;approaching.cool=99""")
         page.wait_for_function("approaching.burn>0")
@@ -108,7 +103,7 @@ with sync_playwright() as p:
         page.wait_for_timeout(750)
         assert page.evaluate("approaching.hp") < hp
         picture(page, label+"-burning-monster")
-        report["checks"].append({"device": label, "actual_use_2_second_delay": True, "late_arrival_burns": True})
+        report["checks"].append({"device": label, "disarmed_trap_auto_arms_for_monsters": True, "late_arrival_burns": True})
         for material in ("crate", "monster"):
             fixture(page, f"""player.weapon={{...weaponTypes.boomerang,kind:'boomerang',damage:25,color:'#ddd'}};
               var blocker={"{x:player.x+80,y:player.y,type:'crate',hp:300,open:false}" if material == "crate" else "makeEnemy('slime',{x:player.x+80,y:player.y})"};
@@ -134,6 +129,10 @@ with sync_playwright() as p:
                 page.wait_for_timeout(550)
                 assert page.evaluate("props[0].broken&&behind.hp===300")
                 page.evaluate("player.cool=0;loot=[]")
+                attack()
+                page.wait_for_timeout(550)
+                assert page.evaluate("props[0].destroyed&&behind.hp===300")
+                page.evaluate("player.cool=0;heroShots=[]")
                 attack()
                 page.wait_for_timeout(550)
                 assert page.evaluate("behind.hp===273")

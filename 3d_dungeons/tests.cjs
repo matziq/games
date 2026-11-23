@@ -61,7 +61,7 @@ check('enemy projectiles and direct sources cannot harm allies or apply status, 
 check('ordinary swarm creatures target only player while activated trap creatures still harm enemies', () => {
   run("loadFloor(1,604);world.tiles.fill(1);world.traps=[];props=[];player.x+=300;var friendly=makeEnemy('slime',{x:player.x-200,y:player.y});var mob=makeEnemy('bug',{x:friendly.x+15,y:friendly.y});Object.assign(mob,{trapSwarm:true,swarmLife:10,emerge:0,cool:0});enemies=[mob,friendly];var friendlyHP=friendly.hp;updateTraps(.01,false)");
   assert.equal(run('friendly.hp===friendlyHP'),true);
-  run('mob.trapSource={};mob.cool=0;updateTraps(.01,false)');
+  run("mob.trapSource={targetFaction:'enemy'};mob.cool=0;updateTraps(.01,false)");
   assert.ok(run('friendly.hp<friendlyHP'));
   run('begin()');
 });
@@ -191,7 +191,7 @@ check('leaving during the egg countdown merges the later hatch rather than dupli
   assert.equal(run('delayedNest.parent.giant&&!enemies.some(e=>e.baby)&&enemies.filter(e=>e.giant).length===1'),true);
 });
 check('giant web strikes inflict tripled base damage and root; normal webs remain root-only and dodge protects', () => {
-  run("loadFloor(1,604);world.tiles.fill(1);props=[];world.traps=[];player.armor=player.boots=player.gloves=player.helmet=null;player.hp=120;player.inv=0;var giantStriker=makeEnemy('cave_spider',{x:player.x+120,y:player.y});enemies=[giantStriker];strikeWeb(giantStriker)");
+  run("loadFloor(1,604);world.tiles.fill(1);props=[];world.traps=[];player.armor=player.boots=player.gloves=player.helmet=null;player.hp=120;player.inv=0;var giantStriker=makeEnemy('cave_spider',{x:player.x+120,y:player.y});giantStriker.attackAngle=Math.PI;enemies=[giantStriker];strikeWeb(giantStriker)");
   assert.equal(run('player.hp===120&&player.root===1'),true);
   run('player.root=0;giantStriker.giant=true;giantStriker.damage*=3;strikeWeb(giantStriker)');
   assert.equal(run('player.hp===120-creatures.cave_spider.damage*3&&player.root===1'),true);
@@ -199,7 +199,7 @@ check('giant web strikes inflict tripled base damage and root; normal webs remai
   assert.equal(run('player.hp===hpAfterWeb&&player.root===0'),true);
 });
 check('a direct spider web hit roots the knight then drives the spider into an immediate fast melee attack', () => {
-  run("loadFloor(1,604);world.tiles.fill(1);props=[];world.traps=[];player.armor=player.boots=player.gloves=player.helmet=null;player.hp=120;player.inv=0;state='playing';var webStriker=makeEnemy('cave_spider',{x:player.x+120,y:player.y});webStriker.cool=10;enemies=[webStriker];strikeWeb(webStriker)");
+  run("loadFloor(1,604);world.tiles.fill(1);props=[];world.traps=[];player.armor=player.boots=player.gloves=player.helmet=null;player.hp=120;player.inv=0;state='playing';var webStriker=makeEnemy('cave_spider',{x:player.x+120,y:player.y});webStriker.attackAngle=Math.PI;webStriker.cool=10;enemies=[webStriker];strikeWeb(webStriker)");
   assert.equal(run('player.root===1&&webStriker.webLunge&&webStriker.lunge>0'),true);
   run('update(.2)');
   assert.equal(run('player.hp===120-creatures.cave_spider.damage&&player.root>0&&webStriker.lunge===0&&!webStriker.webLunge'),true);
@@ -234,12 +234,12 @@ check('gear blinks at 30 and expires at 60 while potion timing stays 10 and 20; 
   run('baseUpdate(1.01)');
   assert.equal(run('loot.length'),0);
 });
-check('monsters and trap creatures never spring hidden or disarmed traps, even while crossing them', () => {
+check('hidden traps ignore monsters; disarmed traps trigger on monsters without harming the player', () => {
   for(const type of ['slime','bug','bat','cave_spider','cinder_wizard']){
     for(const revealed of [false,true]){
       run(`loadFloor(1,604);world.tiles.fill(1);props=[];loot=[];var inert={x:player.x+100,y:player.y,kind:'explosion',revealed:${revealed},inspect:0,active:0};world.traps=[inert];var passer=makeEnemy('${type}',inert);passer.hp=300;passer.trapSwarm=${type==='bug'||type==='bat'};passer.emerge=10;enemies=[passer];updateTraps(.1,false)`);
-      assert.equal(run('!!inert.triggered'),false,`${type}, revealed=${revealed}`);
-      assert.equal(run('passer.hp'),300);
+      assert.equal(run('!!inert.triggered'),revealed,`${type}, revealed=${revealed}`);
+      assert.equal(run('passer.hp'),revealed?268:300);
     }
   }
 });
@@ -899,13 +899,55 @@ check('crossfire traps fire eight arrows, deal one half-health volley, and can b
   run("player.hp=120;player.inv=1;player.x=(room.x+room.w/2)*T;player.y=(room.y+room.h/2)*T;crossTrap={x:player.x,y:player.y,kind:'crossfire',room:world.rooms.indexOf(room),revealed:false,triggered:false};world.traps=[crossTrap];triggerTrap(crossTrap,true);updateCrossfire(.8)");
   assert.equal(run('player.hp===120&&!crossTrap.hit'),true);
 });
-check('pedestal relics are collectible once and release a directional boulder with 75-percent-hit damage', () => {
+check('pedestal boulders pursue laterally, grow, deal up to 90 percent and can be destroyed', () => {
   run("loadFloor(1,604);world.tiles.fill(1);enemies=[];props=[];state='playing';player.armor=player.boots=player.gloves=player.helmet=null;player.max=120;player.hp=120;player.inv=0;var room=world.rooms[1];player.x=(room.x+room.w/2)*T;player.y=(room.y+room.h/2)*T;var relic={x:player.x,y:player.y,room:room.id,relic:'ancient weapon',opened:false};world.pedestals=[relic];var lootCount=loot.length;var firstClaim=collectPedestal(relic);var firstBall={...world.boulder};var repeatClaim=collectPedestal(relic)");
-  assert.equal(run("firstClaim&&!repeatClaim&&relic.opened&&loot.length===lootCount+1&&Math.abs(Math.hypot(firstBall.vx,firstBall.vy)-690)<.01"),true);
-  run("world.boulder={x:player.x-80,y:player.y,vx:690,vy:0,life:3,hit:false};updateBoulder(.2)");
-  assert.equal(run('player.hp===30&&world.boulder===null'),true);
-  run("player.hp=120;player.inv=0;var missedRelic={x:player.x,y:player.y,room:room.id,relic:'sun idol',opened:false};collectPedestal(missedRelic);world.boulder={x:player.x-80,y:player.y,vx:690,vy:0,life:3,hit:false};player.y+=80;updateBoulder(.2)");
-  assert.equal(run('player.hp===120&&world.boulder!==null'),true);
+  assert.equal(run("firstClaim&&!repeatClaim&&relic.opened&&loot.length===lootCount+1&&firstBall.hp===100&&firstBall.radius===25"),true);
+  run("world.boulder={x:player.x-200,y:player.y-150,axis:'x',direction:1,age:0,hp:100,max:100,radius:25};var initialBall={...world.boulder};updateBoulder(1)");
+  assert.equal(run("world.boulder.x===initialBall.x+105&&world.boulder.y===initialBall.y+65&&world.boulder.radius>25&&player.hp===120"),true);
+  run("world.boulder={x:player.x-80,y:player.y,axis:'x',direction:1,age:12,hp:100,max:100,radius:50};updateBoulder(.5)");
+  assert.ok(run('Math.abs(player.hp-12)<.00001&&world.boulder===null'));
+  run("player.hp=120;world.boulder={x:player.x+40,y:player.y,axis:'x',direction:-1,age:1,hp:100,max:100,radius:27};player.angle=0;player.weapon={...weaponTypes.sword,kind:'sword',damage:25};player.cool=0;attack();var ballHP=world.boulder.hp");
+  assert.ok(run('ballHP<100'));
+  run("player.weapon={...weaponTypes.bow,kind:'bow',damage:100,color:'#ddd'};player.cool=0;heroShots=[];attack();updateHeroShots(.2)");
+  assert.equal(run('world.boulder===null'),true);
+});
+check('enemy traps, boulder growth and their references survive save and resume', () => {
+  run("begin();loadFloor(1,604);world.tiles.fill(1);world.traps=[{x:player.x+80,y:player.y,kind:'fire',revealed:true,triggered:false,inspect:0,active:0}];world.boulder={x:player.x-300,y:player.y,axis:'x',direction:1,age:7,hp:43,max:100,radius:39.58};enemies=[makeEnemy('bone_archer',{x:player.x+300,y:player.y})];shots=[];shoot(enemies[0],0,200,'ranged');shots[0].remaining=30;saveRun();state='title';savedRun=null");
+  assert.equal(run('restoreSavedRun()'),true);
+  assert.equal(run("world.traps[0].revealed&&!world.traps[0].triggered&&world.boulder.hp===43&&world.boulder.age===7&&shots[0].remaining===30&&shots[0].owner===enemies[0]"),true);
+  run("var savedTrapEnemy=makeEnemy('slime',world.traps[0]);savedTrapEnemy.hp=300;enemies=[savedTrapEnemy];updateTraps(.01,false)");
+  assert.equal(run("world.traps[0].targetFaction==='enemy'&&savedTrapEnemy.burn>0"),true);
+});
+check('hidden hazards ignore mobs, disarmed hazards never harm the knight, and disarmed pits kill mobs', () => {
+  for(const kind of ['poison','fire','explosion','quicksand','trapdoor','bugs','bats','crossfire']){
+    run(`begin();loadFloor(1,604);world.tiles.fill(1);props=[];player.inv=0;player.hp=120;player.x+=100;var factionTrap={x:player.x,y:player.y,kind:'${kind}',room:1,revealed:false,triggered:false};var mobVictim=makeEnemy('slime',factionTrap);mobVictim.hp=mobVictim.max=300;enemies=[mobVictim];world.traps=[factionTrap];triggerTrap(factionTrap);`);
+    assert.equal(run("mobVictim.hp===300&&!mobVictim.poison&&!mobVictim.burn&&!mobVictim.slow"),true,kind+' hidden');
+    run(`loadFloor(1,604);world.tiles.fill(1);props=[];player.inv=0;player.hp=120;player.poison=player.burn=player.slow=0;var factionTrap={x:player.x,y:player.y,kind:'${kind}',room:1,revealed:true,triggered:false};var mobVictim=makeEnemy('slime',factionTrap);mobVictim.hp=mobVictim.max=300;enemies=[mobVictim];world.traps=[factionTrap];updateTraps(.01,false);`);
+    assert.equal(run("factionTrap.triggered&&player.hp===120&&!player.poison&&!player.burn&&!player.slow"),true,kind+' disarmed');
+    if(kind==='trapdoor')assert.equal(run('mobVictim.hp'),0);
+    if(kind==='poison')assert.ok(run('mobVictim.poison>0'));
+    if(kind==='fire')assert.ok(run('mobVictim.burn>0'));
+    if(kind==='quicksand')assert.ok(run('mobVictim.slow>0'));
+  }
+});
+check('spider webs strike within 0.1 seconds only in the shown cone', () => {
+  run("begin();loadFloor(1,604);world.tiles.fill(1);props=[];world.traps=[];player.root=0;player.inv=0;var spider=makeEnemy('cave_spider',{x:player.x+120,y:player.y});spider.cool=0;enemies=[spider];update(.01)");
+  assert.ok(run('spider.wind<=.08'));
+  run("update(.09)");assert.equal(run('player.root>0'),true);
+  run("player.root=0;spider.attackAngle=0;strikeWeb(spider)");assert.equal(run('player.root'),0);
+  run("spider.attackAngle=Math.PI;var blockingAlly=makeEnemy('slime',{x:player.x+60,y:player.y});enemies.push(blockingAlly);strikeWeb(spider)");
+  assert.equal(run('player.root>0&&blockingAlly.hp===blockingAlly.max'),true);
+});
+check('crossfire respects the disarmed trap faction and hits each monster once', () => {
+  run("begin();loadFloor(1,604);world.tiles.fill(1);props=[];world.merchant=null;var testRoom=world.rooms[1];player.x=(testRoom.x+testRoom.w/2)*T;player.y=(testRoom.y+testRoom.h/2)*T;player.hp=120;player.inv=0;var trap={x:player.x,y:player.y,kind:'crossfire',room:1,revealed:true,triggered:false};var caught=makeEnemy('slime',trap);caught.hp=caught.max=200;enemies=[caught];world.traps=[trap];updateTraps(.01,false);updateCrossfire(.8)");
+  assert.equal(run("caught.hp===100&&player.hp===120&&trap.victims.has(caught)"),true);
+});
+check('enemy projectiles expire at the displayed cone radius', () => {
+  for(const kind of ['cinder_wizard','bone_archer','dragon']){
+    run(`begin();loadFloor(1,604);world.tiles.fill(1);world.traps=[];props=[];player.x=2000;player.y=1500;var caster=makeEnemy('${kind}',{x:500,y:500});caster.reach=150;caster.speed=0;caster.cool=1000;enemies=[caster];shots=[];shoot(caster,0,200,'fire');var limited=shots[0];for(let i=0;i<100;i++)baseUpdate(.04)`);
+    assert.ok(run("Math.abs(limited.x-(500+("+ (kind==='dragon'?330:150) +")))<1e-7"));
+    assert.equal(run('shots.length'),0);
+  }
 });
 check('room lighting, reachable torches and hazard placement preserve safe entrances and finale', () => {
   const kinds=new Set();
@@ -1033,23 +1075,20 @@ check('corridors retain soft ambient light and stone walls block radial light an
   assert.ok(run('torchIllumination({x:8.5*T,y:7.5*T})')>.5);
   run("loadFloor(1,604)");
 });
-check('safe traps activate only by deliberate Use, after exactly two seconds, then catch arriving monsters', () => {
+check('disarmed traps remain safe until a monster steps on them', () => {
   run("loadFloor(1,604);state='playing';enemies=[];props=[];loot=[];world.traps=[{x:player.x+45,y:player.y,kind:'fire',revealed:true,active:0}];player.hp=120;player.inv=0;world.end.x=2500;world.end.y=1900");
-  assert.equal(run('nearby().type'),'trap');
+  assert.equal(run('nearby()'),null);
   run('player.x=world.traps[0].x;updateTraps(.1,false)');
   assert.equal(run('player.hp'),120);assert.ok(!run('world.traps[0].triggered'));
-  run('player.x-=45;interact();updateTraps(1.99,false)');
-  assert.ok(!run('world.traps[0].triggered'));assert.ok(run('world.traps[0].arming>0'));
-  run('interact();updateTraps(.01,false)');
-  assert.equal(run('world.traps[0].triggered'),true);assert.equal(run('world.traps[0].arming'),0);
-  assert.equal(run('player.hp'),120,'trap hit a player outside the danger radius');
+  run('player.x-=45;interact();updateTraps(2,false)');
+  assert.ok(!run('world.traps[0].triggered'));
   run("enemies=[makeEnemy('slime',{x:world.traps[0].x,y:world.traps[0].y})];var victim=enemies[0];updateTraps(.1,false)");
   assert.ok(run('victim.burn>0'));const hp=run('victim.hp');
   run('updateTraps(.5,false)');assert.ok(run('victim.hp')<hp,'monster did not burn over time');
   run('updateTraps(6,false);var oldhp=player.hp;player.x=world.traps[0].x;updateTraps(.1,false)');
   assert.equal(run('player.hp'),run('oldhp'),'spent trap kept damaging entrants');
 });
-check('all trap types affect monsters; swarms attack nearby monsters and players; falling removes a monster', () => {
+check('disarmed trap swarms attack monsters but not the knight; pits remove monsters', () => {
   for(const kind of ['poison','fire','explosion','quicksand','trapdoor','bugs','bats']){
     run(`loadFloor(1,604);state='playing';props=[];loot=[];world.traps=[];player.x=world.start.x-100;enemies=[makeEnemy('slime',world.start)];var monster=enemies[0];monster.hp=300;var monsterTrap={...world.start,kind:'${kind}',revealed:true};triggerTrap(monsterTrap,true)`);
     if(kind==='poison')assert.ok(run('monster.poison>0&&monster.hp<300'));
@@ -1063,7 +1102,7 @@ check('all trap types affect monsters; swarms attack nearby monsters and players
       run("var swarm=enemies.find(e=>e.trapSwarm);swarm.x=monster.x+20;swarm.y=monster.y;swarm.emerge=0;swarm.cool=0;updateTraps(.01,false)");
       assert.ok(run('monster.hp')<300);
       run('monster.hp=0;player.x=swarm.x-20;player.y=swarm.y;player.hp=120;player.inv=0;swarm.cool=0;updateTraps(.01,false)');
-      assert.ok(run('player.hp')<120);
+      assert.equal(run('player.hp'),120);
     }
   }
 });
