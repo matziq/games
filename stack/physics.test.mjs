@@ -78,6 +78,34 @@ test("a supported jittering tower settles after resume without losing the player
   assert.equal(addBlock(M, world, state), true);
   assert.equal(addBlock(M, world, state), false);
 });
+test("a recording-like tower with small sustained oscillations settles, including after reload", () => {
+  const saved = newGame(() => 0);
+  saved.players = ["Ada", "Bo"];
+  saved.blocks = [
+    {shape:"short",x:333.7299479756504,y:931.1430239098147,angle:1.571608019885842,vx:0.0028985844017006455,vy:-0.006716720047406852,angularVelocity:-0.00018924784508999437},
+    {shape:"bar",x:301.8578969016671,y:916.4291018379852,angle:1.5689249604076634,vx:0.0060642198915593325,vy:0.012697036983445287,angularVelocity:-0.00012388485914561898},
+    {shape:"short",x:298.7765833999962,y:986.7727329889312,angle:0.0008362757414579391,vx:-0.008828833743464201,vy:-0.0074048005649819965,angularVelocity:0.000023693542112596335},
+    {shape:"bar",x:362.07795032933353,y:944.2607882952318,angle:1.5704262019090842,vx:-0.008859637475106865,vy:-0.010986213069409131,angularVelocity:0.00017954468249808999},
+    {shape:"ell",x:242.36907059140503,y:940.615012842603,angle:0.00020344091579318048,vx:0.010759744013193994,vy:-0.01001439908053726,angularVelocity:-0.00017579153494443745},
+    {shape:"ell",x:211.64132895469666,y:968.1671708283945,angle:-0.0019400605689734222,vx:0.012192760545294732,vy:0.011828695898875594,angularVelocity:-0.00021461474860552698}
+  ];
+  saved.blocks.forEach((b, i) => { saved.queue[i] = b.shape; });
+  saved.phase = "falling";
+  for (const resume of [false, true]) {
+    const state = structuredClone(saved);
+    let world = createWorld(M, state);
+    if (resume) {
+      for (let i = 0; i < 120; i++) step(M, world, state);
+      state.blocks = snapshot(world.bodies);
+      world = createWorld(M, JSON.parse(JSON.stringify(state)));
+    }
+    for (let i = 0; i < 750 && state.phase === "falling"; i++) step(M, world, state);
+    assert.equal(state.phase, "aim");
+    for (let i = 0; i < 3600 && state.phase === "aim"; i++) step(M, world, state);
+    assert.equal(state.phase, "aim");
+    assert.deepEqual(state.players, ["Ada", "Bo"]);
+  }
+});
 test("sustained slow movement does not become a settled turn", () => {
   const state = newGame(() => 0);
   const ground = {id: 1, position: {x: 300, y: 1018}, isStatic: true};

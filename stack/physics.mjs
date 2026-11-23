@@ -119,7 +119,7 @@ function motionWindow(world, name, frames, bounds) {
     return Math.hypot(item.maxX - item.minX, item.maxY - item.minY) <= bounds.span &&
       item.maxA - item.minA <= bounds.angleSpan &&
       drift <= bounds.drift && rotation <= bounds.rotation &&
-      (drift <= item.distance * 0.25 + 0.00001 || microscopic) &&
+      (drift <= item.distance * (bounds.driftRatio ?? 0.25) + 0.00001 || microscopic) &&
       (rotation <= item.rotation * 0.25 + 0.0001 || microscopic);
   });
 }
@@ -147,7 +147,7 @@ export function step(M, world, state) {
     const still = quiet && motionWindow(world, "quiet", 45, {span: 1, angleSpan: 0.005, drift: 0.5, rotation: 0.002});
     if (!quiet) world.settling.quiet = null;
     const gentle = hasSupport && world.bodies.every(b => b.speed < 0.6 && Math.abs(b.angularVelocity) < 0.012);
-    const jitter = gentle && motionWindow(world, "jitter", 240, {span: 8, angleSpan: 0.09, drift: 2, rotation: 0.015});
+    const jitter = gentle && motionWindow(world, "jitter", 240, {span: 8, angleSpan: 0.09, drift: 2, rotation: 0.025, driftRatio: 0.4});
     if (!gentle) world.settling.jitter = null;
     if (still || jitter) {
       state.phase = world.bodies.length === MAX_PLACEMENTS ? "won" : "aim";
