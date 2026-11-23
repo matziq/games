@@ -330,14 +330,25 @@ function attack(){
 }
 function nearby(){const candidates=[...props.filter(p=>p.type==='chest'&&!p.open),...loot.filter(l=>l.type==='weapon'||l.type==='armor'),{...world.end,type:'stairs'}].filter(o=>distance(o,player)<70&&clearLine(player,o));return candidates.sort((a,b)=>distance(a,player)-distance(b,player))[0]}
 function usesAmmo(weapon){return !!weapon&&!isWand(weapon)&&rangedKinds.includes(weaponKind(weapon))}
+function allowedArmor(weapon,armor){
+ return isWand(weapon)?armor.kind==='robe':usesAmmo(weapon)?['leather','chain'].includes(armor.kind):['chain','plate'].includes(armor.kind);
+}
+function armorRequirement(weapon){return isWand(weapon)?'robes':usesAmmo(weapon)?'leather or chain armor':'chain or plate armor'}
+function reconcileArmor(weapon){
+ const dropped=[];
+ for(const slot of armorSlots)if(player[slot]&&!allowedArmor(weapon,player[slot])){
+  const armor=player[slot];loot.push({x:player.x,y:player.y,type:'armor',armor,weaponSwitchDrop:true});player[slot]=null;dropped.push(armor.name);
+ }
+ if(dropped.length)log('Dropped incompatible armor: '+dropped.join(', ')+'. This weapon allows '+armorRequirement(weapon)+'.');
+}
 function reconcileInventory(weapon){
  if(!isWand(weapon))for(const [kind,count] of Object.entries(player.scrolls||{})){
-  for(let i=0;i<count;i++)loot.push({x:player.x+12,y:player.y+12,type:'scroll',scroll:kind});
+  for(let i=0;i<count;i++)loot.push({x:player.x+12,y:player.y+12,type:'scroll',scroll:kind,weaponSwitchDrop:true});
   player.scrolls[kind]=0;
  }
  if(!usesAmmo(weapon)&&player.ammoShared){
   for(const [kind,count] of Object.entries(player.ammoShared))if(count>0){
-   loot.push({x:player.x-12,y:player.y+12,type:'ammo',special:kind,ammoKind:'bow',value:count});
+   loot.push({x:player.x-12,y:player.y+12,type:'ammo',special:kind,ammoKind:'bow',value:count,weaponSwitchDrop:true});
    player.ammoShared[kind]=0;
   }
   selectedAmmo='regular';
@@ -345,13 +356,8 @@ function reconcileInventory(weapon){
 }
 function equipLoot(o){
  const slot=o.type==='armor'?armorSlot(o.armor):'weapon',next=o[o.type],old=player[slot];
- if(o.type==='armor'&&isWand(player.weapon)&&next.kind!=='robe'){log('Wands can only be used while wearing a robe.');return false}
- if(o.type==='weapon'&&isWand(next)){
-  for(const armorSlotName of armorSlots)if(player[armorSlotName]&&player[armorSlotName].kind!=='robe'){
-   loot.push({x:player.x,y:player.y,type:'armor',armor:player[armorSlotName]});player[armorSlotName]=null;
-  }
- }
- if(o.type==='weapon')reconcileInventory(next);
+ if(o.type==='armor'&&!allowedArmor(player.weapon,next)){log('This weapon allows only '+armorRequirement(player.weapon)+'.');return false}
+ if(o.type==='weapon'){reconcileArmor(next);reconcileInventory(next)}
  player[slot]=next;loot.splice(loot.indexOf(o),1);if(old)loot.push({x:o.x,y:o.y,type:o.type,[o.type]:old});floatText(o.x,o.y-18,'+ '+next.name,'loot');log('Equipped '+next.name+'.');if(o.type==='armor')window.DungeonAudio.play('armor');updateHUD();return true
 }
 function interact(){if(state!=='playing')return;const o=nearby();if(!o)return;if(o.type==='chest'){o.open=true;drops(o,true);floatText(o.x,o.y-18,'CHEST OPENED','treasure');log('Treasure chest opened.')}if(o.type==='weapon'||o.type==='armor')equipLoot(o);if(o.type==='stairs'){if(depth<5)loadFloor(depth+1,crypto.getRandomValues(new Uint32Array(1))[0]);else log('Defeat the Cinder King to claim the crown.');}}
@@ -429,7 +435,7 @@ function update(dt){
  for(const status of ['poison','burn'])if(player[status]>0){player[status]=Math.max(0,player[status]-dt);player[status+'Tick']-=dt;if(player[status]>0&&player[status+'Tick']<=0){player[status+'Tick']=status==='poison'?.75:.65;damagePlayer(status==='poison'?3:4,status);particle(player.x,player.y,status==='poison'?'#9be05c':'#ff793c',4)}}
  shots=shots.filter(s=>s.life>0);enemies=enemies.filter(e=>e.hp>0);
  for(const l of loot){
-  if(['weapon','armor','potion'].includes(l.type)){l.age=(l.age||0)+dt;if(l.age>=(l.type==='potion'?15:55)){l.taken=true;continue}}
+  l.age=(l.age||0)+dt;if(l.age>=lootLifetime(l)){l.taken=true;continue}
   if((['gold','potion'].includes(l.type)||l.type==='ammo'&&usesAmmo(player.weapon)||l.type==='scroll'&&isWand(player.weapon))&&!l.taken){
    const gap=distance(l,player);
    if(gap<=3.75*T&&gap>0){const step=Math.min(gap,360*dt);l.x+=(player.x-l.x)/gap*step;l.y+=(player.y-l.y)/gap*step}
@@ -896,7 +902,7 @@ function interactionPrompt(o){
  if(o.type==='merchant')return '[E / Use] Trade with the merchant';
  if(o.type==='stairs')return depth===MAX_FLOOR?(bossDefeated?'[E / Use] Begin Cycle '+(runCycle+1)+' / keep gear and rewards':'Defeat the dragon to claim the crown'):'[E / Use] Descend to Floor '+(depth+1)+' / restore vitality';
  if(o.type==='chest')return '[E / Use] Open treasure chest';
- if(o.type==='armor'){const slot=armorSlot(o.armor);return '[E / Use] Equip '+o.armor.name+' ('+Math.round(o.armor.reduction*100)+'% / slot currently '+Math.round((player[slot]?.reduction||0)*100)+'%; total cap 40%)'}
+ if(o.type==='armor'){const slot=armorSlot(o.armor);return allowedArmor(player.weapon,o.armor)?'[E / Use] Equip '+o.armor.name+' ('+Math.round(o.armor.reduction*100)+'% / slot currently '+Math.round((player[slot]?.reduction||0)*100)+'%; total cap 40%)':o.armor.name+' incompatible: this weapon allows only '+armorRequirement(player.weapon)+'.'}
  return '[E / Use] Equip '+o.weapon.name+' ('+(o.weapon.damage+player.level*2)+' power / current '+(player.weapon.damage+player.level*2)+')';
 }
 function drawHazardsAndLighting(){
@@ -1346,7 +1352,8 @@ function updateScrolls(dt){
  world.webStrikes=world.webStrikes.filter(strike=>strike.life>0);
  refreshScrollHUD();
 }
-function lootVisible(item){const blinkAt=item.type==='potion'?5:25;return !['weapon','armor','potion'].includes(item.type)||(item.age||0)<blinkAt||Math.floor(((item.age||0)-blinkAt)*5)%2===0}
+function lootLifetime(item){return item.weaponSwitchDrop?10:30}
+function lootVisible(item){const blinkAt=lootLifetime(item)-5;return (item.age||0)<blinkAt||Math.floor(((item.age||0)-blinkAt)*5)%2===0}
 const gearPreferences={enabled:true,prefer:'ranged'};
 document.querySelector('aside').insertAdjacentHTML('afterbegin','<section class="panel" aria-label="Automatic equipment"><div class="label">Automatic equipment</div><p><button id="autoEquip" type="button" aria-pressed="true">Auto-equip: On</button></p><p><button id="preferWeapon" type="button">Prefer: Ranged</button></p><p style="font-size:12px">Upgrades fly from 3.75 tiles away. Magic preference equips a first wand, then stronger wands. Settings are saved with your run.</p></section>');
 document.querySelector('aside').insertAdjacentHTML('afterbegin','<section class="panel" aria-label="Game settings"><div class="label">Game settings</div><label>Difficulty <select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></label><p>Difficulty affects newly spawned enemies.</p><div id="bindingSettings"></div><p id="bindingError" role="status"></p></section>');
@@ -1377,7 +1384,7 @@ $('autoEquip').onclick=()=>{gearPreferences.enabled=!gearPreferences.enabled;ref
 $('preferWeapon').onclick=()=>{const options=['ranged','magic','melee'];gearPreferences.prefer=options[(options.indexOf(gearPreferences.prefer)+1)%options.length];refreshGearControls();if(player)saveRun()};
 refreshGearControls();
 function betterAutoGear(item){
- if(item.type==='armor')return (!isWand(player.weapon)||item.armor.kind==='robe')&&item.armor.reduction>(player[armorSlot(item.armor)]?.reduction||0);
+ if(item.type==='armor')return allowedArmor(player.weapon,item.armor)&&item.armor.reduction>(player[armorSlot(item.armor)]?.reduction||0);
  if(item.type!=='weapon')return false;
  const next=item.weapon,current=player.weapon;
  if((isWand(next)?'magic':rangedKinds.includes(weaponKind(next))?'ranged':'melee')!==gearPreferences.prefer)return false;
@@ -1400,7 +1407,7 @@ function drawScrollMagic(){
   ctx.moveTo(strike.from.x,strike.from.y);ctx.lineTo(strike.x,strike.y);ctx.stroke();
   for(let i=0;i<3;i++){ctx.beginPath();ctx.ellipse(strike.x,strike.y,8+i*5,5+i*4,i*.5,0,TAU);ctx.stroke()}ctx.restore();
  }
- for(const item of loot)if(item.type==='ammo'&&world.seen[Math.floor(item.y/T)*W+Math.floor(item.x/T)]){
+ for(const item of loot)if(item.type==='ammo'&&lootVisible(item)&&world.seen[Math.floor(item.y/T)*W+Math.floor(item.x/T)]){
   ctx.strokeStyle=ammoColors[item.special];ctx.lineWidth=2;
   for(let n=-1;n<=1;n++){ctx.beginPath();ctx.moveTo(item.x-9,item.y+n*5+5);ctx.lineTo(item.x+10,item.y+n*5-5);ctx.stroke()}
   ctx.fillStyle=ammoColors[item.special];ctx.font='bold 10px Georgia';ctx.textAlign='center';ctx.fillText((item.value??5)+' AMMO',item.x,item.y-15);
@@ -1482,8 +1489,8 @@ function worldTargets(){
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Mouse clicks select nearby objects AND attack/fire; hold to keep attacking across loot. Highlighting never blocks combat. Touch taps select and aim; hold Attack to strike/fire. Only E / Use activates selected items.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Rubble and furnishings are attack-only obstacles, not selectable items. Click to strike them; on touch, tap to aim then use Attack. E / Use does not break them.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Inspect torchlit floor glints: a rare 8% chance reveals a hidden-hoard weapon with +5 power over its normal floor-level roll instead of a trap. Select and equip it with E / Use. Stepping on an uninspected glint still triggers its trap.');
-document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Silken nests: entering starts a 4-second egg countdown. Attack the sacs before three very fast spiderlings hatch from each! Adult spider webs strike nearly instantly in their attack zone and root you for 1 second; a hit sends the spider rushing in for an immediate melee attack. Weapon strikes and projectiles toggle torches, including relighting them.<br>Find five-shot Light, Fire, Explosion, Poison, Lightning, Web, and Charm ammo packs for every ranged weapon. Special ammo returns to unlimited regular shots when empty. Rare unstable rooms mark a tile for 2 seconds before it becomes a pit down exactly one floor (never on boss floors 8 or 16).<br>Gold and potions vacuum within 3.75 tiles; ammo requires a ranged weapon and scrolls require a wand. Better gear flies toward you when automatic equipment is enabled. Weapons and armor blink after 25 seconds and vanish at 55; potions blink after 5 seconds and vanish at 15. Gold never expires. Hit broken barrels/boxes or opened chests again to clear them, without extra loot. Hidden traps ignore monsters; disarmed traps trigger when monsters cross them.');
-document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Automatic equipment is on by default, preferring ranged weapons. Gear / Map lets you choose Melee, Ranged, or Magic, or switch it off.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Silken nests: entering starts a 4-second egg countdown. Attack the sacs before three very fast spiderlings hatch from each! Adult spider webs strike nearly instantly in their attack zone and root you for 1 second; a hit sends the spider rushing in for an immediate melee attack. Weapon strikes and projectiles toggle torches, including relighting them.<br>Find five-shot Light, Fire, Explosion, Poison, Lightning, Web, and Charm ammo packs for every ranged weapon. Special ammo returns to unlimited regular shots when empty. Rare unstable rooms mark a tile for 2 seconds before it becomes a pit down exactly one floor (never on boss floors 8 or 16).<br>Gold and potions vacuum within 3.75 tiles; ammo requires a ranged weapon and scrolls require a wand. Better gear flies toward you when automatic equipment is enabled. All loose drops blink for their final 5 seconds and vanish after 30 active seconds; unusable armor, ammo, and scrolls dropped by a weapon switch vanish after 10. Hit broken barrels/boxes or opened chests again to clear them, without extra loot. Hidden traps ignore monsters; disarmed traps trigger when monsters cross them.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Automatic equipment is on by default, preferring ranged weapons. Gear / Map lets you choose Melee, Ranged, or Magic, or switch it off. Ranged weapons allow leather and chain armor; melee weapons allow chain and plate; wands allow robes. Changing weapons drops incompatible armor.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Light arrows and bolts light the way in flight and illuminate their landing spot for 5 seconds.');
 function isWorldTarget(target){return worldTargets().includes(target)}
 function targetReachable(target){return distance(target,player)<72&&clearLine(player,target)}
@@ -2321,7 +2328,7 @@ function restoreSavedRun(){
   for(const zone of world.scrollZones||[])if(zone.wandPoison===undefined)zone.wandPoison=true;
   $('difficulty').value=difficulty;for(const [action,input] of Object.entries(bindingInputs))input.value=keyBindings[action];refreshKeyHints();
   selectedWorldItem=data.selectedWorldItem||null;selectionChoices=data.selectionChoices||[];lastGearDelete=data.lastGearDelete||null;
-  setSeed(data.seed);installSharedAmmo();reconcileInventory(player.weapon);distances=null;pathTimer=0;keys.clear();mouse.down=false;mouse.active=false;releaseTouchControls();
+  setSeed(data.seed);installSharedAmmo();reconcileArmor(player.weapon);reconcileInventory(player.weapon);distances=null;pathTimer=0;keys.clear();mouse.down=false;mouse.active=false;releaseTouchControls();
   state='playing';$('overlay').hidden=true;resumeSaved.hidden=true;refreshGearControls();
   $('area').textContent=chapters[realmForFloor(depth)-1];$('area').style.color=world.theme.accent;
   $('floor').textContent='CYCLE '+runCycle+'  |  FLOOR '+depth+' / '+MAX_FLOOR+'  |  '+world.theme.name.toUpperCase();
