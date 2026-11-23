@@ -1302,7 +1302,7 @@ function updateScrolls(dt){
 }
 function lootVisible(item){const blinkAt=item.type==='potion'?10:30;return !['weapon','armor','potion'].includes(item.type)||(item.age||0)<blinkAt||Math.floor(((item.age||0)-blinkAt)*5)%2===0}
 const gearPreferences={enabled:false,prefer:'melee'};
-document.querySelector('aside').insertAdjacentHTML('afterbegin','<section class="panel" aria-label="Automatic equipment"><div class="label">Automatic equipment</div><label><input id="autoEquip" type="checkbox"> Auto-pickup and equip better gear</label><p><label for="preferWeapon">Prefer</label> <select id="preferWeapon"><option value="melee">Melee</option><option value="ranged">Ranged</option></select></p><p style="font-size:12px">Within 3.75 tiles and clear sight. Weapons: higher power, then faster recovery, then reach. Armor: higher reduction per slot. Never downgrades to switch styles. Settings last this page session.</p></section>');
+document.querySelector('aside').insertAdjacentHTML('afterbegin','<section class="panel" aria-label="Automatic equipment"><div class="label">Automatic equipment</div><label><input id="autoEquip" type="checkbox"> Auto-pickup and equip better gear</label><p><label for="preferWeapon">Prefer</label> <select id="preferWeapon"><option value="melee">Melee</option><option value="ranged">Ranged</option></select></p><p style="font-size:12px">Within 3.75 tiles and clear sight. Weapons: higher power, then faster recovery, then reach. Armor: higher reduction per slot. Never downgrades to switch styles. Settings are saved with your run.</p></section>');
 $('autoEquip').onchange=()=>{gearPreferences.enabled=$('autoEquip').checked};
 $('preferWeapon').onchange=()=>{gearPreferences.prefer=$('preferWeapon').value};
 function betterAutoGear(item){
@@ -2050,6 +2050,133 @@ document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>C
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>A boss waits every 8 floors. Each boss has ranged and melee attacks, calls weaker kin to help, and drops about 1,000 gold, powerful gear, spells and ammo. Floors 8 and 16 seal every pit, fissure and trapdoor until the boss dies; then the stairway opens.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Watch for subtly mismatched tiles: crossfire sends eight mixed arrows from both sides. Glowing pedestal relics are collectible, but claiming one releases a fast boulder from a random side—move or dodge out of its path.');
 window.emberkeepExpansion={ammoKinds,bossForms:BOSS_FORMS,isBossFloor:bossFloor,snapshot:()=>({floor:depth,bossFloor:bossFloor(),bossName:world?.boss?.bossName||'',bossDefeated,ammo:{...player.ammoShared},selectedAmmo,pedestals:world?.pedestals?.length||0,crossfireShots:world?.crossfireShots?.length||0,boulder:!!world?.boulder})};
+</script>
+<script id="run-persistence">
+'use strict';
+const RUN_SAVE_KEY='emberkeep.run.v1',RUN_SAVE_VERSION=1;
+const saveStatus=document.createElement('div');
+saveStatus.id='saveStatus';saveStatus.setAttribute('role','status');
+saveStatus.style.cssText='position:absolute;right:12px;bottom:8px;z-index:3;max-width:70%;color:#ffd39a;background:#10191ee8;font:11px Segoe UI;padding:4px 7px;border-radius:4px';
+saveStatus.hidden=true;document.querySelector('.viewport').append(saveStatus);
+const resumeSaved=document.createElement('button');
+resumeSaved.id='resumeSaved';resumeSaved.className='primary';resumeSaved.textContent='Resume saved run';resumeSaved.hidden=true;
+$('start').before(resumeSaved);
+let savedRun=null,savePresent=false,saveElapsed=0,saveWarning='',confirmFromTitle=false;
+function reportSaveError(message,error){
+ if(saveWarning!==message)console.error(message,error);
+ saveWarning=message;saveStatus.textContent=message;saveStatus.hidden=false;$('error').textContent=message;
+}
+function encodeRun(root){
+ const ids=new Map(),nodes=[];
+ function ref(value){
+  if(value===undefined)return {u:1};
+  if(typeof value==='number'&&!Number.isFinite(value))return {n:String(value)};
+  if(value===null||typeof value==='string'||typeof value==='number'||typeof value==='boolean')return value;
+  if(typeof value!=='object')throw new Error('Unsupported save value');
+  if(ids.has(value))return {r:ids.get(value)};
+  const id=nodes.length;ids.set(value,id);nodes.push(null);
+  const type=value instanceof Uint8Array?'u8':value instanceof Int16Array?'i16':value instanceof Set?'set':Array.isArray(value)?'array':'object';
+  const data=type==='object'?Object.entries(value).map(([k,v])=>[k,ref(v)]):Array.from(value,ref);
+  nodes[id]={type,data};return {r:id};
+ }
+ return JSON.stringify({version:RUN_SAVE_VERSION,root:ref(root),nodes});
+}
+function decodeRun(text){
+ if(typeof text!=='string'||text.length>8000000)throw new Error('Save size is invalid');
+ const doc=JSON.parse(text);
+ if(!doc||doc.version!==RUN_SAVE_VERSION||!Array.isArray(doc.nodes)||doc.nodes.length>100000)throw new Error('Unsupported or invalid save version');
+ const objects=doc.nodes.map(node=>{
+  if(!node||!Array.isArray(node.data))throw new Error('Invalid save node');
+  if(node.type==='object')return {};
+  if(node.type==='array')return [];
+  if(node.type==='set')return new Set();
+  if(node.type==='u8')return new Uint8Array(node.data.length);
+  if(node.type==='i16')return new Int16Array(node.data.length);
+  throw new Error('Unknown save node type');
+ });
+ function value(v){
+  if(v===null||typeof v==='string'||typeof v==='boolean'||typeof v==='number')return v;
+  if(!v||typeof v!=='object'||Array.isArray(v))throw new Error('Invalid save value');
+  if(Object.keys(v).length===1&&v.u===1)return undefined;
+  if(Object.keys(v).length===1&&['Infinity','-Infinity','NaN'].includes(v.n))return Number(v.n);
+  if(Object.keys(v).length===1&&Number.isInteger(v.r)&&v.r>=0&&v.r<objects.length)return objects[v.r];
+  throw new Error('Invalid save reference');
+ }
+ doc.nodes.forEach((node,i)=>{
+  const target=objects[i];
+  if(node.type==='object')for(const entry of node.data){
+   if(!Array.isArray(entry)||entry.length!==2||typeof entry[0]!=='string'||['__proto__','constructor','prototype'].includes(entry[0]))throw new Error('Invalid save property');
+   target[entry[0]]=value(entry[1]);
+  }else if(node.type==='set')for(const item of node.data)target.add(value(item));
+  else node.data.forEach((item,index)=>{target[index]=value(item)});
+ });
+ const data=value(doc.root);
+ if(!data||!Number.isInteger(data.depth)||data.depth<1||data.depth>MAX_FLOOR||!Number.isInteger(data.runCycle)||data.runCycle<1||
+  !data.player||!Number.isFinite(data.player.x)||!Number.isFinite(data.player.y)||!(data.player.hp>0)||!data.player.weapon||
+  !data.world||!(data.world.tiles instanceof Uint8Array)||data.world.tiles.length!==W*H||!(data.world.seen instanceof Uint8Array)||data.world.seen.length!==W*H||
+  !Array.isArray(data.world.rooms)||!data.world.start||!data.world.end||!data.world.theme||!data.world.quake||
+  !['enemies','props','loot','shots','heroShots','effects','floatingTexts','messages'].every(key=>Array.isArray(data[key]))||
+  !data.idleThreat||!data.player.scrolls||!data.player.ammoShared||!Number.isFinite(data.seed))throw new Error('Save is incomplete or invalid');
+ return data;
+}
+function snapshotRun(){
+ return {world,player,enemies,props,loot,shots,heroShots,effects,floatingTexts,messages,depth,kills,clock,seed,runCycle,bossDefeated,
+  selectedAmmo,activeBossName,idleThreat,selectedWorldItem,selectionChoices,lastGearDelete,gearPreferences,shopFloor};
+}
+function saveRun(){
+ if(!world||!player||!['playing','paused','shop','confirm'].includes(state)||player.hp<=0)return false;
+ try{
+  const text=encodeRun(snapshotRun());window.localStorage.setItem(RUN_SAVE_KEY,text);
+  savePresent=true;savedRun=null;saveElapsed=0;
+  if(saveWarning){saveWarning='';saveStatus.hidden=true;$('error').textContent=''}
+  return true;
+ }catch(error){saveElapsed=0;reportSaveError('Run could not be saved on this device. Keep this page open or enable local storage.',error);return false}
+}
+function inspectSavedRun(){
+ try{
+  const text=window.localStorage.getItem(RUN_SAVE_KEY);savePresent=text!==null;
+  if(!savePresent)return;
+  savedRun=decodeRun(text);resumeSaved.hidden=false;
+ }catch(error){savePresent=true;savedRun=null;reportSaveError('Saved run is unavailable or invalid. It has not been overwritten.',error)}
+}
+function restoreSavedRun(){
+ try{
+  const data=savedRun||decodeRun(window.localStorage.getItem(RUN_SAVE_KEY));
+  world=data.world;player=data.player;enemies=data.enemies;props=data.props;loot=data.loot;shots=data.shots;heroShots=data.heroShots;
+  effects=data.effects;floatingTexts=data.floatingTexts;messages=data.messages;depth=data.depth;kills=data.kills;clock=data.clock;
+  runCycle=data.runCycle;bossDefeated=data.bossDefeated;selectedAmmo=data.selectedAmmo;activeBossName=data.activeBossName;shopFloor=data.shopFloor;
+  Object.assign(idleThreat,data.idleThreat);Object.assign(gearPreferences,data.gearPreferences||{});
+  selectedWorldItem=data.selectedWorldItem||null;selectionChoices=data.selectionChoices||[];lastGearDelete=data.lastGearDelete||null;
+  setSeed(data.seed);installSharedAmmo();distances=null;pathTimer=0;keys.clear();mouse.down=false;mouse.active=false;releaseTouchControls();
+  state='playing';$('overlay').hidden=true;resumeSaved.hidden=true;$('autoEquip').checked=gearPreferences.enabled;$('preferWeapon').value=gearPreferences.prefer;
+  $('area').textContent=chapters[realmForFloor(depth)-1];$('area').style.color=world.theme.accent;
+  $('floor').textContent='CYCLE '+runCycle+'  |  FLOOR '+depth+' / '+MAX_FLOOR+'  |  '+world.theme.name.toUpperCase();
+  $('objective').textContent=bossFloor()&&!bossDefeated?activeBossName+' blocks the only descent. Slay the boss to unseal the stairway.':'Find the stairway and continue your adventure.';
+  $('logs').replaceChildren(...messages.map(text=>{const p=document.createElement('p');p.textContent=text;return p}));
+  window.DungeonAudio.setChapter(realmForFloor(depth));refreshSelectionPanel();refreshScrollHUD();updateHUD();reveal();canvas.focus();
+  savedRun=null;saveElapsed=0;return true;
+ }catch(error){state='title';world=undefined;$('overlay').hidden=false;reportSaveError('Saved run could not be restored. It has not been overwritten.',error);return false}
+}
+const persistenceUpdate=update,persistenceBegin=begin,persistencePause=togglePause,persistenceDamage=damagePlayer,persistenceRestart=$('restart').onclick;
+update=function(dt){persistenceUpdate(dt);if(state==='playing'){saveElapsed+=dt;if(saveElapsed>=2)saveRun()}};
+begin=function(){confirmFromTitle=false;persistenceBegin();resumeSaved.hidden=true;savedRun=null;saveRun()};
+togglePause=function(){persistencePause();if(state==='paused')saveRun()};
+$('pause').onclick=togglePause;
+damagePlayer=function(amount,source){persistenceDamage(amount,source);if(state==='dead'){
+ try{window.localStorage.removeItem(RUN_SAVE_KEY);savePresent=false;savedRun=null;resumeSaved.hidden=true}
+ catch(error){reportSaveError('Could not clear the finished run from local storage.',error)}
+}};
+resumeSaved.onclick=restoreSavedRun;
+$('start').onclick=()=>{
+ if(state==='title'&&savePresent){confirmFromTitle=true;state='confirm';resumeSaved.hidden=true;showOverlay('Begin a new journey?','This replaces the saved run on this device. Press Escape to return, or start a new run below.','Start a new run');return}
+ if(state==='paused')togglePause();else if(state==='victory')continueAfterVictory();else begin();
+};
+$('restart').onclick=()=>{if(state==='title'&&savePresent)$('start').onclick();else persistenceRestart()};
+window.addEventListener('keydown',event=>{if(event.key==='Escape'&&confirmFromTitle){confirmFromTitle=false;state='title';$('title').textContent='Steel. Stone. Something beneath.';$('story').textContent='Resume your saved adventure or begin a new run.';$('start').textContent='New run';resumeSaved.hidden=!savedRun;$('overlay').hidden=false}});
+window.addEventListener('pagehide',()=>saveRun());
+document.addEventListener('visibilitychange',()=>{if(document.hidden)saveRun()});
+inspectSavedRun();if(savePresent)$('start').textContent='New run';
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Runs save locally on this device about every two seconds and when leaving or pausing. Resume from the title screen; a new run replaces the local save. Saves do not sync between devices or browser profiles.');
 </script>
 </body>
 </html>

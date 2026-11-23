@@ -31,7 +31,7 @@ $apk = Join-Path $OutputDirectory 'Emberkeep-Android.apk'
 $resources = Join-Path $build 'resources.zip'
 Run "$tools\aapt2.exe" @('compile','--dir',"$PSScriptRoot\res",'-o',$resources)
 Run "$tools\aapt2.exe" @('link','-o',$unsigned,'-I',$platform,'--manifest',"$PSScriptRoot\AndroidManifest.xml",
-    '-R',$resources,'-A',$assets,'--min-sdk-version','26','--target-sdk-version','36','--version-code','23','--version-name','1.22-spell-effects')
+    '-R',$resources,'-A',$assets,'--min-sdk-version','26','--target-sdk-version','36','--version-code','24','--version-name','1.23-local-save')
 Run "$JavaHome\bin\javac.exe" @('--release','8','-classpath',$platform,'-d',$classes,
     "$PSScriptRoot\src\org\matziq\emberkeep\MainActivity.java")
 $classFiles = @(Get-ChildItem $classes -Filter '*.class' -Recurse | ForEach-Object { $_.FullName })
@@ -40,8 +40,7 @@ Run "$JavaHome\bin\jar.exe" @('uf',$unsigned,'-C',$dex,'classes.dex')
 Run "$tools\zipalign.exe" @('-f','-p','4',$unsigned,$aligned)
 $key = Join-Path $OutputDirectory 'android-debug.keystore'
 if (!(Test-Path -LiteralPath $key)) {
-    Run "$JavaHome\bin\keytool.exe" @('-genkeypair','-keystore',$key,'-storepass','android','-keypass','android',
-        '-alias','androiddebugkey','-dname','CN=Android Debug,O=Emberkeep,C=US','-keyalg','RSA','-validity','10000')
+    throw "Existing signing key is missing: $key"
 }
 Run "$tools\apksigner.bat" @('sign','--ks',$key,'--ks-pass','pass:android','--key-pass','pass:android','--out',$apk,$aligned)
 Run "$tools\apksigner.bat" @('verify','--verbose',$apk)

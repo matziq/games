@@ -16,7 +16,10 @@ const sandbox = { console, Uint8Array, Int16Array, Uint32Array, Math, URLSearchP
   ResizeObserver: class { observe() {} }, Image: class { complete = true; naturalWidth = 120; },
   document: { getElementById(id) { if (!elements.has(id)) elements.set(id, element()); return elements.get(id); },
     createElement: element, querySelector: element, addEventListener() {} },
-  window: { addEventListener() {} } };
+  window: { addEventListener() {}, localStorage: {
+    data: new Map(), getItem(key) { return this.data.get(key) ?? null; },
+    setItem(key, value) { this.data.set(key, String(value)); }, removeItem(key) { this.data.delete(key); }
+  } } };
 vm.createContext(sandbox);
 const html = fs.readFileSync(require('node:path').join(__dirname, 'index.html'), 'utf8');
 const scripts = [...html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]);
@@ -24,6 +27,25 @@ scripts.forEach(script => vm.runInContext(script, sandbox));
 const run = code => vm.runInContext(code, sandbox);
 let count = 0;
 function check(name, fn) { fn(); count++; console.log('PASS ' + name); }
+check('local save restores the current world, shared references, timers and random sequence', () => {
+  run("begin();loadFloor(8,604);player.gold=4321;player.scrolls.light=7;selectedAmmo='light';player.ammoShared.light=8;world.rooms[1].decor[0].broken=true;world.boss.hp-=23;world.quake.next=Infinity;world.scrollLights.push({x:player.x,y:player.y,life:5});var marker={type:'weapon',weapon:{...player.weapon,name:'Saved marker'},x:player.x,y:player.y};loot.push(marker);selectedWorldItem=marker;heroShots.push({hit:new Set([world.boss])});var beforeSeed=seed;var savedBossHp=world.boss.hp;var savedTiles=Array.from(world.tiles).join('');saveRun()");
+  assert.equal(run("decodeRun(window.localStorage.getItem(RUN_SAVE_KEY)).player.gold"),4321);
+  run("var expectedRandom=rng();player.gold=0;world.boss.hp=1;state='title';savedRun=null");
+  assert.equal(run('restoreSavedRun()'),true);
+  assert.equal(run("state==='playing'&&depth===8&&player.gold===4321&&player.scrolls.light===7&&selectedAmmo==='light'&&player.ammo.bow===player.ammo.crossbow&&player.ammo.bow===player.ammoShared"),true);
+  for(const condition of ["world.boss.hp===savedBossHp","enemies.includes(world.boss)","world.rooms[1].decor[0].broken","props.includes(world.rooms[1].decor[0])","heroShots[0].hit.has(world.boss)","selectedWorldItem===loot.find(i=>i.weapon?.name==='Saved marker')","world.quake.next===Infinity","world.scrollLights[0].life===5","Array.from(world.tiles).join('')===savedTiles"])assert.equal(run(condition),true,condition);
+  assert.equal(run('rng()'),run('expectedRandom'));
+});
+check('invalid saves and storage failures are explicit and a dead run cannot be resumed', () => {
+  run("begin();var stored=window.localStorage.getItem(RUN_SAVE_KEY);window.localStorage.setItem(RUN_SAVE_KEY,'broken');inspectSavedRun()");
+  assert.equal(run("!savedRun&&!saveStatus.hidden&&window.localStorage.getItem(RUN_SAVE_KEY)==='broken'"),true);
+  run("window.localStorage.setItem(RUN_SAVE_KEY,stored);state='playing';player.inv=0;player.hp=1;damagePlayer(1000)");
+  assert.equal(run("state==='dead'&&window.localStorage.getItem(RUN_SAVE_KEY)===null"),true);
+  run("begin();var realSet=window.localStorage.setItem;window.localStorage.setItem=()=>{throw new Error('quota')};saveRun()");
+  assert.equal(run("!saveStatus.hidden&&saveStatus.textContent.includes('could not be saved')"),true);
+  run("window.localStorage.setItem=realSet;saveRun()");
+  assert.equal(run('saveStatus.hidden'),true);
+});
 check('enemy projectiles and direct sources cannot harm allies or apply status, but still harm player', () => {
   for(const spell of ['ranged','fire','venom']){
     run(`begin();loadFloor(1,604);world.tiles.fill(1);world.traps=[];props=[];player.inv=0;var shooter=makeEnemy('cinder_wizard',{x:player.x+180,y:player.y});var ally=makeEnemy('slime',{x:player.x+80,y:player.y});shooter.cool=ally.cool=1000;shooter.speed=ally.speed=0;enemies=[shooter,ally];var allyHP=ally.hp;var heroHP=player.hp;shoot(shooter,Math.PI,400,'${spell}');baseUpdate(.4)`);
