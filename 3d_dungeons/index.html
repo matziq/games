@@ -37,7 +37,7 @@
 <div class="overlay" id="overlay"><div class="intro"><div class="eyebrow">A PROCEDURAL MEDIEVAL ADVENTURE</div><h2 id="title">Steel. Stone.<br>Something beneath.</h2><p id="story">Descend through five changing medieval realms and survive sixteen floors of monsters, traps, treasure, and rotating bosses. Defeat the guardians on Floors 8 and 16 to open every route down; claim their spoils and carry your progress into a harder cycle.</p><div class="controls"><kbd>WASD / ARROWS</kbd> move &nbsp; <kbd>MOUSE</kbd> aim<br><kbd>CLICK / SPACE</kbd> attack &nbsp; <kbd>SHIFT</kbd> dodge &nbsp; <kbd>Q</kbd> potion<br><kbd>E</kbd> loot / descend &nbsp; <kbd>T</kbd> scrolls &nbsp; <kbd>C</kbd> ammo &nbsp; <kbd>P</kbd> pause<br>Gold and consumables vacuum toward you; gear remains available for deliberate pickup unless Auto-equip is enabled.<br>Spider webs strike nearly instantly inside their attack zone; a webbed knight is rooted, then rushed by the spider's follow-up melee attack.<br>Use light, fire, explosion, poison, lightning, web, and charm ammo with every ranged weapon.</div><button class="primary" id="start">Enter the halls</button><p id="error"></p></div></div>
 </div>
 <aside><div class="label">Cartographer</div><h2>The path unfolds</h2><canvas id="map" width="225" height="174" aria-label="Explored dungeon minimap"></canvas><section class="panel"><div class="label">Equipment</div><div id="weapon">Worn Longsword</div><div class="stat"><span>Strike power</span><b id="damage">16</b></div><div class="stat"><span>Reach / recovery</span><b id="weaponStats">76 / 0.36s</b></div><div id="armor">No armor</div><div class="stat"><span>Damage reduction</span><b id="defense">0%</b></div><div class="stat"><span>Gold recovered</span><b id="gold">0</b></div><div class="stat"><span>Healing potions [Q]</span><b id="potions">3</b></div><div class="stat"><span>Monsters slain</span><b id="kills">0</b></div></section><section class="panel"><div class="label">Your objective</div><p id="objective" style="font-size:13px;line-height:1.7">Find the blue stairway and prepare for the next eighth-floor boss.</p></section><section class="panel"><div class="label">Chronicle</div><div class="logs" id="logs" aria-live="polite"></div></section><p class="label" style="line-height:1.8">[E] Equip weapons &amp; armor<br>Music includes ambience<br>Randomized every run<br>No network required<br>Desktop keyboard + mouse</p></aside>
-</main><footer>WASD MOVE &nbsp; / &nbsp; SPACE STRIKE &nbsp; / &nbsp; E INTERACT &nbsp; / &nbsp; SHIFT DODGE &nbsp; / &nbsp; Q HEAL</footer>
+</main><footer>WASD MOVE &nbsp; / &nbsp; SPACE STRIKE &nbsp; / &nbsp; E INTERACT &nbsp; / &nbsp; SHIFT DODGE &nbsp; / &nbsp; <span id="healHint">Q HEAL</span></footer>
 <dialog id="artDialog"><h2 style="font-family:Georgia;color:#edbf72">The stones that inspired Emberkeep</h2><p>All 15 supplied images are full overhead room renders, not sprite sheets. Their torchlit masonry, geometric halls, and throne rooms guide this game's art direction. Cropped floor and wall samples from NoLoRA_0008 and NoLoRA_0015 texture the actual procedural world below; the original layouts are shown here as references, not collision maps.</p><div class="gallery" id="gallery"></div><p id="assetStatus"></p><button id="closeArt">Return to the halls</button></dialog>
 <dialog id="shopDialog" aria-labelledby="shopTitle"><h2 id="shopTitle" style="font-family:Georgia;color:#edbf72">The Roadside Merchant</h2><p id="shopDescription">A safe room for trade. Your current equipment stays equipped; purchased gear is placed nearby for you to equip with E. Scroll down to sell carried potions and scrolls, one at a time.</p><p class="shop-gold">Your gold: <b id="shopGold">0</b></p><div id="shopProducts" class="shop-products"></div><button id="closeShop">Leave the shop</button></dialog>
 <style>
@@ -224,6 +224,11 @@ const creatures={
  dragon:{hp:850,speed:56,damage:24,color:'#a1523a',reach:320,windup:1.15,cooldown:2.6,attack:'dragon',shotSpeed:260,projectile:'#ff9d44'}
 };
 const keys=new Set(),mouse={x:0,y:0,active:false,down:false};let vw=900,vh=700,camera={x:0,y:0},state='title',world,player,enemies=[],props=[],loot=[],shots=[],effects=[],floatingTexts=[],messages=[],depth=1,kills=0,clock=0,last=0,pathTimer=0,distances,bossDefeated=false;
+const keyBindings={scroll:'t',ammo:'c',potion:'q'};
+let difficulty='medium',currentFloor=1;
+function isWand(weapon){return weapon?.kind==='wand'}
+function wandPower(){return isWand(player?.weapon)?player.weapon.power||1:0}
+function makeRobe(hooded=false){return {name:hooded?'Hooded Robe':'Mystic Robe',kind:'robe',slot:'armor',hooded,reduction:Math.min(.4,.1+currentFloor*.012+(hooded?.08:0)),color:hooded?'#c5a8e8':'#8c78b4'}}
 let rng=Math.random,seed=0;
 const random=(a,b)=>a+rng()*(b-a),integer=(a,b)=>Math.floor(random(a,b+1)),distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),angleDiff=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
 const artImages=(window.SOURCE_ART||[]).map(src=>{const im=new Image();im.src=src;return im});
@@ -253,7 +258,7 @@ function clearLine(a,b){const steps=Math.ceil(distance(a,b)/8);for(let i=1;i<ste
 function move(e,dx,dy){const r=e.radius||12;if(free(e.x+dx,e.y,r))e.x+=dx;if(free(e.x,e.y+dy,r))e.y+=dy}
 function roomSpot(r){return {x:(integer(r.x+1,r.x+r.w-2)+.5)*T,y:(integer(r.y+1,r.y+r.h-2)+.5)*T}}
 let runCycle=1;
-function makeEnemy(type,p){const base=creatures[type];if(!base)throw new Error('Unknown creature: '+type);const scale=1+(runCycle-1)*.25,hp=(base.hp+(type==='dragon'?0:depth*6))*scale;return {...p,...base,type,hp,max:hp,damage:base.damage*scale,radius:type==='dragon'?25:12,cool:random(.5,2),hit:0,wind:0,lunge:0,attackAngle:0,phase:0}}
+function makeEnemy(type,p){const base=creatures[type];if(!base)throw new Error('Unknown creature: '+type);const scale=(1+(runCycle-1)*.25)*({easy:.75,medium:1,hard:1.35}[difficulty]),hp=(base.hp+(type==='dragon'?0:depth*6))*scale;return {...p,...base,type,hp,max:hp,damage:base.damage*scale,radius:type==='dragon'?25:12,cool:random(.5,2),hit:0,wind:0,lunge:0,attackAngle:0,phase:0}}
 function loadFloor(d,s){
  depth=d;world=generate(s,d);enemies=[];props=[];loot=[];shots=[];effects=[];floatingTexts=[];distances=null;bossDefeated=false;
  player.x=world.start.x;player.y=world.start.y;player.hp=player.max;player.inv=1;player.stamina=100;player.poison=player.burn=player.poisonTick=player.burnTick=0;
@@ -276,15 +281,15 @@ function floatText(x,y,text,kind='loot'){const stack=floatingTexts.filter(f=>f.a
 function tickFloatingTexts(dt){for(const f of floatingTexts){f.age+=dt;f.y-=14*dt}floatingTexts=floatingTexts.filter(f=>f.age<f.life)}
 const armorSlots=['armor','boots','gloves','helmet'];
 const armorSlot=a=>a.slot||'armor';
-function reduction(){return Math.min(.4,armorSlots.reduce((total,slot)=>total+Math.max(0,player[slot]?.reduction||0),0))}
-function damagePlayer(amount,source='physical'){if((player.inv>0&&source!=='poison'&&source!=='burn')||state!=='playing')return;const before=player.hp;window.DungeonAudio.play('damage');if(player.armor)window.DungeonAudio.play('armor');player.hp=Math.max(0,player.hp-amount*(1-reduction()));const actual=before-player.hp;if(actual>0)floatText(player.x,player.y-15,'-'+Math.ceil(actual),'damage');if(source==='physical')player.inv=.6;particle(player.x,player.y,source==='poison'?'#9ae66d':source==='burn'?'#ff8b45':'#d89b84');if(player.hp===0){window.DungeonAudio.play('death');state='dead';showOverlay('The embers fade.','You recovered '+player.gold+' gold and defeated '+kills+' monsters in Chapter '+depth+'. A new path awaits.','Try a new run')}}
+function reduction(source='physical'){return Math.min(.4,armorSlots.reduce((total,slot)=>total+Math.max(0,source==='head'&&player[slot]?.kind==='robe'&&!player[slot].hooded?0:player[slot]?.reduction||0),0))}
+function damagePlayer(amount,source='physical'){if((player.inv>0&&source!=='poison'&&source!=='burn')||state!=='playing')return;const before=player.hp;window.DungeonAudio.play('damage');if(player.armor)window.DungeonAudio.play('armor');player.hp=Math.max(0,player.hp-amount*(1-reduction(source)));const actual=before-player.hp;if(actual>0)floatText(player.x,player.y-15,'-'+Math.ceil(actual),'damage');if(source==='physical'||source==='head')player.inv=.6;particle(player.x,player.y,source==='poison'?'#9ae66d':source==='burn'?'#ff8b45':'#d89b84');if(player.hp===0){window.DungeonAudio.play('death');state='dead';showOverlay('The embers fade.','You recovered '+player.gold+' gold and defeated '+kills+' monsters in Chapter '+depth+'. A new path awaits.','Try a new run')}}
 const weaponTypes={sword:{label:'Longsword',range:82,cooldown:.36,bonus:0},axe:{label:'War Axe',range:74,cooldown:.46,bonus:7},mace:{label:'Mace',range:68,cooldown:.42,bonus:5},spear:{label:'Spear',range:108,cooldown:.4,bonus:-2},bow:{label:'Longbow',range:490,cooldown:.65,bonus:-2},boomerang:{label:'Boomerang',range:270,cooldown:.8,bonus:-4},javelin:{label:'Throwing Spear',range:390,cooldown:.72,bonus:4},halberd:{label:'Halberd',range:123,cooldown:.57,bonus:9},knife:{label:'Throwing Knife',range:330,cooldown:.3,bonus:-6},throwing_axe:{label:'Throwing Axe',range:305,cooldown:.66,bonus:6}};
 weaponTypes.crossbow={label:'Crossbow',range:560,cooldown:.85,bonus:10};
 const rangedKinds=['bow','crossbow','boomerang','javelin','knife','throwing_axe'];
 function weaponKind(w){return w.kind||(w.name.includes('Axe')?'axe':w.name.includes('Spear')?'spear':w.name.includes('Mace')?'mace':'sword')}
 function makeWeapon(){const tier=integer(0,99),rarity=tier>88?2:tier>55?1:0,kinds=Object.keys(weaponTypes),kind=kinds[integer(0,kinds.length-1)],type=weaponTypes[kind];return {name:['Tempered','Knight\'s','Runed'][rarity]+' '+type.label,kind,damage:15+depth*5+rarity*9+type.bonus+(runCycle-1)*5,range:type.range+rarity*4,cooldown:type.cooldown,color:['#c5d4d4','#78c8e0','#c6a0ed'][rarity]}}
-function makeArmor(slot=armorSlots[integer(0,armorSlots.length-1)]){const tier=integer(0,2),kind=['leather','chain','plate'][tier];return {name:slot==='armor'?['Hardened Leather','Riveted Chainmail','Knight\'s Plate'][tier]:['Leather','Chain','Plate'][tier]+' '+{boots:'Boots',gloves:'Gloves',helmet:'Helmet'}[slot],kind,slot,reduction:slot==='armor'?Math.min(.4,.08+tier*.08+depth*.025):Math.min(.12,.025+tier*.025+depth*.006),color:['#ad7951','#91adb4','#c8cddd'][tier]}}
-function drops(e,chest=false){if(e.trapSwarm)return;loot.push({x:e.x-12,y:e.y,type:'gold',value:chest?integer(20,40)*depth:integer(3,10)*depth});if(chest||rng()<.25)loot.push({x:e.x+22,y:e.y+12,type:'weapon',weapon:makeWeapon()});if(chest||rng()<.16)loot.push({x:e.x-24,y:e.y+25,type:'armor',armor:makeArmor()});if(rng()<(chest?.65:.14))loot.push({x:e.x,y:e.y-22,type:'potion'})}
+function makeArmor(slot=armorSlots[integer(0,armorSlots.length-1)]){const tier=integer(0,2),kind=['leather','chain','plate'][tier];if(slot==='armor'&&rng()<.3)return makeRobe(false);return {name:slot==='armor'?['Hardened Leather','Riveted Chainmail','Knight\'s Plate'][tier]:['Leather','Chain','Plate'][tier]+' '+{boots:'Boots',gloves:'Gloves',helmet:'Helmet'}[slot],kind,slot,reduction:slot==='armor'?Math.min(.4,.08+tier*.08+depth*.025):Math.min(.12,.025+tier*.025+depth*.006),color:['#ad7951','#91adb4','#c8cddd'][tier]}}
+function drops(e,chest=false){if(e.trapSwarm)return;loot.push({x:e.x-12,y:e.y,type:'gold',value:chest?integer(20,40)*depth:integer(3,10)*depth});if(chest||rng()<.25)loot.push({x:e.x+22,y:e.y+12,type:'weapon',weapon:makeWeapon()});if(chest||rng()<.16)loot.push({x:e.x-24,y:e.y+25,type:'armor',armor:makeArmor()});if(rng()<(chest?.3:.06))loot.push({x:e.x,y:e.y-22,type:'potion'})}
 function hurtEnemy(e,amount){if(e.hp<=0)return;window.DungeonAudio.play('hit',e.type);window.DungeonAudio.play('voice',e.type);const actual=Math.min(Math.max(0,e.hp),amount);e.hp-=amount;e.hit=.15;if(actual>0)floatText(e.x,e.y-25,'-'+Math.ceil(actual),'strike');particle(e.x,e.y,e.type==='slime'?'#74b788':'#d4a873');if(e.hp<=0){kills++;drops(e);player.xp+=e.type==='dragon'?250:18+depth*3;log(e.type==='dragon'?'Varkhos has fallen! The crown is yours.':e.type[0].toUpperCase()+e.type.slice(1)+' defeated.');while(player.xp>=player.level*65){player.xp-=player.level*65;player.level++;player.max+=15;player.hp=Math.min(player.max,player.hp+40);log('Knight rank '+player.level+'. Vitality increased.')}if(e.type==='dragon'){bossDefeated=true;player.gold+=500;player.crowns=(player.crowns||0)+1;floatText(player.x,player.y-25,'+500 GOLD','gold');showBossVictory()}}}
 function showBossVictory(){
  const origin=world?.boss||player;
@@ -323,7 +328,19 @@ function attack(){
  for(const torch of world.torches)if(distance(torch,player)<w.range&&clearLine(player,torch)&&Math.abs(angleDiff(Math.atan2(torch.y-player.y,torch.x-player.x),player.angle))<1.3)strikeTorch(torch);
 }
 function nearby(){const candidates=[...props.filter(p=>p.type==='chest'&&!p.open),...loot.filter(l=>l.type==='weapon'||l.type==='armor'),{...world.end,type:'stairs'}].filter(o=>distance(o,player)<70&&clearLine(player,o));return candidates.sort((a,b)=>distance(a,player)-distance(b,player))[0]}
-function equipLoot(o){const slot=o.type==='armor'?armorSlot(o.armor):'weapon',old=player[slot];player[slot]=o[o.type];loot.splice(loot.indexOf(o),1);if(old)loot.push({x:o.x,y:o.y,type:o.type,[o.type]:old});floatText(o.x,o.y-18,'+ '+player[slot].name,'loot');log('Equipped '+player[slot].name+'.');if(o.type==='armor')window.DungeonAudio.play('armor');updateHUD()}
+function equipLoot(o){
+ const slot=o.type==='armor'?armorSlot(o.armor):'weapon',next=o[o.type],old=player[slot];
+ if(o.type==='armor'&&isWand(player.weapon)&&next.kind!=='robe'){log('Wands can only be used while wearing a robe.');return false}
+ if(o.type==='weapon'&&isWand(next)){
+  for(const armorSlotName of armorSlots)if(player[armorSlotName]&&player[armorSlotName].kind!=='robe'){
+   loot.push({x:player.x,y:player.y,type:'armor',armor:player[armorSlotName]});player[armorSlotName]=null;
+  }
+ }else if(o.type==='weapon'&&isWand(old)){
+  for(const [kind,count] of Object.entries(player.scrolls||{}))for(let i=0;i<count;i++)loot.push({x:player.x+12,y:player.y+12,type:'scroll',scroll:kind});
+  for(const kind of Object.keys(player.scrolls||{}))player.scrolls[kind]=0;
+ }
+ player[slot]=next;loot.splice(loot.indexOf(o),1);if(old)loot.push({x:o.x,y:o.y,type:o.type,[o.type]:old});floatText(o.x,o.y-18,'+ '+next.name,'loot');log('Equipped '+next.name+'.');if(o.type==='armor')window.DungeonAudio.play('armor');updateHUD();return true
+}
 function interact(){if(state!=='playing')return;const o=nearby();if(!o)return;if(o.type==='chest'){o.open=true;drops(o,true);floatText(o.x,o.y-18,'CHEST OPENED','treasure');log('Treasure chest opened.')}if(o.type==='weapon'||o.type==='armor')equipLoot(o);if(o.type==='stairs'){if(depth<5)loadFloor(depth+1,crypto.getRandomValues(new Uint32Array(1))[0]);else log('Defeat the Cinder King to claim the crown.');}}
 function potion(){if(state!=='playing')return;if(player.potions>0&&player.hp<player.max){const restored=Math.min(65,player.max-player.hp);player.potions--;player.hp+=restored;floatText(player.x,player.y-15,'+'+Math.ceil(restored)+' HP','heal');particle(player.x,player.y,'#81dab5',20);log('Healing draught restores 65 vitality.')}else log(player.potions?'Already at full vitality.':'No potions left.')}
 function dodge(){if(state!=='playing'||player.stamina<35||player.dash>0)return;window.DungeonAudio.play('dodge');player.stamina-=35;player.dash=.18;player.inv=.3;let x=(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0),y=(keys.has('s')||keys.has('arrowdown')?1:0)-(keys.has('w')||keys.has('arrowup')?1:0);const a=x||y?Math.atan2(y,x):player.angle;player.dashX=Math.cos(a);player.dashY=Math.sin(a)}
@@ -386,7 +403,7 @@ function update(dt){
    else{
     const dodging=target===player&&player.inv>0;
     if(target!==player){s.life=0;continue}
-    if(s.damage>0)damagePlayer(s.damage);
+    if(s.damage>0)damagePlayer(s.damage,s.y<player.y-8?'head':'physical');
     if(!dodging&&s.type==='web'&&target===player&&!inMerchantSanctuary()){player.root=1;floatText(player.x,player.y-15,'WEBBED - STUCK 1s','damage')}
     if(!dodging&&(s.type==='venom'||s.type==='fire')){
      const status=s.type==='venom'?'poison':'burn';target[status]=Math.max(target[status]||0,s.type==='venom'?2.4:2);target[status+'Tick']=.4;
@@ -399,8 +416,8 @@ function update(dt){
  for(const status of ['poison','burn'])if(player[status]>0){player[status]=Math.max(0,player[status]-dt);player[status+'Tick']-=dt;if(player[status]>0&&player[status+'Tick']<=0){player[status+'Tick']=status==='poison'?.75:.65;damagePlayer(status==='poison'?3:4,status);particle(player.x,player.y,status==='poison'?'#9be05c':'#ff793c',4)}}
  shots=shots.filter(s=>s.life>0);enemies=enemies.filter(e=>e.hp>0);
  for(const l of loot){
-  if(['weapon','armor','potion'].includes(l.type)){l.age=(l.age||0)+dt;if(l.age>=(l.type==='potion'?20:60)){l.taken=true;continue}}
-  if(['gold','scroll','potion','ammo'].includes(l.type)&&!l.taken){
+  if(['weapon','armor','potion'].includes(l.type)){l.age=(l.age||0)+dt;if(l.age>=(l.type==='potion'?15:55)){l.taken=true;continue}}
+  if((['gold','potion','ammo'].includes(l.type)||l.type==='scroll'&&isWand(player.weapon))&&!l.taken){
    const gap=distance(l,player);
    if(gap<=3.75*T&&gap>0){const step=Math.min(gap,360*dt);l.x+=(player.x-l.x)/gap*step;l.y+=(player.y-l.y)/gap*step}
   }
@@ -441,7 +458,7 @@ function drawArmor(a){
 }
 function drawActor(e,hero=false){
  ctx.save();ctx.translate(e.x,e.y);if(e.baby)ctx.scale(.55,.55);else if(e.giant)ctx.scale(2,2);ctx.shadowColor='#000';ctx.shadowBlur=7;circle(hero?0:2,7,e.type==='dragon'?29:14,'#0008');ctx.shadowBlur=0;
- if(hero){ctx.save();ctx.scale(heroFacing(player.angle),1);polygon([[-11,-8],[-16,11],[-10,16],[9,16],[15,9],[10,-8],[6,-10],[-6,-10]],'#943f3b');ctx.fillStyle='#65818b';ctx.fillRect(-9,-7,18,19);if(player.armor)drawArmor(player.armor);circle(0,-15,7,'#c8ccba');ctx.fillStyle='#3c515e';ctx.fillRect(2,-21,4,12);ctx.fillStyle='#e2ba70';ctx.fillRect(-4,-20,11,3);ctx.fillStyle='#6c8d96';ctx.fillRect(-7,12,18,8);ctx.strokeStyle='#ecc979';ctx.strokeRect(-7,12,18,8);for(const slot of ['boots','gloves','helmet'])if(player[slot]){ctx.save();ctx.translate(0,slot==='helmet'?-15:slot==='boots'?22:1);drawArmor(player[slot]);ctx.restore()}ctx.restore();ctx.save();ctx.translate(0,-4);ctx.rotate(player.angle+(player.swing>0?-.6+player.swing*4:0));ctx.translate(8,0);drawWeapon(player.weapon);ctx.restore()}
+ if(hero){ctx.save();ctx.scale(heroFacing(player.angle),1);polygon([[-11,-8],[-16,11],[-10,16],[9,16],[15,9],[10,-8],[6,-10],[-6,-10]],'#943f3b');ctx.fillStyle='#65818b';ctx.fillRect(-9,-7,18,19);if(player.armor)drawArmor(player.armor);circle(0,-15,7,'#c8ccba');ctx.fillStyle='#3c515e';ctx.fillRect(2,-21,4,12);ctx.fillStyle='#e2ba70';ctx.fillRect(-4,-20,11,3);if(player.armor?.hooded){ctx.strokeStyle=player.armor.color;ctx.lineWidth=5;ctx.beginPath();ctx.arc(0,-15,8,Math.PI,TAU);ctx.stroke()}ctx.fillStyle='#6c8d96';ctx.fillRect(-7,12,18,8);ctx.strokeStyle='#ecc979';ctx.strokeRect(-7,12,18,8);for(const slot of ['boots','gloves','helmet'])if(player[slot]){ctx.save();ctx.translate(0,slot==='helmet'?-15:slot==='boots'?22:1);drawArmor(player[slot]);ctx.restore()}ctx.restore();ctx.save();ctx.translate(0,-4);ctx.rotate(player.angle+(player.swing>0?-.6+player.swing*4:0));ctx.translate(8,0);drawWeapon(player.weapon);ctx.restore()}
  else if(e.type==='slime'){ctx.scale(1,1+Math.sin(clock*4)*.07);circle(0,1,15,'#294e39');circle(0,-2,13,e.hit?'#fff4c6':'#69a77c');circle(-5,-5,3,'#b3dab1');circle(4,-4,2,'#12281e');circle(-5,-4,2,'#12281e')}
  else if(e.type==='dragon'){ctx.rotate(e.attackAngle);polygon([[-10,0],[-39,-45],[10,-35],[32,-53],[27,-9]],'#69342e');polygon([[-10,0],[-39,45],[10,35],[32,53],[27,9]],'#69342e');ctx.strokeStyle='#b46c4b';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-10,0);ctx.lineTo(32,-53);ctx.moveTo(-10,0);ctx.lineTo(32,53);ctx.stroke();polygon([[-15,-10],[-65,0],[-20,9],[5,22],[26,12],[44,6],[44,-7],[26,-12],[5,-22]],e.hit?'#ffc078':'#a1523a');for(let i=0;i<4;i++)polygon([[-20+i*13,-9],[-13+i*13,-24],[-7+i*13,-9]],'#d0a16a');circle(30,-8,3,'#ffd67b');circle(30,8,3,'#ffd67b')}
  else if(e.type==='goblin'){polygon([[-11,-8],[-17,-15],[-4,-13],[0,-21],[6,-12],[15,-14],[10,-5],[13,13],[-12,13]],e.hit?'#dcdf92':'#8c9850');circle(0,-6,9,'#a5ad5c');circle(-4,-7,2,'#1c2419');circle(4,-7,2,'#1c2419');ctx.strokeStyle='#c9d2b2';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(10,1);ctx.lineTo(19,12);ctx.stroke()}
@@ -517,7 +534,7 @@ function render(){
  }
  for(const s of shots){glow(s.x,s.y,s.type==='fire'?25:18,s.color+'77');if(s.type==='web'){ctx.strokeStyle=s.color;ctx.lineWidth=1;for(let i=0;i<4;i++){const a=i*Math.PI/4;ctx.beginPath();ctx.moveTo(s.x-Math.cos(a)*9,s.y-Math.sin(a)*9);ctx.lineTo(s.x+Math.cos(a)*9,s.y+Math.sin(a)*9);ctx.stroke()}ctx.beginPath();ctx.arc(s.x,s.y,6,0,TAU);ctx.stroke()}else if(s.type==='venom'){ctx.strokeStyle='#c8e88a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(s.x-6,s.y);ctx.lineTo(s.x+6,s.y);ctx.stroke();circle(s.x,s.y,4,s.color)}else if(s.type==='fire'){circle(s.x,s.y,6,'#ffd178');circle(s.x-3,s.y+2,4,s.color)}else circle(s.x,s.y,5,s.color)}
  ctx.globalAlpha=player.inv>0&&Math.floor(clock*18)%2===0?.6:1;drawActor(player,true);ctx.globalAlpha=1;
- if(player.swing>0&&!rangedKinds.includes(weaponKind(player.weapon))){ctx.strokeStyle='#f7ddb3';ctx.lineWidth=5;ctx.beginPath();ctx.arc(player.x,player.y,player.weapon.range-10,player.angle-1.1,player.angle+1.1);ctx.stroke();glow(player.x,player.y,90,'#f4cc6420')}
+ if(player.swing>0&&!isWand(player.weapon)&&!rangedKinds.includes(weaponKind(player.weapon))){ctx.strokeStyle='#f7ddb3';ctx.lineWidth=5;ctx.beginPath();ctx.arc(player.x,player.y,player.weapon.range-10,player.angle-1.1,player.angle+1.1);ctx.stroke();glow(player.x,player.y,90,'#f4cc6420')}
  for(const p of effects){ctx.globalAlpha=Math.min(1,p.life*3);if(p.coin){circle(p.x,p.y,5,'#a87528');circle(p.x-1,p.y-1,4,p.color);circle(p.x-2,p.y-2,1.3,'#fff0ad')}else circle(p.x,p.y,2,p.color)}ctx.globalAlpha=1;
  ctx.restore();const g=ctx.createRadialGradient(vw/2,vh/2,80,vw/2,vh/2,Math.max(vw,vh)*.62);g.addColorStop(0,'transparent');g.addColorStop(1,'#02070cb0');ctx.fillStyle=g;ctx.fillRect(0,0,vw,vh);
  mini.fillStyle='#081014';mini.fillRect(0,0,225,174);const sx=225/W,sy=174/H;for(let i=0;i<W*H;i++)if(world.seen[i]&&world.tiles[i]){mini.fillStyle=world.theme.accent;mini.fillRect(i%W*sx,Math.floor(i/W)*sy,sx+.2,sy+.2)}mini.fillStyle=world.theme.accent;mini.fillRect(world.end.x/T*sx-2,world.end.y/T*sy-2,4,4);mini.fillStyle='#ffd38a';mini.beginPath();mini.arc(player.x/T*sx,player.y/T*sy,3,0,TAU);mini.fill();
@@ -525,7 +542,7 @@ function render(){
 function resize(){const r=canvas.getBoundingClientRect();vw=Math.round(r.width);vh=Math.round(r.height);canvas.width=vw;canvas.height=vh}new ResizeObserver(resize).observe(canvas);
 function showOverlay(title,story,label){$('title').textContent=title;$('story').textContent=story;$('start').textContent=label;$('overlay').hidden=false}
 function togglePause(){if(state==='playing'){state='paused';keys.clear();mouse.down=false;showOverlay('A moment by the fire.','Your journey waits here. Resume when you are ready.','Resume journey')}else if(state==='paused'){state='playing';$('overlay').hidden=true;canvas.focus()}}
-window.addEventListener('keydown',e=>{if($('artDialog').open)return;const k=e.key.toLowerCase();if(e.target?.closest?.('#selectionPanel')&&[' ','enter'].includes(k))return;if([' ','arrowup','arrowdown','arrowleft','arrowright','shift'].includes(k))e.preventDefault();keys.add(k);if(e.repeat)return;if(k==='p'||k==='escape')togglePause();if(k==='e')interact();if(k==='x')deleteSelectedGear();if(k==='q')potion();if(k==='shift')dodge();if(k===' ')attack()});
+window.addEventListener('keydown',e=>{if($('artDialog').open||e.target?.matches?.('input,textarea,select'))return;const k=e.key.toLowerCase();if(e.target?.closest?.('#selectionPanel')&&[' ','enter'].includes(k))return;if([' ','arrowup','arrowdown','arrowleft','arrowright','shift'].includes(k))e.preventDefault();keys.add(k);if(e.repeat)return;if(k==='p'||k==='escape')togglePause();if(k==='e')interact();if(k==='x')deleteSelectedGear();if(k===keyBindings.potion)potion();if(k==='shift')dodge();if(k===' ')attack()});
 window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{keys.clear();mouse.down=false;if(state==='playing')togglePause()});document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='playing')togglePause()});
 canvas.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;const r=canvas.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;mouse.active=true});canvas.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse')return;if(e.button===0){selectWorldPointer(e);mouse.down=true;const r=canvas.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;mouse.active=true;player&&(player.angle=Math.atan2(mouse.y+camera.y-player.y,mouse.x+camera.x-player.x));canvas.focus();attack()}});window.addEventListener('pointerup',()=>mouse.down=false);canvas.addEventListener('pointerleave',()=>{mouse.active=false;mouse.down=false});
 $('start').onclick=()=>state==='victory'?continueAfterVictory():state==='paused'?togglePause():begin();$('pause').onclick=togglePause;$('restart').onclick=()=>{if(state==='title'||state==='dead'||state==='won')begin();else{state='confirm';keys.clear();mouse.down=false;showOverlay('Begin a new journey?','This replaces your current run. Press Escape to keep your adventure, or begin again below.','Start a new run')}};
@@ -715,7 +732,7 @@ function updateHeroShots(dt){
      for(let n=0;n<12;n++){const mid=(floor+wall)/2;if(floorAt(x+dx*mid,y+dy*mid))floor=mid;else wall=mid}
      s.x=x+dx*floor;s.y=y+dy*floor;
     }
-    impactAmmo(s,null);particle(s.x,s.y,'#bba780',4);break;
+    if(s.wandEffect)impactWand(s,null);else impactAmmo(s,null);particle(s.x,s.y,'#bba780',4);break;
    }
    if(collision){
     s.hits.add(collision.object);
@@ -723,12 +740,13 @@ function updateHeroShots(dt){
     else if(collision.prop)breakProp(collision.object,s.damage);
     else if(collision.boulder)damageBoulder(collision.object,s.damage);
     else hurtEnemy(collision.object,s.damage);
-    impactAmmo(s,collision.torch||collision.boulder?null:collision.object);
+    if(s.wandEffect)impactWand(s,collision.object);else impactAmmo(s,collision.torch||collision.boulder?null:collision.object);
     // A boomerang turns away from its first impact; it never pierces an intact target.
     if(s.kind==='boomerang'&&!s.returning){s.returning=true;s.departing=collision.object;s.departureRadius=collision.radius;break}
     s.life=0;break;
    }
-   if(s.kind!=='boomerang'&&s.travel>=s.range){impactAmmo(s,null);s.life=0}
+   if(s.wandEffect&&rng()<.35)particle(s.x,s.y,s.color,1);
+   if(s.kind!=='boomerang'&&s.travel>=s.range){if(s.wandEffect)impactWand(s,null);else impactAmmo(s,null);s.life=0}
   }
  }
  heroShots=heroShots.filter(s=>s.life>0);
@@ -808,10 +826,12 @@ function withinTorchLight(point,torch){
  }
  return inside;
 }
-function lightSources(){return [...world.torches,...(world.scrollLights||[]),...heroShots.filter(s=>s.lit&&s.life>0)]}
+const wandLight={x:0,y:0,lit:true,magicRadius:100};
+function lightSources(){wandLight.x=player.x;wandLight.y=player.y;return [...world.torches,...(world.scrollLights||[]),...heroShots.filter(s=>s.lit&&s.life>0),...(isWand(player.weapon)?[wandLight]:[])]}
 function torchIllumination(p){
  let darkness=1;
  for(const torch of lightSources())if(torch.lit){
+  if(torch.coneAngle!==undefined&&Math.abs(Math.atan2(Math.sin(Math.atan2(p.y-torch.y,p.x-torch.x)-torch.coneAngle),Math.cos(Math.atan2(p.y-torch.y,p.x-torch.x)-torch.coneAngle)))>torch.coneWidth/2)continue;
   const strength=radialLight(distance(p,torch)/torchRadius(torch));
   if(strength>0&&withinTorchLight(p,torch))darkness*=1-strength;
  }
@@ -841,7 +861,9 @@ function drawDarkness(){
   const points=torchVisibility(torch);
   mask.save();mask.beginPath();mask.moveTo(points[0].x-camera.x,points[0].y-camera.y);
   for(let i=1;i<points.length;i++)mask.lineTo(points[i].x-camera.x,points[i].y-camera.y);
-  mask.closePath();mask.clip();illuminate(torch.x,torch.y,torchRadius(torch),lightStops);mask.restore();
+  mask.closePath();mask.clip();
+  if(torch.coneAngle!==undefined){mask.beginPath();mask.moveTo(torch.x-camera.x,torch.y-camera.y);mask.arc(torch.x-camera.x,torch.y-camera.y,torchRadius(torch),torch.coneAngle-torch.coneWidth/2,torch.coneAngle+torch.coneWidth/2);mask.closePath();mask.clip()}
+  illuminate(torch.x,torch.y,torchRadius(torch),lightStops);mask.restore();
  }
  illuminate(player.x,player.y,85,[[0,.5],[1,0]]);
  mask.globalCompositeOperation='source-over';
@@ -867,7 +889,8 @@ function interactionPrompt(o){
 function drawHazardsAndLighting(){
  for(const s of heroShots){
   ctx.save();ctx.translate(s.x,s.y);ctx.rotate(s.kind==='boomerang'?s.age*16:Math.atan2(s.vy,s.vx));
-  if(['boomerang','knife','throwing_axe'].includes(s.kind)){if(s.kind==='throwing_axe')ctx.rotate(s.age*18);ctx.scale(.7,.7);drawWeapon({kind:s.kind,color:s.color})}
+  if(s.wandEffect){glow(0,0,22,s.color+'66');circle(0,0,6,s.color)}
+  else if(['boomerang','knife','throwing_axe'].includes(s.kind)){if(s.kind==='throwing_axe')ctx.rotate(s.age*18);ctx.scale(.7,.7);drawWeapon({kind:s.kind,color:s.color})}
   else{ctx.strokeStyle=s.kind==='bow'?'#e7d4a0':'#b49162';ctx.lineWidth=s.kind==='bow'?2:3;ctx.beginPath();ctx.moveTo(-20,0);ctx.lineTo(9,0);ctx.stroke();polygon([[7,-4],[17,0],[7,4]],s.color);if(s.kind==='bow'){ctx.strokeStyle='#e2b275';ctx.beginPath();ctx.moveTo(-20,-4);ctx.lineTo(-14,0);ctx.lineTo(-20,4);ctx.stroke()}}
   ctx.restore();
  }
@@ -1048,7 +1071,7 @@ loadFloor=function(floor,s){
  if(!player.ammo){player.ammo={bow:{fire:0,poison:0,explosive:0,light:0},crossbow:{fire:0,poison:0,explosive:0,light:0}};player.ammoChoice={bow:'regular',crossbow:'regular'}}
  player.root=0;world.pits=[];
  for(const room of world.rooms)room.collapse=depth<MAX_FLOOR&&room.kind!=='entrance'&&room.kind!=='throne'&&rng()<.04?{timer:7,warning:null,count:0}:null;
- if(!player.scrolls){player.scrolls={fireball:1,light:1,poison:1,lightning:1};player.selectedScroll='fireball';player.scrollCooldown=0}
+ if(!player.scrolls){player.scrolls={fireball:0,light:0,poison:0,lightning:0};player.selectedScroll='fireball';player.scrollCooldown=0}
  world.scrollLights=[];world.scrollZones=[];world.scrollFlashes=[];world.webStrikes=[];
  selectedWorldItem=null;selectionChoices=[];refreshSelectionPanel();
  idleThreat.elapsed=0;idleThreat.triggered=false;idleThreat.markers=[];
@@ -1147,7 +1170,7 @@ function cycleAmmo(){
  player.ammoChoice[kind]=choices[(choices.indexOf(player.ammoChoice[kind])+1)%choices.length];refreshScrollHUD();
 }
 $('cycleAmmo').onclick=()=>{cycleAmmo();canvas.focus()};
-window.addEventListener('keydown',event=>{if(event.key.toLowerCase()==='c'&&!event.repeat&&!$('artDialog').open&&!event.target?.matches?.('input,textarea,select')){event.preventDefault();cycleAmmo()}});
+window.addEventListener('keydown',event=>{if(event.key.toLowerCase()===keyBindings.ammo&&!event.repeat&&!$('artDialog').open&&!event.target?.matches?.('input,textarea,select')){event.preventDefault();cycleAmmo()}});
 function cycleScroll(){
  if(state!=='playing')return;
  const choices=Object.keys(scrollTypes).filter(kind=>player.scrolls[kind]>0);
@@ -1240,7 +1263,7 @@ function refreshScrollHUD(){
  const spell=scrollTypes[player.selectedScroll];
  $('scrollSummary').textContent='Scrolls / Ammo: '+spell.name+' ('+player.scrolls[player.selectedScroll]+')';
  $('castScroll').textContent='Cast '+spell.name+' [R]';
- $('castScroll').disabled=state!=='playing'||player.scrolls[player.selectedScroll]<=0||player.scrollCooldown>0;
+ $('castScroll').disabled=state!=='playing'||!isWand(player.weapon)||player.scrolls[player.selectedScroll]<=0||player.scrollCooldown>0;
  $('scrollStatus').textContent=spell.description;
  const ammoKind=weaponKind(player.weapon)==='crossbow'?'crossbow':'bow',choice=player.ammoChoice?.[ammoKind]||'regular';
  $('cycleAmmo').textContent=(ammoKind==='bow'?'Arrows: ':'Bolts: ')+choice+(choice==='regular'?'': ' ('+player.ammo[ammoKind][choice]+')')+' [C]';
@@ -1258,18 +1281,19 @@ function scrollAimPoint(){
 }
 function castScroll(){
  if(state!=='playing'||!player.scrolls||player.scrollCooldown>0)return false;
+ if(!isWand(player.weapon)){log('Equip a wand to use scrolls.');return false}
  const kind=player.selectedScroll,spell=scrollTypes[kind];
  if(!spell||player.scrolls[kind]<=0){log('No '+(spell?.name||'selected')+' scrolls left. Find scrolls in chests and monster loot.');return false}
  const point=kind==='light'?{x:player.x,y:player.y}:scrollAimPoint();
  if(kind!=='light'&&distance(point,player)<8){log('No room to cast: aim away from the wall.');return false}
  player.scrolls[kind]--;player.scrollCooldown=.45;
  if(kind==='light')world.scrollLights.push({...point,lit:true,magicRadius:220,life:25});
- else if(kind==='poison')world.scrollZones.push({...point,life:6,tick:0,radius:76,magicRadius:76});
+ else if(kind==='poison')world.scrollZones.push({...point,life:6,tick:0,radius:76,magicRadius:76,damage:7+wandPower()});
  else{
   const radius=kind==='fireball'?82:36;
   for(const enemy of [...enemies])if(enemy.hp>0&&distance(point,enemy)<radius+enemy.radius&&clearLine(point,enemy)){
    if(kind==='fireball'){enemy.burn=3;enemy.burnTick=.4}
-   hurtEnemy(enemy,kind==='fireball'?55:100);
+   hurtEnemy(enemy,(kind==='fireball'?55:100)+wandPower());
   }
   for(const prop of props)if(canStrikeProp(prop)&&distance(point,prop)<radius+15&&clearLine(point,prop))breakProp(prop,80);
  }
@@ -1280,7 +1304,7 @@ function castScroll(){
 }
 function updateScrolls(dt){
  player.scrollCooldown=Math.max(0,player.scrollCooldown-dt);
- for(const item of loot)if(item.type==='scroll'&&!item.taken&&distance(item,player)<32){
+ for(const item of loot)if(isWand(player.weapon)&&item.type==='scroll'&&!item.taken&&distance(item,player)<32){
   player.scrolls[item.scroll]++;item.taken=true;
   floatText(item.x,item.y-12,'+1 '+scrollTypes[item.scroll].name.toUpperCase()+' SCROLL','treasure');
   window.DungeonAudio.play('magic');log('Found a '+scrollTypes[item.scroll].name+' scroll.');
@@ -1297,7 +1321,7 @@ function updateScrolls(dt){
   if(zone.life>0&&zone.tick<=0){
    zone.tick+=.5;
    for(const enemy of enemies)if(enemy.hp>0&&distance(zone,enemy)<zone.radius+enemy.radius&&clearLine(zone,enemy)){
-    enemy.poison=3;enemy.poisonTick=.4;hurtEnemy(enemy,7);
+    enemy.poison=3;enemy.poisonTick=.4;hurtEnemy(enemy,zone.damage??7);
    }
   }
  }
@@ -1308,23 +1332,46 @@ function updateScrolls(dt){
  world.webStrikes=world.webStrikes.filter(strike=>strike.life>0);
  refreshScrollHUD();
 }
-function lootVisible(item){const blinkAt=item.type==='potion'?10:30;return !['weapon','armor','potion'].includes(item.type)||(item.age||0)<blinkAt||Math.floor(((item.age||0)-blinkAt)*5)%2===0}
-const gearPreferences={enabled:false,prefer:'melee'};
-document.querySelector('aside').insertAdjacentHTML('afterbegin','<section class="panel" aria-label="Automatic equipment"><div class="label">Automatic equipment</div><label><input id="autoEquip" type="checkbox"> Auto-pickup and equip better gear</label><p><label for="preferWeapon">Prefer</label> <select id="preferWeapon"><option value="melee">Melee</option><option value="ranged">Ranged</option></select></p><p style="font-size:12px">Within 3.75 tiles and clear sight. Weapons: higher power, then faster recovery, then reach. Armor: higher reduction per slot. Never downgrades to switch styles. Settings are saved with your run.</p></section>');
-$('autoEquip').onchange=()=>{gearPreferences.enabled=$('autoEquip').checked};
-$('preferWeapon').onchange=()=>{gearPreferences.prefer=$('preferWeapon').value};
+function lootVisible(item){const blinkAt=item.type==='potion'?5:25;return !['weapon','armor','potion'].includes(item.type)||(item.age||0)<blinkAt||Math.floor(((item.age||0)-blinkAt)*5)%2===0}
+const gearPreferences={enabled:true,prefer:'ranged'};
+document.querySelector('aside').insertAdjacentHTML('afterbegin','<section class="panel" aria-label="Automatic equipment"><div class="label">Automatic equipment</div><label><input id="autoEquip" type="checkbox" checked> Auto-pickup and equip better gear</label><p><label for="preferWeapon">Prefer</label> <select id="preferWeapon"><option value="melee">Melee</option><option value="ranged" selected>Ranged</option><option value="magic">Magic</option></select></p><p style="font-size:12px">Upgrades fly from 3.75 tiles away. Preferred weapons never replace a stronger weapon. Settings are saved with your run.</p></section>');
+document.querySelector('aside').insertAdjacentHTML('afterbegin','<section class="panel" aria-label="Game settings"><div class="label">Game settings</div><label>Difficulty <select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></label><p>Difficulty affects newly spawned enemies.</p><div id="bindingSettings"></div><p id="bindingError" role="status"></p></section>');
+const bindingInputs={};
+function refreshKeyHints(){
+ $('cycleScroll').textContent='Next available scroll ['+keyBindings.scroll.toUpperCase()+']';
+ $('healHint').textContent=keyBindings.potion.toUpperCase()+' HEAL';
+ const potionLabel=$('potions').previousElementSibling;if(potionLabel)potionLabel.textContent='Healing potions ['+keyBindings.potion.toUpperCase()+']';
+ canvas.setAttribute('aria-label','Overhead action RPG. Move with WASD or arrows; attack with Space or mouse; E interacts; Shift dodges; '+keyBindings.potion.toUpperCase()+' heals.');
+}
+for(const [action,label] of [['scroll','Cycle scroll'],['ammo','Cycle ammo'],['potion','Health potion']]){
+ const row=document.createElement('label');row.textContent=label+' ';
+ const input=document.createElement('input');input.type='text';input.maxLength=1;input.value=keyBindings[action];input.setAttribute('aria-label',label+' key');input.style.width='3em';
+ input.addEventListener('change',()=>{
+  const key=input.value.toLowerCase(),reserved='wasdeprx';
+  if(!/^[a-z0-9]$/.test(key)||reserved.includes(key)||Object.entries(keyBindings).some(([other,value])=>other!==action&&value===key)){
+   $('bindingError').textContent='Choose a unique letter or number not used by movement or other controls.';input.value=keyBindings[action];return;
+  }
+  keyBindings[action]=key;input.value=key;$('bindingError').textContent='';refreshKeyHints();if(player){refreshScrollHUD();saveRun()}
+ });bindingInputs[action]=input;row.append(input);$('bindingSettings').append(row,document.createElement('br'));
+}
+$('difficulty').onchange=()=>{difficulty=$('difficulty').value;if(player)saveRun()};
+$('autoEquip').onchange=()=>{gearPreferences.enabled=$('autoEquip').checked;if(player)saveRun()};
+$('preferWeapon').onchange=()=>{gearPreferences.prefer=$('preferWeapon').value;if(player)saveRun()};
 function betterAutoGear(item){
- if(item.type==='armor')return item.armor.reduction>(player[armorSlot(item.armor)]?.reduction||0);
+ if(item.type==='armor')return (!isWand(player.weapon)||item.armor.kind==='robe')&&item.armor.reduction>(player[armorSlot(item.armor)]?.reduction||0);
  if(item.type!=='weapon')return false;
  const next=item.weapon,current=player.weapon;
- if((rangedKinds.includes(weaponKind(next))?'ranged':'melee')!==gearPreferences.prefer)return false;
+ if((isWand(next)?'magic':rangedKinds.includes(weaponKind(next))?'ranged':'melee')!==gearPreferences.prefer)return false;
  if(next.damage!==current.damage)return next.damage>current.damage;
  if((next.cooldown||.36)!==(current.cooldown||.36))return (next.cooldown||.36)<(current.cooldown||.36);
  return next.range>current.range;
 }
-function updateAutoGear(){
+function updateAutoGear(dt=0){
  if(!gearPreferences.enabled||state!=='playing')return;
- for(const item of [...loot])if(!item.taken&&(item.type==='weapon'||item.type==='armor')&&distance(item,player)<=3.75*T&&clearLine(player,item)&&betterAutoGear(item))equipLoot(item);
+ for(const item of [...loot])if(!item.taken&&(item.type==='weapon'||item.type==='armor')&&distance(item,player)<=3.75*T&&clearLine(player,item)&&betterAutoGear(item)){
+  const gap=distance(item,player),step=Math.min(gap,360*dt);if(gap){item.x+=(player.x-item.x)/gap*step;item.y+=(player.y-item.y)/gap*step}
+  if(distance(item,player)<32)equipLoot(item);
+ }
  refreshSelectionPanel();
 }
 function drawScrollMagic(){
@@ -1382,7 +1429,7 @@ cycleScrollButton.id='cycleScroll';cycleScrollButton.textContent='Next available
 $('castScroll').before(cycleScrollButton);
 cycleScrollButton.onclick=()=>{cycleScroll();canvas.focus()};
 window.addEventListener('keydown',event=>{
- if(event.key.toLowerCase()!=='t'||event.repeat||$('artDialog').open||event.target?.matches?.('input,textarea,select'))return;
+ if(event.key.toLowerCase()!==keyBindings.scroll||event.repeat||$('artDialog').open||event.target?.matches?.('input,textarea,select'))return;
  event.preventDefault();cycleScroll();
 });
 $('castScroll').onclick=()=>{castScroll();canvas.focus()};
@@ -1399,7 +1446,7 @@ window.addEventListener('keydown',event=>{
  if(event.target?.matches?.('input,textarea,select'))return;
  event.preventDefault();castScroll();
 });
-document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Single-use scrolls: T / Next available scroll cycles stocked spells; C / Ammo cycles seven special-ammo types shared by all ranged weapons (regular ammo is unlimited). Cycling never consumes items. Right-click the game to aim and cast, or press R / tap Cast using your current facing. Start with one of each; collect more from chests and monsters. Light lasts 25 seconds; poison clouds last 6 seconds. Scrolls persist between floors; paused or blocked casts do not consume them.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Magic: equip a wand to collect and cast scrolls; changing to a non-wand drops them. Find five wand spells, floor-scaled bonuses, robes, and boss-only hooded robes. T cycles scrolls, C cycles ammo, and Q heals by default; change these keys and difficulty in Game settings. Right-click, R, or Cast uses a scroll. No scrolls are carried at the start.');
 function worldTargets(){
  if(!world)return [];
  world.end.type='stairs';
@@ -1410,8 +1457,8 @@ function worldTargets(){
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Mouse clicks select nearby objects AND attack/fire; hold to keep attacking across loot. Highlighting never blocks combat. Touch taps select and aim; hold Attack to strike/fire. Only E / Use activates selected items.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Rubble and furnishings are attack-only obstacles, not selectable items. Click to strike them; on touch, tap to aim then use Attack. E / Use does not break them.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Inspect torchlit floor glints: a rare 8% chance reveals a hidden-hoard weapon with +5 power over its normal floor-level roll instead of a trap. Select and equip it with E / Use. Stepping on an uninspected glint still triggers its trap.');
-document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Silken nests: entering starts a 4-second egg countdown. Attack the sacs before three very fast spiderlings hatch from each! Adult spider webs strike nearly instantly in their attack zone and root you for 1 second; a hit sends the spider rushing in for an immediate melee attack. Weapon strikes and projectiles toggle torches, including relighting them.<br>Find five-shot Light, Fire, Explosion, Poison, Lightning, Web, and Charm ammo packs for every ranged weapon. Special ammo returns to unlimited regular shots when empty. Rare unstable rooms mark a tile for 2 seconds before it becomes a pit down exactly one floor (never on boss floors 8 or 16).<br>Gold, scrolls, potions and ammo packs vacuum within 3.75 tiles. Loose weapons and armor blink after 30 seconds and vanish at 60; potions blink after 10 seconds and vanish at 20. Hit broken barrels/boxes or opened chests again to clear them, without extra loot. Hidden traps ignore monsters; disarmed traps trigger when monsters cross them.');
-document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Equipment stays manual by default. Gear / Map offers Auto-pickup better gear and Prefer Melee / Ranged; only upgrades in your preferred style equip automatically.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Silken nests: entering starts a 4-second egg countdown. Attack the sacs before three very fast spiderlings hatch from each! Adult spider webs strike nearly instantly in their attack zone and root you for 1 second; a hit sends the spider rushing in for an immediate melee attack. Weapon strikes and projectiles toggle torches, including relighting them.<br>Find five-shot Light, Fire, Explosion, Poison, Lightning, Web, and Charm ammo packs for every ranged weapon. Special ammo returns to unlimited regular shots when empty. Rare unstable rooms mark a tile for 2 seconds before it becomes a pit down exactly one floor (never on boss floors 8 or 16).<br>Gold, potions, and ammo vacuum within 3.75 tiles; scrolls require a wand. Better gear flies toward you when automatic equipment is enabled. Weapons and armor blink after 25 seconds and vanish at 55; potions blink after 5 seconds and vanish at 15. Gold never expires. Hit broken barrels/boxes or opened chests again to clear them, without extra loot. Hidden traps ignore monsters; disarmed traps trigger when monsters cross them.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Automatic equipment is on by default, preferring ranged weapons. Gear / Map lets you choose Melee, Ranged, or Magic, or switch it off.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Light arrows and bolts light the way in flight and illuminate their landing spot for 5 seconds.');
 function isWorldTarget(target){return worldTargets().includes(target)}
 function targetReachable(target){return distance(target,player)<72&&clearLine(player,target)}
@@ -1548,7 +1595,7 @@ update=function(dt){
  baseUpdate(dt);
  if(state!=='playing')return;
  updateScrolls(dt);
- updateAutoGear();
+ updateAutoGear(dt);
  if(updateNestsAndPits(dt,before))return;
  if(state!=='playing')return;
  const moved=Math.hypot(player.x-before.x,player.y-before.y)>.25;
@@ -1720,6 +1767,30 @@ const expansionUpdateHUD=updateHUD,expansionDrawWeapon=drawWeapon,expansionFall=
 const expansionUpdateEarthquakes=updateEarthquakes,expansionConfigureHazards=configureHazards;
 const expansionTriggerTrap=triggerTrap,expansionHurtEnemy=hurtEnemy,expansionPrompt=interactionPrompt;
 const expansionWorldTargets=worldTargets,expansionNearby=nearby;
+const ordinaryWeapon=makeWeapon;
+makeWeapon=function(){
+ if(rng()>=.2)return ordinaryWeapon();
+ const kinds=['lightning','fireball','poison','web','light'],effect=kinds[integer(0,kinds.length-1)],power=Math.max(1,currentFloor);
+ return {name:effect[0].toUpperCase()+effect.slice(1)+' Wand +'+power,kind:'wand',effect,power,damage:5+power,range:300+Math.min(power*5,200),cooldown:.55,color:ammoColors[effect]||'#ff954d'};
+};
+function impactWand(shot,target){
+ if(shot.wandDone)return;shot.wandDone=true;
+ const power=shot.power,kind=shot.wandEffect,radius=65+Math.min(power*7,140);
+ particle(shot.x,shot.y,shot.color,kind==='fireball'?24:12);
+ if(kind==='fireball'){
+  for(const enemy of [...enemies])if(enemy!==target&&enemy.hp>0&&distance(shot,enemy)<radius+enemy.radius&&clearLine(shot,enemy))hurtEnemy(enemy,8+power);
+ }else if(kind==='poison'){
+  world.scrollZones.push({x:shot.x,y:shot.y,life:5,tick:0,radius,magicRadius:radius,damage:3+power});
+ }else if(kind==='web'){
+  for(const enemy of enemies)if(enemy.hp>0&&distance(shot,enemy)<radius+enemy.radius&&clearLine(shot,enemy))enemy.rooted=Math.max(enemy.rooted||0,1.5+power*.3);
+ }else if(kind==='lightning'&&power>=5&&target&&enemies.includes(target)){
+  const struck=new Set([target]);let previous=target;
+  for(let i=0;i<Math.min(5,1+Math.floor(power/5));i++){
+   const next=enemies.filter(enemy=>enemy.hp>0&&!struck.has(enemy)&&distance(previous,enemy)<140&&clearLine(previous,enemy)).sort((a,b)=>distance(previous,a)-distance(previous,b))[0];
+   if(!next)break;hurtEnemy(next,5+power);particle(next.x,next.y,shot.color,8);struck.add(next);previous=next;
+  }
+ }
+}
 const BOSS_FORMS=[
  {type:'dragon',name:'The Ember Wyrm',minion:'emberling',attack:'dragon',color:'#ff9d44'},
  {type:'crypt_wizard',name:'The Grave Necromancer',minion:'skeleton',attack:'lightning',color:'#b8ccff'},
@@ -1766,7 +1837,7 @@ function dropBossRewards(boss){
  loot.push({x:x-22,y,type:'gold',value:1000});
  const weapon=makeWeapon();weapon.damage+=35+depth*2;weapon.range+=20;weapon.name='Bossforged '+weapon.name;
  loot.push({x:x+24,y:y+8,type:'weapon',weapon});
- const armor=makeArmor();armor.reduction=Math.min(.38,armor.reduction+.12);armor.name='Warlord\'s '+armor.name;
+ const armor=rng()<.5?makeRobe(true):makeArmor();armor.reduction=Math.min(.38,armor.reduction+.12);armor.name='Warlord\'s '+armor.name;
  loot.push({x:x-20,y:y+24,type:'armor',armor});
  const spells=Object.keys(scrollTypes);
  for(let i=0;i<3;i++)loot.push({x:x-12+i*14,y:y-30,type:'scroll',scroll:spells[integer(0,spells.length-1)]});
@@ -1774,7 +1845,7 @@ function dropBossRewards(boss){
  log('The boss drops 1,000 gold, war-forged equipment, spells and special ammunition.');
 }
 loadFloor=function(floor,seed){
- expansionLoadFloor(floor,seed);installSharedAmmo();
+ currentFloor=floor;expansionLoadFloor(floor,seed);installSharedAmmo();
  world.crossfireShots=[];world.boulder=null;world.pedestals=[];
  if(bossFloor(floor)){
   enemies=enemies.filter(enemy=>enemy.type!=='dragon');
@@ -1825,7 +1896,7 @@ cycleAmmo=function(){
 refreshScrollHUD=function(){
  expansionRefreshScrollHUD();
  const amount=player.ammoShared?.[selectedAmmo]||0;
- $('cycleAmmo').textContent='Ammo for all ranged: '+(selectedAmmo==='regular'?'Regular':ammoLabels[selectedAmmo]+' ('+amount+')')+' [C]';
+ $('cycleAmmo').textContent='Ammo for all ranged: '+(selectedAmmo==='regular'?'Regular':ammoLabels[selectedAmmo]+' ('+amount+')')+' ['+keyBindings.ammo.toUpperCase()+']';
 };
 impactAmmo=function(shot,target){
  if(!shot.special||shot.specialDone)return;
@@ -1854,6 +1925,12 @@ function fireWeapon(kind){
 attack=function(){
  if(state!=='playing'||player.cool>0)return;
  const kind=weaponKind(player.weapon);
+ if(isWand(player.weapon)){
+  const weapon=player.weapon,power=weapon.power||1;player.cool=weapon.cooldown||.55;player.swing=.2;
+  if(weapon.effect==='light'){world.scrollLights.push({x:player.x,y:player.y,lit:true,magicRadius:170+power*10,life:5+power*.25,coneAngle:player.angle,coneWidth:Math.min(1.7,.65+power*.04)});window.DungeonAudio.play('light');return}
+  const speed=520;heroShots.push({x:player.x,y:player.y,vx:Math.cos(player.angle)*speed,vy:Math.sin(player.angle)*speed,kind:'wand',wandEffect:weapon.effect,power,age:0,travel:0,range:weapon.range,damage:5+power,color:weapon.color,hits:new Set(),life:4,lit:weapon.effect==='fireball',magicRadius:85});
+  window.DungeonAudio.play('strike');return;
+ }
  if(!rangedKinds.includes(kind)){expansionAttack();return}
  if(kind==='boomerang'&&heroShots.some(shot=>shot.kind==='boomerang'))return;
  window.DungeonAudio.play('strike',kind);player.cool=player.weapon.cooldown||.36;player.swing=.2;fireWeapon(kind);
@@ -1866,6 +1943,7 @@ weaponKind=function(weapon){
 };
 drawWeapon=function(weapon){
  const kind=weaponKind(weapon);
+ if(isWand(weapon)){ctx.fillStyle='#95693d';ctx.fillRect(0,-2,31,4);ctx.fillStyle=weapon.color;ctx.beginPath();ctx.arc(31,0,4,0,TAU);ctx.fill();return}
  if(kind==='rifle'||kind==='pistol'){
   const length=kind==='rifle'?50:32;ctx.fillStyle='#805b3d';ctx.fillRect(-3,-3,length,7);ctx.fillStyle='#bdc4b8';ctx.fillRect(length-7,-2,kind==='rifle'?24:13,4);
   ctx.fillStyle='#4a352c';ctx.fillRect(7,3,7,15);ctx.fillStyle='#cf9d5c';ctx.fillRect(length-12,-6,5,4);return;
@@ -2134,7 +2212,7 @@ function decodeRun(text){
 }
 function snapshotRun(){
  return {world,player,enemies,props,loot,shots,heroShots,effects,floatingTexts,messages,depth,kills,clock,seed,runCycle,bossDefeated,
-  selectedAmmo,activeBossName,idleThreat,selectedWorldItem,selectionChoices,lastGearDelete,gearPreferences,shopFloor};
+  selectedAmmo,activeBossName,idleThreat,selectedWorldItem,selectionChoices,lastGearDelete,gearPreferences,shopFloor,keyBindings,difficulty};
 }
 function saveRun(){
  if(!world||!player||!['playing','paused','shop','confirm'].includes(state)||player.hp<=0)return false;
@@ -2159,6 +2237,11 @@ function restoreSavedRun(){
   effects=data.effects;floatingTexts=data.floatingTexts;messages=data.messages;depth=data.depth;kills=data.kills;clock=data.clock;
   runCycle=data.runCycle;bossDefeated=data.bossDefeated;selectedAmmo=data.selectedAmmo;activeBossName=data.activeBossName;shopFloor=data.shopFloor;
   Object.assign(idleThreat,data.idleThreat);Object.assign(gearPreferences,data.gearPreferences||{});
+  Object.assign(keyBindings,data.keyBindings||{});difficulty=['easy','medium','hard'].includes(data.difficulty)?data.difficulty:'medium';currentFloor=depth;
+  $('difficulty').value=difficulty;for(const [action,input] of Object.entries(bindingInputs))input.value=keyBindings[action];refreshKeyHints();
+  if(!isWand(player.weapon))for(const [kind,count] of Object.entries(player.scrolls)){
+   for(let i=0;i<count;i++)loot.push({x:player.x+12,y:player.y+12,type:'scroll',scroll:kind});player.scrolls[kind]=0;
+  }
   selectedWorldItem=data.selectedWorldItem||null;selectionChoices=data.selectionChoices||[];lastGearDelete=data.lastGearDelete||null;
   setSeed(data.seed);installSharedAmmo();distances=null;pathTimer=0;keys.clear();mouse.down=false;mouse.active=false;releaseTouchControls();
   state='playing';$('overlay').hidden=true;resumeSaved.hidden=true;$('autoEquip').checked=gearPreferences.enabled;$('preferWeapon').value=gearPreferences.prefer;
