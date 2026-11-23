@@ -27,6 +27,30 @@ scripts.forEach(script => vm.runInContext(script, sandbox));
 const run = code => vm.runInContext(code, sandbox);
 let count = 0;
 function check(name, fn) { fn(); count++; console.log('PASS ' + name); }
+check('all armor slots enforce weapon class on manual and automatic equip', () => {
+  for(const [weapon,allowed] of [['sword',['chain','plate']],['bow',['leather','chain']],['rifle',['leather','chain']],['pistol',['leather','chain']],['wand',['robe']]]){
+    for(const slot of ['armor','boots','gloves','helmet'])for(const kind of ['leather','chain','plate','robe']){
+      run(`begin();world.tiles.fill(1);loot=[];player.weapon={kind:'${weapon}',name:'Test',damage:10,range:300,cooldown:.5};var testArmor={kind:'${kind}',slot:'${slot}',name:'Test ${kind}',reduction:.1};var item={type:'armor',armor:testArmor,x:player.x,y:player.y};loot.push(item)`);
+      const expected=allowed.includes(kind);
+      assert.equal(run('betterAutoGear(item)'),expected,`${weapon} ${slot} ${kind} automatic`);
+      assert.equal(run('equipLoot(item)'),expected,`${weapon} ${slot} ${kind} manual`);
+      assert.equal(run(`player.${slot}===testArmor`),expected,`${weapon} ${slot} ${kind} worn`);
+      assert.equal(run('loot.includes(item)'),!expected,`${weapon} ${slot} ${kind} floor`);
+    }
+  }
+  run('begin()');
+});
+check('weapon changes drop only incompatible armor and preserve chain and inventory on resume', () => {
+  run("begin();world.tiles.fill(1);loot=[];player.weapon={kind:'sword',name:'Sword',damage:10,range:80,cooldown:.5};player.armor={kind:'plate',slot:'armor',name:'Plate',reduction:.3};player.boots={kind:'chain',slot:'boots',name:'Chain boots',reduction:.1};var bow={type:'weapon',x:player.x,y:player.y,weapon:{kind:'bow',name:'Bow',damage:30,range:400,cooldown:.6}};loot.push(bow);equipLoot(bow)");
+  assert.equal(run("!player.armor&&player.boots.name==='Chain boots'&&loot.some(i=>i.armor?.name==='Plate')"),true);
+  run("player.gloves={kind:'leather',slot:'gloves',name:'Leather gloves',reduction:.1};var sword={type:'weapon',x:player.x,y:player.y,weapon:{kind:'sword',name:'Sword',damage:40,range:80,cooldown:.5}};loot.push(sword);gearPreferences.enabled=true;gearPreferences.prefer='melee';updateAutoGear(.1)");
+  assert.equal(run("player.weapon.kind==='sword'&&!player.gloves&&player.boots.name==='Chain boots'&&loot.some(i=>i.armor?.name==='Leather gloves')"),true);
+  run("player.armor={kind:'robe',slot:'armor',name:'Legacy robe',reduction:.2};player.helmet={kind:'leather',slot:'helmet',name:'Legacy leather',reduction:.1};saveRun();savedRun=null;restoreSavedRun()");
+  assert.equal(run("!player.armor&&!player.helmet&&player.boots.name==='Chain boots'&&loot.some(i=>i.armor?.name==='Legacy robe')&&loot.some(i=>i.armor?.name==='Legacy leather')"),true);
+  run("saveRun();savedRun=null;restoreSavedRun()");
+  assert.equal(run("loot.filter(i=>i.armor?.name==='Legacy robe').length===1&&loot.filter(i=>i.armor?.name==='Legacy leather').length===1"),true);
+  run("gearPreferences.prefer='ranged';begin()");
+});
 check('weapon classes drop incompatible inventory without losing ammo quantities', () => {
   run("begin();world.tiles.fill(1);loot=[];player.weapon={kind:'bow',name:'Bow',damage:20};player.ammoShared.fire=3;player.ammoShared.web=12;var wandItem={x:player.x,y:player.y,type:'weapon',weapon:{kind:'wand',name:'Wand',power:1,damage:6,range:300,cooldown:.5}};loot.push(wandItem);equipLoot(wandItem);updateScrolls(.1)");
   assert.equal(run("player.ammoShared.fire===0&&player.ammoShared.web===0&&loot.some(i=>i.type==='ammo'&&i.special==='fire'&&i.value===3)&&loot.some(i=>i.type==='ammo'&&i.special==='web'&&i.value===12)"),true);
@@ -217,7 +241,7 @@ check('automatic equipment respects preference, distance and sight, upgrades slo
   assert.equal(run('player.weapon===upgrade.weapon'),true);
   run('ranged.weapon.damage=upgrade.weapon.damage+1;updateAutoGear(1)');
   assert.equal(run('player.weapon===ranged.weapon'),true);
-  run("var armor={x:player.x+100,y:player.y,type:'armor',armor:makeArmor('boots')};loot=[armor];state='paused';updateAutoGear()");
+  run("var armor={x:player.x+100,y:player.y,type:'armor',armor:{...makeArmor('boots'),kind:'chain'}};loot=[armor];state='paused';updateAutoGear()");
   assert.equal(run('!player.boots'),true);
   run("state='playing';updateAutoGear(1);updateAutoGear(1)");
   assert.equal(run('player.boots===armor.armor&&loot.length===0'),true);
@@ -307,25 +331,28 @@ check('gold and eligible consumables vacuum at 150 units', () => {
   assert.equal(run("['bow','crossbow'].every(k=>['fire','poison','explosion','light','lightning','web','charm'].every(s=>player.ammo[k][s]===10))"),true);
   assert.equal(run('nearPickups.every(item=>!loot.includes(item))&&farPickups.every(item=>loot.includes(item))&&manualGear.every(item=>loot.includes(item))'),true);
 });
-check('gear and potions flash and expire five seconds sooner; gold remains', () => {
-  run("loadFloor(1,604);enemies=[];props=[];world.traps=[];var gear=['weapon','armor'].map(type=>({x:player.x+200,y:player.y,type}));var timedPotion={x:player.x+200,y:player.y,type:'potion'};var permanent=['gold','scroll','ammo'].map(type=>({x:player.x+240,y:player.y,type}));loot=[...gear,timedPotion,...permanent];baseUpdate(4.99)");
-  assert.equal(run('lootVisible(timedPotion)&&gear.every(lootVisible)'),true);
-  run('baseUpdate(.22)');
-  assert.equal(run('!lootVisible(timedPotion)&&gear.every(lootVisible)'),true);
-  run('baseUpdate(9.78)');
-  assert.equal(run('loot.includes(timedPotion)'),true);
-  run('baseUpdate(.02)');
-  assert.equal(run('!loot.includes(timedPotion)&&gear.every(item=>loot.includes(item))'),true);
-  run('baseUpdate(9.98)');
-  assert.equal(run('gear.every(item=>item.age<25&&lootVisible(item))'),true);
-  run('baseUpdate(.22)');
-  assert.equal(run('gear.every(item=>!lootVisible(item))'),true);
-  run('baseUpdate(29.78)');
-  assert.equal(run('gear.every(item=>loot.includes(item))'),true);
-  run('baseUpdate(.02)');
-  assert.equal(run('gear.every(item=>!loot.includes(item))&&permanent.every(item=>loot.includes(item)&&lootVisible(item))'),true);
-  run("var timedGear={x:player.x+40,y:player.y,type:'weapon',weapon:makeWeapon(),age:54};loot=[timedGear];selectedWorldItem=timedGear;deleteSelectedGear();baseUpdate(5);undoGearDelete();undoGearDelete()");
-  assert.equal(run('loot.length===1&&loot[0]===timedGear&&timedGear.age===54'),true);
+check('all normal drops expire at 30 seconds; weapon-switch inventory expires at 10 and timers survive resume', () => {
+  run("begin();loadFloor(1,604);enemies=[];props=[];world.traps=[];gearPreferences.enabled=false;player.weapon={kind:'bow',name:'Bow',damage:10,color:'#fff',range:200};player.armor={kind:'leather',slot:'armor',name:'Leather',reduction:.1};player.ammoShared.fire=5;var newWand={x:player.x,y:player.y,type:'weapon',weapon:{kind:'wand',name:'Wand',effect:'light',color:'#fff',damage:10,range:200}};loot=[newWand];equipLoot(newWand);player.scrolls.light=1;var sword={x:player.x,y:player.y,type:'weapon',weapon:{kind:'sword',name:'Sword',color:'#fff',damage:10,range:60}};loot.push(sword);equipLoot(sword)");
+  assert.equal(run("['armor','ammo','scroll'].every(type=>loot.some(i=>i.type===type&&i.weaponSwitchDrop))&&loot.filter(i=>i.type==='weapon').every(i=>!i.weaponSwitchDrop)"),true);
+  run("for(const i of loot){i.x=player.x+400;i.y=player.y} var normal=['gold','potion','scroll','ammo','weapon','armor'].map(type=>({x:player.x+400,y:player.y,type}));loot.push(...normal);baseUpdate(5.21)");
+  assert.equal(run("loot.filter(i=>i.weaponSwitchDrop).every(i=>!lootVisible(i))&&normal.every(lootVisible)"),true);
+  run("saveRun();savedRun=null;restoreSavedRun()");
+  assert.equal(run("loot.filter(i=>i.weaponSwitchDrop).length===3&&loot.filter(i=>i.weaponSwitchDrop).every(i=>i.age>5)"),true);
+  run("var frozenAge=loot[0].age;state='paused';frame(3000)");
+  assert.equal(run("state==='paused'&&loot[0].age===frozenAge"),true);
+  run("state='playing'");
+  run("baseUpdate(4.78)");
+  assert.equal(run("loot.filter(i=>i.weaponSwitchDrop).length===3"),true);
+  run("baseUpdate(.02)");
+  assert.equal(run("!loot.some(i=>i.weaponSwitchDrop)&&loot.length===8"),true);
+  run("baseUpdate(15.2)");
+  assert.equal(run("loot.every(i=>!lootVisible(i))"),true);
+  run("baseUpdate(4.78)");
+  assert.equal(run("loot.length===8"),true);
+  run("baseUpdate(.02)");
+  assert.equal(run("loot.length===0"),true);
+  run("var timedGear={x:player.x+40,y:player.y,type:'weapon',weapon:makeWeapon(),age:29};loot=[timedGear];selectedWorldItem=timedGear;deleteSelectedGear();baseUpdate(5);undoGearDelete();undoGearDelete()");
+  assert.equal(run('loot.length===1&&loot[0]===timedGear&&timedGear.age===29'),true);
   run('baseUpdate(1.01)');
   assert.equal(run('loot.length'),0);
 });
@@ -1095,11 +1122,11 @@ check('all armor slots drop, equip independently, swap deliberately, persist and
     const kinds=new Set();
     for(let i=0;i<300;i++)kinds.add(run('armorSlot(makeArmor())'));
     assert.equal(kinds.size,4);
-    run(`loot=[{x:player.x,y:player.y,type:'armor',armor:{...makeArmor('${slot}'),name:'First ${slot}',reduction:.1}}];interact()`);
+    run(`loot=[{x:player.x,y:player.y,type:'armor',armor:{...makeArmor('${slot}'),kind:'chain',slot:'${slot}',name:'First ${slot}',reduction:.1}}];interact()`);
     assert.equal(run(`player.${slot}.name`),'First '+slot);
   }
   assert.equal(run('reduction()'),.4);
-  run("loot=[{x:player.x,y:player.y,type:'armor',armor:{...makeArmor('boots'),name:'New boots',reduction:.12}}];interact()");
+  run("loot=[{x:player.x,y:player.y,type:'armor',armor:{...makeArmor('boots'),kind:'chain',slot:'boots',name:'New boots',reduction:.12}}];interact()");
   assert.equal(run('player.armor.name'),'First armor');
   assert.equal(run('player.helmet.name'),'First helmet');
   assert.equal(run('loot[0].armor.name'),'First boots');
