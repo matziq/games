@@ -1,5 +1,6 @@
 import { Chess } from "./chess.js";
 import { newTicTacToe, ticResult, playTicTacToe, newCheckers, checkersMoves, checkersResult, playCheckers } from "./rules.js";
+import { playerNames, validPlayerNames } from "../party_names.mjs";
 
 const names = { tic: "Tic-Tac-Toe", checkers: "Checkers", chess: "Chess" };
 const symbols = {
@@ -13,6 +14,7 @@ const warning = byId("storage-warning");
 const key = game => `road-board-games.v1.${game}`;
 const current = document.body.dataset.game;
 let selected = null, focusIndex = 0;
+let players = ["Player 1", "Player 2"], started = false;
 const states = { tic: newTicTacToe(), checkers: newCheckers(), chess: new Chess() };
 
 function warn(message) {
@@ -40,6 +42,7 @@ for (const game of [current]) {
     const saved = localStorage.getItem(key(game));
     if (saved === null) continue;
     const data = JSON.parse(saved);
+    if (data.players !== undefined && !validPlayerNames(data.players)) throw new Error("Invalid player names");
     if (game === "chess") {
       if (!data || typeof data.pgn !== "string") throw new Error("Invalid chess save");
       if (data.pgn) states.chess.loadPgn(data.pgn);
@@ -47,6 +50,8 @@ for (const game of [current]) {
       if (!(game === "tic" ? validTic(data) : validCheckers(data))) throw new Error("Invalid save");
       states[game] = data;
     }
+    players = data.players || players;
+    started = true;
   } catch (error) {
     warn(`Could not load ${names[game]}. This browser may not save progress, or the saved game may be invalid.`);
   }
@@ -54,7 +59,7 @@ for (const game of [current]) {
 
 function save(game) {
   try {
-    const data = game === "chess" ? { pgn: states.chess.pgn() } : states[game];
+    const data = game === "chess" ? { pgn: states.chess.pgn(), players } : { ...states[game], players };
     localStorage.setItem(key(game), JSON.stringify(data));
   } catch (error) {
     warn(`Could not save ${names[game]}. Progress may be lost when you leave or reload.`);
@@ -86,23 +91,29 @@ function legalMoves() {
 }
 
 function render(restoreFocus = false) {
+  byId("setup").hidden = started;
+  byId("game").hidden = !started;
+  if (!started) return;
   const game = states[current], size = current === "tic" ? 3 : 8;
   byId("game-title").textContent = names[current];
   byId("promotion-wrap").hidden = current !== "chess";
   let result, status, cells;
   if (current === "tic") {
     result = ticResult(game);
-    status = result || `${game.turn}'s turn`;
+    status = result ? result.replace(/^(X|O) wins!$/, (_, mark) => `${players[mark === "X" ? 0 : 1]} (${mark}) wins!`) :
+      `${players[game.turn === "X" ? 0 : 1]} (${game.turn})'s turn`;
     cells = game.board;
     byId("instructions").textContent = "Tap an empty square to place your mark. Three in a row wins.";
   } else if (current === "checkers") {
     result = checkersResult(game);
-    status = result || `${game.turn === "r" ? "Red" : "Black"}'s turn${game.forced !== null ? " — continue jumping" : ""}`;
+    status = result ? result.replace(/^(Red|Black) wins!$/, (_, color) => `${players[color === "Red" ? 0 : 1]} (${color}) wins!`) :
+      `${players[game.turn === "r" ? 0 : 1]} (${game.turn === "r" ? "Red" : "Black"})'s turn${game.forced !== null ? " — continue jumping" : ""}`;
     cells = game.board;
     byId("instructions").textContent = "American checkers: select a piece, then a highlighted square. Captures are required; continue jumps when possible. A newly crowned king ends its turn.";
   } else {
     result = chessResult(game);
-    status = result || `${game.turn() === "w" ? "White" : "Black"}'s turn${game.isCheck() ? " — check!" : ""}`;
+    status = result ? result.replace(/^(White|Black) wins/, (_, color) => `${players[color === "White" ? 0 : 1]} (${color}) wins`) :
+      `${players[game.turn() === "w" ? 0 : 1]} (${game.turn() === "w" ? "White" : "Black"})'s turn${game.isCheck() ? " — check!" : ""}`;
     cells = game.board().flat();
     byId("instructions").textContent = "Select a piece, then a highlighted legal square. Castling, en passant, and promotion follow chess rules.";
   }
@@ -196,9 +207,19 @@ byId("restart").addEventListener("click", () => {
   states[current] = current === "tic" ? newTicTacToe() : current === "checkers" ? newCheckers() : new Chess();
   selected = null;
   focusIndex = 0;
+  try { localStorage.removeItem(key(current)); } catch { warn("Could not clear the saved game. It may return on reload."); }
+  started = false;
+  document.querySelectorAll('input[name="player"]').forEach((input, i) => { input.value = players[i]; });
+  render();
+  document.querySelector('input[name="player"]').focus();
+});
+
+byId("setup-form").addEventListener("submit", event => {
+  event.preventDefault();
+  players = playerNames([...document.querySelectorAll('input[name="player"]')].map(input => input.value));
+  started = true;
   save(current);
   render();
 });
-
 if (current === "checkers") selected = states.checkers.forced;
 render();

@@ -1,3 +1,4 @@
+import { easy, hard } from "./levels.mjs";
 // The first option is the answer; each match shuffles the displayed choices.
 export const questions = [
 ["Music","How many strings does a standard guitar have?","Six","Four","Five","Eight"],
@@ -91,3 +92,9 @@ export const questions = [
 ["History and inventions","What wall fell in 1989, symbolizing the end of a divided city?","Berlin Wall","Great Wall of China","Hadrian's Wall","Western Wall"],
 ["History and inventions","Which US president delivered the Gettysburg Address?","Abraham Lincoln","George Washington","Thomas Jefferson","Theodore Roosevelt"]
 ];
+export const difficultyRanges = {
+  medium: [0, questions.length],
+  easy: [questions.length, questions.length + easy.length],
+  hard: [questions.length + easy.length, questions.length + easy.length + hard.length]
+};
+questions.push(...easy, ...hard);

@@ -1,3 +1,4 @@
+import { validPlayerNames } from "../party_names.mjs";
 export const MAX_PLACEMENTS = 40;
 export const GROUND_Y = 1000;
 export const SHAPES = ["bar", "square", "tee", "ell", "short"];
@@ -17,12 +18,18 @@ export function validGame(s) {
       !Array.isArray(s.blocks) || s.blocks.length > MAX_PLACEMENTS || !["aim", "falling", "won", "lost"].includes(s.phase) ||
       !Number.isFinite(s.aim) || s.aim < 45 || s.aim > 555 || !Number.isInteger(s.rotation) || s.rotation < 0 || s.rotation > 3 ||
       !Number.isInteger(s.quiet) || s.quiet < 0 || !Number.isInteger(s.ticks) || s.ticks < 0 ||
-      !(s.loser === null || s.loser === 0 || s.loser === 1)) return false;
+      !(s.loser === null || s.loser === 0 || s.loser === 1) ||
+      (s.players !== undefined && !validPlayerNames(s.players))) return false;
   if (s.phase === "lost" ? s.loser === null || !s.blocks.length : s.loser !== null) return false;
   if (s.phase === "won" && s.blocks.length !== MAX_PLACEMENTS) return false;
   if ((s.phase === "aim" && s.blocks.length >= MAX_PLACEMENTS) || (s.phase === "falling" && !s.blocks.length)) return false;
   return s.blocks.every((b, i) => b && b.shape === s.queue[i] && ["x", "y", "angle", "vx", "vy", "angularVelocity"].every(k => Number.isFinite(b[k])) &&
     Math.abs(b.x) < 100000 && Math.abs(b.y) < 100000 && Math.abs(b.vx) < 10000 && Math.abs(b.vy) < 10000 && Math.abs(b.angularVelocity) < 1000);
+}
+export function impactSpeed(pair) {
+  const a = pair.bodyA.parent, b = pair.bodyB.parent;
+  if (a.isStatic || b.isStatic) return 0;
+  return Math.hypot(a.velocity.x - b.velocity.x, a.velocity.y - b.velocity.y);
 }
 export function makeBody(M, shape, x, y, angle = 0) {
   const options = { friction: 0.8, frictionStatic: 1, restitution: 0.02, density: 0.002, frictionAir: 0.012, render: { fillStyle: colors[SHAPES.indexOf(shape)] } };

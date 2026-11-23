@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { MAX_PLACEMENTS, newGame, validGame, createWorld, snapshot, addBlock, step } from "./physics.mjs";
+import { MAX_PLACEMENTS, newGame, validGame, createWorld, snapshot, addBlock, step, impactSpeed } from "./physics.mjs";
 const require = createRequire(import.meta.url);
 const M = require("./matter.min.js");
 
@@ -37,6 +37,15 @@ test("corrupt saves are rejected", () => {
   const state = newGame();
   state.queue[0] = "unknown";
   assert.equal(validGame(state), false);
+});
+test("legacy saves remain valid and impact detection excludes the platform", () => {
+  const state = newGame();
+  assert.equal(validGame(state), true);
+  state.players = ["Ana", "Bo"];
+  assert.equal(validGame(state), true);
+  const body = (isStatic, x, y) => { const p = { isStatic, velocity: { x, y } }; p.parent = p; return p; };
+  assert.equal(impactSpeed({ bodyA: body(false, 0, 4), bodyB: body(true, 0, 0) }), 0);
+  assert.equal(impactSpeed({ bodyA: body(false, 0, 4), bodyB: body(false, 0, 1) }), 3);
 });
 test("the 40th block must settle before both players win", () => {
   const state = newGame(() => 0);

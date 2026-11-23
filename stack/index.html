@@ -4,10 +4,12 @@
 <a class="back" href="https://memconfigmgr.org/games/index.html">&#8592; Games Menu</a>
 <header><p class="eyebrow">PASS &amp; PLAY &bull; TWO PLAYERS</p><h1>Tower Tumble</h1><p>Take turns dropping different shapes. Build as high as you can without letting a block fall off the platform.</p></header>
 <p id="warning" class="warning" role="status" hidden></p>
-<section class="panel"><div class="row"><button id="restart" type="button">New game</button><span id="round" class="status"></span></div><p id="status" class="status" role="status" aria-live="polite"></p><p id="height" class="hint"></p>
+<p id="sound-warning" class="warning" role="status" hidden></p>
+<section id="setup" class="panel" hidden><h2>Players</h2><p>Enter names or leave them blank for the defaults.</p><form id="setup-form"><div class="names"><label>Player 1 <input name="player" maxlength="24" value="Player 1" autocomplete="off"></label><label>Player 2 <input name="player" maxlength="24" value="Player 2" autocomplete="off"></label></div><p><button class="primary" type="submit">Start game</button></p></form></section>
+<section id="game" class="panel" hidden><div class="row"><button id="restart" type="button">New game</button><span id="round" class="status"></span></div><p id="status" class="status" role="status" aria-live="polite"></p><p id="height" class="hint"></p>
 <div class="canvas-wrap"><canvas id="canvas" width="600" height="620" aria-label="Tower and platform; adjust the drop position using the slider and controls below"></canvas></div>
 <label for="aim">Drop position <span id="position"></span></label><input id="aim" class="range" type="range" min="45" max="555" value="300" step="5">
 <div class="control"><button id="left" type="button" aria-label="Move block left">&#8592; Left</button><button id="right" type="button" aria-label="Move block right">Right &#8594;</button><button id="rotate" type="button">Rotate</button><button id="drop" type="button" class="primary">Drop block</button></div>
-<p class="hint small">Tap the board or use the slider to aim; use Left/Right arrow keys to move, R to rotate, and Space to drop when not using another control. Blocks continue moving under gravity. The player whose drop causes a fall loses; survive 20 rounds together to win.</p>
+<p class="hint small">Tap the board or use the slider to aim; use Left/Right arrow keys to move, R to rotate, and Space to drop when not using another control. Blocks continue moving under gravity. The player whose drop causes a fall loses; survive 20 rounds together to win. Sound follows your device's volume settings.</p>
 </section><p class="hint small">Progress is stored on this browser and device when storage is available. If you leave while blocks are moving, the tower resumes from its last saved physics snapshot.</p><noscript>JavaScript is required to play.</noscript>
 </main><script src="./matter.min.js"></script><script type="module" src="./app.mjs"></script></body></html>

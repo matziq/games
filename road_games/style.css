@@ -10,10 +10,14 @@ header { margin: 14px 0 22px; }
 .eyebrow { color: #a7eaff; letter-spacing: .16em; font-weight: 750; font-size: .75rem; }
 h1 { margin: 0; font-size: clamp(2.2rem, 8vw, 3.5rem); line-height: 1.05; }
 header p:last-child { color: #c4cce1; }
-button, select { font: inherit; }
+button, select, input { font: inherit; }
 button { cursor: pointer; color: #fff; background: #252e49; border: 1px solid #71809f; border-radius: 10px; min-height: 44px; font-weight: 700; }
 button:hover { filter: brightness(1.13); }
-button:focus-visible, a:focus-visible, select:focus-visible { outline: 3px solid #75e6ff; outline-offset: 3px; z-index: 2; }
+button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid #75e6ff; outline-offset: 3px; z-index: 2; }
+.names { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.names label { display: grid; gap: 6px; }
+.names input { width: 100%; min-height: 44px; padding: 10px; border: 1px solid #71809f; border-radius: 8px; background: #10172d; color: white; }
+#setup-form button { padding: 10px 16px; }
 #restart { padding: 10px 16px; }
 .game { margin-top: 16px; padding: clamp(14px, 3vw, 22px); border: 1px solid #495675; border-radius: 18px; background: #ffffff0d; }
 .game-header { display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: 12px; }

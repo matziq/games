@@ -12,7 +12,8 @@
   <a class="back" href="https://memconfigmgr.org/games/index.html">&#8592; Games Menu</a>
   <header><p class="eyebrow">PASS &amp; PLAY</p><h1>Checkers</h1><p>Two players, one device. Take turns.</p></header>
   <p id="storage-warning" class="warning" role="status" hidden></p>
-  <section class="game" aria-labelledby="game-title">
+  <section id="setup" class="game" hidden><h2>Players</h2><p>Enter names or leave them blank for the defaults.</p><form id="setup-form"><div class="names"><label>Player 1 (Red)<input name="player" maxlength="24" value="Player 1" autocomplete="off"></label><label>Player 2 (Black)<input name="player" maxlength="24" value="Player 2" autocomplete="off"></label></div><p><button type="submit">Start game</button></p></form></section>
+  <section id="game" class="game" aria-labelledby="game-title" hidden>
     <div class="game-header"><div><h2 id="game-title">Checkers</h2><p id="status" role="status" aria-live="polite"></p></div><button type="button" id="restart">New game</button></div>
     <p id="instructions" class="instructions"></p>
     <div id="promotion-wrap" class="promotion" hidden><label for="promotion">Pawn promotion:</label><select id="promotion"><option value="q">Queen</option><option value="r">Rook</option><option value="b">Bishop</option><option value="n">Knight</option></select><span>Choose before moving a pawn to the last rank.</span></div>
