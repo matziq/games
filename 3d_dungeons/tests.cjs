@@ -27,6 +27,70 @@ scripts.forEach(script => vm.runInContext(script, sandbox));
 const run = code => vm.runInContext(code, sandbox);
 let count = 0;
 function check(name, fn) { fn(); count++; console.log('PASS ' + name); }
+check('weapon classes drop incompatible inventory without losing ammo quantities', () => {
+  run("begin();world.tiles.fill(1);loot=[];player.weapon={kind:'bow',name:'Bow',damage:20};player.ammoShared.fire=3;player.ammoShared.web=12;var wandItem={x:player.x,y:player.y,type:'weapon',weapon:{kind:'wand',name:'Wand',power:1,damage:6,range:300,cooldown:.5}};loot.push(wandItem);equipLoot(wandItem);updateScrolls(.1)");
+  assert.equal(run("player.ammoShared.fire===0&&player.ammoShared.web===0&&loot.some(i=>i.type==='ammo'&&i.special==='fire'&&i.value===3)&&loot.some(i=>i.type==='ammo'&&i.special==='web'&&i.value===12)"),true);
+  run("player.scrolls.fireball=2;var meleeItem={x:player.x,y:player.y,type:'weapon',weapon:{kind:'sword',name:'Sword',damage:20}};loot.push(meleeItem);equipLoot(meleeItem);updateScrolls(.1)");
+  assert.equal(run("player.scrolls.fireball===0&&loot.filter(i=>i.type==='scroll'&&i.scroll==='fireball').length===2&&player.ammoShared.web===0"),true);
+  run("var bowItem={x:player.x,y:player.y,type:'weapon',weapon:{kind:'bow',name:'Bow',damage:30,range:400,cooldown:.6}};loot.push(bowItem);equipLoot(bowItem);updateScrolls(.01)");
+  assert.equal(run("player.ammoShared.fire===3&&player.ammoShared.web===12"),true);
+  run("gearPreferences.enabled=true;gearPreferences.prefer='magic';var autoWand={x:player.x,y:player.y,type:'weapon',weapon:{kind:'wand',name:'Wand',power:1,damage:6,range:300,cooldown:.5}};loot.push(autoWand);updateAutoGear(.1)");
+  assert.equal(run("isWand(player.weapon)&&player.ammoShared.fire===0&&loot.some(i=>i.type==='ammo'&&i.special==='fire'&&i.value===3)"),true);
+  run("gearPreferences.prefer='ranged';begin()");
+});
+check('legacy bindings and mixed inventories migrate without loss', () => {
+  run("begin();player.ammoShared.fire=7;player.scrolls.light=3;var legacy=snapshotRun();legacy.keyBindings={scroll:'t',ammo:'v',potion:'q'};window.localStorage.setItem(RUN_SAVE_KEY,encodeRun(legacy));savedRun=null;restoreSavedRun()");
+  assert.equal(run("keyBindings.cycle==='v'&&player.ammoShared.fire===0&&loot.some(i=>i.type==='ammo'&&i.special==='fire'&&i.value===7)&&loot.filter(i=>i.type==='scroll'&&i.scroll==='light').length===3"),true);
+  run("legacy=snapshotRun();legacy.keyBindings={scroll:'z',ammo:'v',potion:'q'};window.localStorage.setItem(RUN_SAVE_KEY,encodeRun(legacy));savedRun=null;restoreSavedRun()");
+  assert.equal(run("keyBindings.cycle==='z'"),true);
+  run("keyBindings.cycle='t';begin()");
+});
+check('merchant wand purchase drops ammo only when equipped', () => {
+  run("begin();loadFloor(2,604);player.weapon={kind:'bow',name:'Bow',damage:20,range:400,cooldown:.6};player.gold=10000;player.ammoShared.fire=7;world.merchant.stock.weapon.item={kind:'wand',effect:'fire',name:'Fire Wand',power:2,damage:7,range:300,cooldown:.5};state='shop';buyProduct('weapon')");
+  assert.equal(run("player.ammoShared.fire===7&&!isWand(player.weapon)"),true);
+  run("state='playing';var purchased=loot.find(i=>i.type==='weapon'&&i.weapon.kind==='wand');equipLoot(purchased)");
+  assert.equal(run("isWand(player.weapon)&&player.ammoShared.fire===0&&loot.some(i=>i.type==='ammo'&&i.special==='fire'&&i.value===7)"),true);
+  run('begin()');
+});
+check('wand poison cloud cap survives saves and reopens after expiry', () => {
+  run("begin();world.tiles.fill(1);world.scrollZones=[];var shot={x:player.x,y:player.y,power:2,wandEffect:'poison',color:'#abcdef'};impactWand({...shot},null);impactWand({...shot},null)");
+  assert.equal(run('world.scrollZones.filter(z=>z.wandPoison).length'),1);
+  run("player.weapon={kind:'wand',effect:'poison',power:2,name:'Poison Wand',damage:7,range:300,cooldown:.55};saveRun();savedRun=null;restoreSavedRun();impactWand({...shot},null)");
+  assert.equal(run('world.scrollZones.filter(z=>z.wandPoison).length'),1);
+  run("updateScrolls(5.1);impactWand({...shot},null)");
+  assert.equal(run('world.scrollZones.filter(z=>z.wandPoison).length'),1);
+  run("delete world.scrollZones[0].wandPoison;saveRun();savedRun=null;restoreSavedRun();impactWand({...shot},null)");
+  assert.equal(run('world.scrollZones.length'),1);
+  run('begin()');
+});
+check('light and fire cones blind or burn, harm props, and respect walls', () => {
+  run("begin();world.tiles.fill(1);world.torches=[];enemies=[];props=[];player.angle=0;var coneEnemy=makeEnemy('slime',{x:player.x+80,y:player.y});coneEnemy.hp=300;enemies=[coneEnemy];var crate={x:player.x+80,y:player.y+22,type:'crate',hp:100,open:false};props=[crate];wandCone('light',3,180,1.2)");
+  assert.ok(run("coneEnemy.hp<300&&coneEnemy.blind>0&&coneEnemy.wandDots.light&&crate.hp<100"));
+  run("var beforeDot=coneEnemy.hp;updateWandStatuses(.5)");
+  assert.ok(run("coneEnemy.hp<beforeDot"));
+  run("coneEnemy.blind=0;coneEnemy.wandDots={};coneEnemy.hp=300;crate.hp=100;wandCone('fire',4,180,1.2)");
+  assert.ok(run("coneEnemy.wandDots.fire&&crate.hp<100"));
+  run("var blockedEnemy=makeEnemy('slime',{x:player.x+120,y:player.y});blockedEnemy.hp=300;enemies=[blockedEnemy];props=[];world.tiles[Math.floor(player.y/T)*W+Math.floor((player.x+60)/T)]=0;wandCone('fire',3,180,1.2)");
+  assert.equal(run('blockedEnemy.hp'),300);
+  run('begin()');
+});
+check('web and poison hurt objects over time, fireball has no burn, lightning chains visibly at +5', () => {
+  run("begin();world.tiles.fill(1);props=[];enemies=[];var crate={x:player.x+60,y:player.y,type:'crate',hp:100,open:false};props=[crate];impactWand({x:crate.x,y:crate.y,power:3,wandEffect:'web',color:'#ffffff'},crate);var hp=crate.hp;updateWandStatuses(.5)");
+  assert.ok(run('crate.hp<hp'));
+  run("crate.wandDots={};impactWand({x:crate.x,y:crate.y,power:3,wandEffect:'poison',color:'#ffffff'},crate);hp=crate.hp;updateWandStatuses(.5)");
+  assert.ok(run('crate.hp<hp'));
+  run("props=[];var a=makeEnemy('slime',{x:player.x+50,y:player.y}),b=makeEnemy('slime',{x:player.x+90,y:player.y});a.hp=b.hp=300;enemies=[a,b];world.scrollFlashes=[];impactWand({x:a.x,y:a.y,from:{x:player.x,y:player.y},power:4,wandEffect:'fireball',color:'#ffffff'},a)");
+  assert.ok(run("a.hp<300&&b.hp<300&&!a.burn&&!b.burn&&world.scrollFlashes.some(f=>f.kind==='fireball')"));
+  run("a.hp=b.hp=300;world.scrollFlashes=[];impactWand({x:a.x,y:a.y,from:{x:player.x,y:player.y},power:4,wandEffect:'lightning',color:'#ffffff'},a)");
+  assert.equal(run("b.hp===300&&world.scrollFlashes.length===1"),true);
+  run("world.scrollFlashes=[];impactWand({x:a.x,y:a.y,from:{x:player.x,y:player.y},power:5,wandEffect:'lightning',color:'#ffffff'},a)");
+  assert.equal(run("b.hp<300&&world.scrollFlashes.length>=2"),true);
+  run("a.rooted=b.rooted=0;impactWand({x:a.x,y:a.y,power:20,wandEffect:'web',color:'#ffffff'},a)");
+  assert.equal(run("a.rooted===5&&b.rooted===5&&a.wandDots.web.damage===21"),true);
+  run("a.rooted=0;impactWand({x:a.x,y:a.y,power:1,wandEffect:'web',color:'#ffffff'},a)");
+  assert.equal(run('a.rooted'),1);
+  run('begin()');
+});
 check('wand gating, old-save migration, settings and robe protection', () => {
   run("begin();world.tiles.fill(1);loot=[];player.scrolls.fireball=2;var oldSword=player.weapon;var scrollDrop={x:player.x,y:player.y,type:'scroll',scroll:'light'};loot.push(scrollDrop);updateScrolls(.1)");
   assert.equal(run("loot.includes(scrollDrop)&&player.scrolls.light===0&&castScroll()===false"),true);
@@ -38,9 +102,9 @@ check('wand gating, old-save migration, settings and robe protection', () => {
   assert.ok(run("body>head&&reduction('head')>0"));
   run("player.scrolls.fireball=2;var swordItem=loot.find(i=>i.type==='weapon'&&i.weapon===oldSword)||{x:player.x,y:player.y,type:'weapon',weapon:oldSword};if(!loot.includes(swordItem))loot.push(swordItem);equipLoot(swordItem)");
   assert.equal(run("!isWand(player.weapon)&&player.scrolls.fireball===0&&loot.filter(i=>i.type==='scroll'&&i.scroll==='fireball').length>=2"),true);
-  run("keyBindings.ammo='v';difficulty='hard';saveRun();keyBindings.ammo='c';difficulty='medium';savedRun=null;restoreSavedRun()");
-  assert.equal(run("keyBindings.ammo==='v'&&difficulty==='hard'"),true);
-  run("keyBindings.ammo='c';difficulty='medium';begin()");
+  run("keyBindings.cycle='v';difficulty='hard';saveRun();keyBindings.cycle='t';difficulty='medium';savedRun=null;restoreSavedRun()");
+  assert.equal(run("keyBindings.cycle==='v'&&difficulty==='hard'"),true);
+  run("keyBindings.cycle='t';difficulty='medium';begin()");
 });
 check('wand powers scale by actual floor and effects chain, cloud, root and illuminate', () => {
   run("begin();gearPreferences.enabled=true;gearPreferences.prefer='magic';world.tiles.fill(1);var firstWand={x:player.x+100,y:player.y,type:'weapon',weapon:{kind:'wand',effect:'light',power:1,name:'Light Wand +1',damage:6,range:300,cooldown:.55,color:'#fff'}};loot=[firstWand];updateAutoGear(1)");
@@ -51,7 +115,7 @@ check('wand powers scale by actual floor and effects chain, cloud, root and illu
   run("var first=makeEnemy('slime',{x:player.x+40,y:player.y}),second=makeEnemy('slime',{x:player.x+80,y:player.y});first.hp=second.hp=200;enemies=[first,second];impactWand({x:first.x,y:first.y,power:5,wandEffect:'lightning',color:'#abcdef'},first)");
   assert.equal(run('second.hp===190'),true);
   run("impactWand({x:first.x,y:first.y,power:6,wandEffect:'poison',color:'#abcdef'},first);impactWand({x:first.x,y:first.y,power:6,wandEffect:'web',color:'#abcdef'},first)");
-  assert.equal(run("world.scrollZones.at(-1).damage===9&&second.rooted>3"),true);
+  assert.equal(run("world.scrollZones.at(-1).damage===9&&second.rooted===5"),true);
   run("player.weapon={kind:'wand',effect:'light',power:6,cooldown:.55};player.cool=0;attack()");
   assert.equal(run("world.scrollLights.at(-1).coneAngle===player.angle&&world.scrollLights.at(-1).life>5"),true);
   run("begin()");
@@ -61,7 +125,7 @@ check('local save restores the current world, shared references, timers and rand
   assert.equal(run("decodeRun(window.localStorage.getItem(RUN_SAVE_KEY)).player.gold"),4321);
   run("var expectedRandom=rng();player.gold=0;world.boss.hp=1;state='title';savedRun=null");
   assert.equal(run('restoreSavedRun()'),true);
-  assert.equal(run("state==='playing'&&depth===8&&player.gold===4321&&player.scrolls.light===7&&selectedAmmo==='light'&&player.ammo.bow===player.ammo.crossbow&&player.ammo.bow===player.ammoShared"),true);
+  assert.equal(run("state==='playing'&&depth===8&&player.gold===4321&&player.scrolls.light===7&&selectedAmmo==='regular'&&player.ammoShared.light===0&&loot.some(i=>i.type==='ammo'&&i.special==='light'&&i.value===8)&&player.ammo.bow===player.ammo.crossbow&&player.ammo.bow===player.ammoShared"),true);
   for(const condition of ["world.boss.hp===savedBossHp","enemies.includes(world.boss)","world.rooms[1].decor[0].broken","props.includes(world.rooms[1].decor[0])","heroShots[0].hit.has(world.boss)","selectedWorldItem===loot.find(i=>i.weapon?.name==='Saved marker')","world.quake.next===Infinity","world.scrollLights[0].life===5","Array.from(world.tiles).join('')===savedTiles"])assert.equal(run(condition),true,condition);
   assert.equal(run('rng()'),run('expectedRandom'));
 });
@@ -233,11 +297,13 @@ check('a direct spider web hit roots the knight then drives the spider into an i
   run('update(.2)');
   assert.equal(run('player.hp===120-creatures.cave_spider.damage&&player.root>0&&webStriker.lunge===0&&!webStriker.webLunge'),true);
 });
-check('gold scrolls potions and every ammo pack vacuum at 150 units but gear stays manual', () => {
+check('gold and eligible consumables vacuum at 150 units', () => {
   run("begin();loadFloor(1,604);player.weapon={kind:'wand',effect:'light',power:1};enemies=[];props=[];world.traps=[];player.dash=0;var pickupX=player.x;var startGold=player.gold;var startPotions=player.potions;var startScroll=player.scrolls.light;var kinds=[{type:'gold',value:17},{type:'scroll',scroll:'light'},{type:'potion'},...['bow','crossbow'].flatMap(ammoKind=>['fire','poison','explosion','light','lightning','web','charm'].map(special=>({type:'ammo',ammoKind,special})))];var nearPickups=kinds.map(k=>({...k,x:player.x+3.75*T,y:player.y}));var farPickups=kinds.map(k=>({...k,x:player.x+3.75*T+.01,y:player.y}));var manualGear=['weapon','armor'].map(type=>({x:player.x+100,y:player.y,type}));loot=[...nearPickups,...farPickups,...manualGear];baseUpdate(.04)");
-  assert.equal(run('nearPickups.every(item=>item.x<pickupX+150)&&farPickups.every(item=>item.x===pickupX+150.01)&&manualGear.every(item=>item.x===pickupX+100)'),true);
+  assert.equal(run("nearPickups.filter(i=>i.type!=='ammo').every(item=>item.x<pickupX+150)&&nearPickups.filter(i=>i.type==='ammo').every(item=>item.x===pickupX+150)&&farPickups.every(item=>item.x===pickupX+150.01)&&manualGear.every(item=>item.x===pickupX+100)"),true);
   run('for(let i=0;i<30;i++){baseUpdate(.04);updateScrolls(.04)}');
   assert.equal(run('player.gold===startGold+17&&player.potions===startPotions+1&&player.scrolls.light===startScroll+1'),true);
+  assert.equal(run("nearPickups.filter(i=>i.type==='ammo').every(item=>loot.includes(item))"),true);
+  run("player.weapon={kind:'bow'};for(let i=0;i<30;i++){baseUpdate(.04);updateScrolls(.04)}");
   assert.equal(run("['bow','crossbow'].every(k=>['fire','poison','explosion','light','lightning','web','charm'].every(s=>player.ammo[k][s]===10))"),true);
   assert.equal(run('nearPickups.every(item=>!loot.includes(item))&&farPickups.every(item=>loot.includes(item))&&manualGear.every(item=>loot.includes(item))'),true);
 });
@@ -330,7 +396,7 @@ check('spider webs track current position and strike immediately after charge; c
 check('elemental packs grant exactly five, preserve inventories on descent, reset on new run', () => {
   run("begin();loot=[];for(let i=0;i<100;i++)drops(player,true)");
   assert.equal(run("['bow','crossbow'].every(kind=>Object.keys(ammoColors).every(special=>loot.some(l=>l.type==='ammo'&&l.ammoKind===kind&&l.special===special&&l.value===5)))"),true);
-  run("loot=[{x:player.x,y:player.y,type:'ammo',ammoKind:'bow',special:'fire',value:5}];updateScrolls(.01);updateScrolls(.01)");
+  run("player.weapon={kind:'bow'};loot=[{x:player.x,y:player.y,type:'ammo',ammoKind:'bow',special:'fire',value:5}];updateScrolls(.01);updateScrolls(.01)");
   assert.equal(run("player.ammo.bow.fire===5&&player.ammoChoice.bow==='fire'"),true);
   run('loadFloor(2,604)');assert.equal(run('player.ammo.bow.fire'),5);
   run('begin()');assert.equal(run('player.ammo.bow.fire'),0);

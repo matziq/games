@@ -25,7 +25,7 @@ with sync_playwright() as playwright:
             page.locator("#start").click()
             page.evaluate("""() => {
                 loadFloor(8,604); player.weapon={kind:'wand',effect:'light',power:8,range:300,damage:13}; player.gold=4321; player.scrolls.light=7;
-                difficulty='hard'; keyBindings.ammo='v';
+                difficulty='hard'; keyBindings.cycle='v';
                 player.ammoShared.light=8; selectedAmmo='light'; world.boss.hp=101;
                 world.rooms[1].decor[0].broken=true; world.quake.next=Infinity;
                 player.inv=1000; enemies.forEach(enemy=>{enemy.speed=0;enemy.cool=1000});
@@ -51,13 +51,13 @@ with sync_playwright() as playwright:
                 page.locator("#resumeSaved").click()
             result = page.evaluate("""() => ({
                 state, depth, gold:player.gold, scrolls:player.scrolls.light,
-                ammo:player.ammoShared.light, selectedAmmo, bossHp:world.boss.hp,
-                difficulty, ammoKey:keyBindings.ammo, wand:player.weapon.kind==='wand',
+                ammo:player.ammoShared.light, droppedAmmo:loot.filter(i=>i.type==='ammo'&&i.special==='light').reduce((n,i)=>n+i.value,0), selectedAmmo, bossHp:world.boss.hp,
+                difficulty, cycleKey:keyBindings.cycle, wand:player.weapon.kind==='wand',
                 shared:enemies.includes(world.boss)&&props.includes(world.rooms[1].decor[0]),
                 broken:world.rooms[1].decor[0].broken, quake:world.quake.next===Infinity
             })""")
             assert result == {"state":"playing", "depth":8, "gold":4321, "scrolls":7,
-                              "ammo":8, "selectedAmmo":"light", "bossHp":101, "difficulty":"hard", "ammoKey":"v", "wand":True,
+                              "ammo":0, "droppedAmmo":8, "selectedAmmo":"regular", "bossHp":101, "difficulty":"hard", "cycleKey":"v", "wand":True,
                               "shared":True, "broken":True, "quake":True}, result
             page.screenshot(path=str(OUT / f"save-{label}-resumed.png"))
             page.reload()
