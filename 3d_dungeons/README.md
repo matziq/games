@@ -70,7 +70,7 @@ Run `python 3d_dungeons\crown_checks.py` for desktop/phone friendly-fire, activa
 
 ## Single-use scrolls
 
-**Gear / Map** includes automatic equipment, enabled by default, with a **Melee / Ranged / Magic** preference (Ranged by default). Eligible upgrades within 3.75 tiles and clear sight fly toward the knight before equipping, leaving the old item on the floor. Weapons must match the preference and improve strike power; ties favor faster recovery, then longer reach. Changing preference never downgrades your current weapon to switch styles. Compatible armor upgrades by reduction. Gear preferences are saved with the run. Pause and shopping suspend auto-equipping.
+**Gear / Map** includes automatic equipment, enabled by default, with a **Melee / Ranged / Magic** preference (Ranged by default). Eligible upgrades within 3.75 tiles and clear sight fly toward the knight before equipping, leaving the old item on the floor. Weapons must match the preference and improve strike power; ties favor faster recovery, then longer reach. Magic preference equips a first wand even when its strike power is lower, then compares wands as usual. Compatible armor upgrades by reduction. Gear preferences are saved with the run. Pause and shopping suspend auto-equipping.
 
 The start/pause overlay keeps its action button visible while long instructions scroll within the panel, including short desktop and phone layouts. Dropped **gold, potions, and ammo packs** automatically move toward the knight at 360 world units/second within 3.75 tiles (150 units). Scrolls do the same only while holding a wand; eligible gear also flies toward the knight when auto-equipment is enabled. Gold never expires.
 
