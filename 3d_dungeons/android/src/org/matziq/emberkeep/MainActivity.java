@@ -10,9 +10,11 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 
 public final class MainActivity extends Activity {
     private WebView game;
+    private boolean activityPaused;
 
     @Override
     public void onCreate(Bundle state) {
@@ -37,7 +39,15 @@ public final class MainActivity extends Activity {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
-                if (url.startsWith("file:///android_asset/") || url.startsWith("data:")) return null;
+                if (url.equals("https://emberkeep.local/index.html")) {
+                    try {
+                        return new WebResourceResponse("text/html", "UTF-8", getAssets().open("index.html"));
+                    } catch (IOException error) {
+                        return new WebResourceResponse("text/plain", "UTF-8", 500, "Asset unavailable",
+                                null, new ByteArrayInputStream(new byte[0]));
+                    }
+                }
+                if (url.startsWith("data:")) return null;
                 return new WebResourceResponse("text/plain", "UTF-8", 403, "Offline only",
                         null, new ByteArrayInputStream(new byte[0]));
             }
@@ -54,21 +64,24 @@ public final class MainActivity extends Activity {
             return insets.consumeSystemWindowInsets();
         });
         setContentView(game);
-        game.loadUrl("file:///android_asset/index.html");
+        game.loadUrl("https://emberkeep.local/index.html");
     }
 
     @Override
     protected void onPause() {
+        activityPaused = true;
         game.evaluateJavascript("if(typeof resetTouch==='function')resetTouch();"
-                + "if(typeof state!=='undefined'&&state==='playing')togglePause();", null);
+                + "if(typeof state!=='undefined'&&state==='playing')togglePause();"
+                + "if(typeof saveRun==='function')saveRun();",
+                result -> { if (activityPaused) game.pauseTimers(); });
         game.onPause();
-        game.pauseTimers();
         super.onPause();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        activityPaused = false;
         if (game != null) {
             game.onResume();
             game.resumeTimers();
@@ -78,15 +91,17 @@ public final class MainActivity extends Activity {
     @Override
     public void onBackPressed() {
         game.evaluateJavascript("if(typeof resetTouch==='function')resetTouch();"
-                + "if(typeof state!=='undefined'&&state==='playing')togglePause();", null);
+                + "if(typeof state!=='undefined'&&state==='playing')togglePause();"
+                + "if(typeof saveRun==='function')saveRun();", null);
         new AlertDialog.Builder(this).setTitle("Leave Emberkeep?")
-                .setMessage("This run is not saved. Stay to resume your adventure.")
+                .setMessage("The game attempts to save locally when paused. Check the game for any save warning before leaving.")
                 .setNegativeButton("Stay", (dialog, which) -> dialog.dismiss())
                 .setPositiveButton("Leave", (dialog, which) -> finish()).show();
     }
 
     @Override
     protected void onDestroy() {
+        activityPaused = false;
         game.destroy();
         super.onDestroy();
     }
