@@ -27,8 +27,34 @@ scripts.forEach(script => vm.runInContext(script, sandbox));
 const run = code => vm.runInContext(code, sandbox);
 let count = 0;
 function check(name, fn) { fn(); count++; console.log('PASS ' + name); }
+check('wand gating, old-save migration, settings and robe protection', () => {
+  run("begin();world.tiles.fill(1);loot=[];player.scrolls.fireball=2;var oldSword=player.weapon;var scrollDrop={x:player.x,y:player.y,type:'scroll',scroll:'light'};loot.push(scrollDrop);updateScrolls(.1)");
+  assert.equal(run("loot.includes(scrollDrop)&&player.scrolls.light===0&&castScroll()===false"),true);
+  run("saveRun();savedRun=null;state='title';restoreSavedRun()");
+  assert.equal(run("player.scrolls.fireball===0&&loot.filter(i=>i.type==='scroll'&&i.scroll==='fireball').length===2"),true);
+  run("var wand={kind:'wand',effect:'fireball',power:5,name:'Fireball Wand +5',damage:10,range:300,cooldown:.55,color:'#ff954d'};player.armor={kind:'plate',slot:'armor',reduction:.3};var item={x:player.x,y:player.y,type:'weapon',weapon:wand};loot.push(item);equipLoot(item);updateScrolls(.01)");
+  assert.equal(run("isWand(player.weapon)&&!player.armor&&player.scrolls.light===1"),true);
+  run("player.armor=makeRobe(false);var body=reduction(),head=reduction('head');player.armor=makeRobe(true)");
+  assert.ok(run("body>head&&reduction('head')>0"));
+  run("player.scrolls.fireball=2;var swordItem=loot.find(i=>i.type==='weapon'&&i.weapon===oldSword)||{x:player.x,y:player.y,type:'weapon',weapon:oldSword};if(!loot.includes(swordItem))loot.push(swordItem);equipLoot(swordItem)");
+  assert.equal(run("!isWand(player.weapon)&&player.scrolls.fireball===0&&loot.filter(i=>i.type==='scroll'&&i.scroll==='fireball').length>=2"),true);
+  run("keyBindings.ammo='v';difficulty='hard';saveRun();keyBindings.ammo='c';difficulty='medium';savedRun=null;restoreSavedRun()");
+  assert.equal(run("keyBindings.ammo==='v'&&difficulty==='hard'"),true);
+  run("keyBindings.ammo='c';difficulty='medium';begin()");
+});
+check('wand powers scale by actual floor and effects chain, cloud, root and illuminate', () => {
+  run("begin();loadFloor(6,604);world.tiles.fill(1);props=[];loot=[];var wandSet=[];for(let i=0;i<200;i++){var w=withRealmDepth(makeWeapon);if(w.kind==='wand')wandSet.push(w)}");
+  assert.equal(run("wandSet.length>0&&wandSet.every(w=>w.power===6)"),true);
+  run("var first=makeEnemy('slime',{x:player.x+40,y:player.y}),second=makeEnemy('slime',{x:player.x+80,y:player.y});first.hp=second.hp=200;enemies=[first,second];impactWand({x:first.x,y:first.y,power:5,wandEffect:'lightning',color:'#abcdef'},first)");
+  assert.equal(run('second.hp===190'),true);
+  run("impactWand({x:first.x,y:first.y,power:6,wandEffect:'poison',color:'#abcdef'},first);impactWand({x:first.x,y:first.y,power:6,wandEffect:'web',color:'#abcdef'},first)");
+  assert.equal(run("world.scrollZones.at(-1).damage===9&&second.rooted>3"),true);
+  run("player.weapon={kind:'wand',effect:'light',power:6,cooldown:.55};player.cool=0;attack()");
+  assert.equal(run("world.scrollLights.at(-1).coneAngle===player.angle&&world.scrollLights.at(-1).life>5"),true);
+  run("begin()");
+});
 check('local save restores the current world, shared references, timers and random sequence', () => {
-  run("begin();loadFloor(8,604);player.gold=4321;player.scrolls.light=7;selectedAmmo='light';player.ammoShared.light=8;world.rooms[1].decor[0].broken=true;world.boss.hp-=23;world.quake.next=Infinity;world.scrollLights.push({x:player.x,y:player.y,life:5});var marker={type:'weapon',weapon:{...player.weapon,name:'Saved marker'},x:player.x,y:player.y};loot.push(marker);selectedWorldItem=marker;heroShots.push({hit:new Set([world.boss])});var beforeSeed=seed;var savedBossHp=world.boss.hp;var savedTiles=Array.from(world.tiles).join('');saveRun()");
+  run("begin();loadFloor(8,604);player.weapon={kind:'wand',effect:'light',power:8,range:300,damage:13};player.gold=4321;player.scrolls.light=7;selectedAmmo='light';player.ammoShared.light=8;world.rooms[1].decor[0].broken=true;world.boss.hp-=23;world.quake.next=Infinity;world.scrollLights.push({x:player.x,y:player.y,life:5});var marker={type:'weapon',weapon:{...player.weapon,name:'Saved marker'},x:player.x,y:player.y};loot.push(marker);selectedWorldItem=marker;heroShots.push({hit:new Set([world.boss])});var beforeSeed=seed;var savedBossHp=world.boss.hp;var savedTiles=Array.from(world.tiles).join('');saveRun()");
   assert.equal(run("decodeRun(window.localStorage.getItem(RUN_SAVE_KEY)).player.gold"),4321);
   run("var expectedRandom=rng();player.gold=0;world.boss.hp=1;state='title';savedRun=null");
   assert.equal(run('restoreSavedRun()'),true);
@@ -111,22 +137,22 @@ check('scroll and ammunition cycling skip empty types, wrap without consumption,
   assert.equal(run("selectedAmmo==='regular'&&player.ammoShared.poison+player.ammoShared.light===10"),true);
   run('begin()');
 });
-check('automatic equipment is opt-in, respects preference, distance and sight, upgrades slots without oscillation', () => {
+check('automatic equipment respects preference, distance and sight, upgrades slots without oscillation', () => {
   run("begin();loadFloor(1,604);enemies=[];props=[];world.tiles.fill(1);var original=player.weapon;var upgrade={x:player.x+150,y:player.y,type:'weapon',weapon:{...original,damage:original.damage+5}};loot=[upgrade];updateAutoGear()");
   assert.equal(run('player.weapon===original&&loot.includes(upgrade)'),true);
   run("gearPreferences.enabled=true;gearPreferences.prefer='ranged';updateAutoGear()");
   assert.equal(run('player.weapon===original'),true);
   run("gearPreferences.prefer='melee';upgrade.x+=.01;updateAutoGear()");
   assert.equal(run('player.weapon===original'),true);
-  run('upgrade.x-=.01;updateAutoGear();updateAutoGear()');
+  run('upgrade.x-=.01;updateAutoGear(1);updateAutoGear(1)');
   assert.equal(run('player.weapon===upgrade.weapon&&loot.length===1&&loot[0].weapon===original'),true);
   run("gearPreferences.prefer='ranged';var ranged={x:player.x+100,y:player.y,type:'weapon',weapon:{...weaponTypes.bow,kind:'bow',name:'Bow',damage:original.damage}};loot=[ranged];updateAutoGear()");
   assert.equal(run('player.weapon===upgrade.weapon'),true);
-  run('ranged.weapon.damage=upgrade.weapon.damage+1;updateAutoGear()');
+  run('ranged.weapon.damage=upgrade.weapon.damage+1;updateAutoGear(1)');
   assert.equal(run('player.weapon===ranged.weapon'),true);
   run("var armor={x:player.x+100,y:player.y,type:'armor',armor:makeArmor('boots')};loot=[armor];state='paused';updateAutoGear()");
   assert.equal(run('!player.boots'),true);
-  run("state='playing';updateAutoGear();updateAutoGear()");
+  run("state='playing';updateAutoGear(1);updateAutoGear(1)");
   assert.equal(run('player.boots===armor.armor&&loot.length===0'),true);
   run("var downgrade={...armor,armor:{...armor.armor,reduction:armor.armor.reduction-.01}};loot=[downgrade];updateAutoGear()");
   assert.equal(run('loot.includes(downgrade)'),true);
@@ -205,15 +231,15 @@ check('a direct spider web hit roots the knight then drives the spider into an i
   assert.equal(run('player.hp===120-creatures.cave_spider.damage&&player.root>0&&webStriker.lunge===0&&!webStriker.webLunge'),true);
 });
 check('gold scrolls potions and every ammo pack vacuum at 150 units but gear stays manual', () => {
-  run("begin();loadFloor(1,604);enemies=[];props=[];world.traps=[];player.dash=0;var pickupX=player.x;var startGold=player.gold;var startPotions=player.potions;var startScroll=player.scrolls.light;var kinds=[{type:'gold',value:17},{type:'scroll',scroll:'light'},{type:'potion'},...['bow','crossbow'].flatMap(ammoKind=>['fire','poison','explosion','light','lightning','web','charm'].map(special=>({type:'ammo',ammoKind,special})))];var nearPickups=kinds.map(k=>({...k,x:player.x+3.75*T,y:player.y}));var farPickups=kinds.map(k=>({...k,x:player.x+3.75*T+.01,y:player.y}));var manualGear=['weapon','armor'].map(type=>({x:player.x+100,y:player.y,type}));loot=[...nearPickups,...farPickups,...manualGear];baseUpdate(.04)");
+  run("begin();loadFloor(1,604);player.weapon={kind:'wand',effect:'light',power:1};enemies=[];props=[];world.traps=[];player.dash=0;var pickupX=player.x;var startGold=player.gold;var startPotions=player.potions;var startScroll=player.scrolls.light;var kinds=[{type:'gold',value:17},{type:'scroll',scroll:'light'},{type:'potion'},...['bow','crossbow'].flatMap(ammoKind=>['fire','poison','explosion','light','lightning','web','charm'].map(special=>({type:'ammo',ammoKind,special})))];var nearPickups=kinds.map(k=>({...k,x:player.x+3.75*T,y:player.y}));var farPickups=kinds.map(k=>({...k,x:player.x+3.75*T+.01,y:player.y}));var manualGear=['weapon','armor'].map(type=>({x:player.x+100,y:player.y,type}));loot=[...nearPickups,...farPickups,...manualGear];baseUpdate(.04)");
   assert.equal(run('nearPickups.every(item=>item.x<pickupX+150)&&farPickups.every(item=>item.x===pickupX+150.01)&&manualGear.every(item=>item.x===pickupX+100)'),true);
   run('for(let i=0;i<30;i++){baseUpdate(.04);updateScrolls(.04)}');
   assert.equal(run('player.gold===startGold+17&&player.potions===startPotions+1&&player.scrolls.light===startScroll+1'),true);
   assert.equal(run("['bow','crossbow'].every(k=>['fire','poison','explosion','light','lightning','web','charm'].every(s=>player.ammo[k][s]===10))"),true);
   assert.equal(run('nearPickups.every(item=>!loot.includes(item))&&farPickups.every(item=>loot.includes(item))&&manualGear.every(item=>loot.includes(item))'),true);
 });
-check('gear blinks at 30 and expires at 60 while potion timing stays 10 and 20; undo preserves age', () => {
-  run("loadFloor(1,604);enemies=[];props=[];world.traps=[];var gear=['weapon','armor'].map(type=>({x:player.x+200,y:player.y,type}));var timedPotion={x:player.x+200,y:player.y,type:'potion'};var permanent=['gold','scroll','ammo'].map(type=>({x:player.x+240,y:player.y,type}));loot=[...gear,timedPotion,...permanent];baseUpdate(9.99)");
+check('gear and potions flash and expire five seconds sooner; gold remains', () => {
+  run("loadFloor(1,604);enemies=[];props=[];world.traps=[];var gear=['weapon','armor'].map(type=>({x:player.x+200,y:player.y,type}));var timedPotion={x:player.x+200,y:player.y,type:'potion'};var permanent=['gold','scroll','ammo'].map(type=>({x:player.x+240,y:player.y,type}));loot=[...gear,timedPotion,...permanent];baseUpdate(4.99)");
   assert.equal(run('lootVisible(timedPotion)&&gear.every(lootVisible)'),true);
   run('baseUpdate(.22)');
   assert.equal(run('!lootVisible(timedPotion)&&gear.every(lootVisible)'),true);
@@ -222,15 +248,15 @@ check('gear blinks at 30 and expires at 60 while potion timing stays 10 and 20; 
   run('baseUpdate(.02)');
   assert.equal(run('!loot.includes(timedPotion)&&gear.every(item=>loot.includes(item))'),true);
   run('baseUpdate(9.98)');
-  assert.equal(run('gear.every(item=>item.age<30&&lootVisible(item))'),true);
+  assert.equal(run('gear.every(item=>item.age<25&&lootVisible(item))'),true);
   run('baseUpdate(.22)');
   assert.equal(run('gear.every(item=>!lootVisible(item))'),true);
   run('baseUpdate(29.78)');
   assert.equal(run('gear.every(item=>loot.includes(item))'),true);
   run('baseUpdate(.02)');
   assert.equal(run('gear.every(item=>!loot.includes(item))&&permanent.every(item=>loot.includes(item)&&lootVisible(item))'),true);
-  run("var timedGear={x:player.x+40,y:player.y,type:'weapon',weapon:makeWeapon(),age:59};loot=[timedGear];selectedWorldItem=timedGear;deleteSelectedGear();baseUpdate(5);undoGearDelete();undoGearDelete()");
-  assert.equal(run('loot.length===1&&loot[0]===timedGear&&timedGear.age===59'),true);
+  run("var timedGear={x:player.x+40,y:player.y,type:'weapon',weapon:makeWeapon(),age:54};loot=[timedGear];selectedWorldItem=timedGear;deleteSelectedGear();baseUpdate(5);undoGearDelete();undoGearDelete()");
+  assert.equal(run('loot.length===1&&loot[0]===timedGear&&timedGear.age===54'),true);
   run('baseUpdate(1.01)');
   assert.equal(run('loot.length'),0);
 });
@@ -398,21 +424,21 @@ check('rare collapsing rooms warn then open exact-one-floor pits, never on final
 });
 check('scroll inventory starts fresh, persists between floors, and every kind is obtainable', () => {
   run('begin()');
-  assert.equal(run('Object.values(player.scrolls).every(count=>count===1)'),true);
+  assert.equal(run('Object.values(player.scrolls).every(count=>count===0)'),true);
   run("player.scrolls.fireball=3;world.scrollLights.push({life:25});world.scrollZones.push({life:6});loadFloor(3,604)");
   assert.equal(run('player.scrolls.fireball'),3);
   assert.equal(run('world.scrollLights.length+world.scrollZones.length'),0);
   run("loot=[];for(let i=0;i<80;i++)drops(player,true)");
   assert.equal(run("Object.keys(scrollTypes).every(kind=>loot.some(item=>item.type==='scroll'&&item.scroll===kind))"),true);
-  run("loot=[{x:player.x,y:player.y,type:'scroll',scroll:'fireball'}];updateScrolls(.01);updateScrolls(.01)");
+  run("player.weapon={kind:'wand',effect:'light',power:1};loot=[{x:player.x,y:player.y,type:'scroll',scroll:'fireball'}];updateScrolls(.01);updateScrolls(.01)");
   assert.equal(run('player.scrolls.fireball'),4);
   run("loot=[];drops({...player,trapSwarm:true},true)");
   assert.equal(run('loot.length'),0);
   run('begin()');
-  assert.equal(run('Object.values(player.scrolls).every(count=>count===1)'),true);
+  assert.equal(run('Object.values(player.scrolls).every(count=>count===0)'),true);
 });
 check('scroll casts consume exactly once, reject pause walls cooldown and empty inventory', () => {
-  run("loadFloor(1,604);state='paused';player.selectedScroll='fireball'");
+  run("loadFloor(1,604);player.weapon={kind:'wand',effect:'light',power:1};player.scrolls.fireball=1;state='paused';player.selectedScroll='fireball'");
   assert.equal(run('castScroll()'),false);
   assert.equal(run('player.scrolls.fireball'),1);
   run("state='playing';props=[];enemies=[];world.tiles.fill(1);player.angle=0;world.tiles[Math.floor(player.y/T)*W+Math.floor((player.x+8)/T)]=0");
@@ -432,7 +458,7 @@ check('fireball burns and lightning strikes actual targets without crossing wall
   for(const kind of ['fireball','lightning']){
     run(`loadFloor(1,604);state='playing';world.tiles.fill(1);props=[];loot=[];player.angle=0;player.scrolls.${kind}=2;player.scrollCooldown=0;player.selectedScroll='${kind}';
       var scrollTarget=makeEnemy('slime',{x:player.x+100,y:player.y});scrollTarget.hp=500;enemies=[scrollTarget];castScroll()`);
-    assert.equal(run('scrollTarget.hp'),kind==='fireball'?445:400);
+    assert.equal(run('scrollTarget.hp'),kind==='fireball'?444:399);
     if(kind==='fireball')assert.equal(run('scrollTarget.burn'),3);
     run(`player.scrollCooldown=0;scrollTarget.hp=500;var shieldBox={x:player.x+35,y:player.y,type:'crate',hp:100,open:false};props=[shieldBox];castScroll()`);
     if(kind==='lightning')assert.equal(run('scrollTarget.hp'),500);
@@ -444,7 +470,7 @@ check('fireball burns and lightning strikes actual targets without crossing wall
 check('poison scroll lingers and poisons late-arriving foes then expires', () => {
   run("loadFloor(1,604);state='playing';world.tiles.fill(1);props=[];enemies=[];player.angle=0;player.scrolls.poison=1;player.selectedScroll='poison';player.scrollCooldown=0;castScroll();updateScrolls(1);var cloud=world.scrollZones[0];var poisoned=makeEnemy('slime',{x:cloud.x,y:cloud.y});enemies=[poisoned];var poisonBefore=poisoned.hp;updateScrolls(.5)");
   assert.equal(run('poisoned.poison'),3);
-  assert.equal(run('poisoned.hp===poisonBefore-7&&player.scrolls.poison===0'),true);
+  assert.equal(run('poisoned.hp===poisonBefore-8&&player.scrolls.poison===0'),true);
   run('updateScrolls(6)');
   assert.equal(run('world.scrollZones.length'),0);
 });
@@ -452,7 +478,7 @@ check('light scroll shares wall-bounded radial glint lighting and expires withou
   run("loadFloor(1,604);state='playing';props=[];enemies=[];world.torches.forEach(t=>t.lit=false);player.selectedScroll='light';player.scrolls.light=1;player.scrollCooldown=0;castScroll()");
   assert.ok(run('torchIllumination(player)>.9&&world.scrollLights.length===1&&world.torches.every(t=>!t.lit)'));
   run('updateScrolls(25)');
-  assert.equal(run('torchIllumination(player)'),0);
+  assert.ok(run('torchIllumination(player)>0'));
   assert.equal(run('world.scrollLights.length'),0);
   run('begin()');
 });
@@ -611,7 +637,7 @@ check('floating combat and pickup feedback reports actual values without duplica
   run('floatingTexts=[];player.hp=10;player.potions=1;potion()');
   assert.equal(sandbox.window.emberkeep.snapshot().floatingTexts[0].text,'+65 HP');
 });
-check('thirteen coherent melee and ranged weapon types drop with valid stats and no whips', () => {
+check('weapon types and wands drop with valid stats and no whips', () => {
   const kinds = new Set();
   for (let i=0;i<200;i++) {
     const w=run('makeWeapon()'); kinds.add(w.kind);
@@ -619,7 +645,7 @@ check('thirteen coherent melee and ranged weapon types drop with valid stats and
     run(`heroShots=[];player.weapon=${JSON.stringify(w)};player.cool=0;attack()`);
     assert.equal(run('player.cool'),w.cooldown);
   }
-  assert.equal(kinds.size,13);
+  assert.equal(kinds.size,14);
   assert.equal([...kinds].some(kind=>kind.includes('whip')),false);
 });
 check('rifles and pistols are ranged for classification, preference, and projectile combat', () => {
