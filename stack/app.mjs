@@ -1,10 +1,12 @@
 import { MAX_PLACEMENTS, GROUND_Y, newGame, validGame, createWorld, makeBody, snapshot, topOf, towerHeight, addBlock, step, impactSpeed } from "./physics.mjs";
 import { playerNames } from "../party_names.mjs";
 import { createSounds } from "../party_audio.mjs";
+import { VIEW_WIDTH, VIEW_HEIGHT, cameraFor, pointerWorldX } from "./view.mjs";
 const M = window.Matter;
 const $ = id => document.getElementById(id);
 const canvas = $("canvas"), ctx = canvas.getContext("2d"), key = "road-tower-tumble.v1";
 let state = null, world, lastTime = 0, accumulator = 0, sinceSave = 0, lastDisplay = "", lastImpact = -Infinity;
+let camera = null;
 const sounds = createSounds(() => { $("sound-warning").textContent = "Sound is unavailable or waiting for interaction; you can still play."; $("sound-warning").hidden = false; }, () => { $("sound-warning").hidden = true; });
 function warn(text) { $("warning").textContent = text; $("warning").hidden = false; }
 function save() {
@@ -57,15 +59,19 @@ function polygon(body, opacity = 1) {
   ctx.globalAlpha = 1;
 }
 function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
   const top = topOf(world.bodies);
-  const viewTop = Math.min(GROUND_Y - 600, top - 160);
-  ctx.save(); ctx.translate(0, -viewTop);
+  const ghost = state.phase === "aim" ? makeBody(M, state.queue[world.bodies.length], state.aim, top - 100, state.rotation * Math.PI / 2) : null;
+  camera = cameraFor(world.bodies, ghost, GROUND_Y);
+  const rect = canvas.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  const width = Math.max(1, Math.round(rect.width * dpr)), height = Math.max(1, Math.round(rect.height * dpr));
+  if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, width, height);
+  ctx.setTransform(width / VIEW_WIDTH, 0, 0, height / VIEW_HEIGHT, 0, 0);
+  ctx.save(); ctx.translate(camera.x, camera.y); ctx.scale(camera.scale, camera.scale);
   ctx.fillStyle = "#7688a2"; ctx.fillRect(140, GROUND_Y, 320, 36);
   ctx.fillStyle = "#c4cce1"; ctx.font = "16px system-ui"; ctx.fillText("PLATFORM", 255, GROUND_Y + 24);
   world.bodies.forEach(body => polygon(body));
-  if (state.phase === "aim") {
-    const ghost = makeBody(M, state.queue[world.bodies.length], state.aim, top - 100, state.rotation * Math.PI / 2);
+  if (ghost) {
     polygon(ghost, 0.6);
     ctx.strokeStyle = "#a7eaff"; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.moveTo(state.aim, top - 155); ctx.lineTo(state.aim, top - 120); ctx.stroke(); ctx.setLineDash([]);
   }
@@ -96,9 +102,8 @@ $("left").addEventListener("click", () => setAim(state.aim - 15));
 $("right").addEventListener("click", () => setAim(state.aim + 15));
 $("rotate").addEventListener("click", rotate);
 $("drop").addEventListener("click", drop);
-canvas.addEventListener("pointerdown", event => {
-  const bounds = canvas.getBoundingClientRect();
-  setAim((event.clientX - bounds.left) * canvas.width / bounds.width);
+canvas.addEventListener("click", event => {
+  if (camera) setAim(pointerWorldX(event.clientX, canvas.getBoundingClientRect(), camera));
 });
 window.addEventListener("keydown", event => {
   if (event.target.closest("button, input, a")) return;

@@ -1,0 +1,8 @@
+.back{position:static;margin:max(4px,env(safe-area-inset-top)) 0 0 max(8px,env(safe-area-inset-left))}
+main{padding-top:16px}
+@media(min-width:1100px){.back{position:fixed;margin:0}main{padding-top:74px}}
+.names{grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr))}
+.panel,.status,.hint{overflow-wrap:anywhere}
+.canvas-wrap{width:min(100%,68vh,600px);aspect-ratio:600/620;margin-inline:auto}
+.canvas-wrap canvas{width:100%;height:100%;touch-action:pan-y}
+.control button{min-width:0}
