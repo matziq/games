@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#081426">
+  <meta name="description" content="Jump through three original rhythmic runner courses.">
+  <title>Starline Sprint</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<a class="back" href="https://memconfigmgr.org/games/index.html">&#8592; Games Menu</a>
+<main>
+  <header>
+    <p class="eyebrow"><span aria-hidden="true">&#10022;</span> ONE TAP &middot; THREE WORLDS</p>
+    <h1>Starline <span>Sprint</span></h1>
+    <p class="intro">Find your rhythm. Leap the hazards. Chase the horizon.</p>
+  </header>
+  <p id="storage-warning" class="warning" role="status" hidden></p>
+  <p id="audio-warning" class="warning" role="status" hidden></p>
+  <section class="play-card" aria-label="Game">
+    <div class="game-heading">
+      <div><p class="label">CURRENT COURSE</p><h2 id="course-title"></h2></div>
+      <div class="stat"><span>BEST</span><strong id="best">0%</strong></div>
+    </div>
+    <div class="meter"><progress id="progress" max="100" value="0" aria-label="Course progress"></progress><span id="percent">0%</span></div>
+    <div class="stage">
+      <canvas id="canvas" width="960" height="400" tabindex="0" aria-label="Runner game. Tap the game area or press Space to jump."></canvas>
+      <div id="overlay" class="overlay"><div><p id="overlay-kicker" class="overlay-kicker"></p><p id="overlay-message"></p></div></div>
+    </div>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+    <div class="controls">
+      <button id="start" class="primary" type="button">Start run</button>
+      <button id="jump" class="jump" type="button">Jump <span aria-hidden="true">&#8593;</span></button>
+      <button id="pause" type="button">Pause</button>
+      <button id="retry" type="button">Retry</button>
+      <button id="next" type="button" hidden>Next course &#8594;</button>
+    </div>
+    <p class="instructions">Tap the track or Jump, or press <kbd>Space</kbd> / <kbd>&#8593;</kbd>. Press <kbd>P</kbd> to pause. One jump per landing.</p>
+  </section>
+  <div class="details">
+    <section class="panel" aria-labelledby="courses-heading">
+      <p class="label">PICK YOUR ROUTE</p><h2 id="courses-heading">Courses</h2>
+      <div id="levels" class="levels"></div>
+    </section>
+    <section class="panel" aria-labelledby="sound-heading">
+      <p class="label">MAKE SOME NOISE</p><h2 id="sound-heading">Soundtrack</h2>
+      <p>Original synth beats play while you run. Your browser may require a tap before audio starts.</p>
+      <div class="sound-row"><button id="mute" type="button" aria-pressed="false">Mute</button>
+        <label for="volume">Volume <span id="volume-value"></span></label>
+        <input id="volume" type="range" min="0" max="100" step="5" value="35">
+      </div>
+    </section>
+  </div>
+  <p class="fineprint">Your best runs, unlocked courses, sound settings, and current run are saved on this browser and device. A restored run starts paused.</p>
+  <noscript>JavaScript is required to play.</noscript>
+</main>
+<script type="module" src="./app.mjs"></script>
+</body>
+</html>
