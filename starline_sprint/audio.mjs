@@ -1,7 +1,8 @@
 export function createMusic(onError) {
   let context, master, nextBeat = 0, beat = 0, volume = 0.35, muted = false, failed = false, generation = 0;
-  const melody = [0,7,3,10,7,3,12,10,5,12,8,7,3,5,7,2];
-  const bass = [0,0,8,8,5,5,10,7];
+  const melody = [0,7,12,7,3,7,10,7,5,12,15,12,7,10,14,10,
+    8,15,12,8,5,12,8,5,7,14,10,7,3,10,7,2];
+  const bass = [0,0,8,8,5,5,7,7];
   function tone(frequency, start, duration, level, type) {
     const oscillator = context.createOscillator(), gain = context.createGain();
     oscillator.type = type;
@@ -42,10 +43,17 @@ export function createMusic(onError) {
     if (nextBeat < context.currentTime - 0.3) nextBeat = context.currentTime;
     while (nextBeat < context.currentTime + 0.1) {
       const pitch = melody[beat % melody.length];
-      tone(261.6256 * 2 ** (pitch / 12),nextBeat,0.14,0.12,"triangle");
-      if (beat % 2 === 0) tone(130.8128 * 2 ** (bass[Math.floor(beat/2)%bass.length] / 12),nextBeat,0.17,0.15,"sine");
-      if (beat % 4 === 0) tone(72,nextBeat,0.07,0.18,"sine");
-      beat++; nextBeat += 0.2;
+      tone(261.6256 * 2 ** (pitch / 12),nextBeat,0.12,0.07,"square");
+      if (beat % 2 === 0) {
+        tone(65.4064 * 2 ** (bass[Math.floor(beat/4)%bass.length] / 12),nextBeat,0.2,0.12,"sawtooth");
+        tone(2400,nextBeat,0.025,0.018,"square");
+      }
+      if (beat % 8 === 0) tone(68,nextBeat,0.12,0.18,"sine");
+      if (beat % 8 === 4) {
+        tone(180,nextBeat,0.09,0.08,"triangle");
+        tone(730,nextBeat,0.035,0.025,"square");
+      }
+      beat++; nextBeat += 0.145;
     }
   }
   function silence() {

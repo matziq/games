@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#081426">
-  <meta name="description" content="Jump through three original rhythmic runner courses.">
+  <meta name="description" content="Jump and flip through 15 original rhythmic runner courses.">
   <title>Starline Sprint</title>
   <link rel="stylesheet" href="./style.css">
 </head>
@@ -12,7 +12,7 @@
 <a class="back" href="https://memconfigmgr.org/games/index.html">&#8592; Games Menu</a>
 <main>
   <header>
-    <p class="eyebrow"><span aria-hidden="true">&#10022;</span> ONE TAP &middot; THREE WORLDS</p>
+    <p class="eyebrow"><span aria-hidden="true">&#10022;</span> ONE TAP &middot; FIFTEEN WORLDS</p>
     <h1>Starline <span>Sprint</span></h1>
     <p class="intro">Find your rhythm. Leap the hazards. Chase the horizon.</p>
   </header>
@@ -36,23 +36,41 @@
       <button id="retry" type="button">Retry</button>
       <button id="next" type="button" hidden>Next course &#8594;</button>
     </div>
-    <p class="instructions">Tap the track or Jump, or press <kbd>Space</kbd> / <kbd>&#8593;</kbd>. Press <kbd>P</kbd> to pause. One jump per landing.</p>
+    <p class="instructions">Tap the track or Jump, or press <kbd>Space</kbd> / <kbd>&#8593;</kbd>. Press <kbd>P</kbd> to pause. One jump per landing. Glowing gates flip gravity: jump away from the floor or ceiling, and land on platforms.</p>
   </section>
   <div class="details">
     <section class="panel" aria-labelledby="courses-heading">
       <p class="label">PICK YOUR ROUTE</p><h2 id="courses-heading">Courses</h2>
       <div id="levels" class="levels"></div>
     </section>
+    <div class="detail-stack">
+    <section class="panel" aria-labelledby="profile-heading">
+      <p class="label">MAKE IT YOURS</p><h2 id="profile-heading">Your runner</h2>
+      <div class="profile-fields">
+        <label for="player-name">Player name</label>
+        <input id="player-name" type="text" maxlength="24" autocomplete="off" placeholder="Player 1">
+        <label for="avatar">Avatar</label>
+        <select id="avatar"><option value="nova">Nova &mdash; square</option><option value="orbit">Orbit &mdash; circle</option><option value="spark">Spark &mdash; diamond</option><option value="comet">Comet &mdash; hexagon</option></select>
+      </div>
+      <p>All avatars play the same. Your name and avatar are saved on this device.</p>
+    </section>
+    <section class="panel" aria-labelledby="scores-heading">
+      <p class="label">LOCAL LEADERBOARD</p><h2 id="scores-heading">High scores</h2>
+      <p>Top 10 runs on this browser and device. Scores reward distance, later courses, and completing a course.</p>
+      <ol id="scores" class="scores"></ol>
+      <p id="no-scores">Finish or crash a run to set a score.</p>
+    </section>
     <section class="panel" aria-labelledby="sound-heading">
       <p class="label">MAKE SOME NOISE</p><h2 id="sound-heading">Soundtrack</h2>
-      <p>Original synth beats play while you run. Your browser may require a tap before audio starts.</p>
+      <p>Original retro synth beats play while you run. Your browser may require a tap before audio starts.</p>
       <div class="sound-row"><button id="mute" type="button" aria-pressed="false">Mute</button>
         <label for="volume">Volume <span id="volume-value"></span></label>
         <input id="volume" type="range" min="0" max="100" step="5" value="35">
       </div>
     </section>
+    </div>
   </div>
-  <p class="fineprint">Your best runs, unlocked courses, sound settings, and current run are saved on this browser and device. A restored run starts paused.</p>
+  <p class="fineprint">Your profile, high scores, best runs, unlocked courses, sound settings, and current run are saved on this browser and device. A restored run starts paused.</p>
   <noscript>JavaScript is required to play.</noscript>
 </main>
 <script type="module" src="./app.mjs"></script>
