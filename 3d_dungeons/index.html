@@ -1334,7 +1334,7 @@ function updateScrolls(dt){
 }
 function lootVisible(item){const blinkAt=item.type==='potion'?5:25;return !['weapon','armor','potion'].includes(item.type)||(item.age||0)<blinkAt||Math.floor(((item.age||0)-blinkAt)*5)%2===0}
 const gearPreferences={enabled:true,prefer:'ranged'};
-document.querySelector('aside').insertAdjacentHTML('afterbegin','<section class="panel" aria-label="Automatic equipment"><div class="label">Automatic equipment</div><label><input id="autoEquip" type="checkbox" checked> Auto-pickup and equip better gear</label><p><label for="preferWeapon">Prefer</label> <select id="preferWeapon"><option value="melee">Melee</option><option value="ranged" selected>Ranged</option><option value="magic">Magic</option></select></p><p style="font-size:12px">Upgrades fly from 3.75 tiles away. Preferred weapons never replace a stronger weapon. Settings are saved with your run.</p></section>');
+document.querySelector('aside').insertAdjacentHTML('afterbegin','<section class="panel" aria-label="Automatic equipment"><div class="label">Automatic equipment</div><label><input id="autoEquip" type="checkbox" checked> Auto-pickup and equip better gear</label><p><label for="preferWeapon">Prefer</label> <select id="preferWeapon"><option value="melee">Melee</option><option value="ranged" selected>Ranged</option><option value="magic">Magic</option></select></p><p style="font-size:12px">Upgrades fly from 3.75 tiles away. Magic preference equips a first wand, then stronger wands. Settings are saved with your run.</p></section>');
 document.querySelector('aside').insertAdjacentHTML('afterbegin','<section class="panel" aria-label="Game settings"><div class="label">Game settings</div><label>Difficulty <select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></label><p>Difficulty affects newly spawned enemies.</p><div id="bindingSettings"></div><p id="bindingError" role="status"></p></section>');
 const bindingInputs={};
 function refreshKeyHints(){
@@ -1362,6 +1362,7 @@ function betterAutoGear(item){
  if(item.type!=='weapon')return false;
  const next=item.weapon,current=player.weapon;
  if((isWand(next)?'magic':rangedKinds.includes(weaponKind(next))?'ranged':'melee')!==gearPreferences.prefer)return false;
+ if(isWand(next)&&!isWand(current))return true;
  if(next.damage!==current.damage)return next.damage>current.damage;
  if((next.cooldown||.36)!==(current.cooldown||.36))return (next.cooldown||.36)<(current.cooldown||.36);
  return next.range>current.range;

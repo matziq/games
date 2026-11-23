@@ -43,6 +43,9 @@ check('wand gating, old-save migration, settings and robe protection', () => {
   run("keyBindings.ammo='c';difficulty='medium';begin()");
 });
 check('wand powers scale by actual floor and effects chain, cloud, root and illuminate', () => {
+  run("begin();gearPreferences.enabled=true;gearPreferences.prefer='magic';world.tiles.fill(1);var firstWand={x:player.x+100,y:player.y,type:'weapon',weapon:{kind:'wand',effect:'light',power:1,name:'Light Wand +1',damage:6,range:300,cooldown:.55,color:'#fff'}};loot=[firstWand];updateAutoGear(1)");
+  assert.equal(run("player.weapon===firstWand.weapon"),true);
+  run("gearPreferences.prefer='ranged';begin()");
   run("begin();loadFloor(6,604);world.tiles.fill(1);props=[];loot=[];var wandSet=[];for(let i=0;i<200;i++){var w=withRealmDepth(makeWeapon);if(w.kind==='wand')wandSet.push(w)}");
   assert.equal(run("wandSet.length>0&&wandSet.every(w=>w.power===6)"),true);
   run("var first=makeEnemy('slime',{x:player.x+40,y:player.y}),second=makeEnemy('slime',{x:player.x+80,y:player.y});first.hp=second.hp=200;enemies=[first,second];impactWand({x:first.x,y:first.y,power:5,wandEffect:'lightning',color:'#abcdef'},first)");
