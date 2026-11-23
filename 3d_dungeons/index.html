@@ -27,17 +27,19 @@
 </head>
 <body>
 <a id="return-menu-link" href="https://memconfigmgr.org/games/index.html">&#8592; Games Menu</a>
-<header><div><h1>EMBERKEEP</h1><small>THE ASHEN CROWN</small></div><nav><div class="audio-controls"><button id="mute" aria-pressed="false">Sound effects on</button><button id="music" aria-pressed="false">Music on</button><label for="volume" class="label">Volume</label><input id="volume" type="range" min="0" max="100" value="55" aria-label="Master audio volume"></div><button id="art">Source art</button><button id="pause">Pause [P]</button><button id="restart">New run</button></nav></header>
+<header><div><h1>EMBERKEEP</h1><small>THE ASHEN CROWN</small></div><nav aria-label="Game controls"><div class="audio-controls"><button id="mute" type="button" aria-pressed="false">Sound effects on</button><button id="music" type="button" aria-pressed="false">Music on</button><label for="volume" class="label">Volume</label><input id="volume" name="volume" type="range" min="0" max="100" value="55" aria-label="Master audio volume"></div><button id="art" type="button">Source art</button><button id="pause" type="button">Pause</button><button id="restart" type="button">New run</button></nav></header>
 <main>
-<div class="viewport"><canvas id="game" tabindex="0" aria-label="Overhead action RPG. Move with WASD or arrows; attack with Space or mouse; E interacts; Shift dodges; Q heals."></canvas>
+<div class="viewport"><canvas id="game" role="application" tabindex="0" aria-label="Emberkeep game. Use the accessible action controls or keyboard to move, attack, use objects, dodge, heal and pause." aria-describedby="gameStateSummary"></canvas>
+<section id="accessibleGameState" class="sr-only" role="region" aria-label="Current game state" aria-live="off"><h2>Current game state</h2><p id="gameStateSummary">Enter the halls to begin. The game state and controls will be available here.</p></section>
+<div id="gameEvent" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 <div class="hud"><div class="label">Knight <span id="level">I</span> <span id="health"></span></div><bar><i id="hp"></i></bar><div class="label">Resolve / dodge</div><bar><i id="stamina"></i></bar><bar style="height:3px"><i id="xp"></i></bar></div>
 <div class="area"><span id="area">The Sunken Halls</span><small id="floor">CHAPTER I / V</small><small id="roomName"></small></div>
-<div id="audioStatus" role="status" aria-live="polite">Sound starts when you enter the halls.</div><div id="threatStatus" role="status" aria-live="polite" hidden></div><div class="prompt" id="prompt"></div><div class="boss" id="boss" hidden>VARKHOS, THE CINDER KING<bar><i id="bosshp"></i></bar></div>
+<div id="audioStatus" role="status" aria-live="polite">Sound starts when you enter the halls.</div><div id="threatStatus" role="status" aria-live="polite" hidden></div><div class="prompt" id="prompt" role="note" aria-label="Nearby action"></div><div class="boss" id="boss" role="group" aria-label="Boss health" hidden>VARKHOS, THE CINDER KING<bar><i id="bosshp"></i></bar></div>
 <details id="scrollPanel" aria-label="Ammo and single-use scrolls" hidden><summary id="scrollSummary">Scrolls / right-click or R</summary><div id="scrollChoices" class="scroll-choices"><button id="scroll-fireball" aria-pressed="true">Fireball</button><button id="scroll-light" aria-pressed="false">Light</button><button id="scroll-poison" aria-pressed="false">Poison</button><button id="scroll-lightning" aria-pressed="false">Lightning</button></div><button id="castScroll">Cast Fireball [R]</button><div id="scrollStatus" role="status" aria-live="polite"></div><button id="cycleAmmo">Cycle ammo or scrolls [T]</button></details>
 <section id="selectionPanel" aria-label="World item selection" hidden><div id="selectionStatus" role="status" aria-live="polite"></div><div id="selectionChoices" aria-label="Overlapping items"></div><div class="selection-actions"><button id="useSelected">Use [E]</button><button id="deleteSelected" disabled>Delete gear [X]</button><button id="clearSelected">Clear</button></div><button id="undoDelete" disabled>Undo last delete</button></section>
 <div class="overlay" id="overlay"><div class="intro"><div class="eyebrow">A PROCEDURAL MEDIEVAL ADVENTURE</div><h2 id="title">Steel. Stone.<br>Something beneath.</h2><p id="story">Descend through five changing medieval realms and survive sixteen floors of monsters, traps, treasure, and rotating bosses. Defeat the guardians on Floors 8 and 16 to open every route down; claim their spoils and carry your progress into a harder cycle.</p><div class="controls"><kbd>WASD / ARROWS</kbd> move &nbsp; <kbd>MOUSE</kbd> aim<br><kbd>CLICK / SPACE</kbd> attack &nbsp; <kbd>SHIFT</kbd> dodge &nbsp; <kbd>Q</kbd> potion<br><kbd>E</kbd> loot / descend &nbsp; <kbd>T</kbd> cycle ammo / scrolls &nbsp; <kbd>P</kbd> pause<br>Gold and eligible consumables vacuum toward you; gear remains available for deliberate pickup unless Auto-equip is enabled.<br>Spider webs strike nearly instantly inside their attack zone; a webbed knight is rooted, then rushed by the spider's follow-up melee attack.<br>Use light, fire, explosion, poison, lightning, web, and charm ammo with every ranged weapon.</div><button class="primary" id="start">Enter the halls</button><p id="error"></p></div></div>
 </div>
-<aside><div class="label">Cartographer</div><h2>The path unfolds</h2><canvas id="map" width="225" height="174" aria-label="Explored dungeon minimap"></canvas><section class="panel"><div class="label">Equipment</div><div id="weapon">Worn Longsword</div><div class="stat"><span>Strike power</span><b id="damage">16</b></div><div class="stat"><span>Reach / recovery</span><b id="weaponStats">76 / 0.36s</b></div><div id="armor">No armor</div><div class="stat"><span>Damage reduction</span><b id="defense">0%</b></div><div class="stat"><span>Gold recovered</span><b id="gold">0</b></div><div class="stat"><span>Healing potions [Q]</span><b id="potions">3</b></div><div class="stat"><span>Monsters slain</span><b id="kills">0</b></div></section><section class="panel"><div class="label">Your objective</div><p id="objective" style="font-size:13px;line-height:1.7">Find the blue stairway and prepare for the next eighth-floor boss.</p></section><section class="panel"><div class="label">Chronicle</div><div class="logs" id="logs" aria-live="polite"></div></section><p class="label" style="line-height:1.8">[E] Equip weapons &amp; armor<br>Music includes ambience<br>Randomized every run<br>No network required<br>Desktop keyboard + mouse</p></aside>
+<aside aria-label="Dungeon map, equipment, settings, and chronicle"><div class="label">Cartographer</div><h2>The path unfolds</h2><canvas id="map" width="225" height="174" role="img" aria-label="Explored dungeon minimap. See current floor and discovered passages in the game status."></canvas><section class="panel"><div class="label">Equipment</div><div id="weapon">Worn Longsword</div><div class="stat"><span>Strike power</span><b id="damage">16</b></div><div class="stat"><span>Reach / recovery</span><b id="weaponStats">76 / 0.36s</b></div><div id="armor">No armor</div><div class="stat"><span>Damage reduction</span><b id="defense">0%</b></div><div class="stat"><span>Gold recovered</span><b id="gold">0</b></div><div class="stat"><span>Healing potions [Q]</span><b id="potions">3</b></div><div class="stat"><span>Monsters slain</span><b id="kills">0</b></div></section><section class="panel"><div class="label">Your objective</div><p id="objective" style="font-size:13px;line-height:1.7">Find the blue stairway and prepare for the next eighth-floor boss.</p></section><section class="panel"><div class="label">Chronicle</div><div class="logs" id="logs" aria-live="off"></div></section><p class="label" style="line-height:1.8">[E] Equip weapons &amp; armor<br>Music includes ambience<br>Randomized every run<br>No network required<br>Desktop keyboard + mouse</p></aside>
 </main><footer>WASD MOVE &nbsp; / &nbsp; SPACE STRIKE &nbsp; / &nbsp; E INTERACT &nbsp; / &nbsp; SHIFT DODGE &nbsp; / &nbsp; <span id="healHint">Q HEAL</span></footer>
 <dialog id="artDialog"><h2 style="font-family:Georgia;color:#edbf72">The stones that inspired Emberkeep</h2><p>All 15 supplied images are full overhead room renders, not sprite sheets. Their torchlit masonry, geometric halls, and throne rooms guide this game's art direction. Cropped floor and wall samples from NoLoRA_0008 and NoLoRA_0015 texture the actual procedural world below; the original layouts are shown here as references, not collision maps.</p><div class="gallery" id="gallery"></div><p id="assetStatus"></p><button id="closeArt">Return to the halls</button></dialog>
 <dialog id="shopDialog" aria-labelledby="shopTitle"><h2 id="shopTitle" style="font-family:Georgia;color:#edbf72">The Roadside Merchant</h2><p id="shopDescription">A safe room for trade. Your current equipment stays equipped; purchased gear is placed nearby for you to equip with E. Scroll down to sell carried potions and scrolls, one at a time.</p><p class="shop-gold">Your gold: <b id="shopGold">0</b></p><div id="shopProducts" class="shop-products"></div><button id="closeShop">Leave the shop</button></dialog>
@@ -2358,6 +2360,225 @@ window.addEventListener('pagehide',()=>saveRun());
 document.addEventListener('visibilitychange',()=>{if(document.hidden)saveRun()});
 inspectSavedRun();if(savePresent)$('start').textContent='New run';
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Runs save locally on this device about every two seconds and when leaving or pausing. Resume from the title screen; a new run replaces the local save. Saves do not sync between devices or browser profiles.');
+</script>
+<style>
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.assistive-controls:focus-within{position:fixed!important;z-index:20;left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom));width:auto!important;height:auto!important;margin:0!important;padding:12px!important;clip:auto!important;overflow:auto!important;white-space:normal!important;background:#10191d;border:1px solid #edbf72;border-radius:6px;box-shadow:0 6px 24px #000b}
+.assistive-controls h2{font:18px Georgia,serif;color:#edbf72;margin:0 0 8px}
+.assistive-controls>div{display:flex;flex-wrap:wrap;gap:6px}
+.assistive-controls button{min-width:44px;min-height:44px}
+#game:focus-visible{outline:3px solid #edbf72;outline-offset:-4px}
+.intro .quick-start{max-width:56ch;margin:12px auto;font-size:15px;line-height:1.55;color:#d4ded8}
+.intro .first-steps{max-width:54ch;margin:8px auto;padding-left:1.5rem;text-align:left;color:#cbd5d0;font-size:14px;line-height:1.6}
+.intro .first-steps li{padding-left:4px;margin:3px 0}
+.intro .guide-topics{display:grid;gap:6px;text-align:left;margin:12px 0}
+.intro .guide-topics details,.intro #completeGuide{border-top:1px solid #46534d;padding:8px 4px;color:#cbd5d0}
+.intro .guide-topics summary,.intro #completeGuide summary{min-height:44px;display:flex;align-items:center;color:#edbf72;font-weight:600;cursor:pointer}
+.intro .guide-topics p{margin:4px 0 8px;font-size:13px;line-height:1.55}
+.intro .guide-copy{font-size:13px;line-height:1.6;text-align:left;overflow-wrap:anywhere}
+.intro .guide-copy p{margin:8px 0}
+#accessibleGameState{max-width:100%}
+#gameEvent{font-size:1px}
+#extraControls{display:flex;align-items:center;gap:6px}
+#extraControls>summary{display:none}
+#extraControls .extra-content{display:flex;align-items:center;gap:8px}
+#extraControls #art{display:inline-flex}
+#guideDialog{overflow:auto}
+#guideDialog h2{font:24px Georgia,serif;color:#edbf72}
+#guideDialog h3{font:17px Georgia,serif;color:#edbf72;margin:18px 0 6px}
+#guideDialog p,#guideDialog li{font-size:15px;line-height:1.6}
+#guideDialog .dialog-actions{display:flex;justify-content:flex-end;position:sticky;bottom:0;padding:8px 0;background:#142025}
+body>header{height:auto;min-height:62px;padding:8px 16px}
+body>main{height:calc(100vh - 96px);height:calc(100dvh - 96px);min-height:0}
+#return-menu-link{position:static;top:auto;left:auto;z-index:auto;flex-shrink:0;margin:0 8px 0 0}
+@media(min-width:1001px){
+ #extraControls[open]{display:flex}
+ #extraControls .extra-content{display:flex}
+ #extraControls>summary{display:none}
+}
+@media(min-width:651px) and (max-width:1000px){
+ body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+ header{height:auto;min-height:58px;flex-shrink:0;flex-wrap:nowrap;padding:6px 10px;gap:6px}
+ header nav{width:auto;flex-wrap:nowrap;align-items:center;gap:5px}
+ header button{min-height:44px;padding:6px 9px;font-size:12px}
+ #extraControls{position:relative}
+ #extraControls>summary{display:flex;align-items:center;min-height:44px;padding:4px 8px;border:1px solid #506063;border-radius:5px;cursor:pointer;color:#e6e9e3}
+ #extraControls .extra-content{position:absolute;right:0;top:calc(100% + 6px);z-index:8;display:grid;gap:8px;min-width:210px;padding:12px;background:#10191d;border:1px solid #6b674e;box-shadow:0 6px 24px #000b}
+ #extraControls:not([open]) .extra-content{display:none}
+ main{display:grid;grid-template-columns:minmax(0,1fr) clamp(220px,30vw,270px);position:relative;flex:1;min-height:0;height:auto}
+ .viewport{height:100%;width:100%;min-width:0}
+ aside{display:block;position:static;width:auto;z-index:auto;padding:10px 12px;box-shadow:none;border-left:1px solid var(--line);overflow:auto}
+ #map{width:100%;height:auto;aspect-ratio:225/174}
+ #inventoryToggle,#closeInventory{display:none}
+ #art{display:inline-flex}
+ footer{display:none}
+}
+@media(max-width:650px){
+ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+ body>header{padding:6px 8px;min-height:0;gap:4px}
+ #return-menu-link{min-height:44px;padding:0 8px;font-size:12px}
+ header>div{min-width:0;flex:1}
+ h1{font-size:18px;letter-spacing:3px}
+ header nav{display:grid;width:100%;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+ header nav>button,header nav>details{width:100%;min-width:0;min-height:44px}
+ header nav>button{padding:4px;font-size:12px;line-height:1.1}
+ #extraControls{justify-content:center;min-height:44px}
+ #extraControls>summary{display:flex;align-items:center;justify-content:center;min-height:44px;width:100%;padding:4px;text-align:center;border:1px solid #506063;border-radius:5px;font-size:12px;line-height:1.1;cursor:pointer}
+ #extraControls .extra-content{position:absolute;top:calc(100% + 5px);left:0;right:auto;z-index:8;display:grid;gap:8px;width:min(290px,calc(100vw - 20px));padding:12px;background:#10191d;border:1px solid #6b674e;box-shadow:0 6px 24px #000b}
+ #extraControls:not([open]) .extra-content{display:none}
+ #extraControls .audio-controls{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+ #extraControls .audio-controls button{min-height:44px;padding:6px;font-size:12px}
+ #extraControls .audio-controls input{grid-column:span 2;width:100%;min-height:44px}
+ #extraControls .audio-controls label{display:none}
+ #extraControls #art{display:none}
+ #inventoryToggle{min-height:44px;font-size:12px}
+ main{height:auto;flex:1;min-height:0}
+ .viewport{height:100%;min-height:0}
+ #audioStatus{bottom:174px;max-width:85%;font-size:10px}
+ .prompt{max-width:calc(100% - 24px);overflow-wrap:anywhere}
+ .intro .quick-start{font-size:14px}
+ .intro .first-steps{font-size:14px}
+ .intro .guide-copy{font-size:14px}
+}
+@media(max-width:360px){
+ body>header{padding-inline:6px}
+ #return-menu-link{margin-right:5px;font-size:11px}
+ header nav>button{font-size:11px}
+ #inventoryToggle{font-size:11px}
+}
+@media(max-height:500px) and (pointer:coarse){
+ body>header{padding-top:6px}
+ header{flex-wrap:nowrap}
+ header nav{display:flex;width:auto;flex-wrap:nowrap}
+ header nav>button,header nav>details{width:auto}
+ #extraControls .extra-content{max-height:calc(100dvh - 90px);overflow:auto}
+}
+@media(min-width:1001px) and (max-width:1200px) and (pointer:coarse){
+ main{display:grid;grid-template-columns:minmax(0,1fr) clamp(220px,30vw,270px);position:relative;flex:1;min-height:0;height:auto}
+ aside{display:block;position:static;width:auto;z-index:auto;padding:10px 12px;box-shadow:none;border-left:1px solid var(--line);overflow:auto}
+ #map{width:100%;height:auto;aspect-ratio:225/174}
+ #inventoryToggle,#closeInventory{display:none}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+</style>
+<script id="accessible-mobile-ui">
+'use strict';
+const introControls=document.querySelector('.intro .controls'),completeGuideMarkup=introControls.innerHTML;
+introControls.innerHTML=`
+ <p class="quick-start">Touch first: drag <strong>Move</strong> to walk and face. Hold <strong>Attack</strong> to strike. Tap <strong>Use / Equip</strong> to open a chest, equip selected gear, trade, or descend.</p>
+ <ol class="first-steps"><li>Enter the halls and move toward the monsters.</li><li>Attack, then dodge when an enemy winds up or a trap warns.</li><li>Use nearby chests, equipment and stairs. Heal when your vitality falls.</li></ol>
+ <p class="quick-start">Tap an item to select it; tap <strong>Use / Equip</strong> to act. Your run saves on this device.</p>
+ <div class="guide-topics">
+  <details><summary>Combat, equipment and magic</summary><p>Use melee or ranged weapons, seven special ammunition types, or wands and single-use scrolls. Armor rules depend on weapon class. Better gear can auto-equip; incompatible gear stays as a temporary floor drop.</p></details>
+  <details><summary>Rooms, traps and bosses</summary><p>Search torchlit passages for hidden glints, disarm traps, break containers and watch for enemy attack warnings. Every eighth-floor boss seals all routes down until defeated; victory opens the stairway.</p></details>
+  <details><summary>Settings, shops and saved runs</summary><p>Change difficulty, healing and cycle keys, audio, and auto-equipment preferences. Merchants offer a safe place to trade. Runs save locally and do not sync across devices or browser profiles.</p></details>
+ </div>
+ <details id="completeGuide"><summary>Complete adventurer's guide</summary><div class="guide-copy"></div></details>`;
+introControls.querySelector('.guide-copy').innerHTML=completeGuideMarkup;
+
+const header=document.querySelector('header'),menuLink=$('return-menu-link'),nav=document.querySelector('header nav');
+header.prepend(menuLink);menuLink.removeAttribute('style');
+const extraControls=document.createElement('details');extraControls.id='extraControls';extraControls.setAttribute('aria-label','Audio and help options');
+const extraSummary=document.createElement('summary');extraSummary.textContent='Options & help';
+const extraContent=document.createElement('div');extraContent.className='extra-content';
+extraContent.append(document.querySelector('.audio-controls'),$('art'));
+const helpButton=document.createElement('button');helpButton.type='button';helpButton.id='helpButton';helpButton.textContent='How to play';
+extraContent.append(helpButton);extraControls.append(extraSummary,extraContent);nav.prepend(extraControls);
+function adaptOptionsMenu(){extraControls.open=!(window.matchMedia?.('(max-width: 1000px)').matches??false)}
+adaptOptionsMenu();window.addEventListener('resize',adaptOptionsMenu);
+
+const guideDialog=document.createElement('dialog');guideDialog.id='guideDialog';guideDialog.setAttribute('aria-labelledby','guideTitle');
+guideDialog.innerHTML=`<h2 id="guideTitle">Field guide</h2>
+ <p>Emberkeep is an overhead dungeon adventure. Essential actions are always available by keyboard, touch, or the accessible controls.</p>
+ <h3>Move and survive</h3><ul><li>Drag Move, use the four direction controls, or press WASD / arrow keys.</li><li>Hold Attack, click the arena, or press Space.</li><li>Use / Equip or E acts on the selected nearby object; it never attacks.</li><li>Dodge with Shift or Dodge. Heal with Q or Heal. Pause with P or Pause.</li></ul>
+ <h3>Explore and equip</h3><p>Tap or click a visible object to select it. Press Use / Equip to act; clear selection to return to nearby interactions. Seven special ammo effects work with every ranged weapon. Wands collect scrolls. Incompatible armor, ammo and spells dropped by weapon changes are temporary; other floor drops also expire.</p>
+ <h3>Progress</h3><p>Disarm revealed traps, break barrels and crates, and gather treasure. Bosses guard every eighth floor and block every descent route until defeated. Your run is saved locally on this device.</p>
+ <div class="dialog-actions"><button type="button" id="closeGuide">Return to game</button></div>`;
+document.body.append(guideDialog);
+let resumeAfterGuide=false;
+helpButton.onclick=()=>{resumeAfterGuide=state==='playing';if(resumeAfterGuide)togglePause();guideDialog.showModal()};
+function closeGuide(){if(guideDialog.open)guideDialog.close()}
+$('closeGuide').onclick=closeGuide;
+guideDialog.addEventListener('cancel',event=>{event.preventDefault();closeGuide()});
+guideDialog.addEventListener('close',()=>{if(resumeAfterGuide&&state==='paused')togglePause();resumeAfterGuide=false;helpButton.focus()});
+
+for(const [action,input] of Object.entries(bindingInputs)){input.id='binding-'+action;input.name='binding-'+action}
+$('difficulty').name='difficulty';$('volume').name='volume';
+$('pause').type='button';$('restart').type='button';$('pause').setAttribute('aria-label','Pause or resume the game');
+$('touchAttack').setAttribute('aria-label','Hold to attack');$('touchInteract').setAttribute('aria-label','Use or equip the selected nearby object');
+$('touchDodge').setAttribute('aria-label','Dodge an attack');$('touchHeal').setAttribute('aria-label','Drink a healing potion');
+const accessibleControls=document.createElement('div');accessibleControls.id='assistiveControls';accessibleControls.className='sr-only assistive-controls';
+accessibleControls.setAttribute('role','group');accessibleControls.setAttribute('aria-label','Accessible game controls');
+accessibleControls.innerHTML=`<h2>Accessible game controls</h2><p>Activate a direction once for a short step or hold it to keep moving. Attack, use, dodge, heal, cycle or pause with these buttons.</p><div>
+ <button type="button" data-move="w" aria-label="Move north">North</button><button type="button" data-move="a" aria-label="Move west">West</button><button type="button" data-move="s" aria-label="Move south">South</button><button type="button" data-move="d" aria-label="Move east">East</button>
+ <button type="button" id="accessibleAttack" aria-label="Attack">Attack</button><button type="button" id="accessibleUse" aria-label="Use or equip selected nearby object">Use / Equip</button>
+ <button type="button" id="accessibleDodge" aria-label="Dodge">Dodge</button><button type="button" id="accessibleHeal" aria-label="Drink healing potion">Heal</button>
+ <button type="button" id="accessibleCycle" aria-label="Cycle ammunition or spells">Cycle</button><button type="button" id="accessiblePause" aria-label="Pause or resume the game">Pause</button>
+ <button type="button" id="readGameState">Read current game status</button></div>`;
+document.querySelector('.viewport').append(accessibleControls);
+const gameEvent=$('gameEvent'),gameStateSummary=$('gameStateSummary');
+let lastAnnouncement='',lastAccessibleSummary='',lastHealthBand=null,statusElapsed=0;
+function announceGameEvent(message){
+ if(!message||message===lastAnnouncement)return;
+ lastAnnouncement=message;gameEvent.textContent=message;
+}
+let lastNearbyPrompt='';
+function refreshAccessibleGameState(dt=0,force=false){
+ statusElapsed+=dt;if(!force&&statusElapsed<.45)return;statusElapsed=0;
+ if(!player||!world)return;
+ const healthBand=Math.floor(player.hp/Math.max(1,player.max)*10);
+ if(lastHealthBand!==null&&healthBand!==lastHealthBand&&state==='playing')
+  announceGameEvent('Vitality '+Math.ceil(player.hp)+' of '+player.max+'.');
+ lastHealthBand=healthBand;
+ const armor=armorSlots.filter(slot=>player[slot]).map(slot=>player[slot].name);
+ const nearest=enemies.filter(enemy=>enemy.hp>0).sort((a,b)=>distance(a,player)-distance(b,player))[0];
+ const prompt=$('prompt').textContent.replace(/Inspecting floor glint: \d+%/,'Inspecting a floor glint');
+ if(state==='playing'&&prompt!==lastNearbyPrompt&&prompt)announceGameEvent(prompt);
+ lastNearbyPrompt=prompt;
+ const summary=[
+  'Floor '+depth+' of '+MAX_FLOOR+', '+(world.theme?.name||chapters[realmForFloor(depth)-1])+'.',
+  'Health '+Math.ceil(player.hp)+' of '+player.max+'; resolve '+Math.floor(player.stamina)+' percent.',
+  'Level '+player.level+'; weapon '+player.weapon.name+'; armor '+(armor.length?armor.join(', '):'none')+'.',
+  'Gold '+player.gold+'; healing potions '+player.potions+'; monsters defeated '+kills+'.',
+  'Objective: '+$('objective').textContent,
+  prompt?'Nearby action: '+prompt:'No nearby object is ready to use.',
+  nearest?'Nearest enemy: '+nearest.type.replaceAll('_',' ')+', '+Math.max(0,Math.ceil(nearest.hp))+' health.':'No living enemies remain on this floor.',
+  player.poison>0?'Poisoned.':'',player.burn>0?'Burning.':'',player.root>0?'Webbed and unable to move.':'',
+  state==='playing'?'Game is in progress.':state==='paused'?'Game is paused.':state==='dead'?'The knight has fallen.':''
+ ].filter(Boolean).join(' ');
+ if(force||summary!==lastAccessibleSummary){gameStateSummary.textContent=summary;lastAccessibleSummary=summary}
+}
+window.emberkeepA11y={announce:announceGameEvent,readStatus(){refreshAccessibleGameState(1,true);announceGameEvent(gameStateSummary.textContent)}};
+const accessibleBaseLog=log;log=function(text){accessibleBaseLog(text);announceGameEvent(text)};
+const accessibleBaseHUD=updateHUD;updateHUD=function(){accessibleBaseHUD();refreshAccessibleGameState()};
+const accessibleBaseUpdate=update;update=function(dt){accessibleBaseUpdate(dt);if(state==='playing')refreshAccessibleGameState(dt)};
+function runAccessibleAction(action){if(state!=='playing')return false;action();refreshAccessibleGameState(1,true);return true}
+for(const button of accessibleControls.querySelectorAll('[data-move]')){
+ const key=button.dataset.move;let pointerHeld=false;
+ const release=()=>{keys.delete(key);pointerHeld=false};
+ button.addEventListener('pointerdown',event=>{event.preventDefault();pointerHeld=true;keys.add(key);button.setPointerCapture(event.pointerId)});
+ for(const eventName of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(eventName,release);
+ button.addEventListener('click',()=>{if(pointerHeld||state!=='playing')return;keys.add(key);setTimeout(()=>keys.delete(key),180)});
+}
+const accessibleAttack=$('accessibleAttack');
+accessibleAttack.onclick=()=>runAccessibleAction(attack);
+accessibleAttack.addEventListener('pointerdown',event=>{if(state==='playing'){event.preventDefault();keys.add(' ');attack()}});
+for(const eventName of ['pointerup','pointercancel','lostpointercapture'])accessibleAttack.addEventListener(eventName,()=>keys.delete(' '));
+$('accessibleUse').onclick=()=>runAccessibleAction(interact);
+$('accessibleDodge').onclick=()=>runAccessibleAction(dodge);
+$('accessibleHeal').onclick=()=>runAccessibleAction(potion);
+$('accessibleCycle').onclick=()=>runAccessibleAction(cycleAvailable);
+$('accessiblePause').onclick=()=>{$('pause').click();announceGameEvent(state==='paused'?'Game paused.':'Game resumed.')};
+$('readGameState').onclick=()=>window.emberkeepA11y.readStatus();
+const accessibleBasePause=$('pause').onclick;
+$('pause').onclick=()=>{accessibleBasePause();announceGameEvent(state==='paused'?'Game paused.':'Game resumed.');refreshAccessibleGameState(1,true)};
+const accessibleResume=resumeSaved.onclick;
+resumeSaved.onclick=()=>{const restored=accessibleResume();if(restored)announceGameEvent('Saved run resumed. '+gameStateSummary.textContent)};
+const accessibleStart=$('start').onclick;
+$('start').onclick=()=>{accessibleStart();refreshAccessibleGameState(1,true)};
+document.querySelector('.viewport').append($('audioStatus'));
+$('touchControls').setAttribute('role','group');$('touchControls').setAttribute('aria-label','Touch controls. Move, attack, use or equip, dodge, and heal.');
+refreshKeyHints();refreshAccessibleGameState(1,true);
 </script>
 </body>
 </html>

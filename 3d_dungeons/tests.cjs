@@ -7,14 +7,16 @@ const context = new Proxy({createImageData(width,height){return {width,height,da
 function element() {
   return { style: {}, hidden: false, textContent: '', open: false, children: [], getContext: () => context,
     getBoundingClientRect: () => ({ left: 0, top: 0, width: 1000, height: 700 }), focus() {}, addEventListener() {},
-    append(e) { this.children.push(e); }, before() {}, prepend(e) { this.children.unshift(e); }, replaceChildren(...e) { this.children = e; },
-    setAttribute() {}, insertAdjacentHTML() {}, classList: { toggle() {}, remove() {}, add() {}, contains() { return false; } },
+    append(...e) { this.children.push(...e); }, before() {}, prepend(e) { this.children.unshift(e); }, replaceChildren(...e) { this.children = e; },
+    attributes:{}, setAttribute(name,value) { this.attributes[name]=String(value); }, getAttribute(name) { return this.attributes[name]??null; },
+    removeAttribute(name) { delete this.attributes[name]; }, insertAdjacentHTML() {}, querySelector() { return element(); }, querySelectorAll() { return []; }, dataset:{},
+    classList: { toggle() {}, remove() {}, add() {}, contains() { return false; } },
     showModal() { this.open = true; }, close() { this.open = false; } };
 }
 const sandbox = { console, Uint8Array, Int16Array, Uint32Array, Math, URLSearchParams, structuredClone,
   crypto: webcrypto, location: { search: '?test' }, requestAnimationFrame() {},
   ResizeObserver: class { observe() {} }, Image: class { complete = true; naturalWidth = 120; },
-  document: { getElementById(id) { if (!elements.has(id)) elements.set(id, element()); return elements.get(id); },
+  document: { body: element(), getElementById(id) { if (!elements.has(id)) elements.set(id, element()); return elements.get(id); },
     createElement: element, querySelector: element, addEventListener() {} },
   window: { addEventListener() {}, localStorage: {
     data: new Map(), getItem(key) { return this.data.get(key) ?? null; },
@@ -27,6 +29,16 @@ scripts.forEach(script => vm.runInContext(script, sandbox));
 const run = code => vm.runInContext(code, sandbox);
 let count = 0;
 function check(name, fn) { fn(); count++; console.log('PASS ' + name); }
+check('accessible game state and essential nonvisual controls initialize', () => {
+  run('begin()');
+  assert.equal(run("!!document.getElementById('gameEvent')"),true);
+  assert.equal(run("!!document.getElementById('gameStateSummary')"),true);
+  assert.equal(run("window.emberkeepA11y.readStatus();document.getElementById('gameEvent').textContent.includes('Floor 1')"),true);
+  assert.equal(run("Object.values(bindingInputs).length===2&&Object.values(bindingInputs).every(input=>input.id===input.name&&input.type==='text')"),true);
+  assert.equal(run("document.getElementById('difficulty').name==='difficulty'&&document.getElementById('volume').name==='volume'"),true);
+  assert.equal(run("helpButton.textContent==='How to play'&&guideDialog.getAttribute('aria-labelledby')==='guideTitle'"),true);
+  run('begin()');
+});
 check('all armor slots enforce weapon class on manual and automatic equip', () => {
   for(const [weapon,allowed] of [['sword',['chain','plate']],['bow',['leather','chain']],['rifle',['leather','chain']],['pistol',['leather','chain']],['wand',['robe']]]){
     for(const slot of ['armor','boots','gloves','helmet'])for(const kind of ['leather','chain','plate','robe']){
