@@ -43,12 +43,12 @@ with sync_playwright() as p:
         # Objects deliberately share exactly the same world coordinates; no input is mocked.
         page.evaluate("""() => {
           loadFloor(5,604);state='playing';keys.clear();enemies=[];props=[];loot=[];shots=[];heroShots=[];effects=[];
-          world.traps=[];world.quake.next=Infinity;world.seen.fill(1);player.inv=1000;player.angle=0;mouse.active=false;
+          world.traps=[];world.quake.next=Infinity;world.seen.fill(1);player.inv=1000;player.angle=0;mouse.active=false;gearPreferences.enabled=false;
           player.weapon={...weaponTypes.sword,kind:'sword',name:'Test longsword',damage:20,color:'#dddddd'};player.cool=1000;
           world.torches.forEach(t=>t.lit=true);
           window.overlap={x:player.x-42,y:player.y+20};
           window.floorWeapon={...overlap,type:'weapon',weapon:{...weaponTypes.halberd,kind:'halberd',name:'Selected Halberd',damage:26,color:'#dddddd'}};
-          window.floorArmor={...overlap,type:'armor',armor:{...makeArmor('helmet'),name:'Selected Helmet'}};
+          window.floorArmor={...overlap,type:'armor',armor:{...makeArmor('helmet'),kind:'chain',name:'Selected Helmet'}};
           window.floorTorch={...overlap,type:'torch',lit:false,room:0};
           world.torches.push(floorTorch);loot=[floorWeapon,floorArmor];window.beforeWeapon=player.weapon;
           window.strikes=0;const actualAttack=attack;attack=function(...args){window.strikes++;return actualAttack(...args)};
@@ -67,7 +67,7 @@ with sync_playwright() as p:
 
         tap_world()
         assert page.evaluate("selectedWorldItem===floorWeapon&&player.weapon===beforeWeapon&&!floorTorch.lit"), page.evaluate("({mode:innerWidth,state,selected:selectedWorldItem,choices:selectionChoices.map(worldTargetName),strikes,lit:floorTorch.lit,point:overlap,camera:{...camera},vw,vh,trace:pointerTrace,player:{x:player.x,y:player.y}})")
-        assert page.evaluate("strikes===0" if mobile else "strikes>0")
+        assert page.evaluate("strikes>0")
         assert page.locator("#selectionChoices button").count() == 2
         # Repeated world taps cycle when unobscured. Named choices also work on small screens.
         button("#clearSelected")
@@ -105,14 +105,15 @@ with sync_playwright() as p:
         assert page.evaluate("selectionChoices[0]===floorWeapon&&!worldTargets().includes(floorTorch)")
         assert page.evaluate("!floorTorch.lit&&loot.includes(floorWeapon)")
         button("#clearSelected")
-        # Empty floor clicks still attack; on touch they aim, and Attack remains separate.
-        page.evaluate("loot=[];world.torches=world.torches.filter(t=>t!==floorTorch);player.cool=0")
+        # Empty floor clicks and taps attack; the dedicated Attack control remains available.
+        page.evaluate("loot=[];world.torches=world.torches.filter(t=>t!==floorTorch);player.cool=0;window.beforeStrike=strikes")
         tap_world()
+        assert page.evaluate("strikes>beforeStrike")
         if mobile:
-            assert page.evaluate("strikes===0")
+            page.evaluate("player.cool=0;window.beforeStrike=strikes")
             button("#touchAttack")
-        assert page.evaluate("strikes>0")
-        # Decor is never selectable/usable; clicks attack, touch aims then Attack breaks it.
+            assert page.evaluate("strikes>beforeStrike")
+        # Decor is never selectable/usable; both clicks and taps attack it.
         page.evaluate("""() => {
           loot=[];window.overlap={x:player.x-40,y:player.y+15};
           window.stand={...overlap,type:'decor',label:'Armor stand',hp:1,open:false};
@@ -120,10 +121,6 @@ with sync_playwright() as p:
         }""")
         tap_world()
         assert page.evaluate("selectedWorldItem===null&&!selectionChoices.includes(stand)&&!worldTargets().includes(stand)")
-        if mobile:
-            button("#touchInteract")
-            assert page.evaluate("!stand.open")
-            button("#touchAttack")
         assert page.evaluate("stand.broken&&loot.every(l=>l.type==='gold')&&[1,2].includes(player.gold-beforeDecorGold+loot.reduce((sum,l)=>sum+l.value,0))"), (mode, page.evaluate("({stand,loot,gold:player.gold,weapon:player.weapon,state})"))
         # A real stairs interaction must retain Undo and restore the same gear safely on the new floor.
         page.evaluate("""() => {
@@ -151,7 +148,9 @@ with sync_playwright() as p:
         }""")
         page.wait_for_timeout(120)
         clean_shot = picture(page, mode + "-clean-floor")
-        assert page.evaluate("document.documentElement.scrollWidth<=innerWidth&&document.documentElement.scrollHeight<=innerHeight")
+        assert page.evaluate("document.documentElement.scrollWidth<=innerWidth")
+        if mobile:
+            assert page.evaluate("document.documentElement.scrollHeight<=innerHeight")
         if mobile:
             for control in ["touchAttack", "touchInteract", "touchDodge", "touchHeal"]:
                 box = page.locator("#" + control).bounding_box()

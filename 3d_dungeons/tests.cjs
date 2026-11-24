@@ -29,6 +29,22 @@ scripts.forEach(script => vm.runInContext(script, sandbox));
 const run = code => vm.runInContext(code, sandbox);
 let count = 0;
 function check(name, fn) { fn(); count++; console.log('PASS ' + name); }
+check('attacks hit overlapping enemies from the player center, including after resume', () => {
+  for(const kind of ['sword','bow','crossbow','knife','javelin','throwing_axe','boomerang','rifle','pistol','wand-fireball','wand-poison','wand-web','wand-lightning','wand-fire','wand-light']){
+    const weapon=kind.startsWith('wand-')?{kind:'wand',effect:kind.slice(5),power:2,damage:7,range:300,cooldown:.55,color:'#fff'}:{...run(`weaponTypes.${kind}`),kind,damage:20,range:300,cooldown:.4,color:'#fff'};
+    run(`begin();world.tiles.fill(1);world.torches=[];world.merchant=null;world.traps=[];props=[];loot=[];heroShots=[];player.weapon=${JSON.stringify(weapon)};player.angle=0;player.cool=0;var closeEnemy=makeEnemy('slime',{x:player.x-20,y:player.y});closeEnemy.hp=300;closeEnemy.emerge=0;enemies=[closeEnemy];saveRun();savedRun=null;restoreSavedRun();closeEnemy=enemies[0];attack()`);
+    const damage=300-run('closeEnemy.hp');
+    assert.ok(damage>0,`${kind} missed an overlapping enemy`);
+    run('updateHeroShots(.5)');
+    assert.equal(run('closeEnemy.hp'),300-damage,`${kind} hit twice`);
+  }
+});
+check('close projectiles respect walls and retain effects after a low-frame-rate update', () => {
+  run("begin();world.tiles.fill(1);world.torches=[];world.merchant=null;props=[];heroShots=[];player.x=Math.floor(player.x/T)*T+T-3;player.angle=0;var tx=Math.floor(player.x/T)+1,ty=Math.floor(player.y/T);world.tiles[ty*W+tx]=0;var blocked=makeEnemy('slime',{x:player.x+12,y:player.y});blocked.hp=300;enemies=[blocked];player.weapon={...weaponTypes.bow,kind:'bow',damage:20};player.cool=0;attack();updateHeroShots(.3)");
+  assert.equal(run('blocked.hp'),300,'projectile hit an enemy through stone');
+  run("world.tiles.fill(1);heroShots=[];player.cool=0;player.ammoShared.web=1;selectedAmmo='web';blocked.x=player.x+23;attack();updateHeroShots(.3)");
+  assert.ok(run('blocked.hp<300&&blocked.rooted>0'),'close projectile lost its hit or special effect');
+});
 check('all flood traps seal every carved exit and generated rooms have attackable doors', () => {
   for(let seed=0;seed<60;seed++){
     run(`begin();loadFloor(1,${seed})`);

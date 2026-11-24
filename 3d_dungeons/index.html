@@ -334,7 +334,7 @@ function attack(){
   heroShots.push({x:player.x,y:player.y,vx:Math.cos(player.angle)*speed,vy:Math.sin(player.angle)*speed,kind,special,age:0,travel:0,range:w.range,damage:w.damage+player.level*2,color:special?ammoColors[special]:w.color,returning:false,hits:new Set(),life:4,lit:special==='light',magicRadius:special==='light'?105:0});
   return;
  }
- enemies.filter(e=>e.hp>0&&distance(e,player)<w.range+e.radius&&clearLine(player,e)&&Math.abs(angleDiff(Math.atan2(e.y-player.y,e.x-player.x),player.angle))<1.2).forEach(e=>hurtEnemy(e,w.damage+player.level*2));
+ enemies.filter(e=>e.hp>0&&distance(e,player)<w.range+e.radius&&clearLine(player,e)&&inAttackArc(e,1.2)).forEach(e=>hurtEnemy(e,w.damage+player.level*2));
  const ball=world.boulder;
  if(ball&&distance(ball,player)<w.range+(ball.radius||25)&&clearLine(player,ball)&&Math.abs(angleDiff(Math.atan2(ball.y-player.y,ball.x-player.x),player.angle))<1.2)damageBoulder(ball,w.damage+player.level*2);
  props.filter(p=>canStrikeProp(p)&&distance(p,player)<w.range&&clearLine(player,p)&&Math.abs(angleDiff(Math.atan2(p.y-player.y,p.x-player.x),player.angle))<1.3).forEach(p=>breakProp(p,w.damage));
@@ -577,7 +577,7 @@ function showOverlay(title,story,label){$('title').textContent=title;$('story').
 function togglePause(){if(state==='playing'){state='paused';keys.clear();mouse.down=false;showOverlay('A moment by the fire.','Your journey waits here. Resume when you are ready.','Resume journey')}else if(state==='paused'){state='playing';$('overlay').hidden=true;canvas.focus()}}
 window.addEventListener('keydown',e=>{if($('artDialog').open||e.target?.matches?.('input,textarea,select'))return;const k=e.key.toLowerCase();if(e.target?.closest?.('#selectionPanel')&&[' ','enter'].includes(k))return;if([' ','arrowup','arrowdown','arrowleft','arrowright','shift'].includes(k))e.preventDefault();keys.add(k);if(e.repeat)return;if(k==='p'||k==='escape')togglePause();if(k==='e')interact();if(k==='x')deleteSelectedGear();if(k===keyBindings.potion)potion();if(k==='shift')dodge();if(k===' ')attack()});
 window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{keys.clear();mouse.down=false;if(state==='playing')togglePause()});document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='playing')togglePause()});
-canvas.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;const r=canvas.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;mouse.active=true});canvas.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse')return;if(e.button===0){selectWorldPointer(e);mouse.down=true;const r=canvas.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;mouse.active=true;player&&(player.angle=Math.atan2(mouse.y+camera.y-player.y,mouse.x+camera.x-player.x));canvas.focus();attack()}});window.addEventListener('pointerup',()=>mouse.down=false);canvas.addEventListener('pointerleave',()=>{mouse.active=false;mouse.down=false});
+canvas.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;const r=canvas.getBoundingClientRect();mouse.x=(e.clientX-r.left)*vw/r.width;mouse.y=(e.clientY-r.top)*vh/r.height;mouse.active=true});canvas.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button!==0||state!=='playing')return;const r=canvas.getBoundingClientRect();mouse.x=(e.clientX-r.left)*vw/r.width;mouse.y=(e.clientY-r.top)*vh/r.height;mouse.active=true;player.angle=Math.atan2(mouse.y+camera.y-player.y,mouse.x+camera.x-player.x);if(!openPointerChest(e)){selectWorldPointer(e);mouse.down=true;attack()}canvas.focus()});window.addEventListener('pointerup',()=>mouse.down=false);canvas.addEventListener('pointerleave',()=>{mouse.active=false;mouse.down=false});
 $('start').onclick=()=>state==='victory'?continueAfterVictory():state==='paused'?togglePause():begin();$('pause').onclick=togglePause;$('restart').onclick=()=>{if(state==='title'||state==='dead'||state==='won')begin();else{state='confirm';keys.clear();mouse.down=false;showOverlay('Begin a new journey?','This replaces your current run. Press Escape to keep your adventure, or begin again below.','Start a new run')}};
 window.addEventListener('keydown',e=>{if(e.key==='Escape'&&state==='confirm'){state='playing';$('overlay').hidden=true;canvas.focus()}});
 let artWasPlaying=false;$('art').onclick=()=>{artWasPlaying=state==='playing';if(artWasPlaying)togglePause();$('artDialog').showModal();$('artDialog').scrollTop=0};$('closeArt').onclick=()=>$('artDialog').close();$('artDialog').addEventListener('close',()=>{if(artWasPlaying&&state==='paused')togglePause()});
@@ -788,8 +788,8 @@ function segmentHit(start,end,object,radius){
  const hit=(-b-Math.sqrt(disc))/(2*a);
  return hit>=0&&hit<=1?hit:null;
 }
-function updateHeroShots(dt){
- for(const s of heroShots){
+function updateHeroShots(dt,activeShots=heroShots,initial=false){
+ for(const s of activeShots){
   s.age+=dt;s.life-=dt;
   if(s.kind==='boomerang'&&!s.returning&&(s.travel>=s.range||s.age>.8)){s.returning=true;s.hits.clear()}
   if(s.returning){const a=Math.atan2(player.y-s.y,player.x-s.x);s.vx=Math.cos(a)*460;s.vy=Math.sin(a)*460;if(distance(s,player)<20){s.life=0;continue}}
@@ -802,8 +802,8 @@ function updateHeroShots(dt){
     ...world.torches.filter(object=>!s.hits.has(object)).map(object=>({object,radius:12,torch:true})),
     ...props.filter(p=>blocksShot(p)&&!canDepart(p)).map(object=>({object,radius:20,prop:true})),
     ...(world.boulder&&!canDepart(world.boulder)?[{object:world.boulder,radius:world.boulder.radius||25,boulder:true}]:[]),
-    ...enemies.filter(e=>e.hp>0&&!canDepart(e)).map(object=>({object,radius:object.radius+5,prop:false}))
-   ].map(c=>c.door?c:({...c,at:segmentHit(s,next,c.object,c.radius)})).filter(c=>c.at!==null).sort((a,b)=>a.at-b.at);
+    ...enemies.filter(e=>e.hp>0&&!canDepart(e)).map(object=>({object,radius:object.radius+(initial?12:5),prop:false}))
+   ].map(c=>c.door?c:({...c,at:segmentHit(s,next,c.object,c.radius)})).filter(c=>c.at!==null&&(c.door||clearLine(s,c.object))).sort((a,b)=>a.at-b.at);
    const collision=colliders[0],fraction=collision?.at??1;
    s.x+=(next.x-s.x)*fraction;s.y+=(next.y-s.y)*fraction;s.travel+=Math.hypot(s.vx,s.vy)*step*fraction;
    if(!floorAt(s.x,s.y)){
@@ -1561,8 +1561,8 @@ function worldTargets(){
  for(const trap of world.traps)trap.type='trap';
  return [...loot.filter(o=>o.type==='weapon'||o.type==='armor'),...props.filter(p=>!p.open&&p.type==='chest'),...world.traps.filter(t=>t.revealed&&!t.triggered),...(world.merchant?[world.merchant]:[]),world.end];
 }
-document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Mouse clicks select nearby objects AND attack/fire; hold to keep attacking across loot. Highlighting never blocks combat. Touch taps select and aim; hold Attack to strike/fire. Only E / Use activates selected items.');
-document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Rubble and furnishings are attack-only obstacles, not selectable items. Click to strike them; on touch, tap to aim then use Attack. E / Use does not break them.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Click or tap the hall to aim and attack. Click or tap a nearby chest to open it; other nearby gear can still be selected and equipped with E / Use. Hold the mouse or Attack button to keep attacking.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Rubble and furnishings are attack-only obstacles, not selectable items. Click or tap to strike them. E / Use does not break them.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Inspect torchlit floor glints: a rare 8% chance reveals a hidden-hoard weapon with +5 power over its normal floor-level roll instead of a trap. Select and equip it with E / Use. Stepping on an uninspected glint still triggers its trap.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Silken nests: entering starts a 4-second egg countdown. Attack the sacs before three very fast spiderlings hatch from each! Adult spider webs strike nearly instantly in their attack zone and root you for 1 second; a hit sends the spider rushing in for an immediate melee attack. Weapon strikes and projectiles toggle torches, including relighting them.<br>Find five-shot Light, Fire, Explosion, Poison, Lightning, Web, and Charm ammo packs for every ranged weapon. Special ammo returns to unlimited regular shots when empty. Rare unstable rooms mark a tile for 2 seconds before it becomes a pit down exactly one floor (never on boss floors 8 or 16).<br>Gold and potions vacuum within 3.75 tiles; ammo requires a ranged weapon and scrolls require a wand. Better gear flies toward you when automatic equipment is enabled. All loose drops blink for their final 5 seconds and vanish after 30 active seconds; unusable armor, ammo, and scrolls dropped by a weapon switch vanish after 10. Hit broken barrels/boxes or opened chests again to clear them, without extra loot. Hidden traps ignore monsters; disarmed traps trigger when monsters cross them.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Automatic equipment is on by default, preferring ranged weapons. Gear / Map lets you choose Melee, Ranged, or Magic, or switch it off. Ranged weapons allow leather and chain armor; melee weapons allow chain and plate; wands allow robes. Changing weapons drops incompatible armor.');
@@ -1597,6 +1597,15 @@ function selectWorldPointer(event){
  const same=candidates.includes(selectedWorldItem)&&candidates.length===selectionChoices.length&&candidates.every(o=>selectionChoices.includes(o));
  selectedWorldItem=same?candidates[(candidates.indexOf(selectedWorldItem)+1)%candidates.length]:candidates[0];
  selectionChoices=candidates;selectionPointerId=event.pointerId;event.preventDefault();refreshSelectionPanel();canvas.focus();return true;
+}
+function openPointerChest(event){
+ const rect=canvas.getBoundingClientRect(),point={x:(event.clientX-rect.left)*vw/rect.width+camera.x,y:(event.clientY-rect.top)*vh/rect.height+camera.y};
+ const targets=[...props.filter(p=>!p.destroyed),...enemies.filter(e=>e.hp>0),...world.torches]
+  .filter(target=>distance(target,point)<(target.radius||20))
+  .sort((a,b)=>distance(a,point)-distance(b,point));
+ const target=targets[0];
+ if(!target||target.type!=='chest'||target.open||!targetReachable(target))return false;
+ selectedWorldItem=target;selectionChoices=[target];selectionPointerId=event.pointerId;event.preventDefault();interact();return true;
 }
 // Mobile browsers may retarget the tap's compatibility click to a newly shown chooser.
 document.addEventListener('pointerdown',()=>{selectionPointerId=null},true);
@@ -1854,11 +1863,11 @@ for(const event of ['pointerup','pointercancel','lostpointercapture'])attackButt
 $('touchInteract').onclick=()=>{if(state!=='playing')return;const target=nearby();interact();touchFeedback(target?'Used '+target.type:'Move closer to loot, stairs or merchant')};
 $('touchDodge').onclick=()=>{if(state!=='playing')return;dodge();touchFeedback(player.dash>0?'Dodging':'Need 35 resolve')};
 $('touchHeal').onclick=()=>{if(state!=='playing')return;const before=player.hp;potion();touchFeedback(player.hp>before?'Vitality restored':player.potions?'Already at full vitality':'No potions left')};
-canvas.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'||state!=='playing')return;const r=canvas.getBoundingClientRect();player.angle=Math.atan2(e.clientY-r.top+camera.y-player.y,e.clientX-r.left+camera.x-player.x);mouse.active=false;touchFeedback(selectWorldPointer(e)?'Selected / aimed - Attack or Use':'Facing target')});
+canvas.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'||state!=='playing')return;const r=canvas.getBoundingClientRect();player.angle=Math.atan2((e.clientY-r.top)*vh/r.height+camera.y-player.y,(e.clientX-r.left)*vw/r.width+camera.x-player.x);mouse.active=false;if(openPointerChest(e))touchFeedback('Chest opened');else{selectWorldPointer(e);attack();touchFeedback('Striking')}});
 window.addEventListener('blur',resetTouch);document.addEventListener('visibilitychange',()=>{if(document.hidden)resetTouch()});
 const touchUpdate=update;
 update=function(dt){touchUpdate(dt);if(state!=='playing')resetTouch()};
-document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Touch: drag MOVE to walk and face; hold Attack. Tap Use / Equip, Dodge or Heal. Tap an item to select (not attack); tap again to cycle overlaps or choose its name. E / Use acts on your selection; Clear restores nearby interaction. Empty hall taps aim; empty clicks attack.<br>Torches are attack-only: hit with any weapon to switch them off or on, no fire needed. E / Use cannot toggle or select them. X / Delete gear removes only selected loose weapons or armor. Undo last delete restores one item during this run, even after descent. Break furnishings for 1-2 coins; trap swarms never drop loot.<br>Leaving a nest with living spiderlings combines its brood into a giant parent with 3x normal vitality and damage. If the parent was slain, the surviving brood forms a new giant. Kill the brood before leaving to prevent this.<br>Merchants buy carried potions for 8 gold and each scroll for 12 gold; use the Sell buttons in the shop.<br>Traps glint intermittently only in torchlight. Stop beside one for 2 seconds to disarm it; it then resets for monsters only. Each torch lights its share of the room.<br>Find body armor, boots, gloves, helmets, halberds, bows, boomerangs, throwing spears, knives and axes. Projectiles stop at the first creature or intact container.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Touch: drag MOVE to walk and face; hold Attack. Tap the hall to aim and strike, or a nearby chest to open it. Tap Use / Equip, Dodge or Heal. Tap gear to select it while attacking; E / Use equips the selection and Clear restores nearby interaction.<br>Torches are attack-only: hit with any weapon to switch them off or on, no fire needed. E / Use cannot toggle or select them. X / Delete gear removes only selected loose weapons or armor. Undo last delete restores one item during this run, even after descent. Break furnishings for 1-2 coins; trap swarms never drop loot.<br>Leaving a nest with living spiderlings combines its brood into a giant parent with 3x normal vitality and damage. If the parent was slain, the surviving brood forms a new giant. Kill the brood before leaving to prevent this.<br>Merchants buy carried potions for 8 gold and each scroll for 12 gold; use the Sell buttons in the shop.<br>Traps glint intermittently only in torchlight. Stop beside one for 2 seconds to disarm it; it then resets for monsters only. Each torch lights its share of the room.<br>Find body armor, boots, gloves, helmets, halberds, bows, boomerangs, throwing spears, knives and axes. Projectiles stop at the first creature or intact container.');
 </script>
 <script id="rpg-expansion">
 'use strict';
@@ -1902,9 +1911,12 @@ function updateWandStatuses(dt){
   }
  }
 }
+function inAttackArc(target,halfWidth){
+ return distance(player,target)<=(target.radius||0)+12||Math.abs(angleDiff(Math.atan2(target.y-player.y,target.x-player.x),player.angle))<halfWidth;
+}
 function wandConeTargets(range,width){
  return [...enemies.filter(e=>e.hp>0),...props.filter(canStrikeProp)].filter(target=>{
-  if(distance(player,target)>range+(target.radius||20)||!clearLine(player,target)||Math.abs(angleDiff(Math.atan2(target.y-player.y,target.x-player.x),player.angle))>width/2)return false;
+  if(distance(player,target)>range+(target.radius||20)||!clearLine(player,target)||!inAttackArc(target,width/2))return false;
   return !props.some(prop=>prop!==target&&blocksShot(prop)&&segmentHit(player,target,prop,20)!==null);
  });
 }
@@ -2093,6 +2105,7 @@ function fireWeapon(kind){
  const weapon=player.weapon,special=takeAmmo();
  const speed=kind==='rifle'?850:kind==='pistol'?720:kind==='crossbow'?720:kind==='bow'?570:kind==='knife'?620:kind==='javelin'?460:kind==='throwing_axe'?410:360;
  heroShots.push({x:player.x,y:player.y,vx:Math.cos(player.angle)*speed,vy:Math.sin(player.angle)*speed,kind,special,age:0,travel:0,range:weapon.range,damage:weapon.damage+player.level*2,color:special?ammoColors[special]||weapon.color:weapon.color,returning:false,hits:new Set(),life:4,lit:special==='light',magicRadius:special==='light'?105:0});
+ updateHeroShots(0,[heroShots[heroShots.length-1]],true);
 }
 attack=function(){
  if(state!=='playing'||player.cool>0)return;
@@ -2105,6 +2118,7 @@ attack=function(){
    wandCone(weapon.effect,power,range,width);window.DungeonAudio.play(weapon.effect==='light'?'magic':'fire');return;
   }
   const speed=520;heroShots.push({x:player.x,y:player.y,from:{x:player.x,y:player.y},vx:Math.cos(player.angle)*speed,vy:Math.sin(player.angle)*speed,kind:'wand',wandEffect:weapon.effect,power,age:0,travel:0,range:weapon.range,damage:5+power,color:weapon.color,hits:new Set(),life:4,lit:weapon.effect==='fireball',magicRadius:85});
+  updateHeroShots(0,[heroShots[heroShots.length-1]],true);
   window.DungeonAudio.play('strike');return;
  }
  if(!rangedKinds.includes(kind)){strikeFloodDoors(player.weapon.range,player.weapon.damage+player.level*2);expansionAttack();return}
@@ -2568,6 +2582,7 @@ document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>R
 .intro .guide-copy p{margin:8px 0}
 #accessibleGameState{max-width:100%}
 #gameEvent{font-size:1px}
+.area{pointer-events:none}
 #extraControls{position:relative;display:flex;align-items:center;gap:6px}
 #extraControls>summary{display:none}
 #extraControls .extra-content{display:flex;align-items:center;gap:8px}
@@ -2690,9 +2705,9 @@ body>main{height:calc(100vh - 96px);height:calc(100dvh - 96px);min-height:0}
 'use strict';
 const introControls=document.querySelector('.intro .controls'),completeGuideMarkup=introControls.innerHTML;
 introControls.innerHTML=`
- <p class="quick-start">Touch first: drag <strong>Move</strong> to walk and face. Hold <strong>Attack</strong> to strike. Tap <strong>Use / Equip</strong> to open a chest, equip selected gear, trade, or descend.</p>
+ <p class="quick-start">Drag <strong>Move</strong> to walk. Tap the hall to attack or a nearby chest to open it. Hold <strong>Attack</strong> to keep striking; <strong>Use / Equip</strong> equips gear, trades, or descends.</p>
  <ol class="first-steps"><li>Enter the halls and move toward the monsters.</li><li>Attack, then dodge when an enemy winds up or a trap warns.</li><li>Use nearby chests, equipment and stairs. Heal when your vitality falls.</li></ol>
- <p class="quick-start">Tap an item to select it; tap <strong>Use / Equip</strong> to act. Your run saves on this device.</p>
+ <p class="quick-start">Tap gear to select it and attack; tap <strong>Use / Equip</strong> to equip it. Your run saves on this device.</p>
  <div class="guide-topics">
   <details><summary>Combat, equipment and magic</summary><p>Use melee or ranged weapons, seven special ammunition types, or wands and single-use scrolls. Armor rules depend on weapon class. Better gear can auto-equip; incompatible gear stays as a temporary floor drop.</p></details>
   <details><summary>Rooms, traps and bosses</summary><p>Search torchlit passages for hidden glints, disarm traps, break containers and watch for enemy attack warnings. Every eighth-floor boss seals all routes down until defeated; victory opens the stairway.</p></details>
@@ -2715,8 +2730,8 @@ adaptOptionsMenu();window.addEventListener('resize',adaptOptionsMenu);
 const guideDialog=document.createElement('dialog');guideDialog.id='guideDialog';guideDialog.setAttribute('aria-labelledby','guideTitle');
 guideDialog.innerHTML=`<h2 id="guideTitle">Field guide</h2>
  <p>Emberkeep is an overhead dungeon adventure. Essential actions are always available by keyboard, touch, or the accessible controls.</p>
- <h3>Move and survive</h3><ul><li>Drag Move, use the four direction controls, or press WASD / arrow keys.</li><li>Hold Attack, click the arena, or press Space.</li><li>Use / Equip or E acts on the selected nearby object; it never attacks.</li><li>Dodge with Shift or Dodge. Heal with Q or Heal. Pause with P or Pause.</li></ul>
- <h3>Explore and equip</h3><p>Tap or click a visible object to select it. Press Use / Equip to act; clear selection to return to nearby interactions. Seven special ammo effects work with every ranged weapon. Wands collect scrolls. Incompatible armor, ammo and spells dropped by weapon changes are temporary; other floor drops also expire.</p>
+ <h3>Move and survive</h3><ul><li>Drag Move, use the four direction controls, or press WASD / arrow keys.</li><li>Tap or click the arena to aim and attack, hold Attack, or press Space.</li><li>Use / Equip or E acts on the selected nearby object; it never attacks.</li><li>Dodge with Shift or Dodge. Heal with Q or Heal. Pause with P or Pause.</li></ul>
+ <h3>Explore and equip</h3><p>Tap or click a nearby chest to open it. Tapping or clicking gear selects it and attacks; press Use / Equip to equip it. Clear selection to return to nearby interactions. Seven special ammo effects work with every ranged weapon. Wands collect scrolls. Incompatible armor, ammo and spells dropped by weapon changes are temporary; other floor drops also expire.</p>
  <h3>Progress</h3><p>Disarm revealed traps, break barrels and crates, and gather treasure. Bosses guard every eighth floor and block every descent route until defeated. Your run is saved locally on this device.</p>
  <div class="dialog-actions"><button type="button" id="closeGuide">Return to game</button></div>`;
 document.body.append(guideDialog);

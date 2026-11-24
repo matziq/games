@@ -27,7 +27,7 @@ with sync_playwright() as p:
               player.weapon={...weaponTypes[kind],kind,name:'Combat test',damage:20,color:'#ddd'};
               player.angle=Math.PI;mouse.active=false;
               window.pickup={x:player.x+40,y:player.y,type:'weapon',weapon:makeWeapon()};
-              window.mail={x:pickup.x,y:pickup.y,type:'armor',armor:makeArmor('boots')};
+              window.mail={x:pickup.x,y:pickup.y,type:'armor',armor:{...makeArmor('boots'),kind:'chain'}};
               loot=[pickup,mail];window.originalWeapon=player.weapon;
               window.foe=makeEnemy('slime',{x:player.x+(kind==='bow'?180:55),y:player.y});
               foe.hp=foe.max=500;foe.speed=0;foe.cool=1000;enemies=[foe];
@@ -39,7 +39,7 @@ with sync_playwright() as p:
             }""")
             if touch:
                 page.touchscreen.tap(**point)
-                assert page.evaluate("selectedWorldItem===pickup&&foe.hp===500")
+                assert page.evaluate("selectedWorldItem===pickup&&foe.hp<500" if kind == "sword" else "selectedWorldItem===pickup")
                 box = page.locator("#touchAttack").bounding_box()
                 cdp = context.new_cdp_session(page)
                 cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [
