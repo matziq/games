@@ -29,6 +29,55 @@ scripts.forEach(script => vm.runInContext(script, sandbox));
 const run = code => vm.runInContext(code, sandbox);
 let count = 0;
 function check(name, fn) { fn(); count++; console.log('PASS ' + name); }
+check('all flood traps seal every carved exit and generated rooms have attackable doors', () => {
+  for(let seed=0;seed<60;seed++){
+    run(`begin();loadFloor(1,${seed})`);
+    assert.equal(run("world.traps.filter(t=>t.kind==='flood').every(t=>{const r=world.rooms[t.room],doors=roomFloodDoors(r);if(!doors.length)return false;const checks=[];for(let x=r.x;x<r.x+r.w;x++){checks.push([{x:(x+.5)*T,y:r.y*T-.5},{x:(x+.5)*T,y:r.y*T+.5}]);checks.push([{x:(x+.5)*T,y:(r.y+r.h)*T-.5},{x:(x+.5)*T,y:(r.y+r.h)*T+.5}])}for(let y=r.y;y<r.y+r.h;y++){checks.push([{x:r.x*T-.5,y:(y+.5)*T},{x:r.x*T+.5,y:(y+.5)*T}]);checks.push([{x:(r.x+r.w)*T-.5,y:(y+.5)*T},{x:(r.x+r.w)*T+.5,y:(y+.5)*T}])}return checks.every(([a,b])=>!floorAt(a.x,a.y)||!floorAt(b.x,b.y)||doors.some(d=>segmentDoor(a,b,d)!==null))})"),true,`seed ${seed}`);
+  }
+});
+check('flood doors block every exit and starter melee breaks one to drain the room', () => {
+  run("begin();loadFloor(1,604);enemies=[];props=[];world.traps=[];var r=world.rooms[1];var t={x:(r.cx+.5)*T,y:(r.cy+.5)*T,room:1,kind:'flood',revealed:false,triggered:false};player.x=t.x;player.y=t.y;world.traps=[t];triggerTrap(t);var door=world.flood.doors[0]");
+  assert.equal(run("world.flood.doors.length>0&&world.flood.doors.every(d=>floodBlocked((d.x1+d.x2)/2,(d.y1+d.y2)/2,12,player))"),true);
+  run("updateNewHazards(5);var water=world.flood.level;door.hp=90;saveRun();savedRun=null;restoreSavedRun();door=world.flood.doors[0]");
+  assert.equal(run("door.hp===90&&world.flood.level===water&&world.flood.room===world.rooms[1]"),true);
+  assert.equal(run("fallToFloor(2,'fall')"),false);
+  run("var cx=(door.x1+door.x2)/2,cy=(door.y1+door.y2)/2;var horizontal=door.x2-door.x1>door.y2-door.y1;player.x=cx+(horizontal?0:(cx<r.cx*T?35:-35));player.y=cy+(horizontal?(cy<r.cy*T?35:-35):0);player.angle=Math.atan2(cy-player.y,cx-player.x);player.weapon={kind:'sword',name:'Sword',range:82,damage:16,cooldown:.36};player.level=1;for(let i=0;i<5;i++){player.cool=0;attack()}");
+  assert.equal(run("world.flood.draining&&!floodBlocked(cx,cy,12,player)"),true);
+  run("updateNewHazards(5)");
+  assert.equal(run("world.flood"),null);
+});
+check('flood doors take ranged damage and disarmed flood never harms or blocks the knight', () => {
+  run("begin();loadFloor(1,604);props=[];enemies=[];world.traps=[];var r=world.rooms[1];var t={x:(r.cx+.5)*T,y:(r.cy+.5)*T,room:1,kind:'flood',revealed:true,triggered:false};world.traps=[t];player.x=t.x;player.y=t.y;triggerTrap(t,true);var d=world.flood.doors[0],cx=(d.x1+d.x2)/2,cy=(d.y1+d.y2)/2,horizontal=d.x2-d.x1>d.y2-d.y1;player.x=cx+(horizontal?0:(cx<r.cx*T?35:-35));player.y=cy+(horizontal?(cy<r.cy*T?35:-35):0);player.angle=Math.atan2(cy-player.y,cx-player.x);player.weapon={...weaponTypes.bow,kind:'bow',name:'Bow',damage:25,color:'#fff'};heroShots=[];player.cool=0;attack();updateHeroShots(.15)");
+  assert.equal(run("d.hp===153&&!floodBlocked(cx,cy,12,player)"),true);
+  run("var hp=player.hp;updateNewHazards(8)");
+  assert.equal(run("player.hp===hp"),true);
+  run("loadFloor(2,604)");
+  assert.equal(run("!world.flood"),true);
+});
+check('new damaging traps and summoned swarms honor player and monster factions', () => {
+  for(const [kind,amount] of [['massiveExplosion',70],['lightningTrap',32],['poisonCloud',0]]){
+    for(const disarmed of [false,true]){
+      run(`begin();loadFloor(1,604);world.tiles.fill(1);world.merchant=null;props=[];player.hp=120;player.inv=0;var t={x:player.x,y:player.y,kind:'${kind}',revealed:${disarmed}};world.traps=[t];var mob=makeEnemy('slime',t);mob.hp=300;enemies=[mob];triggerTrap(t,${disarmed})`);
+      assert.equal(run('player.hp'),disarmed?120:120-amount,`${kind} player`);
+      assert.equal(run('mob.hp'),disarmed?300-amount:300,`${kind} mob`);
+      if(kind==='poisonCloud')assert.equal(run(disarmed?'mob.poison>0&&!player.poison':'player.poison>0&&!mob.poison'),true);
+      if(kind==='massiveExplosion')assert.equal(run("world.scrollFlashes.some(f=>f.kind==='fireball'&&f.scale===1.5)"),true);
+      if(kind==='lightningTrap')assert.equal(run("world.scrollFlashes.some(f=>f.kind==='lightning')"),true);
+    }
+  }
+  for(const kind of ['spiders','snakes']){
+    run(`begin();loadFloor(1,604);world.tiles.fill(1);world.merchant=null;enemies=[];props=[];var t={x:player.x+100,y:player.y,kind:'${kind}',revealed:true};world.traps=[t];triggerTrap(t,true);var brood=enemies.slice();var mob=makeEnemy('slime',{x:brood[0].x+20,y:brood[0].y});mob.hp=300;enemies.push(mob);brood[0].emerge=0;brood[0].cool=0;updateTraps(.01,false)`);
+    assert.equal(run(`brood.length===5&&brood.every(e=>e.type==='${kind==='spiders'?'cave_spider':'snake'}'&&e.trapSource===t)&&mob.hp<300`),true);
+    run("saveRun();savedRun=null;restoreSavedRun()");
+    assert.equal(run("enemies.filter(e=>e.trapSwarm).every(e=>e.trapSource===world.traps[0])"),true);
+  }
+});
+check('poison cloud catches late entrants, expires and persists through save', () => {
+  run("begin();loadFloor(1,604);world.tiles.fill(1);world.merchant=null;props=[];enemies=[];var t={x:player.x+120,y:player.y,kind:'poisonCloud',revealed:true,active:0};world.traps=[t];triggerTrap(t,true);saveRun();savedRun=null;restoreSavedRun();var mob=makeEnemy('slime',world.traps[0]);mob.hp=300;enemies=[mob];updateNewHazards(.01)");
+  assert.equal(run("mob.poison>0&&world.traps[0].victims.has(mob)"),true);
+  run("updateTraps(8,false);var second=makeEnemy('slime',world.traps[0]);enemies=[second];updateNewHazards(.1)");
+  assert.equal(run("!second.poison"),true);
+});
 check('last special round stays special and falls back to regular rather than another stocked type', () => {
   run("begin();world.tiles.fill(1);world.torches=[];enemies=[];props=[];player.weapon={...weaponTypes.bow,kind:'bow',damage:20};player.ammoShared.fire=1;player.ammoShared.web=5;selectedAmmo='fire';player.cool=0;attack()");
   assert.equal(run("heroShots[0].special==='fire'&&selectedAmmo==='regular'&&player.ammoShared.web===5"),true);
@@ -1142,7 +1191,7 @@ check('room lighting, reachable torches and hazard placement preserve safe entra
     assert.equal(run('world.traps.every(t=>!pointInRoom(t,world.rooms[0])&&distance(t,world.end)>90&&free(t.x,t.y,12))'),true);
     for(const kind of run('world.traps.map(t=>t.kind)'))kinds.add(kind);
   }
-  assert.equal(kinds.size,8);
+  assert.equal(kinds.size,14);
   run("loadFloor(1,604);enemies=[];props=[];loot=[];const torch=world.torches.find(t=>!t.lit);player.x=torch.x;player.y=torch.y+35;world.end.x=2500;world.end.y=1900");
   const before=run('lightAt({x:torch.x+70,y:torch.y+70})');
   run('interact()');assert.equal(run('torch.lit'),false);

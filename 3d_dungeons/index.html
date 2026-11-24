@@ -56,7 +56,7 @@
 <script>
 'use strict';
 window.DungeonAudio=(()=>{
- let context,master,bus,effectsBus,analyser,musicAnalyser,effectsAnalyser,noise,ambient=false,muted=false,musicMuted=false,volume=.55,playing=false,nextBeat=0,beat=0,chapter=1,blocked='',variation=1,musicNotes=[],events={};
+ let context,master,bus,effectsBus,analyser,musicAnalyser,effectsAnalyser,noise,ambient=false,muted=false,musicMuted=false,volume=.55,playing=false,nextBeat=0,nextAtmosphere=0,atmosphereIndex=0,beat=0,chapter=1,blocked='',variation=1,musicNotes=[],events={};
  const enemySounds={
   slime:[160,'sine',420,210,'sine',420],goblin:[230,'sawtooth',850,310,'square',1100],bog_wraith:[110,'sine',700,175,'triangle',520],
   cave_spider:[145,'sawtooth',620,225,'square',780],crypt_wizard:[310,'triangle',1800,470,'sine',2600],cinder_wizard:[105,'sawtooth',420,185,'triangle',950],
@@ -106,12 +106,21 @@ window.DungeonAudio=(()=>{
  }
  function setPlaying(active){
   if(playing===active)return;playing=active;
-  if(context){gain();nextBeat=context.currentTime;beat=0}
+  if(context){gain();nextBeat=context.currentTime;nextAtmosphere=context.currentTime+3;beat=0}
   ui();
  }
  function update(active){
   setPlaying(active);if(!context||context.state!=='running'||!active||musicMuted||volume===0)return;
-  const now=context.currentTime;if(nextBeat<now-.2)nextBeat=now;
+  const now=context.currentTime;
+  if(now>=nextAtmosphere){
+   ambient=true;variation=.9+Math.random()*.2;
+   const sound=['creak','rumble','waterDrop'][atmosphereIndex++%3];events[sound]=(events[sound]||0)+1;
+   if(sound==='creak'){tone(170,now,.8,.025,'sawtooth',85);hiss(now,.65,.015,500,'bandpass')}
+   else if(sound==='rumble'){hiss(now,1.3,.03,160);tone(45,now,1.4,.025,'sine',28)}
+   else{tone(1050,now,.15,.035,'sine',450);tone(700,now+.12,.18,.018,'sine',320)}
+   ambient=false;nextAtmosphere=now+7+Math.random()*5;
+  }
+  if(nextBeat<now-.2)nextBeat=now;
   if(nextBeat>now+.12)return;
   const scales=[[146.83,174.61,220,196,130.81,174.61,164.81,110],[164.81,196,246.94,220,146.83,185,164.81,123.47],[130.81,155.56,196,174.61,116.54,155.56,146.83,98],[138.59,164.81,207.65,185,123.47,164.81,155.56,103.83],[110,130.81,164.81,146.83,98,130.81,123.47,82.41]];
   const motifs=[[0,2,4,null,3,2,1,null],[4,null,3,2,6,null,5,3],[0,4,null,6,4,null,2,1],[5,4,3,null,2,4,0,null]];
@@ -491,6 +500,7 @@ function drawActor(e,hero=false){
  else if(e.type==='gargoyle'){polygon([[-5,4],[-23,-15],[-24,-1],[-13,9],[-18,14],[-8,13],[0,19],[8,13],[18,14],[13,8],[24,-1],[22,-16],[5,4]],e.hit?'#e4b5a7':'#82616a');circle(0,-4,10,'#a77776');polygon([[-7,-9],[-11,-18],[-2,-12]],'#b88979');polygon([[7,-9],[11,-18],[2,-12]],'#b88979');circle(-4,-5,2,'#ffd184');circle(4,-5,2,'#ffd184')}
  else if(e.type==='iron_knight'){polygon([[-12,-11],[-17,-8],[-13,12],[13,12],[17,-8],[12,-11],[8,-4],[-8,-4]],e.hit?'#fff0c8':'#898a83');ctx.strokeStyle='#d2c5a2';ctx.lineWidth=3;ctx.strokeRect(-11,-9,22,18);circle(0,-13,9,'#b7ae9a');ctx.fillStyle='#333840';ctx.fillRect(-4,-15,8,3);ctx.strokeStyle='#d4bd87';ctx.lineWidth=3;ctx.strokeRect(-21,-6,7,17);ctx.fillStyle='#a04640';ctx.fillRect(15,-13,3,27)}
  else if(e.type==='cultist'){polygon([[-15,14],[-11,-8],[0,-21],[11,-8],[15,14]],e.hit?'#f2c6ad':'#713f47');polygon([[-10,-8],[0,-20],[10,-8],[5,-5],[-5,-5]],'#332734');circle(0,-5,3,'#f19d76');ctx.strokeStyle='#d0aa78';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(17,13);ctx.lineTo(17,-19);ctx.stroke();glow(17,-19,16,'#e5757266');circle(17,-19,4,'#ffd0a1')}
+ else if(e.type==='snake'){ctx.rotate(e.attackAngle||0);ctx.strokeStyle=e.hit?'#e1f4b4':'#76a765';ctx.lineWidth=8;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-20,5);ctx.bezierCurveTo(-9,-12,0,12,10,0);ctx.stroke();circle(12,0,6,'#a1c982');circle(14,-2,1.5,'#18261b');circle(14,2,1.5,'#18261b')}
  else if(e.type==='cave_spider'){for(let side of [-1,1])for(let i=0;i<4;i++){ctx.strokeStyle=e.hit?'#d9f3a5':'#3e623d';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(side*7,i*3-3);ctx.lineTo(side*(15+i*2),i*4-12);ctx.lineTo(side*(21+i),i*6+5);ctx.stroke();circle(side*(21+i),i*6+5,2,'#769c53')}ctx.fillStyle=e.hit?'#f4e3b2':'#4c733f';ctx.beginPath();ctx.ellipse(0,2,12,9,0,0,TAU);ctx.fill();circle(0,-8,8,'#608c48');circle(-3,-10,2,'#e3cf72');circle(3,-10,2,'#e3cf72');circle(-3,-10,1,'#172014');circle(3,-10,1,'#172014');for(let i=-1;i<=1;i++){ctx.strokeStyle='#c7d975';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(i*3,-14);ctx.lineTo(i*5,-19);ctx.stroke()}glow(0,1,16,'#82cf4b22')}
  else if(e.type==='crypt_wizard'||e.type==='cinder_wizard'){const fire=e.type==='cinder_wizard',robe=fire?'#873c31':'#554777',edge=fire?'#f37b42':'#a99be8';glow(0,-5,25,edge+'33');polygon([[-15,15],[-12,-5],[-7,-15],[0,-20],[8,-13],[13,-4],[16,15]],e.hit?'#f2d6ad':robe);polygon([[-10,-10],[0,-24],[10,-10],[5,-7],[-5,-7]],fire?'#542219':'#302743');circle(0,-6,3,fire?'#ffaf55':'#a6ddff');ctx.strokeStyle=fire?'#b68458':'#c0b9da';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(17,14);ctx.lineTo(17,-19);ctx.stroke();glow(17,-20,15,fire?'#ff673c88':'#8faeff88');circle(17,-20,4,fire?'#ffc271':'#d9e8ff');ctx.strokeStyle=edge;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-9,6);ctx.lineTo(0,12);ctx.lineTo(9,6);ctx.stroke()}
  else if(e.type==='bog_wraith'||e.type==='wraith'||e.type==='ash_wraith'){
@@ -580,7 +590,7 @@ const MAX_FLOOR=16,IDLE_WARNING_SECONDS=9,IDLE_SPAWN_SECONDS=12;
 const realmForFloor=floor=>Math.min(5,Math.ceil(floor/2));
 const hasMerchant=floor=>floor>1&&floor<MAX_FLOOR&&floor%2===0;
 const idleThreat={elapsed:0,triggered:false,markers:[]};
-const TRAP_REVEAL_SECONDS=2,trapKinds=['poison','fire','explosion','quicksand','bugs','bats','trapdoor','crossfire'];
+const TRAP_REVEAL_SECONDS=2,trapKinds=['poison','fire','explosion','quicksand','bugs','bats','trapdoor','crossfire','flood','massiveExplosion','spiders','poisonCloud','lightningTrap','snakes'];
 const roomKinds=[
  {id:'graveyard',name:'Forgotten Graveyard',color:'#a7b3a5'},
  {id:'storage',name:'Provision Stores',color:'#c6a378'},
@@ -599,6 +609,54 @@ let shopFloor=0;
 creatures.zombie={hp:66,speed:57,damage:13,color:'#7e8d70',reach:46,windup:.64,cooldown:1.35,attack:'melee'};
 creatures.bug={hp:14,speed:115,damage:5,color:'#b7ae62',reach:32,windup:.42,cooldown:1.2,attack:'melee'};
 creatures.bat={hp:20,speed:140,damage:6,color:'#a58ac1',reach:37,windup:.5,cooldown:1.3,attack:'charge'};
+creatures.snake={hp:22,speed:130,damage:7,color:'#83b773',reach:33,windup:.4,cooldown:1.1,attack:'melee'};
+function roomFloodDoors(room){
+ const doors=[],tiles=world.tiles;
+ const tile=(x,y)=>x>=0&&y>=0&&x<W&&y<H&&tiles[y*W+x]===1;
+ for(const side of ['top','bottom','left','right']){
+  const horizontal=side==='top'||side==='bottom',start=horizontal?room.x:room.y,end=start+(horizontal?room.w:room.h);
+  let first=null;
+  for(let n=start;n<=end;n++){
+   const x=horizontal?n:(side==='left'?room.x:room.x+room.w-1),y=horizontal?(side==='top'?room.y:room.y+room.h-1):n;
+   const dx=side==='left'?-1:side==='right'?1:0,dy=side==='top'?-1:side==='bottom'?1:0;
+   const open=n<end&&tile(x,y)&&tile(x+dx,y+dy);
+   if(open&&first===null)first=n;
+   if(!open&&first!==null){
+    const boundary=(side==='top'?room.y:side==='bottom'?room.y+room.h:side==='left'?room.x:room.x+room.w)*T;
+    doors.push(horizontal?{x1:first*T,y1:boundary-6,x2:n*T,y2:boundary+6,hp:180,max:180}:{x1:boundary-6,y1:first*T,x2:boundary+6,y2:n*T,hp:180,max:180});
+    first=null;
+   }
+  }
+ }
+ return doors;
+}
+function segmentDoor(a,b,door){
+ let lo=0,hi=1;
+ for(const [axis,min,max] of [['x',door.x1,door.x2],['y',door.y1,door.y2]]){
+  const d=b[axis]-a[axis];
+  if(!d){if(a[axis]<min||a[axis]>max)return null;continue}
+  let t1=(min-a[axis])/d,t2=(max-a[axis])/d;if(t1>t2)[t1,t2]=[t2,t1];
+  lo=Math.max(lo,t1);hi=Math.min(hi,t2);if(lo>hi)return null;
+ }
+ return lo;
+}
+function floodBlocked(x,y,r,actor){
+ const flood=world?.flood;
+ if(!flood||flood.draining||(actor===player&&flood.targetFaction==='enemy'))return false;
+ return flood.doors.some(d=>x+r>d.x1&&x-r<d.x2&&y+r>d.y1&&y-r<d.y2);
+}
+function damageFloodDoor(door,amount){
+ const flood=world.flood;if(!flood||flood.draining||amount<=0)return;
+ door.hp=Math.max(0,door.hp-amount);particle((door.x1+door.x2)/2,(door.y1+door.y2)/2,'#bca078',5);
+ if(!door.hp){flood.draining=true;window.DungeonAudio.play('break');log('The door breaks! The other doors open and the water drains.')}
+}
+function strikeFloodDoors(range,damage,width=1.2){
+ const flood=world?.flood;if(!flood||flood.draining)return;
+ for(const door of flood.doors){
+  const x=Math.max(door.x1,Math.min(player.x,door.x2)),y=Math.max(door.y1,Math.min(player.y,door.y2)),point={x,y};
+  if(distance(player,point)<=range&&clearLine(player,point)&&Math.abs(angleDiff(Math.atan2(y-player.y,x-player.x),player.angle))<width)damageFloodDoor(door,damage);
+ }
+}
 function configureHazards(){
  heroShots=[];player.slow=0;world.traps=[];world.torches=[];
  world.rooms.forEach((r,i)=>{
@@ -620,7 +678,8 @@ function configureHazards(){
    const kind=trapKinds[(i*2+n+depth)%trapKinds.length];
    const rewardWeapon=rng()<.08?withRealmDepth(makeWeapon):null;
    if(rewardWeapon){rewardWeapon.damage+=5;rewardWeapon.name="Hidden Hoard "+rewardWeapon.name}
-   world.traps.push({...p,kind:kind==='trapdoor'&&depth>MAX_FLOOR-2?'explosion':kind,rewardWeapon,revealed:false,triggered:false,inspect:0,active:0});
+   const actual=kind==='flood'&&!roomFloodDoors(r).length?'explosion':kind==='trapdoor'&&depth>MAX_FLOOR-2?'explosion':kind;
+   world.traps.push({...p,kind:actual,rewardWeapon,revealed:false,triggered:false,inspect:0,active:0});
   }
  });
 }
@@ -738,11 +797,12 @@ function updateHeroShots(dt){
    const canDepart=object=>object===s.departing&&distance(s,object)<=s.departureRadius+.001&&
     (s.x-object.x)*s.vx+(s.y-object.y)*s.vy>0;
    const next={x:s.x+s.vx*step,y:s.y+s.vy*step},colliders=[
+    ...(world.flood?.doors||[]).filter(door=>!world.flood.draining).map(object=>({object,door:true,at:segmentDoor(s,{x:s.x+s.vx*step,y:s.y+s.vy*step},object)})),
     ...world.torches.filter(object=>!s.hits.has(object)).map(object=>({object,radius:12,torch:true})),
     ...props.filter(p=>blocksShot(p)&&!canDepart(p)).map(object=>({object,radius:20,prop:true})),
     ...(world.boulder&&!canDepart(world.boulder)?[{object:world.boulder,radius:world.boulder.radius||25,boulder:true}]:[]),
     ...enemies.filter(e=>e.hp>0&&!canDepart(e)).map(object=>({object,radius:object.radius+5,prop:false}))
-   ].map(c=>({...c,at:segmentHit(s,next,c.object,c.radius)})).filter(c=>c.at!==null).sort((a,b)=>a.at-b.at);
+   ].map(c=>c.door?c:({...c,at:segmentHit(s,next,c.object,c.radius)})).filter(c=>c.at!==null).sort((a,b)=>a.at-b.at);
    const collision=colliders[0],fraction=collision?.at??1;
    s.x+=(next.x-s.x)*fraction;s.y+=(next.y-s.y)*fraction;s.travel+=Math.hypot(s.vx,s.vy)*step*fraction;
    if(!floorAt(s.x,s.y)){
@@ -759,11 +819,12 @@ function updateHeroShots(dt){
    }
    if(collision){
     s.hits.add(collision.object);
-    if(collision.torch)strikeTorch(collision.object);
+    if(collision.door)damageFloodDoor(collision.object,s.damage);
+    else if(collision.torch)strikeTorch(collision.object);
     else if(collision.prop)breakProp(collision.object,s.damage);
     else if(collision.boulder)damageBoulder(collision.object,s.damage);
     else hurtEnemy(collision.object,s.damage);
-    if(s.wandEffect)impactWand(s,collision.object);else impactAmmo(s,collision.torch||collision.boulder?null:collision.object);
+    if(s.wandEffect)impactWand(s,collision.object);else impactAmmo(s,collision.torch||collision.boulder||collision.door?null:collision.object);
     // A boomerang turns away from its first impact; it never pierces an intact target.
     if(s.kind==='boomerang'&&!s.returning){s.returning=true;s.departing=collision.object;s.departureRadius=collision.radius;break}
     s.life=0;break;
@@ -1594,8 +1655,8 @@ move=function(e,dx,dy){
  const r=e.radius||12;
  if(e!==player&&world&&world.merchant&&pointInRoom({x:e.x+dx,y:e.y},world.merchant.room,0))dx=0;
  if(e!==player&&world&&world.merchant&&pointInRoom({x:e.x,y:e.y+dy},world.merchant.room,0))dy=0;
- if(free(e.x+dx,e.y,r))e.x+=dx;
- if(free(e.x,e.y+dy,r))e.y+=dy;
+ if(free(e.x+dx,e.y,r)&&!floodBlocked(e.x+dx,e.y,r,e))e.x+=dx;
+ if(free(e.x,e.y+dy,r)&&!floodBlocked(e.x,e.y+dy,r,e))e.y+=dy;
 };
 damagePlayer=function(amount,source='physical'){
  if(inMerchantSanctuary())return;
@@ -1847,6 +1908,7 @@ function wandConeTargets(range,width){
  });
 }
 function wandCone(effect,power,range,width){
+ strikeFloodDoors(range,5+power,width/2);
  for(const target of wandConeTargets(range,width)){
   if(enemies.includes(target)){
    hurtEnemy(target,5+power);
@@ -2044,7 +2106,7 @@ attack=function(){
   const speed=520;heroShots.push({x:player.x,y:player.y,from:{x:player.x,y:player.y},vx:Math.cos(player.angle)*speed,vy:Math.sin(player.angle)*speed,kind:'wand',wandEffect:weapon.effect,power,age:0,travel:0,range:weapon.range,damage:5+power,color:weapon.color,hits:new Set(),life:4,lit:weapon.effect==='fireball',magicRadius:85});
   window.DungeonAudio.play('strike');return;
  }
- if(!rangedKinds.includes(kind)){expansionAttack();return}
+ if(!rangedKinds.includes(kind)){strikeFloodDoors(player.weapon.range,player.weapon.damage+player.level*2);expansionAttack();return}
  if(kind==='boomerang'&&heroShots.some(shot=>shot.kind==='boomerang'))return;
  window.DungeonAudio.play('strike',kind);player.cool=player.weapon.cooldown||.36;player.swing=.2;fireWeapon(kind);
 };
@@ -2097,6 +2159,42 @@ function spawnCrossfire(trap){
  }
 }
 triggerTrap=function(trap,manual=false){
+ if(['flood','massiveExplosion','spiders','poisonCloud','lightningTrap','snakes'].includes(trap.kind)){
+  if((trap.revealed&&!manual)||trap.triggered)return false;
+  const room=world.rooms[trap.room]||world.rooms.find(r=>pointInRoom(trap,r));
+  if(trap.kind==='flood'&&world.flood&&!world.flood.draining){log('Another flooding chamber is already active.');return false}
+  const doors=trap.kind==='flood'&&room?roomFloodDoors(room):[];
+  if(trap.kind==='flood'&&!doors.length){log('This flood mechanism cannot seal the room.');return false}
+  trap.targetFaction=trap.revealed?'enemy':'player';trap.triggered=true;trap.inspect=0;trap.victims=new Set();
+  trap.active=trap.kind==='poisonCloud'?7:trap.kind==='massiveExplosion'||trap.kind==='lightningTrap'?.5:0;
+  if(trap.kind==='flood'){
+   world.flood={room,doors,targetFaction:trap.targetFaction,level:0,tick:1,draining:false};
+   log('The doors slam shut! Break a door before the chamber fills.');
+   window.DungeonAudio.play('earthquake');
+  }else if(trap.kind==='spiders'||trap.kind==='snakes'){
+   const type=trap.kind==='spiders'?'cave_spider':'snake';
+   for(let i=0;i<5;i++){
+    const angle=i*TAU/5,p={x:trap.x+Math.cos(angle)*36,y:trap.y+Math.sin(angle)*36};
+    if(!free(p.x,p.y,12))continue;
+    const enemy=withRealmDepth(baseMakeEnemy,type,p);enemy.emerge=.6;enemy.cool=1;enemy.trapSwarm=true;enemy.trapSource=trap;enemy.swarmLife=15;enemies.push(enemy);
+   }
+   log((trap.kind==='spiders'?'Spiders':'Snakes')+' swarm from the trap!');window.DungeonAudio.play('venom');
+  }else{
+   const radius=trap.kind==='massiveExplosion'?125:trap.kind==='poisonCloud'?85:45;
+   for(const actor of (trap.targetFaction==='enemy'?enemies:[player]))if(actor.hp>0&&distance(trap,actor)<radius&&clearLine(trap,actor)){
+    if(trap.kind==='poisonCloud'){if(actor===player&&player.inv>0)continue;actor.poison=Math.max(actor.poison||0,4);actor.poisonTick=.4}
+    else if(actor===player)damagePlayer(trap.kind==='massiveExplosion'?70:32);
+    else hurtEnemy(actor,trap.kind==='massiveExplosion'?70:32);
+    trap.victims.add(actor);
+   }
+   if(trap.kind==='massiveExplosion')world.scrollFlashes.push({x:trap.x,y:trap.y,kind:'fireball',scale:1.5,life:.45});
+   if(trap.kind==='lightningTrap')world.scrollFlashes.push({x:trap.x,y:trap.y,from:{x:trap.x,y:trap.y-100},kind:'lightning',life:.45});
+   particle(trap.x,trap.y,trap.kind==='poisonCloud'?'#9ae66d':trap.kind==='lightningTrap'?'#b8ccff':'#ff9b4c',30);
+   window.DungeonAudio.play(trap.kind==='lightningTrap'?'lightning':trap.kind==='poisonCloud'?'poison':'dragon');
+   log(trap.kind==='massiveExplosion'?'A massive explosion shakes the chamber!':trap.kind==='lightningTrap'?'A lightning bolt strikes the floor!':'A poison cloud fills the air!');
+  }
+  floatText(trap.x,trap.y-12,'TRAP!','damage');return false;
+ }
  if(trap.kind!=='crossfire')return expansionTriggerTrap(trap,manual);
  if((trap.revealed&&!manual)||trap.triggered)return false;
  trap.targetFaction=trap.revealed?'enemy':'player';trap.triggered=true;trap.inspect=0;trap.arming=0;trap.active=1.5;trap.hit=false;trap.victims=new Set();
@@ -2127,6 +2225,23 @@ function updateCrossfire(dt){
   }
  }
  world.crossfireShots=(world.crossfireShots||[]).filter(arrow=>arrow.life>0);
+}
+function updateNewHazards(dt){
+ for(const trap of world.traps)if(trap.kind==='poisonCloud'&&trap.triggered&&trap.active>0){
+  for(const actor of (trap.targetFaction==='enemy'?enemies:[player]))if(actor.hp>0&&!trap.victims.has(actor)&&distance(trap,actor)<85&&clearLine(trap,actor)){
+   if(actor===player&&player.inv>0)continue;
+   actor.poison=Math.max(actor.poison||0,4);actor.poisonTick=.4;trap.victims.add(actor);
+  }
+ }
+ const flood=world.flood;if(!flood)return;
+ if(flood.draining){flood.level=Math.max(0,flood.level-dt*.3);if(!flood.level)world.flood=null;return}
+ flood.level=Math.min(1,flood.level+dt*.08);flood.tick-=dt;
+ if(flood.level>.3&&flood.tick<=0){
+  flood.tick=1;
+  for(const actor of (flood.targetFaction==='enemy'?enemies:[player]))if(actor.hp>0&&pointInRoom(actor,flood.room)){
+   if(actor===player)damagePlayer(6,'poison');else hurtEnemy(actor,6);
+  }
+ }
 }
 function spawnBoulder(pedestal){
  const room=world.rooms.find(candidate=>pointInRoom(pedestal,candidate))||world.rooms[1];
@@ -2194,6 +2309,7 @@ interact=function(){
  expansionInteract();
 };
 fallToFloor=function(destination,message){
+ if(world?.flood&&!world.flood.draining&&world.flood.targetFaction==='player'&&pointInRoom(player,world.flood.room)){log('Break a sealed door to escape the flooding chamber.');return false}
  if(!Number.isInteger(destination)||destination<=depth||destination>MAX_FLOOR)return expansionFall(destination,message);
  if(bossFloor()&&!bossDefeated){log('The boss seals every descent. Defeat it to open the stairway.');return false}
  const nextBoss=Math.ceil((depth+1)/8)*8;
@@ -2250,6 +2366,7 @@ update=function(dt){
   if(enemy.rooted>0||enemy.charmed>0||enemy.blind>0)enemy.emerge=Math.max(enemy.emerge||0,dt+.002);
  }
  expansionUpdate(dt);if(state!=='playing')return;
+ updateNewHazards(dt);
  updateTorchBurnout(dt);
  updateWandStatuses(dt);
  updateBossCombat(dt);updateCrossfire(dt);
@@ -2263,6 +2380,16 @@ updateHUD=function(){
 };
 render=function(){
  expansionRender();if(!world)return;ctx.save();ctx.translate(-camera.x,-camera.y);
+ const flood=world.flood;
+ if(flood){
+  const r=flood.room;ctx.fillStyle='rgba(47,158,190,'+(flood.level*.4)+')';ctx.fillRect(r.x*T,r.y*T,r.w*T,r.h*T);
+  for(const door of flood.doors)if(!flood.draining){
+   ctx.fillStyle='#755333';ctx.fillRect(door.x1,door.y1,door.x2-door.x1,door.y2-door.y1);
+   ctx.strokeStyle='#e5c27e';ctx.lineWidth=2;ctx.strokeRect(door.x1,door.y1,door.x2-door.x1,door.y2-door.y1);
+   const x=(door.x1+door.x2)/2,y=(door.y1+door.y2)/2;ctx.fillStyle='#211c16';ctx.fillRect(x-25,y-18,50,5);ctx.fillStyle='#e5ae63';ctx.fillRect(x-25,y-18,50*door.hp/door.max,5);
+  }
+ }
+ for(const trap of world.traps)if(trap.kind==='poisonCloud'&&trap.active>0){glow(trap.x,trap.y,85,'#a9e56c88');ctx.globalAlpha=.22;circle(trap.x,trap.y,85,'#a9e56c');ctx.globalAlpha=1}
  for(const trap of world.traps)if(trap.kind==='crossfire'&&!trap.triggered&&world.seen[Math.floor(trap.y/T)*W+Math.floor(trap.x/T)]){
   ctx.fillStyle='#d7cfbb0d';ctx.fillRect(Math.floor(trap.x/T)*T,Math.floor(trap.y/T)*T,T,T);
   ctx.strokeStyle='#c9b99126';ctx.lineWidth=1;ctx.strokeRect(Math.floor(trap.x/T)*T+2,Math.floor(trap.y/T)*T+2,T-4,T-4);
@@ -2285,7 +2412,7 @@ render=function(){
  }
  ctx.restore();
 };
-document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Choose one stocked ammo type for every ranged weapon with T / Cycle: Light, Fire, Explosion, Poison, Lightning, Web or Charm. Bow, crossbow, throwing knives, axes, spears, boomerangs, pistols and rifles share their ammo stock; the last special shot keeps its effect, then reverts to unlimited regular shots. Charm turns monsters against other monsters briefly. Explosion ammo makes a small fireball. Activate a disarmed trap with E / Use to trigger it against monsters. Some torches flicker out; strike them to relight them.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Choose one stocked ammo type for every ranged weapon with T / Cycle: Light, Fire, Explosion, Poison, Lightning, Web or Charm. Bow, crossbow, throwing knives, axes, spears, boomerangs, pistols and rifles share their ammo stock; the last special shot keeps its effect, then reverts to unlimited regular shots. Charm turns monsters against other monsters briefly. Explosion ammo makes a small fireball. Activate a disarmed trap with E / Use to trigger it against monsters. Some torches flicker out; strike them to relight them.<br>Flood traps seal the chamber and raise the water: attack or shoot a door until it breaks, opening every exit and draining the water. Beware massive explosions, poison clouds, lightning, spider swarms and snakes. Disarmed traps target monsters instead.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>A boss waits every 8 floors. Each boss has ranged and melee attacks, calls weaker kin to help, and drops about 1,000 gold, powerful gear, spells and ammo. Floors 8 and 16 seal every pit, fissure and trapdoor until the boss dies; then the stairway opens.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Watch for subtly mismatched tiles: crossfire sends eight mixed arrows from both sides. A pedestal relic releases a slow, destructible boulder that rolls forward, steers sideways toward you, and grows to double size. Sidestep or destroy it before it strikes.');
 window.emberkeepExpansion={ammoKinds,bossForms:BOSS_FORMS,isBossFloor:bossFloor,snapshot:()=>({floor:depth,bossFloor:bossFloor(),bossName:world?.boss?.bossName||'',bossDefeated,ammo:{...player.ammoShared},selectedAmmo,pedestals:world?.pedestals?.length||0,crossfireShots:world?.crossfireShots?.length||0,boulder:!!world?.boulder})};
