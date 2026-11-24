@@ -29,6 +29,36 @@ scripts.forEach(script => vm.runInContext(script, sandbox));
 const run = code => vm.runInContext(code, sandbox);
 let count = 0;
 function check(name, fn) { fn(); count++; console.log('PASS ' + name); }
+check('food drops from crates and barrels, boosts armor, and persists and expires in active time', () => {
+  for(const kind of ['crate','barrel']){
+    const foods=new Set();
+    for(let i=0;i<80;i++){
+      run(`begin();setSeed(${i});loot=[];var container={x:player.x+40,y:player.y,type:'${kind}',hp:1,open:false};breakProp(container,99)`);
+      for(const item of run("loot.filter(x=>x.type==='food')"))foods.add(item.food);
+    }
+    assert.deepEqual([...foods].sort(),['fruit','meat','pie']);
+  }
+  run("begin();world.tiles.fill(1);world.merchant=null;world.traps=[];enemies=[];props=[];player.armor={kind:'plate',reduction:.4};loot=[{x:player.x,y:player.y,type:'food',food:'pie'}];floatingTexts=[];update(.01)");
+  assert.equal(run("player.foodArmorTime===30&&Math.abs(reduction()-.55)<1e-8&&floatingTexts.some(f=>f.color==='#8fdde0')"),true);
+  run("update(5);saveRun();savedRun=null;restoreSavedRun()");
+  assert.equal(run("player.foodArmorTime===25&&Math.abs(reduction()-.55)<1e-8"),true);
+  run("state='paused';var pausedFood=player.foodArmorTime");
+  assert.equal(run('player.foodArmorTime'),run('pausedFood'));
+  run("state='playing';update(25);");
+  assert.equal(run("player.foodArmorTime===0&&Math.abs(reduction()-.4)<1e-8"),true);
+  run("loot=[{x:player.x,y:player.y,type:'food',food:'fruit'}];update(.01);player.foodArmorTime=5;loot=[{x:player.x,y:player.y,type:'food',food:'meat'}];update(.01)");
+  assert.equal(run('player.foodArmorTime'),30);
+});
+check('hard difficulty has extra faster monsters and fewer optional drops without changing easy or medium', () => {
+  for(const level of ['easy','medium','hard']){
+    run(`difficulty='${level}';begin();loadFloor(1,604);var spawnCount=enemies.length;var speed=makeEnemy('slime',player).speed;var itemCount=0;setSeed(101);for(let i=0;i<300;i++){loot=[];drops({x:0,y:0,type:'crate'});itemCount+=loot.length}`);
+    const result={count:run('spawnCount'),speed:run('speed'),items:run('itemCount')};
+    if(level==='easy')var easy=result;else if(level==='medium')var normal=result;else var hard=result;
+  }
+  assert.equal(easy.count,normal.count);assert.equal(easy.speed,normal.speed);assert.equal(easy.items,normal.items);
+  assert.ok(hard.count>normal.count&&Math.abs(hard.speed/normal.speed-1.25)<1e-8&&hard.items<normal.items*.75,JSON.stringify({normal,hard}));
+  run("difficulty='medium'");
+});
 check('ammo pickup adds stock without changing regular or special selection', () => {
   for(const selection of ['regular','web']){
     run(`begin();world.tiles.fill(1);player.weapon={...weaponTypes.bow,kind:'bow',damage:20};selectedAmmo='${selection}';player.ammoShared.web=3;player.ammoShared.fire=0;loot=[{x:player.x,y:player.y,type:'ammo',ammoKind:'bow',special:'fire',value:5}];updateScrolls(0)`);
@@ -502,31 +532,44 @@ check('merchant buys one carried potion or each scroll once per valid transactio
   assert.equal(run('player.gold'),56);
   run('closeShop()');
 });
-check('leaving a hatched nest merges only its living brood once and triples parent vitality and damage', () => {
-  run("loadFloor(1,604);world.traps=[];var giantNest=world.rooms.find(r=>r.kind==='spider');var parentSpider=giantNest.parent;var parentMax=parentSpider.max,parentDamage=parentSpider.damage;parentSpider.hp/=2;player.x=(giantNest.x+giantNest.w/2)*T;player.y=(giantNest.y+giantNest.h/2)*T;updateNestsAndPits(4,player);var ownBrood=enemies.filter(e=>e.baby);var unrelatedBaby={...ownBrood[0],nest:-1};enemies.push(unrelatedBaby)");
-  assert.equal(run('ownBrood.length'),18);
-  assert.equal(run('!!parentSpider.giant'),false);
-  run('player.x=world.start.x;player.y=world.start.y;updateNestsAndPits(.01,player)');
-  assert.equal(run('parentSpider.giant&&parentSpider.max===parentMax*3&&parentSpider.hp===parentMax*1.5&&parentSpider.damage===parentDamage*3'),true);
-  assert.equal(run('ownBrood.every(e=>!enemies.includes(e))&&enemies.includes(unrelatedBaby)'),true);
-  run('updateNestsAndPits(10,player)');
-  assert.equal(run('parentSpider.max'),run('parentMax*3'));
-});
-check('cleared eggs or killed spiderlings prevent giants; an orphaned surviving brood can form exactly one giant', () => {
-  for(const cleared of ['eggs','babies','parent']){
-    run("loadFloor(1,604);world.traps=[];var edgeNest=world.rooms.find(r=>r.kind==='spider');var originalParent=edgeNest.parent;player.x=(edgeNest.x+edgeNest.w/2)*T;player.y=(edgeNest.y+edgeNest.h/2)*T");
-    if(cleared==='eggs')run('edgeNest.decor.forEach(p=>breakProp(p,999))');
-    run('updateNestsAndPits(4,player)');
-    if(cleared==='babies')run('enemies.filter(e=>e.baby).forEach(e=>e.hp=0)');
-    if(cleared==='parent')run('originalParent.hp=0;enemies=enemies.filter(e=>e!==originalParent)');
-    run('player.x=world.start.x;player.y=world.start.y;updateNestsAndPits(.01,player)');
-    assert.equal(run('enemies.filter(e=>e.giant).length'),cleared==='parent'?1:0);
-    if(cleared==='parent')assert.equal(run('edgeNest.parent!==originalParent&&!enemies.some(e=>e.baby&&e.hp>0)'),true);
+check('spiderlings converge on the room center and surviving brood determines giant strength', () => {
+  for(const survivors of [1,9,18]){
+    run(`begin();loadFloor(1,604);world.traps=[];var nest=world.rooms.find(r=>r.kind==='spider'),parent=nest.parent;player.x=(nest.x+nest.w/2)*T;player.y=(nest.y+nest.h/2)*T;updateNestsAndPits(4,player);var brood=enemies.filter(e=>e.baby);brood.slice(${survivors}).forEach(e=>e.hp=0);var baby=brood[0],center={x:player.x,y:player.y},oldDistance=distance(baby,center);updateNestsAndPits(.1,player)`);
+    assert.ok(run('distance(baby,center)<oldDistance&&baby.hp>0&&!nest.broodGiant'),JSON.stringify(run('({oldDistance,newDistance:distance(baby,center),hp:baby.hp,giant:!!nest.broodGiant,x:baby.x,y:baby.y,center})')));
+    run("saveRun();savedRun=null;restoreSavedRun();nest=world.rooms.find(r=>r.kind==='spider');player.x=world.start.x;player.y=world.start.y;for(let i=0;i<80&&!nest.broodGiant;i++)updateNestsAndPits(.1,player)");
+    assert.equal(run(`nest.broodGiant.broodCount===${survivors}&&nest.broodGiant.giant&&nest.parent!==nest.broodGiant`),true);
+    assert.ok(run(`Math.abs(nest.broodGiant.damage-nest.parent.damage*(1+${survivors}/9))<1e-8`));
+    assert.ok(run(`Math.abs(nest.broodGiant.max-nest.parent.max*(1+${survivors}/9))<1e-8`));
+    run('updateNestsAndPits(5,player)');
+    assert.equal(run('enemies.filter(e=>e.giant).length'),1);
   }
 });
-check('leaving during the egg countdown merges the later hatch rather than duplicating a roaming brood', () => {
-  run('loadFloor(1,604);world.traps=[];var delayedNest=world.rooms.find(r=>r.kind==="spider");player.x=(delayedNest.x+delayedNest.w/2)*T;player.y=(delayedNest.y+delayedNest.h/2)*T;updateNestsAndPits(.1,player);player.x=world.start.x;player.y=world.start.y;updateNestsAndPits(4,player);updateNestsAndPits(4,player)');
-  assert.equal(run('delayedNest.parent.giant&&!enemies.some(e=>e.baby)&&enemies.filter(e=>e.giant).length===1'),true);
+check('destroyed eggs and spiderlings cannot form a giant, including after leaving the room', () => {
+  for(const cleared of ['eggs','babies']){
+    run("begin();loadFloor(1,604);world.traps=[];var nest=world.rooms.find(r=>r.kind==='spider');player.x=(nest.x+nest.w/2)*T;player.y=(nest.y+nest.h/2)*T");
+    if(cleared==='eggs')run('nest.decor.forEach(p=>breakProp(p,999))');
+    run('updateNestsAndPits(4,player)');
+    if(cleared==='babies')run('enemies.filter(e=>e.baby).forEach(e=>e.hp=0)');
+    run('player.x=world.start.x;player.y=world.start.y;updateNestsAndPits(5,player)');
+    assert.equal(run('enemies.some(e=>e.giant)'),false);
+  }
+});
+check('corridor midpoint activates the adjacent room and its eggs', () => {
+  run("begin();world.tiles.fill(0);world.rooms=[{x:2,y:5,w:4,h:3,kind:'entrance',decor:[]},{x:12,y:5,w:4,h:3,kind:'spider',decor:[],hatchStarted:false,hatchTimer:0}];for(let y=5;y<8;y++)for(let x=2;x<16;x++)world.tiles[y*W+x]=1;player.x=8.99*T;player.y=6.5*T;world.webs=[]");
+  assert.equal(run('roomAtPosition(player)'),0);
+  run('updateNestsAndPits(.01,player)');assert.equal(run('world.rooms[1].hatchStarted'),false);
+  run('player.x=9.01*T;updateNestsAndPits(.01,player)');
+  assert.equal(run('roomAtPosition(player)===1&&world.rooms[1].hatchStarted'),true);
+  run('saveRun();savedRun=null;restoreSavedRun()');
+  assert.equal(run('roomAtPosition(player)===1&&world.rooms[1].hatchStarted'),true);
+});
+check('room activation follows vertical and turning corridor midpoints', () => {
+  run("begin();world.tiles.fill(0);world.rooms=[{x:5,y:2,w:3,h:4,kind:'entrance'},{x:5,y:12,w:3,h:4,kind:'spider'}];for(let y=2;y<16;y++)for(let x=5;x<8;x++)world.tiles[y*W+x]=1;player.x=6.5*T;player.y=8.99*T");
+  assert.equal(run('roomAtPosition(player)'),0);
+  run('player.y=9.01*T');assert.equal(run('roomAtPosition(player)'),1);
+  run("begin();world.tiles.fill(0);world.rooms=[{x:2,y:2,w:4,h:4,kind:'entrance'},{x:12,y:12,w:4,h:4,kind:'spider'}];for(let y=2;y<6;y++)for(let x=2;x<6;x++)world.tiles[y*W+x]=1;for(let y=12;y<16;y++)for(let x=12;x<16;x++)world.tiles[y*W+x]=1;for(let x=6;x<=13;x++)world.tiles[4*W+x]=1;for(let y=5;y<12;y++)world.tiles[y*W+13]=1;player.x=12.5*T;player.y=4.5*T");
+  assert.equal(run('roomAtPosition(player)'),0);
+  run('player.x=13.5*T;player.y=5.5*T');assert.equal(run('roomAtPosition(player)'),1);
 });
 check('giant web strikes inflict tripled base damage and root; normal webs remain root-only and dodge protects', () => {
   run("loadFloor(1,604);world.tiles.fill(1);props=[];world.traps=[];player.armor=player.boots=player.gloves=player.helmet=null;player.hp=120;player.inv=0;var giantStriker=makeEnemy('cave_spider',{x:player.x+120,y:player.y});giantStriker.attackAngle=Math.PI;enemies=[giantStriker];strikeWeb(giantStriker)");
@@ -711,7 +754,7 @@ check('melee and projectiles can extinguish and relight a torch exactly once per
     assert.equal(run('struck.lit'),true,kind);
   }
 });
-check('entering nests hatches only intact eggs once into fast hostile lootless spiderlings', () => {
+check('entering nests hatches only intact eggs into lootless converging spiderlings', () => {
   run("loadFloor(1,604);enemies=[];world.traps=[];var nest=world.rooms.find(r=>r.kind==='spider');var egg=nest.decor[0];breakProp(egg,999);loot=[];updateNestsAndPits(5,player)");
   assert.equal(run('enemies.length'),0);
   run('player.x=(nest.x+nest.w/2)*T;player.y=(nest.y+nest.h/2)*T;updateNestsAndPits(.01,player)');
@@ -719,8 +762,7 @@ check('entering nests hatches only intact eggs once into fast hostile lootless s
   run('updateNestsAndPits(4,player)');
   assert.equal(run('enemies.filter(e=>e.baby).length'),15);
   assert.equal(run('enemies.every(e=>e.speed===245&&e.hp===10&&e.trapSwarm)'),true);
-  run('updateNestsAndPits(9,player)');assert.equal(run('enemies.length'),15);
-  run("var baby=enemies[0];var prevDistance=distance(baby,player);baby.emerge=0;updateTraps(.1,false)");
+  run("var baby=enemies[0];var prevDistance=distance(baby,player);updateNestsAndPits(.1,player)");
   assert.ok(run('distance(baby,player)<prevDistance'));
   run('for(const baby of enemies)hurtEnemy(baby,999)');
   assert.equal(run('loot.length'),0);

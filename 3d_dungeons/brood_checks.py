@@ -57,11 +57,10 @@ with sync_playwright() as p:
         }""")
         if touch:
             page.touchscreen.tap(**point)
-            assert page.evaluate("selectedWorldItem===null&&!sconce.lit")
-            attack()
         else:
             page.mouse.click(**point)
         page.wait_for_function("sconce.lit")
+        assert page.evaluate("selectedWorldItem===null")
         page.wait_for_timeout(450)
         attack()
         page.wait_for_function("!sconce.lit")
@@ -92,45 +91,36 @@ with sync_playwright() as p:
           nest.collapse=null;canvas.focus();
         }""")
         page.wait_for_function("enemies.filter(e=>e.baby).length===18")
-        assert page.evaluate("!parent.giant")
-        # Position just within the room boundary, then actually walk out.
         page.evaluate("""() => {
-          world.tiles.fill(1);world.rooms.forEach(r=>{r.collapse=null});
-          enemies.forEach(e=>e.emerge=1000);
-          player.x=(nest.x+nest.w)*T-6;player.y=(nest.y+nest.h/2)*T;
-          parent.x=player.x-70;parent.y=player.y;
-          window.startX=player.x;render();
+          window.baby=enemies.find(e=>e.baby);
+          window.center={x:(nest.x+nest.w/2)*T,y:(nest.y+nest.h/2)*T};
+          window.startDistance=distance(baby,center);
+          enemies.filter(e=>e.baby).slice(9).forEach(e=>e.hp=0);
         }""")
-        if touch:
-            pad = page.locator("#movePad").bounding_box()
-            x, y = pad["x"] + pad["width"] / 2, pad["y"] + pad["height"] / 2
-            cdp = context.new_cdp_session(page)
-            cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": x, "y": y}]})
-            cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": [{"x": x + 36, "y": y}]})
-            page.wait_for_function("parent.giant")
-            cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
-        else:
-            page.keyboard.down("d")
-            page.wait_for_function("parent.giant")
-            page.keyboard.up("d")
-        assert page.evaluate("""parent.max===originalMax*3&&parent.hp===originalMax*1.5&&
-          parent.damage===originalDamage*3&&!enemies.some(e=>e.baby)&&player.x>startX""")
+        page.wait_for_function("distance(baby,center)<startDistance")
+        page.wait_for_function("nest.broodGiant")
+        assert page.evaluate("""nest.broodGiant.broodCount===9&&nest.broodGiant.max===originalMax*2&&
+          nest.broodGiant.damage===originalDamage*2&&!enemies.some(e=>e.baby&&e.hp>0)&&!parent.giant""")
         page.screenshot(path=str(OUT / f"{PREFIX}-{name}-giant.png"))
-        hit = page.evaluate("""() => {
-          props=[];player.inv=0;player.hp=120;player.armor=player.boots=player.gloves=player.helmet=null;
-          strikeWeb(parent);return {root:player.root,hp:player.hp,expected:120-originalDamage*3};
+        page.evaluate("""() => {
+          enemies=[];world.traps=[];loot=[{x:player.x,y:player.y,type:'food',food:'pie'}];
+          player.armor=player.boots=player.gloves=player.helmet=null;
         }""")
-        assert hit["root"] == 1 and hit["hp"] == hit["expected"], hit
-        page.evaluate("player.x=(nest.x+nest.w/2)*T;player.y=(nest.y+nest.h/2)*T")
-        page.wait_for_timeout(100)
-        page.evaluate("player.x=world.start.x;player.y=world.start.y")
-        page.wait_for_timeout(150)
-        assert page.evaluate("parent.max===originalMax*3&&enemies.filter(e=>e.giant).length===1&&!enemies.some(e=>e.baby)")
+        page.wait_for_function("player.foodArmorTime>29")
+        assert page.evaluate("Math.abs(reduction()-.15)<1e-8&&floatingTexts.some(f=>f.color==='#8fdde0')")
+        page.screenshot(path=str(OUT / f"{PREFIX}-{name}-food.png"))
+        action("#pause")
+        remaining=page.evaluate("player.foodArmorTime")
+        page.wait_for_timeout(200)
+        assert page.evaluate("player.foodArmorTime") == remaining
+        page.reload()
+        action("#resumeSaved")
+        assert page.evaluate("player.foodArmorTime>0&&Math.abs(reduction()-.15)<1e-8")
         assert page.evaluate("state==='playing'&&document.documentElement.scrollWidth<=innerWidth")
         assert not errors, errors
         report["layouts"].append({"name": name, "entrance_only_labels": True, "attack_only_torches": True,
-                                   "potion_and_all_scroll_sales": True, "natural_hatch_and_giant_exit": True,
-                                   "triple_stats_no_duplicate_brood": True, "errors": errors})
+                                   "potion_and_all_scroll_sales": True, "hatch_center_merge": True,
+                                   "survivor_scaled_giant": True, "food_pause_resume": True, "errors": errors})
         context.close()
     browser.close()
 

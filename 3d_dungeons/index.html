@@ -271,13 +271,13 @@ function clearLine(a,b){const steps=Math.ceil(distance(a,b)/8);for(let i=1;i<ste
 function move(e,dx,dy){const r=e.radius||12;if(free(e.x+dx,e.y,r))e.x+=dx;if(free(e.x,e.y+dy,r))e.y+=dy}
 function roomSpot(r){return {x:(integer(r.x+1,r.x+r.w-2)+.5)*T,y:(integer(r.y+1,r.y+r.h-2)+.5)*T}}
 let runCycle=1;
-function makeEnemy(type,p){const base=creatures[type];if(!base)throw new Error('Unknown creature: '+type);const scale=(1+(runCycle-1)*.25)*({easy:.75,medium:1,hard:1.35}[difficulty]),hp=(base.hp+(type==='dragon'?0:depth*6))*scale;return {...p,...base,type,hp,max:hp,damage:base.damage*scale,radius:type==='dragon'?25:12,cool:random(.5,2),hit:0,wind:0,lunge:0,attackAngle:0,phase:0}}
+function makeEnemy(type,p){const base=creatures[type];if(!base)throw new Error('Unknown creature: '+type);const scale=(1+(runCycle-1)*.25)*({easy:.75,medium:1,hard:1.35}[difficulty]),hp=(base.hp+(type==='dragon'?0:depth*6))*scale;return {...p,...base,type,speed:base.speed*(difficulty==='hard'?1.25:1),hp,max:hp,damage:base.damage*scale,radius:type==='dragon'?25:12,cool:random(.5,2),hit:0,wind:0,lunge:0,attackAngle:0,phase:0}}
 function loadFloor(d,s){
  depth=d;world=generate(s,d);enemies=[];props=[];loot=[];shots=[];effects=[];floatingTexts=[];distances=null;bossDefeated=false;
  player.x=world.start.x;player.y=world.start.y;player.hp=player.max;player.inv=1;player.stamina=100;player.poison=player.burn=player.poisonTick=player.burnTick=0;
  world.rooms.forEach((r,i)=>{
   let spawn=0;const roster=chapterRosters[d-1];
-  if(i>0&&!(d===5&&i===11))for(let n=0;n<2+Math.floor(d/2);n++)enemies.push(makeEnemy(roster[(spawn++ + i)%roster.length],roomSpot(r)));
+  if(i>0&&!(d===5&&i===11))for(let n=0;n<2+Math.floor(d/2)+(difficulty==='hard'?2:0);n++)enemies.push(makeEnemy(roster[(spawn++ + i)%roster.length],roomSpot(r)));
   for(let n=0;n<4;n++){const p=roomSpot(r);if(distance(p,world.start)>90&&distance(p,world.end)>100&&!props.some(o=>distance(p,o)<35))props.push({...p,type:n===0?'chest':n%2?'barrel':'crate',hp:20,open:false})}
  });
  if(d===5)enemies.push(makeEnemy('dragon',{x:world.end.x,y:world.end.y}));
@@ -294,7 +294,7 @@ function floatText(x,y,text,kind='loot',color){const stack=floatingTexts.filter(
 function tickFloatingTexts(dt){for(const f of floatingTexts){f.age+=dt;f.y-=14*dt}floatingTexts=floatingTexts.filter(f=>f.age<f.life)}
 const armorSlots=['armor','boots','gloves','helmet'];
 const armorSlot=a=>a.slot||'armor';
-function reduction(source='physical'){return Math.min(.4,armorSlots.reduce((total,slot)=>total+Math.max(0,source==='head'&&player[slot]?.kind==='robe'&&!player[slot].hooded?0:player[slot]?.reduction||0),0))}
+function reduction(source='physical'){return Math.min(.4,armorSlots.reduce((total,slot)=>total+Math.max(0,source==='head'&&player[slot]?.kind==='robe'&&!player[slot].hooded?0:player[slot]?.reduction||0),0))+(player.foodArmorTime>0?.15:0)}
 function damagePlayer(amount,source='physical'){if((player.inv>0&&source!=='poison'&&source!=='burn')||state!=='playing')return;const before=player.hp;window.DungeonAudio.play('damage');if(player.armor)window.DungeonAudio.play('armor');player.hp=Math.max(0,player.hp-amount*(1-reduction(source)));const actual=before-player.hp;if(actual>0)floatText(player.x,player.y-15,'-'+Math.ceil(actual),'damage');if(source==='physical'||source==='head')player.inv=.6;particle(player.x,player.y,source==='poison'?'#9ae66d':source==='burn'?'#ff8b45':'#d89b84');if(player.hp===0){window.DungeonAudio.play('death');state='dead';showOverlay('The embers fade.','You recovered '+player.gold+' gold and defeated '+kills+' monsters in Chapter '+depth+'. A new path awaits.','Try a new run')}}
 const weaponTypes={sword:{label:'Longsword',range:82,cooldown:.36,bonus:0},axe:{label:'War Axe',range:74,cooldown:.46,bonus:7},mace:{label:'Mace',range:68,cooldown:.42,bonus:5},spear:{label:'Spear',range:108,cooldown:.4,bonus:-2},bow:{label:'Longbow',range:490,cooldown:.65,bonus:-2},boomerang:{label:'Boomerang',range:270,cooldown:.8,bonus:-4},javelin:{label:'Throwing Spear',range:390,cooldown:.72,bonus:4},halberd:{label:'Halberd',range:123,cooldown:.57,bonus:9},knife:{label:'Throwing Knife',range:330,cooldown:.3,bonus:-6},throwing_axe:{label:'Throwing Axe',range:305,cooldown:.66,bonus:6}};
 weaponTypes.crossbow={label:'Crossbow',range:560,cooldown:.85,bonus:10};
@@ -302,7 +302,7 @@ const rangedKinds=['bow','crossbow','boomerang','javelin','knife','throwing_axe'
 function weaponKind(w){return w.kind||(w.name.includes('Axe')?'axe':w.name.includes('Spear')?'spear':w.name.includes('Mace')?'mace':'sword')}
 function makeWeapon(){const tier=integer(0,99),rarity=tier>88?2:tier>55?1:0,kinds=Object.keys(weaponTypes),kind=kinds[integer(0,kinds.length-1)],type=weaponTypes[kind];return {name:['Tempered','Knight\'s','Runed'][rarity]+' '+type.label,kind,damage:15+depth*5+rarity*9+type.bonus+(runCycle-1)*5,range:type.range+rarity*4,cooldown:type.cooldown,color:['#c5d4d4','#78c8e0','#c6a0ed'][rarity]}}
 function makeArmor(slot=armorSlots[integer(0,armorSlots.length-1)]){const tier=integer(0,2),kind=['leather','chain','plate'][tier];if(slot==='armor'&&rng()<.3)return makeRobe(false);return {name:slot==='armor'?['Hardened Leather','Riveted Chainmail','Knight\'s Plate'][tier]:['Leather','Chain','Plate'][tier]+' '+{boots:'Boots',gloves:'Gloves',helmet:'Helmet'}[slot],kind,slot,reduction:slot==='armor'?Math.min(.4,.08+tier*.08+depth*.025):Math.min(.12,.025+tier*.025+depth*.006),color:['#ad7951','#91adb4','#c8cddd'][tier]}}
-function drops(e,chest=false){if(e.trapSwarm)return;loot.push({x:e.x-12,y:e.y,type:'gold',value:chest?integer(20,40)*depth:integer(3,10)*depth});if(chest||rng()<.25)loot.push({x:e.x+22,y:e.y+12,type:'weapon',weapon:makeWeapon()});if(chest||rng()<.16)loot.push({x:e.x-24,y:e.y+25,type:'armor',armor:makeArmor()});if(rng()<(chest?.15:.03))loot.push({x:e.x,y:e.y-22,type:'potion'})}
+function drops(e,chest=false){if(e.trapSwarm)return;const rate=difficulty==='hard'?.5:1;if(chest||rate===1||rng()<rate)loot.push({x:e.x-12,y:e.y,type:'gold',value:chest?integer(20,40)*depth:integer(3,10)*depth});if(chest||rng()<.25*rate)loot.push({x:e.x+22,y:e.y+12,type:'weapon',weapon:makeWeapon()});if(chest||rng()<.16*rate)loot.push({x:e.x-24,y:e.y+25,type:'armor',armor:makeArmor()});if(rng()<(chest?.15:.03*rate))loot.push({x:e.x,y:e.y-22,type:'potion'})}
 function hurtEnemy(e,amount){if(e.hp<=0)return;window.DungeonAudio.play('hit',e.type);window.DungeonAudio.play('voice',e.type);const actual=Math.min(Math.max(0,e.hp),amount);e.hp-=amount;e.hit=.15;if(actual>0)floatText(e.x,e.y-25,'-'+Math.ceil(actual),'strike');particle(e.x,e.y,e.type==='slime'?'#74b788':'#d4a873');if(e.hp<=0){kills++;drops(e);player.xp+=e.type==='dragon'?250:18+depth*3;log(e.type==='dragon'?'Varkhos has fallen! The crown is yours.':e.type[0].toUpperCase()+e.type.slice(1)+' defeated.');while(player.xp>=player.level*65){player.xp-=player.level*65;player.level++;player.max+=15;player.hp=Math.min(player.max,player.hp+40);log('Knight rank '+player.level+'. Vitality increased.')}if(e.type==='dragon'){bossDefeated=true;player.gold+=500;player.crowns=(player.crowns||0)+1;floatText(player.x,player.y-25,'+500 GOLD','gold');showBossVictory()}}}
 function showBossVictory(){
  const origin=world?.boss||player;
@@ -394,6 +394,7 @@ function strikeWeb(spider){
  }
 }
 function update(dt){
+ player.foodArmorTime=Math.max(0,(player.foodArmorTime||0)-dt);
  clock+=dt;player.cool=Math.max(0,player.cool-dt);player.swing=Math.max(0,player.swing-dt);player.inv=Math.max(0,player.inv-dt);player.stamina=Math.min(100,player.stamina+22*dt);
  let dx=(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0),dy=(keys.has('s')||keys.has('arrowdown')?1:0)-(keys.has('w')||keys.has('arrowup')?1:0);
  if(dx||dy){const n=Math.hypot(dx,dy);dx/=n;dy/=n;if(!mouse.active)player.angle=Math.atan2(dy,dx)}
@@ -449,16 +450,16 @@ function update(dt){
  shots=shots.filter(s=>s.life>0);enemies=enemies.filter(e=>e.hp>0);
  for(const l of loot){
   l.age=(l.age||0)+dt;if(l.age>=lootLifetime(l)){l.taken=true;continue}
-  if((['gold','potion'].includes(l.type)||l.type==='ammo'&&usesAmmo(player.weapon)||l.type==='scroll'&&isWand(player.weapon))&&!l.taken){
+  if((['gold','potion','food'].includes(l.type)||l.type==='ammo'&&usesAmmo(player.weapon)||l.type==='scroll'&&isWand(player.weapon))&&!l.taken){
    const gap=distance(l,player);
    if(gap<=3.75*T&&gap>0){const step=Math.min(gap,360*dt);l.x+=(player.x-l.x)/gap*step;l.y+=(player.y-l.y)/gap*step}
   }
-  if(!l.taken&&(l.type==='gold'||l.type==='potion')&&distance(l,player)<32){window.DungeonAudio.play(l.type==='gold'?'gold':'bottle');if(l.type==='gold'){player.gold+=l.value;floatText(l.x,l.y-10,'+'+l.value+' GOLD','gold')}else{player.potions++;floatText(l.x,l.y-10,'+1 HEALING POTION','heal')}l.taken=true;particle(l.x,l.y,l.type==='gold'?'#edbf72':'#7ae4ba',5)}
+  if(!l.taken&&['gold','potion','food'].includes(l.type)&&distance(l,player)<32){window.DungeonAudio.play(l.type==='gold'?'gold':'bottle');if(l.type==='gold'){player.gold+=l.value;floatText(l.x,l.y-10,'+'+l.value+' GOLD','gold')}else if(l.type==='food'){player.foodArmorTime=30;floatText(l.x,l.y-10,l.food.toUpperCase()+' +15% ARMOR','treasure','#8fdde0');log('A hearty '+l.food+' grants 15% armor for 30 seconds.')}else{player.potions++;floatText(l.x,l.y-10,'+1 HEALING POTION','heal')}l.taken=true;particle(l.x,l.y,l.type==='gold'?'#edbf72':'#7ae4ba',5)}
  }
  loot=loot.filter(l=>!l.taken);for(const p of effects){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;if(p.coin)p.vy+=200*dt}effects=effects.filter(p=>p.life>0);tickFloatingTexts(dt);updateHUD();
  $('prompt').textContent=interactionPrompt(nearby());
 }
-function updateHUD(){$('hp').style.width=player.hp/player.max*100+'%';$('health').textContent=Math.ceil(player.hp)+' / '+player.max;$('stamina').style.width=player.stamina+'%';$('xp').style.width=player.xp/(player.level*65)*100+'%';$('level').textContent=player.level;$('weapon').textContent=player.weapon.name;$('weapon').style.color=player.weapon.color;$('damage').textContent=player.weapon.damage+player.level*2;$('weaponStats').textContent=player.weapon.range+' / '+(player.weapon.cooldown||.36).toFixed(2)+'s';$('armor').style.whiteSpace='pre-line';$('armor').style.fontSize='12px';$('armor').textContent=armorSlots.map(slot=>(slot==='armor'?'Body':slot[0].toUpperCase()+slot.slice(1))+': '+(player[slot]?player[slot].name+' ('+Math.round(player[slot].reduction*100)+'%)':'None')).join('\n');$('armor').style.color='#b9ccce';$('defense').textContent=Math.round(reduction()*100)+'% (40% cap)';$('gold').textContent=player.gold;$('potions').textContent=player.potions;$('kills').textContent=kills;const b=enemies.find(e=>e.type==='dragon'&&distance(e,player)<600);$('boss').hidden=!b;if(b)$('bosshp').style.width=b.hp/b.max*100+'%'}
+function updateHUD(){$('hp').style.width=player.hp/player.max*100+'%';$('health').textContent=Math.ceil(player.hp)+' / '+player.max;$('stamina').style.width=player.stamina+'%';$('xp').style.width=player.xp/(player.level*65)*100+'%';$('level').textContent=player.level;$('weapon').textContent=player.weapon.name;$('weapon').style.color=player.weapon.color;$('damage').textContent=player.weapon.damage+player.level*2;$('weaponStats').textContent=player.weapon.range+' / '+(player.weapon.cooldown||.36).toFixed(2)+'s';$('armor').style.whiteSpace='pre-line';$('armor').style.fontSize='12px';$('armor').textContent=armorSlots.map(slot=>(slot==='armor'?'Body':slot[0].toUpperCase()+slot.slice(1))+': '+(player[slot]?player[slot].name+' ('+Math.round(player[slot].reduction*100)+'%)':'None')).join('\n');$('armor').style.color='#b9ccce';$('defense').textContent=Math.round(reduction()*100)+'% (gear cap 40%)'+(player.foodArmorTime>0?' · Food '+Math.ceil(player.foodArmorTime)+'s':'');$('gold').textContent=player.gold;$('potions').textContent=player.potions;$('kills').textContent=kills;const b=enemies.find(e=>e.type==='dragon'&&distance(e,player)<600);$('boss').hidden=!b;if(b)$('bosshp').style.width=b.hp/b.max*100+'%'}
 function circle(x,y,r,color){ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill()}
 function polygon(points,color){ctx.fillStyle=color;ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.closePath();ctx.fill()}
 function glow(x,y,r,color){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,color);g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2)}
@@ -557,7 +558,7 @@ function render(){
   }else if(p.broken){polygon([[-16,9],[-8,-7],[-3,8],[6,-13],[11,8],[17,11]],'#997044');ctx.strokeStyle='#593e2c';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-16,9);ctx.lineTo(-8,-7);ctx.lineTo(-3,8);ctx.lineTo(6,-13);ctx.lineTo(11,8);ctx.lineTo(17,11);ctx.stroke()}
   else{ctx.fillStyle='#815b39';ctx.fillRect(-15,-11,30,23);ctx.strokeStyle='#aa8357';ctx.lineWidth=2;ctx.strokeRect(-14,-10,28,21);ctx.fillStyle='#99734b';for(let x of [-9,-3,3,9])ctx.fillRect(x-1,-9,2,19);ctx.strokeStyle='#c09a65';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-14,-10);ctx.lineTo(14,10);ctx.moveTo(14,-10);ctx.lineTo(-14,10);ctx.stroke();ctx.fillStyle='#d5b17a';for(const x of [-11,11])for(const y of [-7,7])circle(x,y,1.3,'#d5b17a')}
   ctx.restore()}
- for(const l of loot)if(lootVisible(l)&&l.type!=='ammo'&&world.seen[Math.floor(l.y/T)*W+Math.floor(l.x/T)]){const c=l.type==='scroll'?scrollTypes[l.scroll].color:l.type==='weapon'?l.weapon.color:l.type==='armor'?l.armor.color:l.type==='gold'?'#edbf72':'#76d9ac';glow(l.x,l.y,24,c+'44');if(l.type==='gold'){circle(l.x,l.y,5,c);circle(l.x-5,l.y+4,4,'#a78041')}else if(l.type==='scroll'){ctx.fillStyle='#ecd6a5';ctx.fillRect(l.x-7,l.y-9,14,18);ctx.strokeStyle=c;ctx.lineWidth=3;ctx.strokeRect(l.x-8,l.y-9,16,18);ctx.fillStyle=c;ctx.font='bold 11px Georgia';ctx.textAlign='center';ctx.fillText(l.scroll[0].toUpperCase(),l.x,l.y+4)}else if(l.type==='potion'){ctx.fillStyle=c;ctx.fillRect(l.x-5,l.y-3,10,12);ctx.fillStyle='#d9d6ba';ctx.fillRect(l.x-3,l.y-7,6,4)}else{ctx.save();ctx.translate(l.x,l.y);if(l.type==='armor')drawArmor(l.armor);else{ctx.rotate(-.8);ctx.scale(.8,.8);ctx.translate(-15,0);drawWeapon(l.weapon)}ctx.restore()}}
+ for(const l of loot)if(lootVisible(l)&&l.type!=='ammo'&&world.seen[Math.floor(l.y/T)*W+Math.floor(l.x/T)]){const c=l.type==='scroll'?scrollTypes[l.scroll].color:l.type==='weapon'?l.weapon.color:l.type==='armor'?l.armor.color:l.type==='gold'?'#edbf72':l.type==='food'?'#8fdde0':'#76d9ac';glow(l.x,l.y,24,c+'44');if(l.type==='gold'){circle(l.x,l.y,5,c);circle(l.x-5,l.y+4,4,'#a78041')}else if(l.type==='food'){circle(l.x,l.y,8,l.food==='fruit'?'#d85e4b':l.food==='pie'?'#d5a35b':'#a76d4b');ctx.fillStyle='#e6c997';ctx.fillRect(l.x-5,l.y-2,10,3)}else if(l.type==='scroll'){ctx.fillStyle='#ecd6a5';ctx.fillRect(l.x-7,l.y-9,14,18);ctx.strokeStyle=c;ctx.lineWidth=3;ctx.strokeRect(l.x-8,l.y-9,16,18);ctx.fillStyle=c;ctx.font='bold 11px Georgia';ctx.textAlign='center';ctx.fillText(l.scroll[0].toUpperCase(),l.x,l.y+4)}else if(l.type==='potion'){ctx.fillStyle=c;ctx.fillRect(l.x-5,l.y-3,10,12);ctx.fillStyle='#d9d6ba';ctx.fillRect(l.x-3,l.y-7,6,4)}else{ctx.save();ctx.translate(l.x,l.y);if(l.type==='armor')drawArmor(l.armor);else{ctx.rotate(-.8);ctx.scale(.8,.8);ctx.translate(-15,0);drawWeapon(l.weapon)}ctx.restore()}}
  for(const e of enemies)if(distance(e,player)<440&&world.seen[Math.floor(e.y/T)*W+Math.floor(e.x/T)]){
   if(e.wind>0){const spell=e.attack==='venom'||e.attack==='web'||e.attack==='fire'||e.attack==='lightning',color=e.type==='dragon'?'#f28b57':e.attack==='web'?'#e4e6d3':e.attack==='venom'?'#9be05c':e.attack==='fire'?'#ff713c':e.attack==='lightning'?'#bbc5ff':e.color;ctx.fillStyle=color+'38';ctx.strokeStyle=color;ctx.lineWidth=2;
    if(e.attack==='lightning'&&e.attackTarget){const tx=e.attackTarget.x,ty=e.attackTarget.y;ctx.setLineDash([5,5]);ctx.beginPath();ctx.arc(tx,ty,24+Math.sin(clock*10)*3,0,TAU);ctx.fill();ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.moveTo(e.x,e.y);for(let i=1;i<=6;i++){const f=i/7,offset=(i%2?1:-1)*10;ctx.lineTo(e.x+(tx-e.x)*f+offset,e.y+(ty-e.y)*f-offset)}ctx.lineTo(tx,ty);ctx.stroke()}
@@ -736,7 +737,7 @@ function updateTraps(dt,moved){
    e[status]=Math.max(0,e[status]-dt);e[status+'Tick']-=dt;
    if(e[status+'Tick']<=0){e[status+'Tick']+=.65;hurtEnemy(e,status==='burn'?4:3)}
   }
-  if(e.trapSwarm&&e.hp>0){
+  if(e.trapSwarm&&e.hp>0&&!e.baby){
    e.swarmLife-=dt;if(e.swarmLife<=0){e.hp=0;particle(e.x,e.y,e.color,12);if(e.trapSource?.manualByPlayer){floatText(e.x,e.y-16,'POOF!','treasure');window.DungeonAudio.play('magic')}continue}
    if(e.charmed>0)continue;
    if(e.emerge>0)continue;
@@ -1020,6 +1021,36 @@ hurtEnemy=function(enemy,amount,source=null){if(source&&source!==player&&!source
 function pointInRoom(point,room,padding=0){
  return !!room&&point.x>=room.x*T+padding&&point.x<(room.x+room.w)*T-padding&&point.y>=room.y*T+padding&&point.y<(room.y+room.h)*T-padding;
 }
+const roomDistanceCache=new WeakMap();
+function roomDistanceFields(map){
+ if(roomDistanceCache.has(map))return roomDistanceCache.get(map);
+ const fields=map.rooms.map(room=>{
+  const field=new Int16Array(W*H).fill(-1),queue=[];
+  for(let y=room.y;y<room.y+room.h;y++)for(let x=room.x;x<room.x+room.w;x++)if(map.tiles[y*W+x]){field[y*W+x]=0;queue.push(y*W+x)}
+  for(let i=0;i<queue.length;i++){
+   const k=queue[i],x=k%W,y=Math.floor(k/W);
+   for(const [nx,ny] of [[x-1,y],[x+1,y],[x,y-1],[x,y+1]])if(nx>=0&&nx<W&&ny>=0&&ny<H){
+    const n=ny*W+nx;if(map.tiles[n]&&field[n]<0){field[n]=field[k]+1;queue.push(n)}
+   }
+  }
+  return field;
+ });
+ roomDistanceCache.set(map,fields);return fields;
+}
+function roomAtPosition(point){
+ const inside=world.rooms.findIndex(room=>pointInRoom(point,room));if(inside>=0)return inside;
+ const gx=point.x/T-.5,gy=point.y/T-.5,x=Math.floor(gx),y=Math.floor(gy),fx=gx-x,fy=gy-y;
+ let best=-1,bestDistance=Infinity;
+ roomDistanceFields(world).forEach((field,index)=>{
+  let total=0,weight=0;
+  for(const [dx,dy,w] of [[0,0,(1-fx)*(1-fy)],[1,0,fx*(1-fy)],[0,1,(1-fx)*fy],[1,1,fx*fy]]){
+   const px=x+dx,py=y+dy;if(px<0||py<0||px>=W||py>=H)continue;
+   const d=field[py*W+px];if(d>=0){total+=d*w;weight+=w}
+  }
+  if(weight&&total/weight<bestDistance-1e-8){bestDistance=total/weight;best=index}
+ });
+ return best;
+}
 function inMerchantSanctuary(point=player){
  return !!(world&&world.merchant&&pointInRoom(point,world.merchant.room,12));
 }
@@ -1295,11 +1326,15 @@ function impactAmmo(shot,target){
  if(shot.special==='light')world.scrollLights.push({x:shot.x,y:shot.y,lit:true,ammoLight:true,magicRadius:170,life:5});
 }
 function updateNestsAndPits(dt,before){
+ const activeRoom=roomAtPosition(player);
  for(const room of world.rooms){
-  if(room.kind==='spider'&&pointInRoom(player,room)&&!room.hatchStarted){
+  const roomIndex=world.rooms.indexOf(room);
+  let broodDt=dt;
+  if(room.kind==='spider'&&activeRoom===roomIndex&&!room.hatchStarted){
    room.hatchStarted=true;room.hatchTimer=4;log('Egg sacs are trembling! Destroy them before they hatch.');floatText(player.x,player.y-30,'EGGS HATCH IN 4s!','damage');
   }
   if(room.hatchTimer>0){
+   broodDt=Math.max(0,dt-room.hatchTimer);
    room.hatchTimer=Math.max(0,room.hatchTimer-dt);
    if(room.hatchTimer===0)for(const egg of room.decor.filter(p=>p.egg&&!p.open)){
     egg.open=true;egg.broken=true;world.webs=world.webs.filter(web=>web.decor!==egg);
@@ -1308,29 +1343,28 @@ function updateNestsAndPits(dt,before){
      if(!free(spot.x,spot.y,8)){spot.x=egg.x;spot.y=egg.y}
      const baby=withRealmDepth(baseMakeEnemy,'cave_spider',spot);
      const scale=1+(runCycle-1)*.25;
-     Object.assign(baby,{hp:10*scale,max:10*scale,radius:8,speed:245,damage:4*scale,trapSwarm:true,swarmLife:Infinity,emerge:.4,cool:.6,baby:true,nest:world.rooms.indexOf(room)});
+     Object.assign(baby,{hp:10*scale,max:10*scale,radius:8,speed:245*(difficulty==='hard'?1.25:1),damage:4*scale,trapSwarm:true,swarmLife:Infinity,emerge:0,cool:.6,baby:true,nest:world.rooms.indexOf(room)});
      enemies.push(baby);
     }
     particle(egg.x,egg.y,'#d4dfb6',18);
    }
   }
-  if(room.kind==='spider'&&room.hatchStarted&&!pointInRoom(player,room)){
-   const brood=enemies.filter(e=>e.baby&&e.nest===world.rooms.indexOf(room)&&e.hp>0);
-   if(brood.length){
-    let parent=room.parent;
-    if(!parent||parent.hp<=0||!enemies.includes(parent)){
-     parent=withRealmDepth(baseMakeEnemy,'cave_spider',{x:brood[0].x,y:brood[0].y});enemies.push(parent);room.parent=parent;
-    }
-    if(!parent.giant){
-     const health=parent.hp/parent.max;parent.max*=3;parent.hp=parent.max*health;parent.damage*=3;parent.giant=true;
-    }
-    enemies=enemies.filter(e=>!brood.includes(e));
-    particle(parent.x,parent.y,'#b5ef7e',30);floatText(parent.x,parent.y-30,'GIANT SPIDER!','damage');
-    log('The abandoned brood combines into a giant spider: triple vitality and damage!');
+  if(room.kind==='spider'&&room.hatchStarted&&room.hatchTimer===0&&!room.broodMerged){
+   const brood=enemies.filter(e=>e.baby&&e.nest===roomIndex&&e.hp>0),center={x:(room.x+room.w/2)*T,y:(room.y+room.h/2)*T};
+   for(const baby of brood){
+    const gap=distance(baby,center),step=Math.min(gap,baby.speed*broodDt);
+    if(gap>0)move(baby,(center.x-baby.x)/gap*step,(center.y-baby.y)/gap*step);
+   }
+   if(brood.length&&brood.every(baby=>distance(baby,center)<2)){
+    const giant=withRealmDepth(baseMakeEnemy,'cave_spider',center),scale=1+brood.length/9;
+    giant.max*=scale;giant.hp=giant.max;giant.damage*=scale;giant.giant=true;giant.broodCount=brood.length;
+    enemies=enemies.filter(e=>!brood.includes(e));enemies.push(giant);room.broodMerged=true;room.broodGiant=giant;
+    particle(center.x,center.y,'#b5ef7e',30);floatText(center.x,center.y-30,'GIANT SPIDER!','damage');
+    log(brood.length+' spiderlings combine into a giant spider!');
    }
   }
   const collapse=room.collapse;
-  if(!collapse||!pointInRoom(player,room)||depth>=MAX_FLOOR||inMerchantSanctuary())continue;
+  if(!collapse||activeRoom!==roomIndex||depth>=MAX_FLOOR||inMerchantSanctuary())continue;
   collapse.timer-=dt;
   if(collapse.warning){collapse.warning.life-=dt;if(collapse.warning.life<=0){world.pits.push({...collapse.warning});collapse.warning=null;collapse.count++;collapse.timer=6}}
   else if(collapse.timer<=0&&collapse.count<3){
@@ -1348,13 +1382,17 @@ function updateNestsAndPits(dt,before){
 }
 drops=function(source,chest=false){
  baseScrollDrops(source,chest);
- if(!source.trapSwarm&&(chest||rng()<.12)){
+ const rate=difficulty==='hard'?.5:1;
+ if(!source.trapSwarm&&(chest||rng()<.12*rate)){
   const kinds=Object.keys(scrollTypes),kind=kinds[integer(0,kinds.length-1)];
   loot.push({x:source.x+12,y:source.y-28,type:'scroll',scroll:kind});
  }
- if(!source.trapSwarm&&(chest||rng()<.18)){
+ if(!source.trapSwarm&&(chest||rng()<.18*rate)){
   const kinds=Object.keys(ammoColors),special=kinds[integer(0,kinds.length-1)],ammoKind=rng()<.5?'bow':'crossbow';
   loot.push({x:source.x-18,y:source.y-30,type:'ammo',special,ammoKind,value:5});
+ }
+ if((source.type==='crate'||source.type==='barrel')&&rng()<.5*rate){
+  const foods=['fruit','pie','meat'];loot.push({x:source.x+10,y:source.y+20,type:'food',food:foods[integer(0,foods.length-1)]});
  }
 };
 updateHUD=function(){baseScrollHUD();refreshScrollHUD()};
@@ -1442,7 +1480,7 @@ function lootLifetime(item){return item.weaponSwitchDrop?10:30}
 function lootVisible(item){const blinkAt=lootLifetime(item)-5;return (item.age||0)<blinkAt||Math.floor(((item.age||0)-blinkAt)*5)%2===0}
 const gearPreferences={enabled:true,prefer:'ranged'};
 document.querySelector('aside').insertAdjacentHTML('afterbegin','<section class="panel" aria-label="Automatic equipment"><div class="label">Automatic equipment</div><p><button id="autoEquip" type="button" aria-pressed="true">Auto-equip: On</button></p><p><button id="preferWeapon" type="button">Prefer: Ranged</button></p><p style="font-size:12px">Upgrades fly from 3.75 tiles away. Magic preference equips a first wand, then stronger wands. Settings are saved with your run.</p></section>');
-document.querySelector('aside').insertAdjacentHTML('afterbegin','<section class="panel" aria-label="Game settings"><div class="label">Game settings</div><label>Difficulty <select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></label><p>Difficulty affects newly spawned enemies.</p><div id="bindingSettings"></div><p id="bindingError" role="status"></p></section>');
+document.querySelector('aside').insertAdjacentHTML('afterbegin','<section class="panel" aria-label="Game settings"><div class="label">Game settings</div><label>Difficulty <select id="difficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></label><p>Hard has more, faster monsters and fewer ordinary drops. New enemy counts apply on the next floor.</p><div id="bindingSettings"></div><p id="bindingError" role="status"></p></section>');
 const bindingInputs={};
 function refreshKeyHints(){
  $('healHint').textContent=keyBindings.potion.toUpperCase()+' HEAL';
@@ -1878,7 +1916,7 @@ canvas.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'||state!=='p
 window.addEventListener('blur',resetTouch);document.addEventListener('visibilitychange',()=>{if(document.hidden)resetTouch()});
 const touchUpdate=update;
 update=function(dt){touchUpdate(dt);if(state!=='playing')resetTouch()};
-document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Touch: drag MOVE to walk and face; hold Attack. Tap the hall to aim and strike, or a nearby chest to open it. Tap Use / Equip, Dodge or Heal. Tap gear to select it while attacking; E / Use equips the selection and Clear restores nearby interaction.<br>Torches are attack-only: hit with any weapon to switch them off or on, no fire needed. E / Use cannot toggle or select them. X / Delete gear removes only selected loose weapons or armor. Undo last delete restores one item during this run, even after descent. Break furnishings for 1-2 coins; trap swarms never drop loot.<br>Leaving a nest with living spiderlings combines its brood into a giant parent with 3x normal vitality and damage. If the parent was slain, the surviving brood forms a new giant. Kill the brood before leaving to prevent this.<br>Merchants buy carried potions for 8 gold and each scroll for 12 gold; use the Sell buttons in the shop.<br>Traps glint intermittently only in torchlight. Stop beside one for 2 seconds to disarm it; monsters can still trigger it. Manual activation may affect you. Each torch lights its share of the room.<br>Find body armor, boots, gloves, helmets, halberds, bows, boomerangs, throwing spears, knives and axes. Most projectiles stop at the first creature or intact container.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Touch: drag MOVE to walk and face; hold Attack. Tap the hall to aim and strike, or a nearby chest to open it. Tap Use / Equip, Dodge or Heal. Tap gear to select it while attacking; E / Use equips the selection and Clear restores nearby interaction.<br>Torches are attack-only: hit with any weapon to switch them off or on, no fire needed. E / Use cannot toggle or select them. X / Delete gear removes only selected loose weapons or armor. Undo last delete restores one item during this run, even after descent. Break furnishings for 1-2 coins; trap swarms never drop loot.<br>Hatched spiderlings rush to their room center and combine into a giant; fewer surviving spiderlings make a weaker giant. Destroy eggs or spiderlings to stop them. Rooms activate when you cross the halfway point of a connecting passage.<br>Crates and barrels may contain fruit, pie or meat; collecting food grants 15% armor for 30 active seconds.<br>Merchants buy carried potions for 8 gold and each scroll for 12 gold; use the Sell buttons in the shop.<br>Traps glint intermittently only in torchlight. Stop beside one for 2 seconds to disarm it; monsters can still trigger it. Manual activation may affect you. Each torch lights its share of the room.<br>Find body armor, boots, gloves, helmets, halberds, bows, boomerangs, throwing spears, knives and axes. Most projectiles stop at the first creature or intact container.');
 </script>
 <script id="rpg-expansion">
 'use strict';
