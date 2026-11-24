@@ -20,16 +20,18 @@ with sync_playwright() as playwright:
         page.evaluate("""() => {
             loadFloor(1,604);world.tiles.fill(1);world.merchant=null;props=[];enemies=[];loot=[];
             world.traps=[{x:player.x+180,y:player.y,kind:'fire',revealed:true,triggered:false,inspect:0,active:0}];
+            const room=world.rooms[1];player.x=(room.x+room.w/2)*T;player.y=(room.y+room.h/2)*T;
             player.angle=0;mouse.active=false;player.inv=1000;player.cool=0;
             player.weapon={...weaponTypes.sword,kind:'sword',name:'Test Sword',damage:25,color:'#ddd'};
-            world.boulder={x:player.x+65,y:player.y,axis:'x',direction:1,age:11.5,hp:100,max:100,radius:49};
+            world.boulder={x:player.x+65,y:player.y,room:1,direction:-1,age:0,hp:10,max:10,radius:25};
         }""")
         page.screenshot(path=str(OUT / f"hazards-{label}-boulder.png"))
+        page.evaluate("world.boulder={x:player.x+65,y:player.y,room:1,direction:-1,age:0,hp:10,max:10,radius:25};player.cool=0")
         if touch:
             page.locator("#touchAttack").tap()
         else:
             page.keyboard.press("Space")
-        assert page.evaluate("world.boulder && world.boulder.hp<100")
+        assert page.evaluate("world.boulder && world.boulder.hp<10"), page.evaluate("({ball:world.boulder,player:{x:player.x,y:player.y,angle:player.angle,cool:player.cool},state})")
         before = page.evaluate("({hp:world.boulder.hp,age:world.boulder.age})")
         page.locator("#pause").click()
         page.reload()
@@ -43,6 +45,41 @@ with sync_playwright() as playwright:
             return {triggered:trap.triggered, faction:trap.targetFaction, burn:victim.burn, heroHp:player.hp};
         }""")
         assert outcome["triggered"] and outcome["faction"] == "enemy" and outcome["burn"] > 0 and outcome["heroHp"] == 120, outcome
+        page.evaluate("""() => {
+            world.boulder=null;world.tiles.fill(1);world.merchant=null;props=[];loot=[];enemies=[];
+            world.end.x=2500;world.end.y=1900;player.hp=120;player.inv=0;
+            window.manualTrap={x:player.x+20,y:player.y,kind:'explosion',type:'trap',revealed:true,triggered:false};
+            world.traps=[manualTrap];selectedWorldItem=manualTrap;
+        }""")
+        if touch:
+            page.locator("#touchInteract").tap()
+        else:
+            page.keyboard.press("e")
+        assert page.evaluate("manualTrap.targetFaction==='both'&&player.hp<120")
+        page.evaluate("""() => {
+            world.tiles.fill(1);world.torches=[];world.merchant=null;world.traps=[];world.boulder=null;props=[];loot=[];
+            player.hp=120;player.inv=0;player.angle=0;mouse.active=false;player.cool=0;
+            player.weapon={...weaponTypes.rifle,kind:'rifle',name:'Test rifle',damage:20,range:600,color:'#ddd'};
+            player.ammoShared.light=1;selectedAmmo='light';heroShots=[];
+            enemies=[60,110,160,210].map(dx=>{const e=makeEnemy('slime',{x:player.x+dx,y:player.y});e.hp=300;e.emerge=1000;return e});
+        }""")
+        if touch:
+            page.locator("#touchAttack").tap()
+        else:
+            page.keyboard.press("Space")
+        page.wait_for_function("enemies[2].hp<300", timeout=5000)
+        assert page.evaluate("enemies.slice(0,3).every(e=>e.hp<300)&&enemies[3].hp===300")
+        page.evaluate("""() => {
+            loadFloor(1,604);world.tiles.fill(1);world.merchant=null;props=[];loot=[];enemies=[];
+            world.end.x=2500;world.end.y=1900;
+            window.pit={x:player.x+20,y:player.y,kind:'trapdoor',type:'trap',revealed:true,triggered:false};
+            world.traps=[pit];selectedWorldItem=pit;
+        }""")
+        if touch:
+            page.locator("#touchInteract").tap()
+        else:
+            page.keyboard.press("e")
+        assert page.evaluate("depth===2&&player.hp>0")
         assert not errors, errors
         results.append({"device": label, "attack": "touch" if touch else "keyboard", "restored": restored, "trap": outcome})
         context.close()

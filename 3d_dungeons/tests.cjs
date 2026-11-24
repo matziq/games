@@ -37,25 +37,57 @@ check('ammo pickup adds stock without changing regular or special selection', ()
   run("selectedAmmo='regular';cycleAmmo()");
   assert.equal(run("selectedAmmo==='fire'"),true,'explicit cycling should select collected ammunition');
 });
-check('bed bugs cling harmlessly for 30 active seconds and honor trap faction and saves', () => {
+check('bed bugs cling harmlessly for 10 active seconds and honor trap faction and saves', () => {
   run("begin();world.tiles.fill(1);world.merchant=null;world.torches=[];props=[];loot=[];enemies=[];player.hp=120;player.inv=0;var bugTrap={x:player.x,y:player.y,kind:'bedbugs',revealed:false,active:0};world.traps=[bugTrap];triggerTrap(bugTrap)");
-  assert.equal(run("player.hp===120&&player.bedbugs===30&&enemies.length===0&&loot.length===0"),true);
+  assert.equal(run("player.hp===120&&player.bedbugs===10&&enemies.length===0&&loot.length===0"),true);
   run("update(4);saveRun();savedRun=null;restoreSavedRun()");
-  assert.equal(run("player.bedbugs===26&&player.hp===120"),true);
+  assert.equal(run("player.bedbugs===6&&player.hp===120"),true);
   run("loadFloor(2,604);world.merchant=null;enemies=[];props=[];world.traps=[]");
-  assert.equal(run("player.bedbugs===26"),true,'bed bugs persist when descending');
+  assert.equal(run("player.bedbugs===6"),true,'bed bugs persist when descending');
   run("state='paused';var pausedTime=player.bedbugs;state='playing'");
   assert.equal(run("player.bedbugs===pausedTime"),true);
-  run("update(25.9)");
+  run("update(5.9)");
   assert.ok(run("player.bedbugs>0&&player.hp===120"));
   run("update(.2)");
   assert.equal(run("player.bedbugs===0&&player.hp===120"),true);
   run("begin();world.tiles.fill(1);world.merchant=null;world.torches=[];props=[];loot=[];player.hp=120;var mob=makeEnemy('slime',{x:player.x+40,y:player.y});mob.hp=300;mob.emerge=100;enemies=[mob];var safeTrap={x:mob.x,y:mob.y,kind:'bedbugs',revealed:true,active:0};world.traps=[safeTrap];triggerTrap(safeTrap,true)");
-  assert.equal(run("mob.bedbugs===30&&mob.hp===300&&!player.bedbugs&&player.hp===120&&enemies.length===1&&loot.length===0"),true);
+  assert.equal(run("mob.bedbugs===10&&mob.hp===300&&!player.bedbugs&&player.hp===120&&enemies.length===1&&loot.length===0"),true);
   run("saveRun();savedRun=null;restoreSavedRun()");
-  assert.equal(run("enemies[0].bedbugs===30&&enemies[0].hp===300"),true);
+  assert.equal(run("enemies[0].bedbugs===10&&enemies[0].hp===300"),true);
   run("begin();world.tiles.fill(1);world.merchant=null;world.torches=[];props=[];player.bedbugs=0;var crossing=makeEnemy('slime',{x:player.x+80,y:player.y});crossing.hp=300;crossing.emerge=100;enemies=[crossing];var armed={x:crossing.x,y:crossing.y,kind:'bedbugs',revealed:true,active:0};world.traps=[armed];updateTraps(.01,false)");
-  assert.equal(run("armed.triggered&&crossing.bedbugs===30&&!player.bedbugs&&crossing.hp===300"),true);
+  assert.equal(run("armed.triggered&&crossing.bedbugs===10&&!player.bedbugs&&crossing.hp===300"),true);
+});
+check('legacy bed bugs retain elapsed time and never exceed the new duration', () => {
+  run("begin();enemies=[makeEnemy('slime',{x:player.x+40,y:player.y})];player.bedbugs=26;delete player.bedbugsDuration;enemies[0].bedbugs=19;delete enemies[0].bedbugsDuration;saveRun();savedRun=null;restoreSavedRun()");
+  assert.equal(run("player.bedbugs===6&&enemies[0].bedbugs===0"),true);
+  run("saveRun();savedRun=null;restoreSavedRun()");
+  assert.equal(run("player.bedbugs===6"),true,'new save must not be migrated twice');
+});
+check('bed bugs alone do not reduce movement speed', () => {
+  run("begin();world.tiles.fill(1);world.merchant=null;world.traps=[];world.webs=[];enemies=[];props=[];loot=[];keys.clear();keys.add('d');player.dash=0;player.root=0;player.slow=0;var originalX=player.x;player.bedbugs=0;update(.04);var cleanStep=player.x-originalX;player.x=originalX;player.bedbugs=10;player.slow=0;player.root=0;update(.04);var bugStep=player.x-originalX;keys.clear()");
+  assert.equal(run('bugStep'),run('cleanStep'));
+});
+check('magic pickups and purchases use their effect colors while ordinary loot stays unchanged', () => {
+  for(const effect of ['fire','poison','explosion','light','lightning','web','charm']){
+    run(`begin();player.weapon={...weaponTypes.bow,kind:'bow'};floatingTexts=[];loot=[{x:player.x,y:player.y,type:'ammo',ammoKind:'bow',special:'${effect}',value:5}];updateScrolls(0)`);
+    assert.equal(run('floatingTexts.at(-1).color'),run(`ammoColors.${effect}`),effect);
+  }
+  for(const effect of ['fireball','light','poison','lightning']){
+    run(`begin();player.weapon={kind:'wand',effect:'light',name:'wand'};floatingTexts=[];loot=[{x:player.x,y:player.y,type:'scroll',scroll:'${effect}'}];updateScrolls(0)`);
+    assert.equal(run('floatingTexts.at(-1).color'),run(`scrollTypes.${effect}.color`),effect);
+  }
+  for(const effect of ['fireball','fire','poison','web','light','lightning']){
+    for(const automatic of [false,true]){
+      run(`begin();world.tiles.fill(1);floatingTexts=[];gearPreferences.enabled=${automatic};gearPreferences.prefer='magic';var wandLoot={x:player.x,y:player.y,type:'weapon',weapon:{kind:'wand',effect:'${effect}',name:'Test wand',damage:99,range:300,cooldown:.5}};loot=[wandLoot];${automatic?'updateAutoGear(0)':'equipLoot(wandLoot)'}`);
+      assert.equal(run('floatingTexts.at(-1).color'),run(`magicPickupColor('wand','${effect}')`),effect);
+    }
+  }
+  run("begin();floatingTexts=[];var normalLoot={x:player.x,y:player.y,type:'weapon',weapon:{...weaponTypes.sword,kind:'sword',name:'Sword'}};loot=[normalLoot];equipLoot(normalLoot)");
+  assert.equal(run('floatingTexts.at(-1).color'),undefined);
+  for(const kind of ['ammo','scroll','weapon']){
+    run(`begin();player.gold=1000;player.weapon=${kind==='ammo'?"{...weaponTypes.bow,kind:'bow'}":"{kind:'wand',effect:'light',name:'wand'}"};world.merchant={x:player.x,y:player.y,stock:{test:{kind:'${kind}',price:1,quantity:1,special:'poison',scroll:'poison',item:{kind:'wand',effect:'poison',name:'Poison wand'}}}};state='shop';floatingTexts=[];buyProduct('test')`);
+    assert.equal(run('floatingTexts.at(-1).color'),run("magicPickupColor('"+(kind==='weapon'?'wand':kind)+"','poison')"),kind);
+  }
 });
 check('torch flicker is slow and unchanged by pause', () => {
   run("begin();var flame={x:0,burnoutRemaining:5};clock=0;var phase0=torchIntensity(flame);clock=.1;var phase1=torchIntensity(flame);clock=Math.PI/4;var phasePeak=torchIntensity(flame)");
@@ -141,13 +173,41 @@ check('explosion ammunition produces a smaller fireball and damages nearby enemi
   run("begin();world.tiles.fill(1);props=[];world.scrollFlashes=[];var victim=makeEnemy('slime',{x:player.x+40,y:player.y});victim.hp=300;enemies=[victim];impactAmmo({x:victim.x,y:victim.y,special:'explosion'},victim)");
   assert.equal(run("victim.hp===265&&world.scrollFlashes.some(f=>f.kind==='fireball'&&f.scale>0&&f.scale<1)"),true);
 });
-check('E and touch Use manually activate disarmed traps against monsters only', () => {
+check('E and touch Use manually activate disarmed hazards against monsters and the knight', () => {
   for(const control of ['interact()', "$('touchInteract').onclick()"]){
     run(`begin();world.tiles.fill(1);world.merchant=null;props=[];loot=[];world.end.x=2500;world.end.y=1900;player.hp=120;player.inv=0;var manualTrap={x:player.x+40,y:player.y,kind:'explosion',revealed:true,active:0,triggered:false};world.traps=[manualTrap];var target=makeEnemy('slime',{x:manualTrap.x,y:manualTrap.y});target.hp=300;enemies=[target];selectedWorldItem=null;${control}`);
-    assert.equal(run("manualTrap.triggered&&manualTrap.targetFaction==='enemy'&&target.hp===268&&player.hp===120"),true);
+    assert.equal(run("manualTrap.triggered&&manualTrap.targetFaction==='both'&&target.hp===268&&player.hp===88"),true);
   }
   run("begin();world.tiles.fill(1);props=[];loot=[];world.merchant=null;world.end.x=2500;world.end.y=1900;world.traps=[{x:player.x+40,y:player.y,kind:'fire',revealed:true,active:0,triggered:false}];enemies=[];saveRun();savedRun=null;restoreSavedRun();interact()");
-  assert.equal(run("world.traps[0].triggered&&world.traps[0].targetFaction==='enemy'"),true);
+  assert.equal(run("world.traps[0].triggered&&world.traps[0].targetFaction==='both'"),true);
+});
+check('manual creature traps create allied swarms for ten active seconds with saved lifetimes', () => {
+  for(const kind of ['bugs','bats','spiders','snakes']){
+    run(`begin();world.tiles.fill(1);world.merchant=null;world.traps=[];props=[];loot=[];enemies=[];player.hp=120;var manualTrap={x:player.x+40,y:player.y,kind:'${kind}',revealed:true,active:0,triggered:false,type:'trap'};world.traps=[manualTrap];selectedWorldItem=manualTrap;interact();var brood=enemies.slice();var foe=makeEnemy('slime',{x:brood[0].x+20,y:brood[0].y});foe.hp=300;foe.emerge=100;enemies.push(foe);for(const member of brood){member.emerge=0;member.cool=0}updateTraps(.1,false)`);
+    assert.equal(run("brood.length>0&&brood.every(e=>e.swarmLife===9.9)&&foe.hp<300&&player.hp===120"),true,kind);
+    run("saveRun();savedRun=null;restoreSavedRun();brood=enemies.filter(e=>e.trapSource);brood[0].charmed=100;updateTraps(9.8,false)");
+    assert.equal(run("brood.every(e=>e.hp>0&&e.swarmLife>0)"),true,kind);
+    run("floatingTexts=[];updateTraps(.11,false)");
+    assert.equal(run("brood.every(e=>e.hp===0)&&floatingTexts.some(f=>f.text==='POOF!')"),true,kind);
+  }
+});
+check('manual damaging traps affect the knight as well as monsters only in their area', () => {
+  for(const kind of ['poison','fire','explosion','quicksand','massiveExplosion','poisonCloud','lightningTrap']){
+    run(`begin();world.tiles.fill(1);world.merchant=null;world.traps=[];props=[];loot=[];player.hp=120;player.inv=0;player.poison=player.burn=player.slow=0;var manualTrap={x:player.x+20,y:player.y,kind:'${kind}',revealed:true,triggered:false,type:'trap'};var foe=makeEnemy('slime',{x:manualTrap.x,y:manualTrap.y});foe.hp=300;enemies=[foe];world.traps=[manualTrap];selectedWorldItem=manualTrap;interact()`);
+    assert.equal(run("manualTrap.targetFaction==='both'"),true,kind);
+    const changed=kind==='poisonCloud'?"player.poison>0&&foe.poison>0":kind==='quicksand'?"player.slow>0&&foe.slow>0":"player.hp<120&&foe.hp<300";
+    assert.equal(run(changed),true,kind);
+  }
+  run("begin();loadFloor(1,604);world.merchant=null;world.tiles.fill(1);props=[];var room=world.rooms[1];player.x=(room.x+room.w/2)*T;player.y=(room.y+room.h/2)*T;player.hp=120;player.inv=0;var foe=makeEnemy('slime',player);foe.hp=300;enemies=[foe];var manualTrap={x:player.x,y:player.y,room:1,kind:'flood',revealed:true};world.traps=[manualTrap];triggerTrap(manualTrap,true,true);updateNewHazards(5)");
+  assert.equal(run("world.flood.targetFaction==='both'&&player.hp<120&&foe.hp<300"),true);
+});
+check('manual and accidental trapdoors descend exactly one floor and preserve the boss gate', () => {
+  for(const manual of [false,true]){
+    run(`begin();loadFloor(1,604);world.tiles.fill(1);world.merchant=null;world.traps=[];props=[];enemies=[];player.hp=100;var pit={x:player.x+${manual?20:0},y:player.y,kind:'trapdoor',revealed:${manual},type:'trap'};world.traps=[pit];${manual?"selectedWorldItem=pit;interact()":"triggerTrap(pit)"}`);
+    assert.equal(run('depth===2&&player.hp>0'),true,String(manual));
+  }
+  run("begin();loadFloor(8,604);world.tiles.fill(1);world.merchant=null;var pit={x:player.x,y:player.y,kind:'trapdoor',revealed:false};triggerTrap(pit)");
+  assert.equal(run('depth===8&&!bossDefeated'),true);
 });
 check('nearby fragile torches flicker, persist their countdown and relight permanently', () => {
   run("begin();world.tiles.fill(1);enemies=[];props=[];var fragile={x:player.x+40,y:player.y,room:2,lit:true,fragile:true,burnedOut:false,burnoutRemaining:null};world.torches=[fragile];updateTorchBurnout(1)");
@@ -606,6 +666,7 @@ check('all seven ammunition effects resolve on projectile impact', () => {
     if(special==='fire'||special==='poison')assert.equal(run(`ammoVictim.${special==='fire'?'burn':'poison'}`),4);
     if(special==='explosion')assert.ok(run('ammoVictim.hp<450'));
     if(special==='light'){
+      run('updateHeroShots(2)');
       assert.equal(run('world.scrollLights.length===1&&world.scrollLights[0].life===5'),true);
       run('updateScrolls(4.99)');assert.equal(run('world.scrollLights.length'),1);
       run('updateScrolls(.02)');assert.equal(run('world.scrollLights.length'),0);
@@ -630,9 +691,17 @@ check('light arrows and bolts illuminate in flight and leave one wall-bounded li
     run('updateHeroShots(.6);updateHeroShots(.1)');
     assert.ok(run('heroShots.length===0&&world.scrollLights.length===1&&world.scrollLights[0].x===lightRound.x&&world.scrollLights[0].y===420'));
     if(hit==='wall')assert.ok(run('lightRound.x>599.99&&lightRound.x<600&&torchIllumination({x:660,y:420})===0'));
-    if(hit==='enemy')assert.ok(run('lightRound.x===600-impactEnemy.radius-5&&impactEnemy.hp<300'));
+    if(hit==='enemy')assert.ok(run('lightRound.x>600&&impactEnemy.hp<300'));
     if(hit==='crate')assert.ok(run('lightRound.x===580&&props[0].hp<100'));
   }
+});
+check('light ammunition pierces three distinct monsters, survives save, and stops at walls', () => {
+  for(const kind of ['bow','boomerang','rifle']){
+    run(`begin();world.tiles.fill(1);world.torches=[];props=[];world.merchant=null;player.x=400;player.y=400;player.angle=0;player.weapon={...weaponTypes.${kind},kind:'${kind}',damage:20,range:600};player.ammoShared.light=1;selectedAmmo='light';player.cool=0;enemies=[470,540,610,680].map(x=>{const e=makeEnemy('slime',{x,y:400});e.hp=300;return e});attack();updateHeroShots(.15);saveRun();savedRun=null;restoreSavedRun();for(let i=0;i<30&&heroShots.length;i++)updateHeroShots(.05)`);
+    assert.equal(run("enemies.slice(0,3).every(e=>e.hp===278)&&enemies[3].hp===300&&heroShots.length===0&&world.scrollLights.length===1"),true,kind);
+  }
+  run("begin();world.tiles.fill(1);world.torches=[];props=[];player.x=400;player.y=420;player.angle=0;player.weapon={...weaponTypes.rifle,kind:'rifle',damage:20,range:600};player.ammoShared.light=1;selectedAmmo='light';player.cool=0;enemies=[470,650].map(x=>{const e=makeEnemy('slime',{x,y:420});e.hp=300;return e});for(let y=0;y<H;y++)world.tiles[y*W+15]=0;attack();updateHeroShots(1)");
+  assert.equal(run("enemies[0].hp<300&&enemies[1].hp===300&&heroShots.length===0&&world.scrollLights.length===1"),true);
 });
 check('melee and projectiles can extinguish and relight a torch exactly once per shot', () => {
   for(const kind of run('Object.keys(weaponTypes)')){
@@ -1161,15 +1230,15 @@ check('poison, fire, explosion, quicksand, bugs and bats have distinct real effe
   }
 });
 check('trapdoors respect the next eighth-floor boss gate and never bypass it', () => {
-  for(let floor=1;floor<=14;floor++)for(let seed=0;seed<12;seed++){
+  for(let floor=1;floor<=15;floor++)for(let seed=0;seed<12;seed++){
     if(floor===8)continue;
     run(`loadFloor(${floor},${seed});state='playing';triggerTrap({x:player.x,y:player.y,kind:'trapdoor'})`);
-    assert.ok(run('depth')>=floor+1&&run('depth')<=Math.min(16,floor+4));
+    assert.equal(run('depth'),floor+1);
     if(run('depth')===8||run('depth')===16)assert.equal(run('enemies.some(e=>e.boss)'),true);
   }
   run("loadFloor(8,60);state='playing';triggerTrap({x:player.x,y:player.y,kind:'trapdoor'})");
   assert.equal(run('depth'),8,'trapdoor bypassed the active boss');
-  for(let floor=15;floor<=16;floor++){
+  for(let floor=16;floor<=16;floor++){
     run(`loadFloor(${floor},60)`);
     assert.equal(run("world.traps.some(t=>t.kind==='trapdoor')"),false);
   }
@@ -1182,22 +1251,50 @@ check('crossfire traps fire eight arrows, deal one half-health volley, and can b
   run("player.hp=120;player.inv=1;player.x=(room.x+room.w/2)*T;player.y=(room.y+room.h/2)*T;crossTrap={x:player.x,y:player.y,kind:'crossfire',room:world.rooms.indexOf(room),revealed:false,triggered:false};world.traps=[crossTrap];triggerTrap(crossTrap,true);updateCrossfire(.8)");
   assert.equal(run('player.hp===120&&!crossTrap.hit'),true);
 });
-check('pedestal boulders pursue laterally, grow, deal up to 90 percent and can be destroyed', () => {
-  run("loadFloor(1,604);world.tiles.fill(1);enemies=[];props=[];state='playing';player.armor=player.boots=player.gloves=player.helmet=null;player.max=120;player.hp=120;player.inv=0;var room=world.rooms[1];player.x=(room.x+room.w/2)*T;player.y=(room.y+room.h/2)*T;var relic={x:player.x,y:player.y,room:room.id,relic:'ancient weapon',opened:false};world.pedestals=[relic];var lootCount=loot.length;var firstClaim=collectPedestal(relic);var firstBall={...world.boulder};var repeatClaim=collectPedestal(relic)");
-  assert.equal(run("firstClaim&&!repeatClaim&&relic.opened&&loot.length===lootCount+1&&firstBall.hp===100&&firstBall.radius===25"),true);
-  run("world.boulder={x:player.x-200,y:player.y-150,axis:'x',direction:1,age:0,hp:100,max:100,radius:25};var initialBall={...world.boulder};updateBoulder(1)");
-  assert.equal(run("world.boulder.x===initialBall.x+105&&world.boulder.y===initialBall.y+65&&world.boulder.radius>25&&player.hp===120"),true);
-  run("world.boulder={x:player.x-80,y:player.y,axis:'x',direction:1,age:12,hp:100,max:100,radius:50};updateBoulder(.5)");
-  assert.ok(run('Math.abs(player.hp-12)<.00001&&world.boulder===null'));
-  run("player.hp=120;world.boulder={x:player.x+40,y:player.y,axis:'x',direction:-1,age:1,hp:100,max:100,radius:27};player.angle=0;player.weapon={...weaponTypes.sword,kind:'sword',damage:25};player.cool=0;attack();var ballHP=world.boulder.hp");
-  assert.ok(run('ballHP<100'));
-  run("player.weapon={...weaponTypes.bow,kind:'bow',damage:100,color:'#ddd'};player.cool=0;heroShots=[];attack();updateHeroShots(.2)");
-  assert.equal(run('world.boulder===null'),true);
+check('pedestal inspection gets one 10 percent disarm attempt, otherwise releases the boulder', () => {
+  for(const [roll,success] of [[.099,true],[.1,false]]){
+    run(`begin();world.tiles.fill(1);world.merchant=null;world.traps=[];world.webs=[];world.torches=[];enemies=[];props=[];loot=[];keys.clear();var room=world.rooms[1];player.x=(room.x+room.w/2)*T;player.y=(room.y+room.h/2)*T;var relic={x:player.x+45,y:player.y,relic:'moon statue',opened:false};world.pedestals=[relic];rng=()=>${roll};update(2)`);
+    assert.equal(run('!!relic.disarmed'),success);
+    assert.equal(run('!!world.boulder'),!success);
+    run("saveRun();savedRun=null;restoreSavedRun();relic=world.pedestals[0]");
+    assert.equal(run('!!relic.disarmed'),success);
+    assert.equal(run('!!world.boulder'),!success);
+    if(success){run("collectPedestal(relic)");assert.equal(run('relic.opened&&!world.boulder'),true)}
+    else{run("world.boulder=null;collectPedestal(relic)");assert.equal(run('relic.opened&&!world.boulder'),true,'failure must not release twice')}
+  }
+  run("begin();world.boulder=null;var room=world.rooms[1];var relic={x:(room.x+room.w/2)*T,y:(room.y+room.h/2)*T,relic:'moon statue',opened:false};collectPedestal(relic)");
+  assert.equal(run("world.boulder.x===(room.x+room.w-.5)*T&&world.boulder.direction===-1&&world.boulder.hp===10"),true);
 });
-check('enemy traps, boulder growth and their references survive save and resume', () => {
+check('boulder rolls left at constant speed, tracks vertically, and crumbles at walls and room edges', () => {
+  run("begin();world.tiles.fill(1);world.rooms[1]={x:10,y:10,w:20,h:20};var room=world.rooms[1];player.x=11*T;player.y=20*T;player.inv=100;world.boulder={x:25*T,y:15*T,room:1,hp:10,max:10,radius:25,age:0};var start={...world.boulder};updateBoulder(1)");
+  assert.ok(run("Math.abs(world.boulder.x-(start.x-145))<.001&&Math.abs(world.boulder.y-(start.y+85))<.001&&world.boulder.radius===25"));
+  run("var previousX=world.boulder.x;player.y=world.boulder.y;updateBoulder(.5)");
+  assert.ok(run("Math.abs(world.boulder.x-(previousX-72.5))<.001"));
+  run("world.boulder={x:(room.x+.1)*T,y:15*T,room:1,hp:10,max:10};updateBoulder(.2)");
+  assert.equal(run('world.boulder'),null);
+  run("world.boulder={x:20*T+2,y:15*T,room:1,hp:10,max:10};world.tiles[15*W+19]=0;updateBoulder(.2)");
+  assert.equal(run('world.boulder'),null);
+});
+check('boulder impact removes 90 percent of current health and dodge lets it continue', () => {
+  run("begin();world.tiles.fill(1);world.rooms[1]={x:10,y:10,w:20,h:20};player.x=15*T;player.y=15*T;player.hp=60;player.inv=0;player.armor={reduction:.25};world.boulder={x:player.x+60,y:player.y,room:1,hp:10,max:10};updateBoulder(.3)");
+  assert.ok(run('Math.abs(player.hp-6)<.00001&&world.boulder===null'));
+  run("player.hp=60;player.inv=1;world.boulder={x:player.x+60,y:player.y,room:1,hp:10,max:10};updateBoulder(.5)");
+  assert.equal(run('player.hp===60&&world.boulder!==null&&world.boulder.x<player.x'),true);
+});
+check('boulder withstands exactly five melee or ten ranged hits regardless of damage', () => {
+  for(const kind of ['sword','bow','wand-fireball','wand-fire','wand-light']){
+    const melee=kind==='sword',hits=melee?5:10;
+    run(`begin();world.tiles.fill(1);world.rooms[1]={x:10,y:10,w:20,h:20};player.x=15*T;player.y=15*T;player.angle=0;enemies=[];props=[];world.torches=[];world.boulder={x:player.x+40,y:player.y,room:1,hp:10,max:10,radius:25};player.weapon=${kind.startsWith('wand-')?`{kind:'wand',effect:'${kind.slice(5)}',power:1,name:'wand',range:300,color:'#fff'}`:`{...weaponTypes.${kind},kind:'${kind}',damage:999,range:300,color:'#fff'}`}`);
+    for(let i=0;i<hits;i++){
+      run("player.cool=0;heroShots=[];attack();updateHeroShots(.2)");
+      assert.equal(run('world.boulder===null'),i===hits-1,`${kind} hit ${i+1}`);
+    }
+  }
+});
+check('enemy traps, legacy boulder state and their references survive save and resume', () => {
   run("begin();loadFloor(1,604);world.tiles.fill(1);world.traps=[{x:player.x+80,y:player.y,kind:'fire',revealed:true,triggered:false,inspect:0,active:0}];world.boulder={x:player.x-300,y:player.y,axis:'x',direction:1,age:7,hp:43,max:100,radius:39.58};enemies=[makeEnemy('bone_archer',{x:player.x+300,y:player.y})];shots=[];shoot(enemies[0],0,200,'ranged');shots[0].remaining=30;saveRun();state='title';savedRun=null");
   assert.equal(run('restoreSavedRun()'),true);
-  assert.equal(run("world.traps[0].revealed&&!world.traps[0].triggered&&world.boulder.hp===43&&world.boulder.age===7&&shots[0].remaining===30&&shots[0].owner===enemies[0]"),true);
+  assert.equal(run("world.traps[0].revealed&&!world.traps[0].triggered&&world.boulder.hp===5&&world.boulder.max===10&&world.boulder.direction===-1&&world.boulder.age===7&&shots[0].remaining===30&&shots[0].owner===enemies[0]"),true);
   run("var savedTrapEnemy=makeEnemy('slime',world.traps[0]);savedTrapEnemy.hp=300;enemies=[savedTrapEnemy];updateTraps(.01,false)");
   assert.equal(run("world.traps[0].targetFaction==='enemy'&&savedTrapEnemy.burn>0"),true);
 });

@@ -25,6 +25,12 @@ with sync_playwright() as playwright:
         }""")
         page.wait_for_function("player.ammoShared.fire===5")
         assert page.evaluate("selectedAmmo") == "regular"
+        color = page.evaluate("""() => {
+          floatingTexts=[];loot=[{x:player.x,y:player.y,type:'ammo',ammoKind:'bow',special:'poison',value:5}];
+          updateScrolls(0);render();return floatingTexts[0].color;
+        }""")
+        assert color == "#a9e56c"
+        page.screenshot(path=str(OUT / f"Emberkeep-magic-pickup-{name}.png"))
         if touch:
             page.locator("#scrollSummary").tap()
             page.locator("#cycleAmmo").tap()
@@ -36,8 +42,17 @@ with sync_playwright() as playwright:
           window.bedTrap={x:player.x,y:player.y,kind:'bedbugs',revealed:false,active:0};
           world.traps=[bedTrap];window.initialHP=player.hp;triggerTrap(bedTrap);render();
         }""")
-        assert page.evaluate("player.bedbugs>29&&player.hp===initialHP&&enemies.length===0")
+        assert page.evaluate("player.bedbugs>9&&player.hp===initialHP&&enemies.length===0")
         page.screenshot(path=str(OUT / f"Emberkeep-bedbugs-{name}.png"))
+        timings = page.evaluate("""() => {
+          const samples={without:[],with:[]};
+          for(let round=0;round<3;round++)for(const [key,active] of [['without',false],['with',true]]){
+            player.bedbugs=active?10:0;const start=performance.now();
+            for(let i=0;i<15;i++)render();
+            samples[key].push(performance.now()-start);
+          }
+          player.bedbugs=10;return samples;
+        }""")
         page.locator("#pause").click()
         before = page.evaluate("player.bedbugs")
         page.wait_for_timeout(1200)
@@ -46,7 +61,7 @@ with sync_playwright() as playwright:
         page.evaluate("saveRun()")
         page.reload()
         page.locator("#resumeSaved").click()
-        assert page.evaluate("player.bedbugs>27&&player.hp===player.max")
+        assert page.evaluate("player.bedbugs>7&&player.hp===player.max")
         page.evaluate("""() => {
           world.tiles.fill(1);world.merchant=null;player.bedbugs=0;
           window.bugMob=makeEnemy('slime',{x:player.x+51,y:player.y});
@@ -58,8 +73,8 @@ with sync_playwright() as playwright:
             page.locator("#touchInteract").tap()
         else:
             page.keyboard.press("e")
-        assert page.evaluate("bugMob.bedbugs>29&&bugMob.hp===300&&!player.bedbugs")
+        assert page.evaluate("bugMob.bedbugs>9&&bugMob.hp===300&&!player.bedbugs")
         assert not errors, (name, errors)
-        print(f"{name}: ammo selection, trap visuals, pause, resume and disarmed faction passed")
+        print(f"{name}: ammo selection, pickup color, trap visuals, pause, resume and disarmed faction passed; 15-render timing samples (ms): {timings}")
         context.close()
     browser.close()
