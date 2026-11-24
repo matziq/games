@@ -77,11 +77,14 @@ with sync_playwright() as p:
         page.evaluate("props=[];loot=[];player.x=world.end.x;player.y=world.end.y")
         page.locator("#touchInteract").tap()
         assert page.evaluate("depth") == 2, "touch interaction did not descend"
-        page.locator("#inventoryToggle").tap()
-        assert page.locator("aside").is_visible() and page.evaluate("state") == "paused"
-        page.screenshot(path=str(OUTPUT / f"Emberkeep-mobile-{name}-inventory.png"))
-        page.locator("#closeInventory").tap()
-        page.locator("#start").tap()
+        if page.locator("#inventoryToggle").is_visible():
+            page.locator("#inventoryToggle").tap()
+            assert page.locator("aside").is_visible() and page.evaluate("state") == "paused"
+            page.screenshot(path=str(OUTPUT / f"Emberkeep-mobile-{name}-inventory.png"))
+            page.locator("#closeInventory").tap()
+            page.locator("#start").tap()
+        else:
+            assert page.locator("aside").is_visible()
         assert page.evaluate("state") == "playing"
         page.evaluate("""loadFloor(2,705);state='playing';player.dash=0;enemies=[];loot=[];props=[];
           player.gold=300;player.x=world.merchant.x-28;player.y=world.merchant.y;keys.clear()""")
@@ -96,6 +99,7 @@ with sync_playwright() as p:
         page.evaluate("""() => {
           loadFloor(2,705);player.x=(world.rooms[1].cx+.5)*T;player.y=(world.rooms[1].cy+.5)*T;
           player.angle=0;player.cool=0;player.inv=0;player.armor=null;player.hp=90;
+          player.weapon={name:'Test sword',kind:'sword',damage:16,range:76,cooldown:.36,color:'#d5d9d0'};
           enemies=[makeEnemy('slime',{x:player.x+48,y:player.y})];enemies[0].hp=30;
           props=[];loot=[];floatingTexts=[];attack();damagePlayer(8);
           loot=[{x:player.x-12,y:player.y,type:'gold',value:37},{x:player.x+12,y:player.y,type:'potion'}];
@@ -107,6 +111,8 @@ with sync_playwright() as p:
             assert event in floating, (name, floating, event)
         page.screenshot(path=str(OUTPUT / f"Emberkeep-mobile-{name}-floating-feedback.png"))
         assert page.evaluate("document.documentElement.scrollWidth<=innerWidth&&document.documentElement.scrollHeight<=innerHeight")
+        if page.locator("#extraControls > summary").is_visible():
+            page.locator("#extraControls > summary").tap()
         page.locator("#mute").tap()
         page.locator("#music").tap()
         audio = page.evaluate("DungeonAudio.diagnostic()")

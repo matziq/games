@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.WindowInsets;
+import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -19,9 +21,17 @@ public final class MainActivity extends Activity {
     @Override
     public void onCreate(Bundle state) {
         super.onCreate(state);
+        if (android.os.Build.VERSION.SDK_INT >= 30) {
+            getWindow().setDecorFitsSystemWindows(false);
+        }
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        FrameLayout root = new FrameLayout(this);
+        root.setBackgroundColor(0xff080e11);
         game = new WebView(this);
         game.setBackgroundColor(0xff080e11);
         game.getSettings().setJavaScriptEnabled(true);
+        game.getSettings().setUserAgentString(game.getSettings().getUserAgentString() + " EmberkeepAndroid");
+        game.getSettings().setTextZoom(Math.round(100f * getResources().getConfiguration().fontScale));
         game.getSettings().setDomStorageEnabled(true);
         game.getSettings().setMediaPlaybackRequiresUserGesture(true);
         game.getSettings().setAllowFileAccess(true);
@@ -52,18 +62,21 @@ public final class MainActivity extends Activity {
                         null, new ByteArrayInputStream(new byte[0]));
             }
         });
-        game.setOnApplyWindowInsetsListener((view, insets) -> {
+        root.addView(game, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        root.setOnApplyWindowInsetsListener((view, insets) -> {
             if (android.os.Build.VERSION.SDK_INT >= 30) {
                 android.graphics.Insets safe = insets.getInsets(
-                        WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
+                        WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout()
+                                | WindowInsets.Type.ime());
                 view.setPadding(safe.left, safe.top, safe.right, safe.bottom);
+                return WindowInsets.CONSUMED;
             } else {
-                view.setPadding(insets.getSystemWindowInsetLeft(), insets.getSystemWindowInsetTop(),
-                        insets.getSystemWindowInsetRight(), insets.getSystemWindowInsetBottom());
+                // Before Android 11 the decor fits system windows by default.
+                return insets;
             }
-            return insets.consumeSystemWindowInsets();
         });
-        setContentView(game);
+        setContentView(root);
         game.loadUrl("https://emberkeep.local/index.html");
     }
 

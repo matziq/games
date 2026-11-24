@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<script>if(typeof navigator!=='undefined'&&navigator.userAgent.includes('EmberkeepAndroid'))document.documentElement.classList.add('native-android');</script>
 <title>Emberkeep | The Ashen Crown</title>
 <meta name="description" content="An offline overhead medieval action RPG. Explore procedural dungeons, plunder castles, and challenge an ancient dragon.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23141c20'/%3E%3Cpath d='M9 30L30 9M23 9h7v7M9 22l9 9' stroke='%23edbf72' stroke-width='4'/%3E%3C/svg%3E">
@@ -2567,7 +2568,7 @@ document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>R
 .intro .guide-copy p{margin:8px 0}
 #accessibleGameState{max-width:100%}
 #gameEvent{font-size:1px}
-#extraControls{display:flex;align-items:center;gap:6px}
+#extraControls{position:relative;display:flex;align-items:center;gap:6px}
 #extraControls>summary{display:none}
 #extraControls .extra-content{display:flex;align-items:center;gap:8px}
 #extraControls #art{display:inline-flex}
@@ -2647,6 +2648,42 @@ body>main{height:calc(100vh - 96px);height:calc(100dvh - 96px);min-height:0}
  #map{width:100%;height:auto;aspect-ratio:225/174}
  #inventoryToggle,#closeInventory{display:none}
 }
+@media(pointer:coarse),(max-width:650px){
+ .touch-actions{grid-template-columns:repeat(3,clamp(54px,16vw,68px));grid-template-areas:"attack use dodge" "attack heal heal";gap:6px}
+ .touch-actions #touchAttack{grid-area:attack;min-height:102px}
+ .touch-actions #touchInteract{grid-area:use}
+ .touch-actions #touchDodge{grid-area:dodge}
+ .touch-actions #touchHeal{grid-area:heal}
+ .touch-actions button{min-width:48px;min-height:48px;overflow-wrap:anywhere}
+ #movePad{width:clamp(80px,25vw,116px);height:clamp(80px,25vw,116px)}
+ #moveKnob{left:50%;top:50%;margin:-22px 0 0 -22px}
+ .prompt{bottom:132px}
+ #audioStatus{bottom:115px}
+ .boss{bottom:160px}
+}
+@media(max-width:360px) and (max-height:650px){
+ .viewport #scrollPanel{position:absolute;top:90px;left:10px;width:min(154px,45%);max-height:40%;overflow:auto}
+}
+@media(max-height:500px) and (pointer:coarse){
+ body>header{min-height:54px;padding:4px 8px;gap:6px;flex-wrap:nowrap}
+ body>header>div{flex:1;min-width:0}
+ header nav{display:flex;width:auto;flex-wrap:nowrap;gap:4px}
+ header nav>button,header nav>details{min-height:48px}
+ #extraControls>summary,#inventoryToggle{min-height:48px}
+ main{display:block;position:relative;flex:1;height:auto;min-height:0}
+ .viewport{width:100%;height:100%}
+ aside{display:none;position:absolute;right:0;top:0;bottom:0;width:min(330px,90%);z-index:7;overflow:auto}
+ aside.inventory-open{display:block}
+ #inventoryToggle,#closeInventory{display:inline-block}
+ .touch-actions{grid-template-columns:repeat(3,58px)}
+ .touch-actions #touchAttack{min-height:102px}
+ #movePad{width:94px;height:94px}
+ .viewport #scrollPanel{position:absolute;top:70px;left:10px;width:min(190px,45%);max-height:calc(100% - 180px);overflow:auto}
+ .prompt{bottom:120px}
+ #audioStatus{bottom:110px;left:10px}
+ .boss{bottom:150px}
+}
+.native-android #return-menu-link{display:none}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
 <script id="accessible-mobile-ui">
