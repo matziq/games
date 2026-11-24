@@ -25,13 +25,16 @@ $classes = Join-Path $build 'classes'
 $dex = Join-Path $build 'dex'
 New-Item -ItemType Directory -Force -Path $OutputDirectory,$build,$assets,$classes,$dex | Out-Null
 Copy-Item -LiteralPath "$PSScriptRoot\..\index.html" -Destination "$assets\index.html" -Force
+$assetAudio = Join-Path $assets 'audio'
+New-Item -ItemType Directory -Force -Path $assetAudio | Out-Null
+Copy-Item -Path "$PSScriptRoot\..\audio\*.ogg" -Destination $assetAudio -Force
 $unsigned = Join-Path $build 'unsigned.apk'
 $aligned = Join-Path $build 'aligned.apk'
 $apk = Join-Path $OutputDirectory 'Emberkeep-Android.apk'
 $resources = Join-Path $build 'resources.zip'
 Run "$tools\aapt2.exe" @('compile','--dir',"$PSScriptRoot\res",'-o',$resources)
 Run "$tools\aapt2.exe" @('link','-o',$unsigned,'-I',$platform,'--manifest',"$PSScriptRoot\AndroidManifest.xml",
-    '-R',$resources,'-A',$assets,'--min-sdk-version','26','--target-sdk-version','36','--version-code','36','--version-name','1.35-brood-and-food')
+    '-R',$resources,'-A',$assets,'--min-sdk-version','26','--target-sdk-version','36','--version-code','37','--version-name','1.36-reactive-audio')
 Run "$JavaHome\bin\javac.exe" @('--release','8','-classpath',$platform,'-d',$classes,
     "$PSScriptRoot\src\org\matziq\emberkeep\MainActivity.java")
 $classFiles = @(Get-ChildItem $classes -Filter '*.class' -Recurse | ForEach-Object { $_.FullName })
@@ -47,4 +50,8 @@ Run "$tools\apksigner.bat" @('verify','--verbose',$apk)
 Run "$tools\zipalign.exe" @('-c','4',$apk)
 Run "$tools\aapt2.exe" @('dump','badging',$apk)
 Copy-Item -LiteralPath "$assets\index.html" -Destination "$OutputDirectory\Emberkeep.html" -Force
+$outputAudio = Join-Path $OutputDirectory 'audio'
+New-Item -ItemType Directory -Force -Path $outputAudio | Out-Null
+Copy-Item -Path "$PSScriptRoot\..\audio\*.ogg" -Destination $outputAudio -Force
+Copy-Item -LiteralPath "$PSScriptRoot\..\audio\SOURCES.md" -Destination $outputAudio -Force
 Get-FileHash -LiteralPath $apk,"$OutputDirectory\Emberkeep.html" -Algorithm SHA256

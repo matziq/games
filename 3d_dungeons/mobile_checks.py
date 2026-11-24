@@ -136,10 +136,20 @@ if apk.exists() and len(sys.argv) == 1:
         bundled = package.read("assets/index.html")
         source = Path(__file__).with_name("index.html").read_bytes()
         assert bundled == source, "APK HTML does not match current game"
+        audio_dir = Path(__file__).with_name("audio")
+        audio_files = sorted(audio_dir.glob("*.ogg"))
+        assert audio_files, "No local audio recordings are available to package"
+        audio_assets = sorted(name for name in package.namelist() if name.startswith("assets/audio/"))
+        assert audio_assets == ["assets/audio/" + audio.name for audio in audio_files], \
+            "APK audio asset list does not match the offline sound pack"
+        for audio in audio_files:
+            assert package.read("assets/audio/" + audio.name) == audio.read_bytes(), \
+                "APK audio asset does not match source: " + audio.name
         assert package.read("classes.dex")[:4] == b"dex\n"
         assert "AndroidManifest.xml" in package.namelist()
         report["apk"] = {"path": str(apk), "bytes": apk.stat().st_size,
                          "sha256": hashlib.sha256(apk.read_bytes()).hexdigest(),
-                         "bundled_html_matches": True, "dex_present": True}
+                         "bundled_html_matches": True, "bundled_audio_matches": [p.name for p in audio_files],
+                         "dex_present": True}
 (OUTPUT / "Emberkeep-mobile-validation.json").write_text(json.dumps(report, indent=2))
 print(json.dumps(report, indent=2))

@@ -571,6 +571,20 @@ check('room activation follows vertical and turning corridor midpoints', () => {
   assert.equal(run('roomAtPosition(player)'),0);
   run('player.x=13.5*T;player.y=5.5*T');assert.equal(run('roomAtPosition(player)'),1);
 });
+check('music state follows proximity combat, boss gates, low vitality, and floor clear', () => {
+  run("begin();world.boss=null;bossDefeated=false;enemies=[];player.hp=player.max");
+  assert.equal(run('currentMusicMode()'), 'floorClear');
+  run("var musicThreat=makeEnemy('goblin',{x:player.x+300,y:player.y});enemies=[musicThreat]");
+  assert.equal(run('currentMusicMode()'), 'combat');
+  run("world.boss={x:player.x+900,y:player.y};bossDefeated=false");
+  assert.equal(run('currentMusicMode()'), 'boss');
+  run('player.hp=player.max*.25');
+  assert.equal(run('currentMusicMode()'), 'lowHealth');
+  run('player.hp=player.max;bossDefeated=true;enemies=[]');
+  assert.equal(run('currentMusicMode()'), 'floorClear');
+  run("for(const mode of ['combat','boss','lowHealth','floorClear','exploration'])window.DungeonAudio.setMusicState(mode)");
+  assert.equal(run("window.DungeonAudio.diagnostic().music.state==='exploration'&&Object.keys(window.DungeonAudio.diagnostic().events).filter(k=>k.startsWith('musicState:')).length===5"), true);
+});
 check('giant web strikes inflict tripled base damage and root; normal webs remain root-only and dodge protects', () => {
   run("loadFloor(1,604);world.tiles.fill(1);props=[];world.traps=[];player.armor=player.boots=player.gloves=player.helmet=null;player.hp=120;player.inv=0;var giantStriker=makeEnemy('cave_spider',{x:player.x+120,y:player.y});giantStriker.attackAngle=Math.PI;enemies=[giantStriker];strikeWeb(giantStriker)");
   assert.equal(run('player.hp===120&&player.root===1'),true);

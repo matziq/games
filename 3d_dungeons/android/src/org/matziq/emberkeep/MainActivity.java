@@ -17,6 +17,10 @@ import java.io.IOException;
 public final class MainActivity extends Activity {
     private WebView game;
     private boolean activityPaused;
+    private static final String[] AUDIO_ASSETS = {
+            "audio/creak-floor-1.ogg", "audio/creak-floor-2.ogg", "audio/creak-floor-3.ogg",
+            "audio/rumble-stone.ogg", "audio/water-drips.ogg"
+    };
 
     @Override
     public void onCreate(Bundle state) {
@@ -55,6 +59,19 @@ public final class MainActivity extends Activity {
                     } catch (IOException error) {
                         return new WebResourceResponse("text/plain", "UTF-8", 500, "Asset unavailable",
                                 null, new ByteArrayInputStream(new byte[0]));
+                    }
+                }
+                String path = request.getUrl().getPath();
+                if (url.startsWith("https://emberkeep.local/audio/")) {
+                    for (String asset : AUDIO_ASSETS) {
+                        if (path.equals("/" + asset)) {
+                            try {
+                                return new WebResourceResponse("audio/ogg", null, getAssets().open(asset));
+                            } catch (IOException error) {
+                                return new WebResourceResponse("text/plain", "UTF-8", 500, "Audio asset unavailable",
+                                        null, new ByteArrayInputStream(new byte[0]));
+                            }
+                        }
                     }
                 }
                 if (url.startsWith("data:")) return null;
