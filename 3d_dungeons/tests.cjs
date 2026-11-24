@@ -29,6 +29,41 @@ scripts.forEach(script => vm.runInContext(script, sandbox));
 const run = code => vm.runInContext(code, sandbox);
 let count = 0;
 function check(name, fn) { fn(); count++; console.log('PASS ' + name); }
+check('ammo pickup adds stock without changing regular or special selection', () => {
+  for(const selection of ['regular','web']){
+    run(`begin();world.tiles.fill(1);player.weapon={...weaponTypes.bow,kind:'bow',damage:20};selectedAmmo='${selection}';player.ammoShared.web=3;player.ammoShared.fire=0;loot=[{x:player.x,y:player.y,type:'ammo',ammoKind:'bow',special:'fire',value:5}];updateScrolls(0)`);
+    assert.equal(run(`selectedAmmo==='${selection}'&&player.ammoShared.fire===5&&loot.length===0`),true);
+  }
+  run("selectedAmmo='regular';cycleAmmo()");
+  assert.equal(run("selectedAmmo==='fire'"),true,'explicit cycling should select collected ammunition');
+});
+check('bed bugs cling harmlessly for 30 active seconds and honor trap faction and saves', () => {
+  run("begin();world.tiles.fill(1);world.merchant=null;world.torches=[];props=[];loot=[];enemies=[];player.hp=120;player.inv=0;var bugTrap={x:player.x,y:player.y,kind:'bedbugs',revealed:false,active:0};world.traps=[bugTrap];triggerTrap(bugTrap)");
+  assert.equal(run("player.hp===120&&player.bedbugs===30&&enemies.length===0&&loot.length===0"),true);
+  run("update(4);saveRun();savedRun=null;restoreSavedRun()");
+  assert.equal(run("player.bedbugs===26&&player.hp===120"),true);
+  run("loadFloor(2,604);world.merchant=null;enemies=[];props=[];world.traps=[]");
+  assert.equal(run("player.bedbugs===26"),true,'bed bugs persist when descending');
+  run("state='paused';var pausedTime=player.bedbugs;state='playing'");
+  assert.equal(run("player.bedbugs===pausedTime"),true);
+  run("update(25.9)");
+  assert.ok(run("player.bedbugs>0&&player.hp===120"));
+  run("update(.2)");
+  assert.equal(run("player.bedbugs===0&&player.hp===120"),true);
+  run("begin();world.tiles.fill(1);world.merchant=null;world.torches=[];props=[];loot=[];player.hp=120;var mob=makeEnemy('slime',{x:player.x+40,y:player.y});mob.hp=300;mob.emerge=100;enemies=[mob];var safeTrap={x:mob.x,y:mob.y,kind:'bedbugs',revealed:true,active:0};world.traps=[safeTrap];triggerTrap(safeTrap,true)");
+  assert.equal(run("mob.bedbugs===30&&mob.hp===300&&!player.bedbugs&&player.hp===120&&enemies.length===1&&loot.length===0"),true);
+  run("saveRun();savedRun=null;restoreSavedRun()");
+  assert.equal(run("enemies[0].bedbugs===30&&enemies[0].hp===300"),true);
+  run("begin();world.tiles.fill(1);world.merchant=null;world.torches=[];props=[];player.bedbugs=0;var crossing=makeEnemy('slime',{x:player.x+80,y:player.y});crossing.hp=300;crossing.emerge=100;enemies=[crossing];var armed={x:crossing.x,y:crossing.y,kind:'bedbugs',revealed:true,active:0};world.traps=[armed];updateTraps(.01,false)");
+  assert.equal(run("armed.triggered&&crossing.bedbugs===30&&!player.bedbugs&&crossing.hp===300"),true);
+});
+check('torch flicker is slow and unchanged by pause', () => {
+  run("begin();var flame={x:0,burnoutRemaining:5};clock=0;var phase0=torchIntensity(flame);clock=.1;var phase1=torchIntensity(flame);clock=Math.PI/4;var phasePeak=torchIntensity(flame)");
+  assert.ok(Math.abs(run('phase1-phase0'))<.08);
+  assert.ok(run('phasePeak-phase0')>.3);
+  run("state='paused';var beforeClock=clock;var beforeFlicker=torchIntensity(flame)");
+  assert.equal(run('clock===beforeClock&&torchIntensity(flame)===beforeFlicker'),true);
+});
 check('attacks hit overlapping enemies from the player center, including after resume', () => {
   for(const kind of ['sword','bow','crossbow','knife','javelin','throwing_axe','boomerang','rifle','pistol','wand-fireball','wand-poison','wand-web','wand-lightning','wand-fire','wand-light']){
     const weapon=kind.startsWith('wand-')?{kind:'wand',effect:kind.slice(5),power:2,damage:7,range:300,cooldown:.55,color:'#fff'}:{...run(`weaponTypes.${kind}`),kind,damage:20,range:300,cooldown:.4,color:'#fff'};
@@ -550,7 +585,7 @@ check('elemental packs grant exactly five, preserve inventories on descent, rese
   run("begin();loot=[];for(let i=0;i<100;i++)drops(player,true)");
   assert.equal(run("['bow','crossbow'].every(kind=>Object.keys(ammoColors).every(special=>loot.some(l=>l.type==='ammo'&&l.ammoKind===kind&&l.special===special&&l.value===5)))"),true);
   run("player.weapon={kind:'bow'};loot=[{x:player.x,y:player.y,type:'ammo',ammoKind:'bow',special:'fire',value:5}];updateScrolls(.01);updateScrolls(.01)");
-  assert.equal(run("player.ammo.bow.fire===5&&player.ammoChoice.bow==='fire'"),true);
+  assert.equal(run("player.ammo.bow.fire===5&&player.ammoChoice.bow==='regular'"),true);
   run('loadFloor(2,604)');assert.equal(run('player.ammo.bow.fire'),5);
   run('begin()');assert.equal(run('player.ammo.bow.fire'),0);
 });
@@ -1207,7 +1242,8 @@ check('room lighting, reachable torches and hazard placement preserve safe entra
     assert.equal(run('world.traps.every(t=>!pointInRoom(t,world.rooms[0])&&distance(t,world.end)>90&&free(t.x,t.y,12))'),true);
     for(const kind of run('world.traps.map(t=>t.kind)'))kinds.add(kind);
   }
-  assert.equal(kinds.size,14);
+  assert.equal(kinds.size,15);
+  assert.ok(kinds.has('bedbugs'));
   run("loadFloor(1,604);enemies=[];props=[];loot=[];const torch=world.torches.find(t=>!t.lit);player.x=torch.x;player.y=torch.y+35;world.end.x=2500;world.end.y=1900");
   const before=run('lightAt({x:torch.x+70,y:torch.y+70})');
   run('interact()');assert.equal(run('torch.lit'),false);

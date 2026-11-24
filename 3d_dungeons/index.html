@@ -545,7 +545,7 @@ function render(){
   }
  }
  drawRoomDetails();
- for(const t of world.torches)if(world.seen[Math.floor(t.y/T)*W+Math.floor(t.x/T)]){ctx.save();if(t.lit){ctx.globalAlpha=torchIntensity(t);glow(t.x,t.y,120,world.theme.torch+'44');glow(t.x,t.y,40,world.theme.torch+'88')}ctx.fillStyle=world.theme.motif==='lava'?'#42231d':'#59402b';ctx.fillRect(t.x-4,t.y-4,8,15);circle(t.x,t.y-7,t.lit?5+Math.sin(clock*9+t.x)*1.3:4,t.lit?world.theme.torch:'#8c8275');if(t.lit)circle(t.x,t.y-9,2,'#fff0ae');ctx.restore()}
+ for(const t of world.torches)if(world.seen[Math.floor(t.y/T)*W+Math.floor(t.x/T)]){ctx.save();if(t.lit){ctx.globalAlpha=torchIntensity(t);glow(t.x,t.y,120,world.theme.torch+'44');glow(t.x,t.y,40,world.theme.torch+'88')}ctx.fillStyle=world.theme.motif==='lava'?'#42231d':'#59402b';ctx.fillRect(t.x-4,t.y-4,8,15);circle(t.x,t.y-7,t.lit?5+Math.sin(clock*2+t.x)*1.3:4,t.lit?world.theme.torch:'#8c8275');if(t.lit)circle(t.x,t.y-9,2,'#fff0ae');ctx.restore()}
  if(world.seen[Math.floor(world.end.y/T)*W+Math.floor(world.end.x/T)]){glow(world.end.x,world.end.y,55,world.theme.accent+'55');ctx.strokeStyle=world.theme.accent;ctx.lineWidth=2;for(let i=0;i<5;i++)ctx.strokeRect(world.end.x-18+i*2,world.end.y-19+i*7,36-i*4,6)}
  for(const p of props){if(p.destroyed||p.type==='decor'||!world.seen[Math.floor(p.y/T)*W+Math.floor(p.x/T)])continue;ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='#0006';ctx.fillRect(-17,-5,35,27);
   if(p.type==='chest'){
@@ -591,7 +591,7 @@ const MAX_FLOOR=16,IDLE_WARNING_SECONDS=9,IDLE_SPAWN_SECONDS=12;
 const realmForFloor=floor=>Math.min(5,Math.ceil(floor/2));
 const hasMerchant=floor=>floor>1&&floor<MAX_FLOOR&&floor%2===0;
 const idleThreat={elapsed:0,triggered:false,markers:[]};
-const TRAP_REVEAL_SECONDS=2,trapKinds=['poison','fire','explosion','quicksand','bugs','bats','trapdoor','crossfire','flood','massiveExplosion','spiders','poisonCloud','lightningTrap','snakes'];
+const TRAP_REVEAL_SECONDS=2,trapKinds=['poison','fire','explosion','quicksand','bugs','bats','trapdoor','crossfire','flood','massiveExplosion','spiders','poisonCloud','lightningTrap','snakes','bedbugs'];
 const roomKinds=[
  {id:'graveyard',name:'Forgotten Graveyard',color:'#a7b3a5'},
  {id:'storage',name:'Provision Stores',color:'#c6a378'},
@@ -696,6 +696,11 @@ function applyTrap(t,actor){
  }
  if(t.kind==='explosion')hit(32);
  if(t.kind==='quicksand')actor.slow=1;
+ if(t.kind==='bedbugs'){
+  actor.bedbugs=30;
+  floatText(actor.x,actor.y-24,'BED BUGS - 30s','treasure');
+  if(hero)log('Bed bugs cling to you for 30 seconds. They cause no harm.');
+ }
  if(t.kind==='trapdoor'){
   if(hero&&depth<=MAX_FLOOR-2){
    const from=depth,fall=integer(2,Math.min(4,MAX_FLOOR-depth));
@@ -712,7 +717,7 @@ function triggerTrap(t,manual=false){
  t.targetFaction=t.revealed?'enemy':'player';t.triggered=true;t.inspect=0;t.arming=0;t.active=t.kind==='explosion'?.45:5;t.victims=new Set();
  floatText(t.x,t.y-12,t.kind.toUpperCase()+' TRAP!','damage');
  log(t.kind[0].toUpperCase()+t.kind.slice(1)+' trap triggered!');
- const sound={poison:'venom',fire:'fire',explosion:'dragon',quicksand:'dodge',bugs:'voice',bats:'voice',trapdoor:'zombieRise'}[t.kind];
+ const sound={poison:'venom',fire:'fire',explosion:'dragon',quicksand:'dodge',bugs:'voice',bats:'voice',bedbugs:'voice',trapdoor:'zombieRise'}[t.kind];
  window.DungeonAudio.play(sound,t.kind==='bats'?'wraith':'slime');
  particle(t.x,t.y,t.kind==='poison'?'#9ae66d':t.kind==='fire'||t.kind==='explosion'?'#ff8b45':'#bfa67c',28);
  if(t.kind==='bugs'||t.kind==='bats'){
@@ -912,7 +917,7 @@ function withinTorchLight(point,torch){
  return inside;
 }
 const wandLight={x:0,y:0,lit:true,magicRadius:100};
-function torchIntensity(torch){return torch.burnoutRemaining>0?.25+.75*(.5+.5*Math.sin(clock*31+torch.x)):1}
+function torchIntensity(torch){return torch.burnoutRemaining>0?.25+.75*(.5+.5*Math.sin(clock*2+torch.x)):1}
 function lightSources(){wandLight.x=player.x;wandLight.y=player.y;return [...world.torches,...(world.scrollLights||[]),...(world.scrollFlashes||[]).filter(f=>f.kind==='fireball'&&f.scale).map(f=>({x:f.x,y:f.y,lit:true,magicRadius:140*f.scale})),...heroShots.filter(s=>s.lit&&s.life>0),...(isWand(player.weapon)?[wandLight]:[])]}
 function torchIllumination(p){
  let darkness=1;
@@ -1404,7 +1409,7 @@ function updateScrolls(dt){
   window.DungeonAudio.play('magic');log('Found a '+scrollTypes[item.scroll].name+' scroll.');
  }
  for(const item of loot)if(usesAmmo(player.weapon)&&item.type==='ammo'&&!item.taken&&distance(item,player)<32){
-  const amount=item.value??5;player.ammo[item.ammoKind][item.special]+=amount;player.ammoChoice[item.ammoKind]=item.special;item.taken=true;
+  const amount=item.value??5;player.ammo[item.ammoKind][item.special]+=amount;item.taken=true;
   floatText(item.x,item.y-15,'+'+amount+' '+item.special.toUpperCase()+' AMMO','treasure');
  }
  loot=loot.filter(item=>!item.taken);
@@ -2375,6 +2380,7 @@ function updateTorchBurnout(dt){
  }
 }
 update=function(dt){
+ for(const actor of [player,...enemies])if(actor.bedbugs>0)actor.bedbugs=Math.max(0,actor.bedbugs-dt);
  for(const enemy of enemies){
   enemy.rooted=Math.max(0,(enemy.rooted||0)-dt);enemy.blind=Math.max(0,(enemy.blind||0)-dt);
   if(enemy.charmed>0){updateCharmedEnemy(enemy,Math.min(dt,enemy.charmed));enemy.charmed=Math.max(0,enemy.charmed-dt);enemy.emerge=Math.max(enemy.emerge||0,dt+.002)}
@@ -2405,6 +2411,12 @@ render=function(){
   }
  }
  for(const trap of world.traps)if(trap.kind==='poisonCloud'&&trap.active>0){glow(trap.x,trap.y,85,'#a9e56c88');ctx.globalAlpha=.22;circle(trap.x,trap.y,85,'#a9e56c');ctx.globalAlpha=1}
+ for(const actor of [player,...enemies])if(actor.hp>0&&actor.bedbugs>0){
+  for(let i=0;i<5;i++){
+   const a=clock*.65+i*TAU/5,x=actor.x+Math.cos(a)*(9+i%2*4),y=actor.y-3+Math.sin(a)*8;
+   ctx.strokeStyle='#f0bd83';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x-4,y-3);ctx.lineTo(x+4,y+3);ctx.moveTo(x-4,y+3);ctx.lineTo(x+4,y-3);ctx.stroke();circle(x,y,3,'#772e29');circle(x,y,1,'#f4cf90');
+  }
+ }
  for(const trap of world.traps)if(trap.kind==='crossfire'&&!trap.triggered&&world.seen[Math.floor(trap.y/T)*W+Math.floor(trap.x/T)]){
   ctx.fillStyle='#d7cfbb0d';ctx.fillRect(Math.floor(trap.x/T)*T,Math.floor(trap.y/T)*T,T,T);
   ctx.strokeStyle='#c9b99126';ctx.lineWidth=1;ctx.strokeRect(Math.floor(trap.x/T)*T+2,Math.floor(trap.y/T)*T+2,T-4,T-4);
@@ -2427,7 +2439,7 @@ render=function(){
  }
  ctx.restore();
 };
-document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Choose one stocked ammo type for every ranged weapon with T / Cycle: Light, Fire, Explosion, Poison, Lightning, Web or Charm. Bow, crossbow, throwing knives, axes, spears, boomerangs, pistols and rifles share their ammo stock; the last special shot keeps its effect, then reverts to unlimited regular shots. Charm turns monsters against other monsters briefly. Explosion ammo makes a small fireball. Activate a disarmed trap with E / Use to trigger it against monsters. Some torches flicker out; strike them to relight them.<br>Flood traps seal the chamber and raise the water: attack or shoot a door until it breaks, opening every exit and draining the water. Beware massive explosions, poison clouds, lightning, spider swarms and snakes. Disarmed traps target monsters instead.');
+document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Choose one stocked ammo type for every ranged weapon with T / Cycle: Light, Fire, Explosion, Poison, Lightning, Web or Charm. Picking up ammo does not change your selection. Bow, crossbow, throwing knives, axes, spears, boomerangs, pistols and rifles share their ammo stock; the last special shot keeps its effect, then reverts to unlimited regular shots. Charm turns monsters against other monsters briefly. Explosion ammo makes a small fireball. Activate a disarmed trap with E / Use to trigger it against monsters. Some torches flicker out; strike them to relight them.<br>Flood traps seal the chamber and raise the water: attack or shoot a door until it breaks, opening every exit and draining the water. Beware massive explosions, poison clouds, lightning, spider swarms and snakes. Bed bugs cling harmlessly for 30 active seconds. Disarmed traps target monsters instead.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>A boss waits every 8 floors. Each boss has ranged and melee attacks, calls weaker kin to help, and drops about 1,000 gold, powerful gear, spells and ammo. Floors 8 and 16 seal every pit, fissure and trapdoor until the boss dies; then the stairway opens.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Watch for subtly mismatched tiles: crossfire sends eight mixed arrows from both sides. A pedestal relic releases a slow, destructible boulder that rolls forward, steers sideways toward you, and grows to double size. Sidestep or destroy it before it strikes.');
 window.emberkeepExpansion={ammoKinds,bossForms:BOSS_FORMS,isBossFloor:bossFloor,snapshot:()=>({floor:depth,bossFloor:bossFloor(),bossName:world?.boss?.bossName||'',bossDefeated,ammo:{...player.ammoShared},selectedAmmo,pedestals:world?.pedestals?.length||0,crossfireShots:world?.crossfireShots?.length||0,boulder:!!world?.boulder})};
@@ -2783,7 +2795,7 @@ function refreshAccessibleGameState(dt=0,force=false){
   'Objective: '+$('objective').textContent,
   prompt?'Nearby action: '+prompt:'No nearby object is ready to use.',
   nearest?'Nearest enemy: '+nearest.type.replaceAll('_',' ')+', '+Math.max(0,Math.ceil(nearest.hp))+' health.':'No living enemies remain on this floor.',
-  player.poison>0?'Poisoned.':'',player.burn>0?'Burning.':'',player.root>0?'Webbed and unable to move.':'',
+  player.poison>0?'Poisoned.':'',player.burn>0?'Burning.':'',player.root>0?'Webbed and unable to move.':'',player.bedbugs>0?'Harmless bed bugs cling for '+Math.ceil(player.bedbugs)+' seconds.':'',
   state==='playing'?'Game is in progress.':state==='paused'?'Game is paused.':state==='dead'?'The knight has fallen.':''
  ].filter(Boolean).join(' ');
  if(force||summary!==lastAccessibleSummary){gameStateSummary.textContent=summary;lastAccessibleSummary=summary}
