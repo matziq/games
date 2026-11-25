@@ -512,6 +512,33 @@ check('automatic weapon comparison favors power then recovery and reach, never e
   run('candidate.weapon={...baseline,range:baseline.range+1}');
   assert.equal(run('betterAutoGear(candidate)'),true);
 });
+check('ranged auto-equipment collects better wands without oscillating or bypassing filters', () => {
+  run("begin();loadFloor(1,604);world.tiles.fill(1);world.merchant=null;enemies=[];props=[];loot=[];gearPreferences.enabled=true;gearPreferences.prefer='ranged';var originalBow={...weaponTypes.bow,kind:'bow',name:'Bow',damage:15};player.weapon=originalBow;var rangedWand={x:player.x+100,y:player.y,type:'weapon',weapon:{kind:'wand',name:'Wand',effect:'light',color:'#fff',power:1,damage:16,range:300,cooldown:.5}};loot=[rangedWand];updateAutoGear(1)");
+  assert.equal(run('player.weapon===rangedWand.weapon&&loot.some(i=>i.weapon===originalBow)'),true);
+  run('updateAutoGear(1);updateAutoGear(1)');
+  assert.equal(run('player.weapon===rangedWand.weapon'),true);
+  run("var weakWand={...rangedWand,x:player.x,y:player.y,weapon:{...rangedWand.weapon,damage:15}};loot=[weakWand];updateAutoGear(1)");
+  assert.equal(run('player.weapon===rangedWand.weapon&&loot.includes(weakWand)'),true);
+  run("var strongWand={...rangedWand,x:player.x+100,y:player.y,weapon:{...rangedWand.weapon,damage:30}};loot=[strongWand];gearPreferences.enabled=false;updateAutoGear(1);gearPreferences.enabled=true;gearPreferences.prefer='melee';updateAutoGear(1)");
+  assert.equal(run('player.weapon===rangedWand.weapon&&loot.includes(strongWand)'),true);
+  run("gearPreferences.prefer='ranged';state='paused';updateAutoGear(1);state='playing';var wallX=Math.floor((player.x+40)/T),wallY=Math.floor(player.y/T);world.tiles[wallY*W+wallX]=0;updateAutoGear(1)");
+  assert.equal(run('player.weapon===rangedWand.weapon&&loot.includes(strongWand)'),true);
+  run("world.tiles.fill(1);strongWand.x=player.x+151;updateAutoGear(1)");
+  assert.equal(run('player.weapon===rangedWand.weapon&&loot.includes(strongWand)'),true);
+  run("strongWand.x=player.x+100;updateAutoGear(1);gearPreferences.enabled=true;gearPreferences.prefer='ranged'");
+  assert.equal(run('player.weapon===strongWand.weapon'),true);
+});
+check('trap audio fires at bat, snake and flood transitions only once', () => {
+  run("begin();loadFloor(1,604);world.merchant=null;world.tiles.fill(1);props=[];enemies=[];var soundBefore=window.DungeonAudio.diagnostic().events;var batSoundTrap={x:player.x+100,y:player.y,kind:'bats',revealed:false};triggerTrap(batSoundTrap);triggerTrap(batSoundTrap)");
+  assert.equal(run("(window.DungeonAudio.diagnostic().events.batWings||0)-(soundBefore.batWings||0)"),1);
+  run("var snakeSoundTrap={x:player.x+100,y:player.y,kind:'snakes',room:1,revealed:false};triggerTrap(snakeSoundTrap);triggerTrap(snakeSoundTrap)");
+  assert.equal(run("(window.DungeonAudio.diagnostic().events.snakeHiss||0)-(soundBefore.snakeHiss||0)"),1);
+  run("loadFloor(1,604);props=[];enemies=[];var floodRoom=world.rooms[1],floodSoundTrap={x:(floodRoom.cx+.5)*T,y:(floodRoom.cy+.5)*T,room:1,kind:'flood',revealed:false};triggerTrap(floodSoundTrap);var soundDoor=world.flood.doors[0];damageFloodDoor(soundDoor,soundDoor.hp);damageFloodDoor(soundDoor,100)");
+  assert.equal(run("(window.DungeonAudio.diagnostic().events.floodRush||0)-(soundBefore.floodRush||0)"),1);
+  assert.equal(run("(window.DungeonAudio.diagnostic().events.floodDrain||0)-(soundBefore.floodDrain||0)"),1);
+  run('updateNewHazards(20)');
+  assert.equal(run("world.flood===null&&(window.DungeonAudio.diagnostic().events.floodDrain||0)-(soundBefore.floodDrain||0)===1"),true);
+});
 check('only Entrance Hall has a room label in the HUD or world renderer', () => {
   run("begin();loadFloor(1,604);enemies=[];world.traps=[];update(.01)");
   assert.equal(elements.get('roomName').textContent,'Entrance Hall');

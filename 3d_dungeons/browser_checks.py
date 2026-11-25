@@ -13,7 +13,9 @@ with sync_playwright() as p:
     page.on("pageerror", lambda e: errors.append(str(e)))
     page.on("request", lambda r: external.append(r.url) if r.url.startswith("http") else None)
     page.goto(URL)
-    page.wait_for_function("Array.from(document.images).every(i=>i.complete&&i.naturalWidth>0)")
+    page.wait_for_function("floorImage.complete&&floorImage.naturalWidth>0&&wallImage.complete&&wallImage.naturalWidth>0")
+    assert page.get_by_role("button", name="Source art").count() == 0
+    assert page.locator("#artDialog, #gallery").count() == 0
     page.keyboard.press("Shift")
     page.keyboard.press("Space")
     page.screenshot(path=str(ROOT / "emberkeep-title.png"))
@@ -28,10 +30,6 @@ with sync_playwright() as p:
     page.keyboard.press("p")
     assert page.evaluate("emberkeep.snapshot().state") == "paused"
     page.get_by_role("button", name="Resume journey").click()
-    page.get_by_role("button", name="Source art").click()
-    assert page.locator("#gallery img").count() == 15
-    page.screenshot(path=str(ROOT / "emberkeep-source-art.png"))
-    page.get_by_role("button", name="Return to the halls").click()
     page.wait_for_function("emberkeep.snapshot().state==='playing'")
     assert page.evaluate("emberkeep.snapshot().state") == "playing"
     page.evaluate("""() => {
@@ -64,7 +62,9 @@ with sync_playwright() as p:
     page.screenshot(path=str(ROOT / "emberkeep-gameplay.png"))
     page.evaluate("""() => {
       state='playing';loadFloor(2,874326);keys.clear();player.x=(world.rooms[1].cx+.5)*T;player.y=(world.rooms[1].cy+.5)*T;
-      player.angle=0;player.cool=0;player.inv=0;player.armor=null;player.hp=90;
+      player.angle=0;player.cool=0;player.inv=0;player.armor=player.boots=player.gloves=player.helmet=null;player.foodArmorTime=0;player.hp=90;
+      player.level=1;player.dash=0;mouse.active=false;
+      player.weapon={name:'Test Sword',kind:'sword',damage:16,range:82,cooldown:.36,color:'#d5d9d0'};
       enemies=[makeEnemy('slime',{x:player.x+48,y:player.y})];enemies[0].hp=30;
       props=[];loot=[];floatingTexts=[];attack();damagePlayer(8);
       loot=[{x:player.x-12,y:player.y,type:'gold',value:37},{x:player.x+12,y:player.y,type:'potion'}];
@@ -77,7 +77,7 @@ with sync_playwright() as p:
     assert {"text": "+1 HEALING POTION", "kind": "heal"} in floating, floating
     page.screenshot(path=str(ROOT / "emberkeep-floating-feedback.png"))
     # Fixture positioning isolates stairs/boss without skipping their real input paths.
-    for floor in range(3, 11):
+    for floor in range(3, 9):
         page.evaluate("player.x=world.end.x;player.y=world.end.y;props=[];loot=[];player.inv=10")
         page.keyboard.press("e")
         assert page.evaluate("depth") == floor
@@ -92,15 +92,18 @@ with sync_playwright() as p:
     page.wait_for_timeout(800)
     assert page.evaluate("shots.length") > 0, "dragon failed to fire"
     page.evaluate("""() => {
-      const b=enemies.find(e=>e.type==='dragon');b.hp=1;player.x=b.x-45;
-      player.y=b.y;player.angle=0;player.inv=10;mouse.active=false;player.cool=0;
+      const b=enemies.find(e=>e.type==='dragon');b.hp=1;
+      b.x=(world.rooms[1].cx+.5)*T;b.y=(world.rooms[1].cy+.5)*T;
+      player.x=b.x-35;player.y=b.y;player.angle=0;player.inv=10;mouse.active=false;player.cool=0;
+      player.weapon={...weaponTypes.sword,kind:'sword',name:'Test Sword',damage:30,color:'#d5d9d0'};
     }""")
     page.keyboard.press("Space")
     page.wait_for_timeout(100)
-    assert page.evaluate("state") == "won", "attack did not trigger victory"
+    assert page.evaluate("bossDefeated&&state==='playing'"), (page.locator("#error").text_content(), errors)
     page.screenshot(path=str(ROOT / "emberkeep-victory.png"))
-    page.get_by_role("button", name="Adventure again").click()
-    assert page.evaluate("state") == "playing"
+    page.evaluate("player.x=world.end.x;player.y=world.end.y;props=[];loot=[];player.inv=10")
+    page.keyboard.press("e")
+    assert page.evaluate("depth===9&&state==='playing'"), "opened boss gate did not allow descent"
     page.get_by_role("button", name="New run").click()
     assert page.evaluate("state") == "confirm"
     page.keyboard.press("Escape")
@@ -113,12 +116,12 @@ with sync_playwright() as p:
     assert not external, external
     report = {"browser": "Microsoft Edge (isolated headless)", "errors": errors,
               "external_requests": external, "checks": [
-                  "offline image decoding", "keyboard movement", "pause/resume", "source-art gallery",
+                  "offline texture decoding", "keyboard movement", "pause/resume", "source-art controls absent",
                   "chest opening and weapon drop", "Space attacks break barrel", "Q healing", "Shift dodge",
                   "green successful-strike, red received-damage, gold-value, and potion floating feedback",
                   "E stairs progression", "dragon telegraph and projectiles", "Space boss victory",
                   "restart confirmation and cancellation", "1024px layout", "canvas rendering"],
-              "screenshots": ["emberkeep-title.png", "emberkeep-source-art.png", "emberkeep-gameplay.png",
+              "screenshots": ["emberkeep-title.png", "emberkeep-gameplay.png",
                               "emberkeep-floating-feedback.png", "emberkeep-dragon.png", "emberkeep-victory.png"]}
     (ROOT / "emberkeep-browser-validation.json").write_text(json.dumps(report, indent=2))
     print(json.dumps(report, indent=2))

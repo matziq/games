@@ -66,6 +66,21 @@ with sync_playwright() as p:
     assert far["attenuation"] < near["attenuation"] and far["pan"] > .9
     page.wait_for_function("audioProbe.recordedSources>=2")
     assert diag()["events"]["recording:creak"] >= 1 and diag()["events"]["recording:waterDrop"] >= 1
+    page.evaluate("""() => {
+      DungeonAudio.setChapter(2);enemies=[];world.traps=[];player.inv=1000;
+      window.savedAmbientMode=currentMusicMode;window.currentMusicMode=()=>window.ambientTestMode;
+      window.ambientTestMode='exploration';
+    }""")
+    page.wait_for_function("""() => {
+      const e=DungeonAudio.diagnostic().events;
+      return e['ambience:wind']>0&&e['ambience:leaves']>0;
+    }""", timeout=60000)
+    page.evaluate("window.ambientTestMode='boss'")
+    page.wait_for_function("DungeonAudio.diagnostic().music.state==='boss'")
+    ambient_count = page.evaluate("Object.entries(DungeonAudio.diagnostic().events).filter(([k])=>k.startsWith('ambience:')).reduce((n,[,v])=>n+v,0)")
+    page.wait_for_timeout(13000)
+    assert page.evaluate("Object.entries(DungeonAudio.diagnostic().events).filter(([k])=>k.startsWith('ambience:')).reduce((n,[,v])=>n+v,0)") == ambient_count, "Ambience masked a boss warning"
+    page.evaluate("window.currentMusicMode=window.savedAmbientMode;delete window.ambientTestMode;DungeonAudio.setChapter(1)")
     effects = {}
     for event in ["strike", "hit", "damage", "break", "gold", "chest", "equip", "rank",
                   "heal", "victory", "dragon", "warning", "magic", "dodge", "death", "floor",
@@ -79,6 +94,28 @@ with sync_playwright() as p:
                           "output_rms": info["effectsRms"]}
         assert effects[event]["sources_created"] > 0, event + " creates no sound sources"
         assert info["effectsRms"] > .00001, event + " output is silent"
+    trap_cues = page.evaluate("""() => {
+      loadFloor(1,604);world.merchant=null;props=[];enemies=[];player.inv=1000;
+      const results={};
+      for(const [kind,cue] of [['bats','batWings'],['snakes','snakeHiss']]){
+        const trap={x:player.x+40,y:player.y,kind,room:1,revealed:false};
+        const before=audioProbe.sources;triggerTrap(trap);const after=audioProbe.sources;
+        triggerTrap(trap);results[cue]={sources:after-before,repeatSources:audioProbe.sources-after};
+      }
+      const room=world.rooms[1],trap={x:(room.cx+.5)*T,y:(room.cy+.5)*T,room:1,kind:'flood',revealed:false};
+      let before=audioProbe.sources;triggerTrap(trap);
+      results.floodRush={sources:audioProbe.sources-before};
+      const door=world.flood.doors[0];before=audioProbe.sources;damageFloodDoor(door,door.hp);
+      let after=audioProbe.sources;damageFloodDoor(door,100);
+      results.floodDrain={sources:after-before,repeatSources:audioProbe.sources-after};
+      updateNewHazards(20);results.floodCleared=world.flood===null;
+      return results;
+    }""")
+    for cue in ["batWings", "snakeHiss", "floodRush", "floodDrain"]:
+        assert trap_cues[cue]["sources"] > 0, cue + " created no sound"
+        assert trap_cues[cue].get("repeatSources", 0) == 0, cue + " replayed on an already spent trigger"
+    assert trap_cues["floodCleared"], "Flood cleanup failed"
+    page.wait_for_function("DungeonAudio.diagnostic().effectsRms>.00001", timeout=2500)
     page.get_by_role("button", name="Sound effects on", exact=True).click()
     page.wait_for_timeout(700)
     muted = diag()
@@ -89,6 +126,11 @@ with sync_playwright() as p:
     page.keyboard.press("Space")
     page.wait_for_timeout(100)
     assert diag()["effectsRms"] < .000001, "Muted strike leaks sound"
+    assert page.evaluate("""() => {
+      const before=audioProbe.sources;
+      for(const cue of ['batWings','snakeHiss','floodRush','floodDrain'])DungeonAudio.play(cue,'',player);
+      return audioProbe.sources===before;
+    }"""), "Muted trap cue created a sound source"
     page.get_by_role("button", name="Sound effects off", exact=True).click()
     page.locator("#music").click()
     page.wait_for_function("DungeonAudio.diagnostic().musicRms<.000001", timeout=2500)
@@ -112,6 +154,11 @@ with sync_playwright() as p:
     page.locator("#pause").click()
     page.wait_for_timeout(3200)
     assert not diag()["playing"] and diag()["rms"] < .000001, "Paused music/ambience still sounds"
+    assert page.evaluate("""() => {
+      const before=audioProbe.sources;
+      for(const cue of ['batWings','snakeHiss','floodRush','floodDrain'])DungeonAudio.play(cue,'',player);
+      return audioProbe.sources===before;
+    }"""), "Paused trap cue created a sound source"
     page.get_by_role("button", name="Resume journey").click()
     page.wait_for_timeout(800)
     assert diag()["playing"] and diag()["rms"] > .00001
@@ -160,8 +207,9 @@ with sync_playwright() as p:
               "gesture_context": "running", "ambient_rms_samples": samples,
               "music_phrase": music, "music_modes": mode_weights,
               "recorded_sources": page.evaluate("audioProbe.recordedSources"),
+              "realm_ambience": ["wind", "leaves", "deferred during boss"],
               "recorded_spatial": {"near": near, "far": far},
-              "effect_samples": effects, "muted_rms": muted["rms"],
+              "effect_samples": effects, "trap_cues": trap_cues, "muted_rms": muted["rms"],
               "checks": [              "gesture startup", "connected audio destination", "nonzero ambient/music output",
               "eight-phrase score and five reactive music mixes", "realm-specific convolution reverb",
               "bundled CC0 recording playback and spatial attenuation/panning",

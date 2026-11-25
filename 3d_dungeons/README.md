@@ -84,7 +84,7 @@ Run `python 3d_dungeons\crown_checks.py` for desktop/phone friendly-fire, activa
 
 ## Single-use scrolls
 
-**Gear / Map** has an on/off auto-equip button and a button cycling **Ranged / Magic / Melee** preference. Eligible upgrades within 3.75 tiles and clear sight fly toward the knight before equipping, leaving the old item on the floor. Weapons must match the preference and improve strike power; ties favor faster recovery, then longer reach. Magic preference equips a first wand even when its strike power is lower, then compares wands as usual. Compatible armor upgrades by reduction. Gear preferences are saved with the run.
+**Gear / Map** has an on/off auto-equip button and a button cycling **Ranged / Magic / Melee** preference. Eligible upgrades within 3.75 tiles and clear sight fly toward the knight before equipping, leaving the old item on the floor. Ranged includes wands and other ranged weapons; upgrades must improve strike power, with ties favoring faster recovery, then longer reach. Magic preference equips a first wand even when its strike power is lower, then compares wands as usual. Compatible armor upgrades by reduction. Gear preferences are saved with the run.
 
 Dropped **gold and potions** move toward the knight within 3.75 tiles. Ammo does so only with a ranged weapon, and scrolls only with a wand; eligible gear flies toward the knight when auto-equipment is enabled. Healing potions drop less often.
 
@@ -132,13 +132,15 @@ The Web Audio score uses an eight-phrase chapter arrangement with bass, sustaine
 
 Environmental creaks, stone rumbles and water drips also use five short, locally bundled OGG recordings derived from Luka Aleksic's phone-recorded **Various Sound Effects** pack, released as CC0 on OpenGameArt. The selected original recordings are `floor_creak1.wav`, `floor_creak2.wav`, `floor_creak3.wav`, `grind_stone.wav`, and `tap_water.wav`; the files in `audio` are mono Vorbis conversions. The source page and license are documented in `audio/SOURCES.md`. These same-origin assets ship beside the offline HTML and inside the Android APK; no third-party audio host or runtime network access is used.
 
+Realm-specific ambience adds wind, rustling leaves, chains, water echoes and forge embers. It waits during combat, boss fights and low health so warnings remain clear. Bat and snake traps sound wingbeats and a hiss; a flood rushes in when triggered and drains when a door breaks. These are brief positional effects, not looping sounds.
+
 **Sound effects** and **Music** are independent on/off buttons with separate gain buses. Music includes the score and recorded environmental ambience; Sound effects controls every gameplay cue. Both default to on; the shared Volume slider defaults to 55% and affects both. Audio unlocks/resumes on clicks or keys, subject to browser autoplay policy. The status message explains blocked or unsupported audio and provides a retry path. Music, ambience and reverb fade on pause or tab departure; event tails finish naturally. Settings last for the current page session.
 
 `DungeonAudio.diagnostic()` reports context state, post-volume analyser RMS, separate music/effects bus RMS, the active music layer, realm reverb, spatial attenuation/panning, bundled-recording events, mute states, volume, and startup errors. `audio_checks.py` validates gesture startup, real nonzero audio samples, recording playback, layered music state changes, distance response, reverb, event output, mute silence, unmute, zero-volume silence, browser suspension recovery, and mobile touch pause/resume in isolated Microsoft Edge. `equipment_checks.py` verifies actual equipped/ground silhouettes, E-driven armor loot/equip/swap, damage reduction, all four independent audio toggle combinations, weapon-specific profiles, and randomized pitch. It saves gameplay and silhouette screenshots and JSON evidence to `D:\OneDrive\Scripts\games\emberkeep`. Pass a deployed URL ending in `?test` as its first argument to repeat the checks on the live game. Measurements validate browser audio routing, not human listening or physical speaker output.
 
 ## Supplied artwork
 
-All 15 original `sample_images/NoLoRA_*.jpg` files were inspected as full room references, not sprite sheets. A source-art gallery embeds reduced copies of every image. Gameplay floor masonry is cropped from NoLoRA_0008 (390, 240, 510, 320); wall masonry from NoLoRA_0015 (230, 110, 350, 160). The original source files are unchanged. The procedural geometry, actors, objects, telegraphs, and effects are drawn in Canvas to match the supplied torchlit stone aesthetic.
+All 15 original `sample_images/NoLoRA_*.jpg` files were inspected as full room references, not sprite sheets. Gameplay floor masonry is cropped from NoLoRA_0008 (390, 240, 510, 320); wall masonry from NoLoRA_0015 (230, 110, 350, 160). The original source files are unchanged. The procedural geometry, actors, objects, telegraphs, and effects are drawn in Canvas to match the supplied torchlit stone aesthetic.
 
 ## Generation and diagnostics
 
