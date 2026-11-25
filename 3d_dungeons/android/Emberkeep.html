@@ -89,6 +89,11 @@ window.DungeonAudio=(()=>{
  }
  function spatial(position){
   if(!position||!listener){lastSpatial={pan:0,attenuation:1,distance:0};return lastSpatial}
+  if(![position.x,position.y,listener.x,listener.y].every(Number.isFinite)){
+   events['audio:invalidPosition']=(events['audio:invalidPosition']||0)+1;
+   console.error('Emberkeep audio received a non-finite sound position; playing it centered.',{position,listener});
+   lastSpatial={pan:0,attenuation:1,distance:0,invalid:true};return lastSpatial;
+  }
   const dx=position.x-listener.x,dy=position.y-listener.y,distance=Math.hypot(dx,dy),pan=Math.max(-1,Math.min(1,dx/320)),attenuation=Math.max(.035,1/(1+Math.pow(distance/290,1.55)));
   lastSpatial={pan,attenuation,distance};return lastSpatial;
  }
@@ -913,7 +918,7 @@ function updateHeroShots(dt,activeShots=heroShots,initial=false){
    }
    if(collision){
     s.hits.add(collision.object);
-    if(['bow','crossbow'].includes(s.kind)||s.special)window.DungeonAudio.play('arrowImpact','',collision.object);
+    if(['bow','crossbow'].includes(s.kind)||s.special)window.DungeonAudio.play('arrowImpact','',{x:s.x,y:s.y});
     if(collision.door)damageFloodDoor(collision.object,s.damage);
     else if(collision.torch)setTorch(collision.object,true);
     else if(collision.prop)breakProp(collision.object,s.damage);

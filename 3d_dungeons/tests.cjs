@@ -199,8 +199,9 @@ check('flood doors block every exit and starter melee breaks one to drain the ro
   assert.equal(run("world.flood"),null);
 });
 check('flood doors take ranged damage and disarmed flood never harms or blocks the knight', () => {
-  run("begin();loadFloor(1,604);props=[];enemies=[];world.traps=[];var r=world.rooms[1];var t={x:(r.cx+.5)*T,y:(r.cy+.5)*T,room:1,kind:'flood',revealed:true,triggered:false};world.traps=[t];player.x=t.x;player.y=t.y;triggerTrap(t,true);var d=world.flood.doors[0],cx=(d.x1+d.x2)/2,cy=(d.y1+d.y2)/2,horizontal=d.x2-d.x1>d.y2-d.y1;player.x=cx+(horizontal?0:(cx<r.cx*T?35:-35));player.y=cy+(horizontal?(cy<r.cy*T?35:-35):0);player.angle=Math.atan2(cy-player.y,cx-player.x);player.weapon={...weaponTypes.bow,kind:'bow',name:'Bow',damage:25,color:'#fff'};heroShots=[];player.cool=0;attack();updateHeroShots(.15)");
+  run("begin();loadFloor(1,604);props=[];enemies=[];world.traps=[];var r=world.rooms[1];var t={x:(r.cx+.5)*T,y:(r.cy+.5)*T,room:1,kind:'flood',revealed:true,triggered:false};world.traps=[t];player.x=t.x;player.y=t.y;triggerTrap(t,true);var d=world.flood.doors[0],cx=(d.x1+d.x2)/2,cy=(d.y1+d.y2)/2,horizontal=d.x2-d.x1>d.y2-d.y1;player.x=cx+(horizontal?0:(cx<r.cx*T?35:-35));player.y=cy+(horizontal?(cy<r.cy*T?35:-35):0);player.angle=Math.atan2(cy-player.y,cx-player.x);  player.weapon={...weaponTypes.bow,kind:'bow',name:'Bow',damage:25,color:'#fff'};heroShots=[];player.cool=0;var impactCues=[],realPlay=window.DungeonAudio.play;window.DungeonAudio.play=(name,kind,position)=>{if(name==='arrowImpact')impactCues.push(position);return realPlay(name,kind,position)};try{attack();updateHeroShots(.15)}finally{window.DungeonAudio.play=realPlay}");
   assert.equal(run("d.hp===153&&!floodBlocked(cx,cy,12,player)"),true);
+    assert.equal(run("impactCues.length===1&&Number.isFinite(impactCues[0].x)&&Number.isFinite(impactCues[0].y)"),true,'door impact sound needs a finite position');
   run("var hp=player.hp;updateNewHazards(8)");
   assert.equal(run("player.hp===hp"),true);
   run("loadFloor(2,604)");

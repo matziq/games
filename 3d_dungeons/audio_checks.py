@@ -1,5 +1,6 @@
 """Verify real Web Audio samples and browser gesture policy in isolated Edge."""
 import json
+import math
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
@@ -189,6 +190,23 @@ with sync_playwright() as p:
     touch.get_by_role("button", name="Resume journey").tap()
     touch.wait_for_function("DungeonAudio.diagnostic().playing")
     assert touch.evaluate("audioProbe.contexts.length") == 1, "Touch resume created a duplicate audio context"
+    # Regression: special ammo striking a flood door (no x/y) once sent NaN into a real AudioParam.
+    touch.evaluate("""() => {
+      loadFloor(3,604);props=[];enemies=[];world.traps=[];
+      const r=world.rooms[1],t={x:(r.cx+.5)*T,y:(r.cy+.5)*T,room:1,kind:'flood',revealed:false,triggered:false};
+      world.traps=[t];player.x=t.x;player.y=t.y;triggerTrap(t);
+      const d=world.flood.doors[0],cx=(d.x1+d.x2)/2,cy=(d.y1+d.y2)/2,h=d.x2-d.x1>d.y2-d.y1;
+      player.x=cx+(h?0:(cx<r.cx*T?35:-35));player.y=cy+(h?(cy<r.cy*T?35:-35):0);player.angle=Math.atan2(cy-player.y,cx-player.x);
+      player.weapon={...weaponTypes.bow,kind:'bow',name:'Bow',damage:25,color:'#fff'};player.ammoShared.poison=1;player.ammoSelection='poison';
+      heroShots=[];player.cool=0;saveRun();savedRun=null;restoreSavedRun();
+    }""")
+    door_hp = touch.evaluate("world.flood.doors[0].hp")
+    attack_box = touch.locator("#touchAttack").bounding_box()
+    touch.touchscreen.tap(attack_box["x"] + attack_box["width"] / 2, attack_box["y"] + attack_box["height"] / 2)
+    touch.wait_for_function("(DungeonAudio.diagnostic().events.arrowImpact||0)>=1", timeout=3000)
+    door_audio = touch.evaluate("({state,doorHp:world.flood.doors[0].hp,spatial:DungeonAudio.diagnostic().spatial,invalid:DungeonAudio.diagnostic().events['audio:invalidPosition']||0})")
+    assert door_audio["state"] == "playing" and door_audio["doorHp"] < door_hp, door_audio
+    assert door_audio["invalid"] == 0 and all(math.isfinite(v) for v in door_audio["spatial"].values()), door_audio
     assert not touch_errors, touch_errors
     assert not touch_requests, touch_requests
     # An explicit browser rejection must surface rather than pretend audio succeeded.
@@ -211,6 +229,7 @@ with sync_playwright() as p:
               "realm_ambience": ["wind", "leaves", "deferred during boss"],
               "recorded_spatial": {"near": near, "far": far},
               "effect_samples": effects, "trap_cues": trap_cues, "muted_rms": muted["rms"],
+              "flood_door_impact_audio": door_audio,
               "checks": [              "gesture startup", "connected audio destination", "nonzero ambient/music output",
               "eight-phrase score and five reactive music mixes", "realm-specific convolution reverb",
               "bundled CC0 recording playback and spatial attenuation/panning",
