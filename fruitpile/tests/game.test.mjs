@@ -19,13 +19,13 @@ fs.mkdirSync(artifacts, { recursive: true });
 // Test-only instrumentation is injected into a routed copy, never the release.
 const hook = `
 window.testGame = {
-  state: () => ({running, paused, simTime, score, gameMode, runChaos, settings: {...settings},
+  state: () => ({running, paused, simTime, score, runChaos, settings: {...settings},
     current: currentFruit.key, next: nextFruit.key, dropCount, swapUsed, largestCreated,
-    diamondsCreated, bestCombo, comboCount, scoreGoal, inputX: input.x,
-    pending: explodeQueue.length + stagedDetonations.length + stagedClusterSweeps.length + mergedClusterSweeps.length,
-    bodies: Composite.allBodies(world).filter(isFruitBody).map(b => ({id:b.id,key:b.plugin.fruitKey,x:b.position.x,y:b.position.y,vx:b.velocity.x,vy:b.velocity.y})),
+    diamondsCreated, bestCombo, comboCount, inputX: input.x,
+    pending: matchQueue.length + mergedClusterSweeps.length,
+    bodies: Composite.allBodies(world).filter(isFruitBody).map(b => ({id:b.id,key:b.plugin.fruitKey,x:b.position.x,y:b.position.y,vx:b.velocity.x,vy:b.velocity.y,armed:!!b.plugin.armedUntil})),
     world: {...playfield}, key: fpHsKey()}),
-  begin: mode => { gameMode=mode; updateModeButtons(); newGame(); audio.setVolume(0); cancelAnimationFrame(rafId); lastT=100; },
+  begin: () => { newGame(); audio.setVolume(0); cancelAnimationFrame(rafId); lastT=100; },
   stopRaf: () => cancelAnimationFrame(rafId),
   frames: (count, dt=1000/60) => { for(let i=0;i<count;i++){tick(lastT+dt); cancelAnimationFrame(rafId);} },
   pair: (key='cherry', separation) => {
@@ -68,6 +68,7 @@ window.testGame = {
   end: () => endGame(),
   scores: () => getFpHighScores(),
   save: (score,name) => addFpHighScore(score,name),
+  setScore: value => { score=value; updateHud(); },
   queue: (a,b) => {currentFruit=fruitByKey.get(a);nextFruit=fruitByKey.get(b);updateHud();},
   idleFruit: () => { const b=fruitBodyAt(260,600,fruitByKey.get('apple')); b.plugin.lastActivityAt=-20000; World.add(world,b); },
   seedRandom: () => {let s=42;Math.random=()=>((s=Math.imul(s,1664525)+1013904223>>>0)/4294967296);},
@@ -122,7 +123,10 @@ window.testGame = {
 `;
 assert.equal((html.match(/            start\(\);/g) || []).length, 1);
 const testHtml = html.replace('            start();', `${hook}\n            start();`);
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({
+    headless: true,
+    ...(process.env.FRUITPILE_CHROME_PATH ? { executablePath: process.env.FRUITPILE_CHROME_PATH } : {})
+});
 const results = [];
 // FRUITPILE_TEST_FILTER=<text>[|<text>...] runs only the tests whose name contains one of the texts.
 const testFilters = (process.env.FRUITPILE_TEST_FILTER || '').toLowerCase().split('|').filter(Boolean);
@@ -181,25 +185,128 @@ const nativeProbe = canVibrate => `
         keepAwake: on => window.__native.push(['awake', on])
     };
 `;
-try {
-    await test('Both modes resolve touching fruit, score, and use the documented fuse', async () => {
-        const { page, context, errors } = await setup();
-        for (const mode of ['explode', 'merge']) {
-            await page.evaluate(mode => {
-                testGame.begin(mode);
-                const ids = testGame.pair();
-                const release = testGame.hold(ids);
-                try { testGame.frames(150); } finally { if (release) release(); }
-            }, mode);
-            const s = await state(page);
-            assert(s.score > 0);
-            assert.equal(s.bodies.length, mode === 'merge' ? 1 : 0);
-            if (mode === 'merge') assert.equal(s.bodies[0].key, 'grape');
-            assert.equal(await page.evaluate(() => testGame.fuse(2)), 750);
-            assert.equal(await page.evaluate(() => testGame.fuse(4)), 1250);
-            const points = await page.evaluate(() => [testGame.points('cherry'), testGame.points('watermelon')]);
-            assert(mode === 'merge' ? points[1] > points[0] : points[0] > points[1]);
+const unavailableAudioProbe = `
+    Object.defineProperty(window, 'AudioContext', { configurable: true, value: undefined });
+    Object.defineProperty(window, 'webkitAudioContext', { configurable: true, value: undefined });
+`;
+const partialAudioGraphProbe = `
+    window.__closedAudioContexts = 0;
+    class PartialAudioContext {
+        constructor() { this.destination = {}; this.state = 'running'; }
+        createGain() { throw new Error('test gain creation failure'); }
+        close() {
+            window.__closedAudioContexts++;
+            this.state = 'closed';
+            return Promise.resolve();
         }
+    }
+    Object.defineProperty(window, 'AudioContext', { configurable: true, value: PartialAudioContext });
+`;
+const rejectedAudioResumeProbe = `
+    window.__audioResumes = 0;
+    Object.defineProperty(window.AudioContext.prototype, 'resume', {
+        configurable: true,
+        value() {
+            window.__audioResumes++;
+            return Promise.reject(new Error('Synthetic audio resume rejection'));
+        }
+    });
+`;
+try {
+    await test('Touching fruit merge, score, and use the documented fuse', async () => {
+        const { page, context, errors } = await setup();
+        await page.evaluate(() => {
+            testGame.begin();
+            const ids = testGame.pair();
+            const release = testGame.hold(ids);
+            try { testGame.frames(150); } finally { release(); }
+        });
+        const s = await state(page);
+        assert.equal(s.score, 50);
+        assert.deepEqual(s.bodies.map(b => b.key), ['grape']);
+        assert.equal(await page.evaluate(() => testGame.fuse(2)), 750);
+        assert.equal(await page.evaluate(() => testGame.fuse(4)), 1250);
+        const points = await page.evaluate(() => [testGame.points('cherry'), testGame.points('watermelon')]);
+        assert(points[1] > points[0]);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    await test('Larger match groups merge once after the extended fuse', async () => {
+        const { page, context, errors } = await setup();
+        const result = await page.evaluate(() => {
+            testGame.begin();
+            const ids = [...testGame.pair(), ...testGame.pair()];
+            const release = testGame.hold(ids);
+            try {
+                testGame.frames(55);
+                const before = testGame.state();
+                testGame.frames(70);
+                return { before, after: testGame.state() };
+            } finally { release(); }
+        });
+        assert.equal(result.before.score, 0, JSON.stringify(result.before));
+        assert.equal(result.before.bodies.length, 4);
+        assert.equal(result.after.score, 100);
+        assert.deepEqual(result.after.bodies.map(b => b.key), ['grape']);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    await test('Two diamonds retain the merge shockwave and bonus', async () => {
+        const { page, context, errors } = await setup();
+        const result = await page.evaluate(() => {
+            testGame.begin();
+            testGame.idleFruit();
+            testGame.mergePair('diamond');
+            testGame.frames(1);
+            return testGame.state();
+        });
+        assert.equal(result.score, 101250);
+        assert.deepEqual(result.bodies.map(b => b.key), ['apple']);
+        assert(Math.abs(result.bodies[0].vx) + Math.abs(result.bodies[0].vy) > 0.1);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    await test('Legacy mode preference starts merge and preserves existing scores and settings', async () => {
+        const seed = `
+            if (!localStorage.getItem('seeded')) {
+                localStorage.setItem('seeded', '1');
+                localStorage.setItem('fruitpile.mode', 'explode');
+                localStorage.setItem('fruitpile.settings.v2', JSON.stringify({volume: 0, reduced: true, chaos: false}));
+                localStorage.setItem('fruitpile.highscores.v2', JSON.stringify({
+                    'merge.classic': [{score: 1250, name: 'ACE', date: '2026-01-01'}],
+                    'merge.chaos': [{score: 900, name: 'BEE', date: '2026-01-01'}],
+                    'explode.classic': [{score: 300, name: 'OLD', date: '2026-01-01'}]
+                }));
+            }
+        `;
+        const { page, context, errors } = await setup({ width: 390, height: 844 }, true, true, seed);
+        assert.equal(await page.locator('#btnModeExplode, #btnModeMerge').count(), 0);
+        assert.equal(await page.locator('#volSlider').inputValue(), '0');
+        assert(await page.locator('#reducedEffects').isChecked());
+        await page.locator('#btnHow').click();
+        assert.doesNotMatch(await page.locator('#infoBody').innerText(), /explod|explosion/i);
+        await page.locator('#btnHow').click();
+        await page.locator('#btnScores').click();
+        const leaderboard = await page.locator('#fp-hs-wrap').innerText();
+        assert.match(leaderboard, /ACE/);
+        assert.doesNotMatch(leaderboard, /OLD/);
+        await page.locator('#fpHsClose').click();
+        await page.locator('#btnPlay').click();
+        await page.evaluate(() => {
+            testGame.stopRaf();
+            const ids = testGame.pair();
+            const release = testGame.hold(ids);
+            try { testGame.frames(150); } finally { release(); }
+        });
+        assert.deepEqual((await state(page)).bodies.map(b => b.key), ['grape']);
+        await page.evaluate(() => testGame.save(1500, 'NEW'));
+        const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('fruitpile.highscores.v2')));
+        assert.deepEqual(stored['merge.classic'].map(row => row.name), ['NEW', 'ACE']);
+        assert.equal(stored['merge.chaos'][0].name, 'BEE');
+        assert.equal(stored['explode.classic'][0].name, 'OLD');
+        assert.equal(await page.evaluate(() => localStorage.getItem('fruitpile.mode')), 'explode');
+        await page.evaluate(() => { testGame.setChaos(true); testGame.begin(); });
+        assert.equal((await page.evaluate(() => testGame.scores()))[0].name, 'BEE');
         assert.deepEqual(errors, []);
         await context.close();
     });
@@ -209,7 +316,7 @@ try {
             const { page, context } = await setup();
             await page.evaluate(hz => {
                 testGame.seedRandom();
-                testGame.begin('merge');
+                testGame.begin();
                 const ids = testGame.pair();
                 const release = testGame.hold(ids);
                 try { testGame.frames(hz * 3, 1000 / hz); } finally { release(); }
@@ -226,7 +333,7 @@ try {
     });
     await test('Mouse, keyboard, swap limits, cancel, multi-pointer and release outside', async () => {
         const { page, context, errors } = await setup();
-        await page.evaluate(() => testGame.begin('explode'));
+        await page.evaluate(() => testGame.begin());
         const box = await page.locator('#game').boundingBox();
         await page.mouse.click(box.x + box.width / 2, box.y + box.height / 3);
         assert.equal((await state(page)).dropCount, 1);
@@ -263,7 +370,7 @@ try {
     });
     await test('Pause/help/scores/background freeze physics and fuse; restart clears all queues', async () => {
         const { page, context, errors } = await setup();
-        await page.evaluate(() => { testGame.begin('explode'); const ids = testGame.pair(); window.__releaseHold = testGame.hold(ids); testGame.frames(20); });
+        await page.evaluate(() => { testGame.begin(); const ids = testGame.pair(); window.__releaseHold = testGame.hold(ids); testGame.frames(20); });
         await page.locator('#btnPause').click();
         const before = await state(page);
         await page.evaluate(() => testGame.frames(500));
@@ -302,88 +409,43 @@ try {
         await page.locator('#volSlider').fill('0');
         await page.locator('#reducedEffects').check();
         await page.locator('#chaosMode').check();
-        await page.locator('#btnModeMerge').click();
         await page.reload();
         await page.evaluate(() => testGame.stopRaf());
         assert.equal(await page.locator('#volSlider').inputValue(), '0');
         assert(await page.locator('#reducedEffects').isChecked());
         assert(await page.locator('#chaosMode').isChecked());
-        assert.equal((await state(page)).gameMode, 'merge');
-        await page.evaluate(() => { testGame.begin('merge'); testGame.idleFruit(); testGame.frames(300); });
+        await page.evaluate(() => { testGame.begin(); testGame.idleFruit(); testGame.frames(300); });
         assert.equal((await state(page)).runChaos, true);
         assert.equal((await state(page)).bodies[0].key, 'orange');
         await page.evaluate(() => { testGame.save(1000, 'TEST'); });
         assert.equal((await page.evaluate(() => testGame.scores()))[0].score, 1000);
         await page.locator('#btnPause').click();
         await page.locator('#chaosMode').uncheck();
-        await page.evaluate(() => { testGame.begin('merge'); testGame.idleFruit(); testGame.frames(200); });
+        await page.evaluate(() => { testGame.begin(); testGame.idleFruit(); testGame.frames(200); });
         assert.equal((await state(page)).bodies[0].key, 'apple');
         assert.equal((await page.evaluate(() => testGame.scores())).length, 0);
-        assert.deepEqual(errors, []);
-        await context.close();
-    });
-    await test('Explosion fuse cancels when fruit separate and watermelon blasts create one diamond', async () => {
-        const { page, context, errors } = await setup();
-        const result = await page.evaluate(() => {
-            testGame.begin('explode');
-            const bounced = testGame.pair('cherry');
-            const releaseBounce = testGame.hold(bounced);
-            try { testGame.frames(20); } finally { releaseBounce(); }
-            testGame.separate(bounced[1], 70);
-            const before = testGame.state();
-            testGame.frames(120);
-            const separated = testGame.state();
-            const held = testGame.pair('grape');
-            const releaseHeld = testGame.hold(held);
-            try { testGame.frames(80); } finally { releaseHeld(); }
-            const popped = testGame.state();
-            testGame.begin('explode');
-            const melons = testGame.pair('watermelon', 40);
-            const releaseMelons = testGame.hold(melons);
-            try { testGame.frames(90); } finally { releaseMelons(); }
-            const blasted = testGame.state();
-            testGame.frames(45);
-            const later = testGame.state();
-            return {
-                separatedScore: separated.score,
-                separatedBodies: separated.bodies.map(b => b.key).sort(),
-                armedCancelled: before.pending >= 0,
-                grapeScore: popped.score,
-                grapesLeft: popped.bodies.filter(b => b.key === 'grape').length,
-                blastScore: blasted.score,
-                diamonds: blasted.bodies.filter(b => b.key === 'diamond').length,
-                melonsLeft: blasted.bodies.filter(b => b.key === 'watermelon').length,
-                diamondsLater: later.bodies.filter(b => b.key === 'diamond').length
-            };
-        });
-        assert.equal(result.separatedScore, 0);
-        assert.deepEqual(result.separatedBodies, ['cherry', 'cherry']);
-        assert(result.grapeScore > 0);
-        assert.equal(result.grapesLeft, 0);
-        assert.equal(result.diamonds, 1, JSON.stringify(result));
-        assert.equal(result.melonsLeft, 0);
-        assert.equal(result.diamondsLater, 1);
-        assert(result.blastScore < 1000, 'one blast must not be followed by a diamond detonation');
         assert.deepEqual(errors, []);
         await context.close();
     });
     await test('Merge stays in contact, and a hit moves the fruit fly onto another fruit', async () => {
         const { page, context, errors } = await setup();
         const result = await page.evaluate(() => {
-            testGame.begin('merge');
+            testGame.begin();
             const bounced = testGame.pair('cherry');
             const releaseBounce = testGame.hold(bounced);
             try { testGame.frames(20); } finally { releaseBounce(); }
+            const armedBeforeSeparation = testGame.state().bodies.every(b => b.armed);
             testGame.separate(bounced[1], 70);
             testGame.frames(120);
-            const separated = testGame.state().bodies.map(b => b.key).sort();
-            testGame.begin('merge');
+            const separatedState = testGame.state();
+            const separated = separatedState.bodies.map(b => b.key).sort();
+            testGame.begin();
             const held = testGame.pair('cherry', 20);
             const releaseHeld = testGame.hold(held);
             try { testGame.frames(80); } finally { releaseHeld(); }
             const merged = testGame.state().bodies.map(b => b.key);
             testGame.setChaos(true);
-            testGame.begin('explode');
+            testGame.begin();
             const planted = testGame.plantFly();
             testGame.scare(planted.apple, planted.grape);
             testGame.freezeFruit();
@@ -391,9 +453,12 @@ try {
             testGame.frames(140);
             const beforeOldDeadline = testGame.flies();
             testGame.frames(180);
-            return { separated, merged, moved, beforeOldDeadline, later: testGame.flies() };
+            return { armedBeforeSeparation, separated, separatedState, merged, moved, beforeOldDeadline, later: testGame.flies() };
         });
+        assert(result.armedBeforeSeparation);
         assert.deepEqual(result.separated, ['cherry', 'cherry']);
+        assert(result.separatedState.bodies.every(b => !b.armed));
+        assert.equal(result.separatedState.pending, 0);
         assert.deepEqual(result.merged, ['grape']);
         assert.equal(result.moved.find(b => b.key === 'apple').fly, false);
         assert.equal(result.moved.find(b => b.key === 'peach').fly, true);
@@ -406,14 +471,14 @@ try {
     await test('Larger fruit have more mass and move the same target farther', async () => {
         const { page, context, errors } = await setup();
         const result = await page.evaluate(() => {
-            testGame.begin('explode');
+            testGame.begin();
             const masses = testGame.masses();
             const cherryFall = testGame.fall('cherry');
-            testGame.begin('explode');
+            testGame.begin();
             const melonFall = testGame.fall('watermelon');
-            testGame.begin('explode');
+            testGame.begin();
             const cherryHit = testGame.strike('cherry');
-            testGame.begin('explode');
+            testGame.begin();
             const melonHit = testGame.strike('watermelon');
             return { masses, cherryFall, melonFall, cherryHit, melonHit };
         });
@@ -433,14 +498,14 @@ try {
     });
     await test('Diamond milestone preserves the run and overflow has a visible grace period', async () => {
         const { page, context, errors } = await setup();
-        await page.evaluate(() => { testGame.begin('merge'); testGame.mergePair('watermelon'); });
+        await page.evaluate(() => { testGame.begin(); testGame.mergePair('watermelon'); });
         assert.equal((await state(page)).diamondsCreated, 1);
         assert.equal((await state(page)).paused, true);
         assert.equal(await page.locator('#modalTitle').innerText(), 'Your first diamond!');
         await page.locator('#btnPlay').click();
         await page.evaluate(() => testGame.stopRaf());
         assert.equal((await state(page)).diamondsCreated, 1);
-        await page.evaluate(() => { testGame.begin('explode'); testGame.danger(); testGame.frames(100); });
+        await page.evaluate(() => { testGame.begin(); testGame.danger(); testGame.frames(100); });
         assert.equal((await state(page)).running, true);
         assert.match(await page.locator('#danger').innerText(), /Clear the line/);
         await page.evaluate(() => testGame.frames(100));
@@ -450,7 +515,7 @@ try {
         await context.close();
     });
     await test('320px, portrait, landscape, tablet and desktop retain controls and board geometry', async () => {
-        const sizes = [[320, 568], [390, 844], [667, 375], [844, 390], [768, 1024], [1440, 900]];
+        const sizes = [[320, 568], [390, 844], [667, 375], [844, 390], [768, 1024], [900, 561], [1024, 600], [1440, 900]];
         for (const [width, height] of sizes) {
             const { page, context, errors } = await setup({ width, height }, width < 900);
             await page.screenshot({ path: path.join(artifacts, `menu-${width}x${height}.png`) });
@@ -458,14 +523,30 @@ try {
             await page.evaluate(() => { testGame.stopRaf(); testGame.queue('watermelon', 'watermelon'); });
             const metrics = await page.evaluate(() => {
                 const rect = el => { const r = el.getBoundingClientRect(); return { x:r.x,y:r.y,width:r.width,height:r.height }; };
+                const intersects = (a,b) => a.width > 0 && a.height > 0 && b.width > 0 && b.height > 0
+                    && a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+                const hud = rect(document.querySelector('.hud'));
+                const arena = rect(document.querySelector('#arena'));
+                const controlsBox = rect(document.querySelector('#controls'));
+                const menuLink = rect(document.querySelector('#return-menu-link'));
+                const menuTarget = document.elementFromPoint(menuLink.x + menuLink.width / 2, menuLink.y + menuLink.height / 2);
                 return {
                     canvas: rect(document.querySelector('#game')),
                     controls: ['btnDrop','btnLeft','btnRight','btnSwap','btnPause'].map(id=>rect(document.getElementById(id))),
                     text: ['currentName','nextName','goal'].map(id=>({text:document.getElementById(id).textContent, ...rect(document.getElementById(id))})),
+                    hudArenaOverlap: intersects(hud, arena),
+                    hudControlsOverlap: intersects(hud, controlsBox),
+                    menuHudOverlap: intersects(menuLink, hud),
+                    menuLinkHeight: menuLink.height,
+                    menuLinkHit: menuTarget?.closest('#return-menu-link')?.id,
                     overflow: document.documentElement.scrollWidth > innerWidth
                 };
             });
             assert.equal(metrics.overflow, false);
+            assert.equal(metrics.hudArenaOverlap, false, `${width}x${height}: HUD covers the game board`);
+            assert.equal(metrics.hudControlsOverlap, false, `${width}x${height}: HUD covers touch controls`);
+            assert.equal(metrics.menuHudOverlap, false, `${width}x${height}: HUD covers the Games Menu link`);
+            assert(metrics.menuLinkHeight >= 44 && metrics.menuLinkHit === 'return-menu-link', `${width}x${height}: Games Menu link is not a reachable 44px target`);
             assert(Math.abs(metrics.canvas.width / metrics.canvas.height - 520 / 680) < .01);
             for (const r of metrics.controls) {
                 assert(r.width >= 44 && r.height >= 44, `${width}: touch target`);
@@ -488,7 +569,7 @@ try {
             await page.evaluate(() => testGame.frames(1, 0));
             await page.evaluate(() => {
                 const tip = document.getElementById('toast');
-                tip.textContent = 'Drop these two cherries together for your first pop.';
+                tip.textContent = 'Drop these two cherries together to grow a grape.';
                 tip.classList.add('show');
             });
             const tipPlacement = await page.evaluate(() => {
@@ -500,6 +581,45 @@ try {
             assert.equal(tipPlacement.overlaps, false, `${width}x${height}: help covers the bowl`);
             assert.equal(tipPlacement.inView, true, `${width}x${height}: help is off screen`);
             await page.screenshot({ path: path.join(artifacts, `game-${width}x${height}.png`) });
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+    await test('Games Menu link stays clear of start, help, scores, pause and game-over dialogs', async () => {
+        for (const [width, height] of [[320, 568], [667, 375]]) {
+            const { page, context, errors } = await setup({ width, height }, true);
+            const assertClear = async stateName => {
+                const bounds = await page.evaluate(() => {
+                    const rect = el => {
+                        const r = el.getBoundingClientRect();
+                        return { x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom };
+                    };
+                    const intersects = (a,b) => a.width > 0 && a.height > 0
+                        && a.x < b.right && a.right > b.x && a.y < b.bottom && a.bottom > b.y;
+                    const link = rect(document.querySelector('#return-menu-link'));
+                    const scores = document.querySelector('#hs-modal').style.display === 'flex';
+                    const card = rect(document.querySelector(scores ? '#hs-modal .card' : '#modal .card'));
+                    const target = document.elementFromPoint(link.x + link.width / 2, link.y + link.height / 2);
+                    return { link, card, overlap: intersects(link, card), linkHit: target?.closest('#return-menu-link')?.id };
+                });
+                assert.equal(bounds.overlap, false, `${width}x${height} ${stateName}: Games Menu link covers dialog ${JSON.stringify(bounds)}`);
+                assert(bounds.link.y >= 0 && bounds.link.bottom <= height && bounds.link.height >= 44 && bounds.linkHit === 'return-menu-link',
+                    `${width}x${height} ${stateName}: Games Menu link is not reachable ${JSON.stringify(bounds)}`);
+                if (width === 667) await page.screenshot({ path: path.join(artifacts, `dialog-${stateName}-${width}x${height}.png`) });
+            };
+
+            await assertClear('start');
+            await page.locator('#btnHow').click();
+            await assertClear('help');
+            await page.locator('#btnHow').click();
+            await page.locator('#btnScores').click();
+            await assertClear('high-scores');
+            await page.locator('#fpHsClose').click();
+            await page.locator('#btnPlay').click();
+            await page.locator('#btnPause').click();
+            await assertClear('pause');
+            await page.evaluate(() => testGame.end());
+            await assertClear('game-over');
             assert.deepEqual(errors, []);
             await context.close();
         }
@@ -529,7 +649,6 @@ try {
     await test('Real RAF rendering, touch play and pause/resume on uninstrumented release', async () => {
         for (const [width, height] of [[390, 844], [1440, 900]]) {
             const { page, context, errors, requests } = await setup({ width, height }, width < 900, false);
-            await page.locator('#btnModeMerge').click();
             await page.locator('#btnPlay').click();
             const box = await page.locator('#game').boundingBox();
             for (const fraction of [.30, .70, .48, .30, .68]) {
@@ -564,7 +683,7 @@ try {
             await page.keyboard.press('Tab');
             assert(await page.evaluate(() => document.getElementById('modal').contains(document.activeElement)));
         }
-        await page.evaluate(() => localStorage.setItem('fruitpile.highscores.v2', '{"explode.classic":[null,{"score":"bad","name":"bad"},{"score":1,"name":"<img>"}]}'));
+        await page.evaluate(() => localStorage.setItem('fruitpile.highscores.v2', '{"merge.classic":[null,{"score":"bad","name":"bad"},{"score":1,"name":"<img>"}]}'));
         const list = await page.evaluate(() => testGame.scores());
         assert.equal(list.length, 1);
         assert.equal(list[0].name, '');
@@ -578,10 +697,150 @@ try {
         assert.deepEqual(errors, []);
         await context.close();
     });
+    await test('Sound activates from a user gesture and follows pause and resume', async () => {
+        const { page, context, errors } = await setup();
+        await page.locator('#btnPlay').click();
+        await page.waitForFunction(() => window._fpAudio?.ctx?.state === 'running');
+        assert.equal(await page.evaluate(() => window._fpAudio.enabled), true);
+        await page.locator('#btnPause').click();
+        await page.waitForFunction(() => window._fpAudio.ctx.state === 'suspended');
+        await page.locator('#btnPlay').click();
+        await page.waitForFunction(() => window._fpAudio.ctx.state === 'running');
+        await page.locator('#btnDrop').click();
+        assert.equal((await state(page)).dropCount, 1);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    await test('Unavailable Web Audio does not interrupt gameplay or re-enable after settings change', async () => {
+        const { page, context, errors } = await setup({ width: 1280, height: 800 }, false, true, unavailableAudioProbe);
+        await page.locator('#btnPlay').click();
+        assert.equal((await state(page)).running, true);
+        assert.equal(await page.evaluate(() => window._fpAudio.enabled), false);
+        assert.equal(await page.evaluate(() => window._fpAudio.unavailable), true);
+        assert.equal(await page.locator('#volSlider').isDisabled(), true);
+        assert.equal(await page.locator('#volSlider').getAttribute('aria-label'), 'Sound unavailable');
+        assert.equal(await page.locator('#soundLabel').innerText(), 'Sound unavailable');
+        assert.match(await page.locator('#toast').innerText(), /Sound unavailable; gameplay is unaffected\./);
+        await page.locator('#btnDrop').click();
+        assert.equal((await state(page)).dropCount, 1);
+        await page.locator('#btnPause').click();
+        await page.locator('#volSlider').evaluate(slider => {
+            slider.value = '80';
+            slider.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        assert.equal(await page.evaluate(() => window._fpAudio.enabled), false);
+        await page.locator('#btnPlay').click();
+        assert.equal((await state(page)).running, true);
+        await page.waitForTimeout(20);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    await test('Partial Web Audio initialization closes its context and disables the sound control', async () => {
+        const { page, context, errors } = await setup({ width: 1280, height: 800 }, false, true, partialAudioGraphProbe);
+        await page.locator('#btnPlay').click();
+        assert.equal(await page.evaluate(() => window.__closedAudioContexts), 1);
+        assert.equal(await page.evaluate(() => window._fpAudio.unavailable), true);
+        assert.equal(await page.locator('#volSlider').isDisabled(), true);
+        assert.equal(await page.locator('#soundLabel').innerText(), 'Sound unavailable');
+        assert.match(await page.locator('#toast').innerText(), /Sound unavailable; gameplay is unaffected\./);
+        await page.locator('#btnDrop').click();
+        assert.equal((await state(page)).dropCount, 1);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    await test('Rejected AudioContext resume promises are handled without stopping play', async () => {
+        const { page, context, errors } = await setup({ width: 1280, height: 800 }, false, true, rejectedAudioResumeProbe);
+        await page.locator('#btnPlay').click();
+        await page.locator('#btnPause').click();
+        await page.locator('#btnPlay').click();
+        await page.waitForTimeout(40);
+        assert.equal((await state(page)).running, true);
+        assert(await page.evaluate(() => window.__audioResumes > 0));
+        await page.locator('#btnDrop').click();
+        await page.waitForTimeout(20);
+        assert.equal((await state(page)).dropCount, 1);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    await test('Touch-only tablet landscape can pause, read help, view scores, restart and aim/drop', async () => {
+        const { page, context, errors } = await setup({ width: 1024, height: 768 }, true);
+        const touch = await touchPad(context, page);
+        const tap = async selector => {
+            const point = await centerOf(page, selector);
+            await touch('touchStart', point.x, point.y);
+            await touch('touchEnd');
+            await page.waitForTimeout(20);
+        };
+        await tap('#btnPlay');
+        assert.equal((await state(page)).running, true);
+        await tap('#btnPause');
+        assert.equal((await state(page)).paused, true);
+        assert.equal((await state(page)).dropCount, 0, 'tapping pause must not drop a fruit');
+        await tap('#btnHow');
+        assert.equal(await page.locator('#modalTitle').innerText(), 'How to play');
+        await tap('#btnHow');
+        await tap('#btnScores');
+        assert.equal(await page.locator('#hs-modal').evaluate(el => el.style.display), 'flex');
+        await tap('#fpHsClose');
+        await tap('#btnNew');
+        await tap('#btnNew');
+        assert.equal((await state(page)).running, true);
+        await tap('#btnSwap');
+        assert.equal((await state(page)).swapUsed, true);
+
+        const game = (await rects(page, ['game'])).game;
+        const x1 = game.left + game.width * .3;
+        const x2 = game.left + game.width * .7;
+        const y = game.top + game.height * .3;
+        await touch('touchStart', x1, y);
+        await touch('touchMove', x2, y);
+        await touch('touchEnd');
+        const dropped = await state(page);
+        assert.equal(dropped.dropCount, 1);
+        assert(Math.abs(dropped.inputX - (x2 - game.left) * 520 / game.width) < 1.5);
+
+        await page.setViewportSize({ width: 768, height: 1024 });
+        const portraitPause = await rects(page, ['btnPause']);
+        assert(portraitPause.btnPause.bottom <= 1025 && portraitPause.btnPause.top >= 0);
+        await page.setViewportSize({ width: 1024, height: 768 });
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    await test('Short landscape game-over name entry remains touch-accessible after rotation', async () => {
+        const { page, context, errors } = await setup({ width: 390, height: 844 }, true);
+        const touch = await touchPad(context, page);
+        const tap = async selector => {
+            const point = await centerOf(page, selector);
+            await touch('touchStart', point.x, point.y);
+            await touch('touchEnd');
+            await page.waitForTimeout(20);
+        };
+        await tap('#btnPlay');
+        await page.setViewportSize({ width: 667, height: 375 });
+        await page.evaluate(() => { testGame.setScore(100); testGame.end(); });
+        assert.equal(await page.locator('#modalTitle').innerText(), 'Bowl full');
+        assert(await page.locator('#fp-hs-name').isVisible());
+
+        const saveBox = await page.locator('#fp-save-name').boundingBox();
+        if (saveBox.y < 0 || saveBox.y + saveBox.height > 375) {
+            const card = await page.locator('#modal .card').boundingBox();
+            await touch('touchStart', card.x + card.width / 2, card.y + card.height * .8);
+            await touch('touchMove', card.x + card.width / 2, card.y + card.height * .3);
+            await touch('touchEnd');
+        }
+        const visibleSave = await page.locator('#fp-save-name').boundingBox();
+        assert(visibleSave.x >= 0 && visibleSave.x + visibleSave.width <= 668 && visibleSave.y >= 0 && visibleSave.y + visibleSave.height <= 376, JSON.stringify(visibleSave));
+        await page.locator('#fp-hs-name').fill('TABLET');
+        await tap('#fp-save-name');
+        assert.equal(await page.locator('#fp-name-saved').isVisible(), true);
+        assert.equal((await page.evaluate(() => testGame.scores()))[0].name, 'TABLET');
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
     await test('Touch aims and drops from anywhere on the board; releasing far off the board cancels the drop', async () => {
         const { page, context, errors } = await setup({ width: 390, height: 844 }, true);
         const touch = await touchPad(context, page);
-        await page.evaluate(() => { testGame.begin('explode'); testGame.queue('cherry', 'grape'); });
+        await page.evaluate(() => { testGame.begin(); testGame.queue('cherry', 'grape'); });
         const { arena, game } = await rects(page, ['arena', 'game']);
         assert(arena.top < game.top - 12, 'the arena needs spare room above the canvas to test the margin');
         const marginY = (arena.top + game.top) / 2;
@@ -616,7 +875,7 @@ try {
     await test('Holding an arrow button glides the aim, a tap nudges once, and opening the menu stops it', async () => {
         const { page, context, errors } = await setup({ width: 390, height: 844 }, true);
         const touch = await touchPad(context, page);
-        await page.evaluate(() => { testGame.begin('explode'); testGame.queue('cherry', 'grape'); testGame.aim(60); });
+        await page.evaluate(() => { testGame.begin(); testGame.queue('cherry', 'grape'); testGame.aim(60); });
         const aim = async () => (await state(page)).inputX;
         const holding = selector => page.locator(selector).evaluate(el => el.classList.contains('holding'));
         const right = await centerOf(page, '#btnRight');
@@ -625,7 +884,7 @@ try {
         const nudged = await aim();
         assert(Math.abs(nudged - 84) < 1, `first nudge ${nudged}`);
         assert.equal(await holding('#btnRight'), true);
-        await page.waitForTimeout(1000);
+        await page.waitForFunction(start => testGame.state().inputX > start + 100, nudged, { timeout: 4000 });
         const glided = await aim();
         assert(glided > nudged + 100, `glide ${nudged} -> ${glided}`);
         await touch('touchEnd');
@@ -641,7 +900,7 @@ try {
         assert(Math.abs(await aim() - 276) < 1, `a tap should move one nudge, got ${await aim()}`);
         await page.evaluate(() => testGame.aim(60));
         await touch('touchStart', right.x, right.y);
-        await page.waitForTimeout(600);
+        await page.waitForFunction(() => testGame.state().inputX > 120, null, { timeout: 4000 });
         await page.evaluate(() => window.dispatchEvent(new Event('blur')));
         const atBlur = await aim();
         assert(atBlur > 120, `the glide should have started, got ${atBlur}`);
@@ -660,7 +919,7 @@ try {
         const toggle = page.locator('#hapticsToggle');
         assert(await toggle.isVisible());
         assert(await toggle.isChecked());
-        await page.evaluate(() => testGame.begin('explode'));
+        await page.evaluate(() => testGame.begin());
         await page.locator('#btnDrop').click();
         assert.deepEqual(await vibes(), [12]);
         await page.locator('#btnPause').click();
@@ -679,7 +938,7 @@ try {
         await touchCase.context.close();
         const desktop = await setup({ width: 1280, height: 800 }, false, true, vibrationProbe);
         assert.equal(await desktop.page.locator('#hapticsToggle').isVisible(), false);
-        await desktop.page.evaluate(() => testGame.begin('explode'));
+        await desktop.page.evaluate(() => testGame.begin());
         await desktop.page.locator('#btnDrop').click();
         assert.deepEqual(await desktop.page.evaluate(() => window.__vibes), []);
         assert.deepEqual(desktop.errors, []);
@@ -705,16 +964,16 @@ try {
         await page.evaluate(() => testGame.end());
         await settle(page);
         assert.deepEqual(await awake(), [false, true, false, true, false, true, false], 'play, pause, resume, focus loss, resume, game over');
-        await page.evaluate(() => testGame.begin('explode'));
+        await page.evaluate(() => testGame.begin());
         await page.locator('#btnDrop').click();
-        await page.evaluate(() => { testGame.begin('explode'); testGame.danger(); testGame.frames(100); });
+        await page.evaluate(() => { testGame.begin(); testGame.danger(); testGame.frames(100); });
         await page.evaluate(() => testGame.frames(100));
         assert.deepEqual((await calls()).filter(c => c[0] !== 'awake'), [['vibrate', 12], ['pattern', '25,60,25'], ['pattern', '60,50,120']]);
         assert.deepEqual(errors, []);
         await context.close();
         const off = await setup({ width: 390, height: 844 }, true, true, nativeProbe(false));
         assert.equal(await off.page.locator('#hapticsToggle').isVisible(), false);
-        await off.page.evaluate(() => testGame.begin('explode'));
+        await off.page.evaluate(() => testGame.begin());
         await off.page.locator('#btnDrop').click();
         assert.deepEqual((await off.page.evaluate(() => window.__native)).filter(c => c[0] !== 'awake'), []);
         assert.deepEqual(off.errors, []);
@@ -733,7 +992,7 @@ try {
         assert.equal(await page.locator('#hs-modal').evaluate(el => el.style.display), 'flex');
         assert.equal(await back(), true);
         assert.notEqual(await page.locator('#hs-modal').evaluate(el => el.style.display), 'flex');
-        await page.evaluate(() => testGame.begin('explode'));
+        await page.evaluate(() => testGame.begin());
         assert.equal(await back(), true, 'Back during a run pauses it');
         assert.equal((await state(page)).paused, true);
         assert.equal(await page.locator('#modalTitle').innerText(), 'Take a breather');
@@ -781,13 +1040,13 @@ try {
     await test('Showing a toast never resizes the HUD or the board', async () => {
         for (const [width, height] of [[320, 568], [390, 844], [667, 375], [1280, 800]]) {
             const { page, context, errors } = await setup({ width, height }, width < 900);
-            await page.evaluate(() => testGame.begin('explode'));
+            await page.evaluate(() => testGame.begin());
             const ids = ['game', 'arena', 'controls'];
             const before = await rects(page, ids);
             const hudBefore = await page.locator('.hud').boundingBox();
             await page.evaluate(() => {
                 const tip = document.getElementById('toast');
-                tip.textContent = 'Drop these two cherries together for your first pop. Keep them touching until the fuse runs out.';
+                tip.textContent = 'Drop these two cherries together to grow a grape. Keep them touching until the fuse runs out.';
                 tip.classList.add('show');
             });
             assert.deepEqual(await rects(page, ids), before, `${width}x${height}: the toast moved the board or controls`);
@@ -839,7 +1098,7 @@ try {
     });
     await test('The board follows its area when it changes without a window resize', async () => {
         const { page, context, errors } = await setup({ width: 390, height: 844 }, true);
-        await page.evaluate(() => testGame.begin('explode'));
+        await page.evaluate(() => testGame.begin());
         const width = () => page.evaluate(() => parseFloat(document.getElementById('game').style.width));
         const before = await width();
         const world = (await state(page)).world;

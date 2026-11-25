@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-function game() {
+function game({ AudioContext, storage } = {}) {
   const calls = [];
   const context2d = new Proxy({}, {
     get(target, key) {
@@ -35,31 +35,133 @@ function game() {
   math.random = () => .5;
   const sandbox = {
     document, innerWidth: 960, innerHeight: 640, console: { warn() {} },
-    localStorage: { getItem: () => null, setItem() {} },
+    localStorage: storage || { getItem: () => null, setItem() {} },
     matchMedia: () => ({ matches: false }), addEventListener() {},
     requestAnimationFrame() {}, HTMLButtonElement: class {}, HTMLInputElement: class {},
     HTMLElement: class {}, onkeydown: null, onkeyup: null, Math: math, Set
   };
   sandbox.window = sandbox;
+  if (AudioContext) Object.assign(sandbox, { AudioContext, setInterval: () => 1, clearInterval() {} });
   const html = fs.readFileSync(path.join(__dirname, '..', 'blood_joust.html'), 'utf8');
   const script = html.match(/<script>\s*([\s\S]*?)<\/script>/)[1];
   const hook = `window.__test = {
-    mkEnt, physEnt, doFlap, aiUpdate, collisions, updatePlaying, startGame, loop, drawBirdPx, resize,
-    get: () => ({ player, enemies, plats, state, lives, score, fragments, teleports, frame, K, touchFlapHeld }),
+    mkEnt, physEnt, doFlap, aiUpdate, collisions, updatePlaying, startGame, loop, drawBirdPx, resize, loseLife,
+    advanceChain, pauseGame, resumeGame, syncHUD, tickEggs,
+    get: () => ({ player, enemies, plats, state, lives, score, fragments, teleports, frame, K, touchFlapHeld, chainCount, chainRemaining }),
     set: v => {
       if ('player' in v) player = v.player;
       if ('enemies' in v) enemies = v.enemies;
       if ('state' in v) state = v.state;
       if ('lives' in v) lives = v.lives;
+      if ('score' in v) score = v.score;
       if ('invulnT' in v) invulnT = v.invulnT;
       if ('respawnT' in v) respawnT = v.respawnT;
       if ('plats' in v) plats = v.plats;
+      if ('eggs' in v) eggs = v.eggs;
     },
-    setUpdate: fn => { update = fn; }
+    setUpdate: fn => { update = fn; },
+    sfx, setSfxMuted, setMusicMuted, audioState: () => ({ music, sfxMuted, musicMuted })
   };`;
   vm.runInNewContext(script.replace('    })();', hook + '\n    })();'), sandbox);
   return { t: sandbox.__test, sandbox, calls, context2d, element };
 }
+
+function joust(t, type = 'bloodKnight') {
+  t.set({
+    state: 'playing', invulnT: 0,
+    player: t.mkEnt('player', 300, 250),
+    enemies: [t.mkEnt(type, 300, 270)]
+  });
+  t.collisions();
+}
+
+test('joust chains multiply each enemy base score and refresh the window', () => {
+  const { t, element } = game();
+  t.startGame();
+  joust(t);
+  assert.equal(t.get().score, 100);
+  t.advanceChain(2900);
+  joust(t, 'shadowRider');
+  assert.equal(t.get().score, 600);
+  assert.equal(t.get().chainRemaining, 3000);
+  t.advanceChain(2900);
+  joust(t, 'deathLord');
+  assert.equal(t.get().score, 2100);
+  for (let i = 4; i <= 12; i++) joust(t);
+  assert.equal(t.get().chainCount, 12, 'chain is not capped');
+  t.syncHUD();
+  assert.match(element('hud-chain').textContent, /CHAIN 12x \+1,200.*NEXT 13x 3.0s/);
+  assert.match(element('chain-announcer').textContent, /Kill chain 12x/);
+});
+
+test('exactly three seconds chains, but a later kill starts at 1x', () => {
+  for (const elapsed of [2999, 3000, 3001]) {
+    const { t, element } = game();
+    t.startGame();
+    joust(t);
+    t.advanceChain(elapsed);
+    t.syncHUD();
+    assert.equal(element('hud-chain').hidden, elapsed > 3000);
+    joust(t);
+    assert.equal(t.get().score, elapsed <= 3000 ? 300 : 200, `${elapsed}ms`);
+    assert.equal(t.get().chainCount, elapsed <= 3000 ? 2 : 1);
+  }
+});
+
+test('chain time is unscaled, freezes on pause, and runs during wave announcements', () => {
+  const { t } = game();
+  t.startGame(); joust(t);
+  t.setUpdate(() => {});
+  t.loop(100);
+  t.loop(1100);
+  assert.equal(t.get().chainRemaining, 2000);
+  t.pauseGame();
+  t.loop(11100);
+  assert.equal(t.get().chainRemaining, 2000);
+  t.resumeGame();
+  t.loop(11200);
+  t.loop(12200);
+  assert.equal(t.get().chainRemaining, 1000);
+  t.set({ state: 'waveAnnounce' });
+  t.loop(13201);
+  assert.equal(t.get().chainCount, 0);
+});
+
+test('life loss, game over, quit, and restart reset chains', () => {
+  const { t, element } = game();
+  for (const action of [
+    () => t.loseLife(),
+    () => { t.set({ lives: 1 }); t.loseLife(); },
+    () => { t.pauseGame(); element('pause-quit').events.click(); },
+    () => t.startGame()
+  ]) {
+    t.startGame(); joust(t); joust(t);
+    action();
+    assert.equal(t.get().chainCount, 0);
+    assert.equal(t.get().chainRemaining, 0);
+    assert.equal(element('chain-announcer').textContent, '');
+  }
+});
+
+test('eggs keep their flat award without refreshing chains and hazard kills do not count', () => {
+  const { t } = game();
+  t.startGame(); joust(t);
+  t.advanceChain(1000);
+  const player = t.get().player;
+  t.set({ plats: [], eggs: [{
+    x: player.x + player.w / 2 - 6, y: player.y + player.h / 2 - 7,
+    vx: 0, vy: 0, type: 'bloodKnight', landed: false, hatchTimer: 1000
+  }] });
+  t.tickEggs();
+  assert.equal(t.get().score, 350);
+  assert.equal(t.get().chainCount, 1);
+  assert.equal(t.get().chainRemaining, 2000);
+  const enemy = t.mkEnt('bloodKnight', 300, 600);
+  t.physEnt(enemy, false);
+  assert.equal(enemy.alive, false);
+  assert.equal(t.get().score, 350);
+  assert.equal(t.get().chainCount, 1);
+});
 
 test('active simulation advances at 80% without slowing menu updates', () => {
   for (const [state, expected] of [['playing', 48], ['title', 60]]) {
@@ -211,4 +313,115 @@ test('keyboard and simultaneous touch controls remain functional', () => {
   t.updatePlaying();
   assert.ok(player.vx > 0);
   sandbox.onkeyup({ code: 'KeyD' });
+});
+
+test('final life loss shows a structured result with a new personal best', () => {
+  const { t, element } = game();
+  t.startGame();
+  t.set({ state: 'playing', lives: 2, score: 1500 });
+  t.loop(1);
+  assert.equal(element('hud').hidden, false);
+  assert.equal(element('hud-score').textContent, '1,500');
+  assert.match(element('hud-lives').innerHTML, /hud-life lost/);
+  t.set({ lives: 1 });
+  t.loseLife();
+  t.loop(2);
+  assert.equal(t.get().state, 'gameOver');
+  assert.equal(element('hud').hidden, true);
+  assert.equal(element('go-score').textContent, '1,500');
+  assert.equal(element('go-best').textContent, '1,500');
+  assert.equal(element('new-best').hidden, false);
+  t.startGame();
+  t.loop(3);
+  assert.equal(element('new-best').hidden, false, 'flag is only rendered on game over');
+  t.set({ lives: 1, score: 10 });
+  t.loseLife();
+  t.loop(4);
+  assert.equal(element('new-best').hidden, true);
+});
+
+test('quitting from pause returns to the title and keeps the best score', () => {
+  const { t, element } = game();
+  t.startGame();
+  t.set({ state: 'paused', score: 2400 });
+  element('pause-quit').events.click();
+  t.loop(1);
+  assert.equal(t.get().state, 'title');
+  assert.equal(element('title-best').hidden, false);
+  assert.equal(element('title-best').textContent, 'Personal best: 2,400');
+  assert.equal(element('touch-controls').hidden, true);
+});
+test('a touch flap tap shorter than one frame still flaps', () => {
+  const { t, element } = game();
+  t.startGame();
+  const player = t.get().player;
+  t.set({ state: 'playing', invulnT: 999, enemies: [Object.assign(t.mkEnt('bloodKnight', 20, 20), { spawning: true })] });
+  const flap = element('tc-flap');
+  flap.events.pointerdown({ pointerId: 7, preventDefault() {} });
+  flap.events.pointerup({ pointerId: 7 });
+  assert.equal(t.get().touchFlapHeld, false);
+  t.updatePlaying();
+  assert.ok(player.vy < 0, 'quick tap produced an upward flap');
+});
+function fakeAudio() {
+  const log = { oscillators: 0, sources: 0, stopped: 0, ctx: null };
+  const param = () => ({ value: 1, setValueAtTime() {}, exponentialRampToValueAtTime() {}, linearRampToValueAtTime() {},
+    setTargetAtTime() {}, cancelScheduledValues() {} });
+  const node = extra => Object.assign({ connect() {}, gain: param(), frequency: param(), Q: param(), pan: param(),
+    playbackRate: param(), threshold: param(), knee: param(), ratio: param(), attack: param(), release: param() }, extra);
+  class FakeAudioContext {
+    constructor() { this.state = 'running'; this.currentTime = 0; this.sampleRate = 8000; this.destination = node(); log.ctx = this; }
+    createGain() { return node(); }
+    createBiquadFilter() { return node(); }
+    createDynamicsCompressor() { return node(); }
+    createStereoPanner() { return node(); }
+    createOscillator() { log.oscillators++; return node({ start() {}, stop() { log.stopped++; } }); }
+    createBufferSource() { log.sources++; return node({ start() {}, stop() {} }); }
+    createBuffer(channels, length) { return { getChannelData: () => new Float32Array(length) }; }
+    decodeAudioData() { return Promise.resolve(); }
+    resume() { return Promise.resolve(); }
+    suspend() { return Promise.resolve(); }
+  }
+  return { FakeAudioContext, log };
+}
+function memoryStorage() {
+  const data = new Map();
+  return { getItem: key => data.has(key) ? data.get(key) : null, setItem: (key, value) => data.set(key, String(value)) };
+}
+
+test('sound toggles persist and the music bed stops and restarts mid-game', () => {
+  const { FakeAudioContext, log } = fakeAudio();
+  const storage = memoryStorage();
+  const { t } = game({ AudioContext: FakeAudioContext, storage });
+  t.startGame();
+  assert.ok(t.audioState().music, 'music starts with the game');
+  t.setMusicMuted(true);
+  assert.equal(t.audioState().music, null);
+  assert.ok(log.stopped > 0, 'music voices were stopped');
+  assert.equal(storage.getItem('bjMusicOff'), '1');
+  t.setMusicMuted(false);
+  assert.ok(t.audioState().music, 'unmuting during play restarts music');
+  t.setSfxMuted(true);
+  assert.equal(storage.getItem('bjSfxOff'), '1');
+
+  const before = log.oscillators + log.sources;
+  t.sfx('kill', 100);
+  assert.equal(log.oscillators + log.sources, before, 'muted effects create no voices');
+
+  const reloaded = game({ AudioContext: FakeAudioContext, storage }).t.audioState();
+  assert.equal(reloaded.sfxMuted, true);
+  assert.equal(reloaded.musicMuted, false);
+});
+
+test('rapidly repeated sound effects are rate-limited', () => {
+  const { FakeAudioContext, log } = fakeAudio();
+  const { t } = game({ AudioContext: FakeAudioContext });
+  t.sfx('flap', 100);
+  const first = log.oscillators + log.sources;
+  assert.ok(first > 0, 'first flap is audible');
+  t.sfx('flap', 100);
+  assert.equal(log.oscillators + log.sources, first, 'same-instant repeat is skipped');
+  log.ctx.currentTime = .2;
+  t.sfx('flap', 100);
+  assert.ok(log.oscillators + log.sources > first, 'later flap plays');
 });

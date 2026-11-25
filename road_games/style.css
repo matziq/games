@@ -35,9 +35,10 @@ select { min-height: 44px; border: 1px solid #71809f; border-radius: 8px; backgr
 .square.tic { background: #252e49; color: #fff; border: 1px solid #71809f; font-size: clamp(2.5rem, 13vw, 6rem); }
 .square.selected { box-shadow: inset 0 0 0 4px #00d9ff; }
 .square.destination::after { content: ""; position: absolute; width: 23%; height: 23%; border-radius: 50%; background: #14e0bc; box-shadow: 0 0 0 2px #172e2e; opacity: .9; }
-.piece { font-size: clamp(1.6rem, 8vw, 3.7rem); line-height: 1; position: relative; z-index: 1; }
-.piece.white { color: #fff; text-shadow: -1px -1px 0 #111, 1px -1px 0 #111, -1px 1px 0 #111, 1px 1px 0 #111; }
-.piece.black { color: #15151a; text-shadow: 0 0 2px #fff; }
+.piece { width: 88%; height: 88%; position: relative; z-index: 1; stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
+.piece.white { fill: #fff9e8; stroke: #222631; }
+.piece.black { fill: #252934; stroke: #fff9e8; }
+.piece .detail { fill: none; }
 .checker { width: 70%; height: 70%; display: grid; place-items: center; border-radius: 50%; border: 2px solid #eee; box-shadow: inset 0 -4px 0 #0005, 0 2px 3px #0008; font-size: clamp(.9rem, 4vw, 1.7rem); }
 .checker.red { background: #bd302b; color: #fff; }
 .checker.black { background: #171a20; color: #fff; }

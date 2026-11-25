@@ -14,6 +14,26 @@
       box-sizing: border-box
     }
 
+    :root {
+      --ar: 1.5;
+      --vh: 100vh;
+      --deck: 0px;
+      --safe-t: env(safe-area-inset-top, 0px);
+      --safe-r: env(safe-area-inset-right, 0px);
+      --safe-l: env(safe-area-inset-left, 0px);
+      --avail-h: calc(var(--vh) - var(--safe-t) - var(--deck));
+      --arena-w: min(100vw, calc(var(--avail-h) * var(--ar)));
+      --arena-h: calc(var(--arena-w) / var(--ar));
+      --arena-x: calc((100vw - var(--arena-w)) / 2);
+      --arena-y: calc(var(--safe-t) + (var(--avail-h) - var(--arena-h)) / 2);
+      --hud-font: "Courier New", Courier, monospace;
+    }
+    @supports (height: 100dvh) { :root { --vh: 100dvh; } }
+    /* Portrait touch devices get a dedicated control deck so thumbs never cover the arena. */
+    @media (any-pointer: coarse) and (orientation: portrait) {
+      :root { --deck: max(150px, calc(var(--vh) - var(--safe-t) - 100vw / var(--ar))); }
+    }
+
     html,
     body {
       width: 100%;
@@ -21,18 +41,70 @@
       overflow: hidden;
       background: #000;
       font-family: system-ui, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+      overscroll-behavior: none;
     }
 
     canvas {
       display: block;
-      width: 100vw;
-      height: 100vh;
-      height: 100dvh;
-      object-fit: contain;
+      position: fixed;
+      left: var(--arena-x);
+      top: var(--arena-y);
+      width: var(--arena-w);
+      height: var(--arena-h);
       image-rendering: pixelated;
       image-rendering: crisp-edges;
       touch-action: manipulation;
     }
+
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+    }
+
+    .hud {
+      position: fixed;
+      z-index: 11;
+      left: var(--arena-x);
+      top: var(--arena-y);
+      width: var(--arena-w);
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 8px max(10px, calc(var(--safe-r) - var(--arena-x))) 0 max(12px, calc(var(--safe-l) - var(--arena-x)));
+      font-family: "Courier New", Courier, monospace;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 2px 2px 0 #200000, 0 0 6px rgba(0, 0, 0, .9);
+      pointer-events: none;
+    }
+    .hud[hidden] { display: none; }
+    .hud-lives { display: flex; gap: 6px; min-height: 22px; align-items: center; }
+    .hud-life { width: 18px; height: 22px; display: block; }
+    .hud-life.lost { opacity: .22; }
+    .hud-wave { color: #ff5a4f; font-size: clamp(15px, 2.4vw, 20px); letter-spacing: 1px; }
+    .hud-score { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.05; }
+    .hud-score-value { color: #ffe14d; font-size: clamp(20px, 3.4vw, 28px); font-variant-numeric: tabular-nums; }
+    .hud-score-value.bump { animation: bump .25s ease-out; }
+    .hud-best { color: #c9c9c9; font-size: 12px; letter-spacing: .5px; }
+    .hud-chain {
+      grid-column: 1 / -1;
+      justify-self: center;
+      padding: 4px 8px;
+      border: 1px solid #bd8333;
+      border-radius: 5px;
+      background: rgba(20, 8, 4, .9);
+      color: #ffe14d;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      text-align: center;
+    }
+    .hud-chain[hidden] { display: none; }
+    @keyframes bump { 40% { transform: scale(1.18); color: #fff; } }
 
     button:focus-visible, input:focus-visible {
       outline: 3px solid #ffdc70;
@@ -62,13 +134,15 @@
       text-align: center;
       line-height: 1.45;
     }
-    .panel h1, .panel h2 { color: #ff6860; margin-bottom: .35em; }
+    .panel h1, .panel h2 { color: #ff6860; margin-bottom: .35em; font-family: "Courier New", Courier, monospace; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; text-shadow: 3px 3px 0 #200000; }
+    .panel h1 { font-size: clamp(30px, 7vw, 48px); line-height: 1.05; }
     .panel p { margin: .55em 0; }
     .panel ul { text-align: left; padding-left: 1.4em; }
-    .menu-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; }
+    .menu-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 14px; }
     .menu button, .pause-button {
-      min-height: 44px;
-      padding: 8px 16px;
+      min-height: 48px;
+      min-width: 48px;
+      padding: 8px 18px;
       border: 1px solid #e97165;
       border-radius: 8px;
       background: #651a1a;
@@ -76,16 +150,61 @@
       font: inherit;
       font-weight: 700;
       cursor: pointer;
+      touch-action: manipulation;
     }
     .menu button:hover, .pause-button:hover { background: #8e2924; }
-    .sound-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 12px 0; }
-    .sound-row input { width: min(55vw, 260px); }
-    .pause-button {
-      position: fixed;
-      z-index: 11;
-      top: max(50px, env(safe-area-inset-top));
-      right: max(10px, env(safe-area-inset-right));
+    .menu button:active, .pause-button:active { transform: translateY(1px); background: #a5302a; }
+    .menu button.primary {
+      flex-basis: 100%;
+      max-width: 320px;
+      min-height: 56px;
+      font-size: 1.2em;
+      letter-spacing: .5px;
+      background: linear-gradient(#c8352b, #8e1f19);
+      border-color: #ffb0a0;
+      box-shadow: 0 4px 0 #3d0b08;
     }
+    .menu button.primary:hover { background: linear-gradient(#dc4034, #a1261f); }
+    .tagline { color: #ffb4a8; font-style: italic; }
+    .best-line { color: #ffc34d; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .hint { color: #c9b8b8; font-size: .9em; }
+    .touch-hint { display: none; }
+    @media (hover: none) and (pointer: coarse) {
+      .key-hint { display: none; }
+      .touch-hint { display: block; }
+      li.touch-hint { display: list-item; }
+    }
+    .sound-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 12px 0; font-weight: 700; }
+    .sound-row input { width: min(55vw, 260px); height: 32px; accent-color: #e0483c; cursor: pointer; }
+    .sound-row output { min-width: 4ch; text-align: right; font-variant-numeric: tabular-nums; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 4px; }
+    .stat { padding: 10px 6px; border: 1px solid #5a2222; border-radius: 8px; background: rgba(60, 10, 10, .5); }
+    .stat dt { font-size: .75em; letter-spacing: 1px; text-transform: uppercase; color: #d9a9a2; }
+    .stat dd { font-size: 1.45em; font-weight: 800; font-variant-numeric: tabular-nums; color: #fff; }
+    .stat.score dd { color: #ffe14d; }
+    .new-best { display: inline-block; margin-top: 6px; padding: 4px 12px; border-radius: 999px; background: #ffc34d; color: #2a0700; font-weight: 800; letter-spacing: 1px; }
+    .new-best[hidden] { display: none; }
+    .help-list li { margin: .35em 0; }
+    .help-list strong { color: #ffc34d; }
+    .panel-sticky-actions { position: sticky; bottom: calc(-1 * clamp(16px, 3vh, 28px)); padding: 10px 0 2px; background: linear-gradient(transparent, rgba(15, 5, 9, .98) 35%); }
+    @media (max-height: 500px) {
+      .panel { line-height: 1.3; font-size: 15px; }
+      .panel p { margin: .35em 0; }
+      .menu button.primary { min-height: 50px; }
+      .stats { margin: 8px 0 2px; }
+    }
+    .pause-button {
+      pointer-events: auto;
+      width: 48px;
+      height: 48px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(60, 12, 12, .78);
+      border-color: rgba(233, 113, 101, .85);
+    }
+    .pause-button svg { width: 18px; height: 18px; fill: #fff; }
+    .pause-button[hidden] { display: none; }
 
     .touch-controls {
       display: none;
@@ -137,17 +256,34 @@
       border-color: rgba(220, 80, 60, .8);
     }
 
+    .tc-btn.pressed { transform: scale(.94); }
+
     .tc-btn.tc-flap {
-      width: 88px;
-      height: 88px;
-      font-size: 14px;
+      width: 92px;
+      height: 92px;
+      font-size: 15px;
       font-weight: 800;
       letter-spacing: 1px;
       text-transform: uppercase;
     }
+    @media (any-pointer: coarse) and (orientation: portrait) {
+      .touch-controls {
+        height: var(--deck);
+        align-items: flex-end;
+        padding-bottom: max(28px, calc(env(safe-area-inset-bottom, 0px) + 16px));
+        pointer-events: auto;
+        background: linear-gradient(#0b0304, #160506);
+        border-top: 1px solid rgba(192, 57, 43, .35);
+        touch-action: none;
+      }
+      .tc-group { gap: 14px; }
+      .tc-btn { width: 80px; height: 80px; background: rgba(60, 14, 14, .8); border-color: rgba(220, 80, 60, .7); }
+      .tc-btn.tc-flap { width: 104px; height: 104px; font-size: 17px; }
+    }
     @media (max-height: 480px) {
-      .tc-btn { width: 56px; height: 56px; }
-      .tc-btn.tc-flap { width: 66px; height: 66px; }
+      .tc-group { gap: 12px; }
+      .tc-btn { width: 64px; height: 64px; font-size: 24px; }
+      .tc-btn.tc-flap { width: 82px; height: 82px; font-size: 14px; }
     }
     @media (prefers-reduced-motion: reduce) {
       .tc-btn { backdrop-filter: none; -webkit-backdrop-filter: none; }
@@ -158,58 +294,96 @@
   #return-menu-link:hover { background: #25375c; }
   #return-menu-link:focus-visible { outline: 3px solid #75e6ff; outline-offset: 2px; }
 </style>
+<style>
+  #return-menu-link[hidden] { display: none; }
+  .menu { padding-top: max(56px, calc(env(safe-area-inset-top) + 52px)); }
+</style>
 </head>
 
 <body>
 <a id="return-menu-link" href="https://memconfigmgr.org/games/index.html">&#8592; Games Menu</a>
   <canvas id="game" aria-label="Blood Joust game arena"></canvas>
 
+  <div class="hud" id="hud" hidden>
+    <div class="hud-lives" id="hud-lives" role="img" aria-label="Lives: 3"></div>
+    <div class="hud-wave" id="hud-wave">WAVE 1</div>
+    <div class="hud-score" aria-label="Score">
+      <span class="hud-score-value" id="hud-score">0</span>
+      <span class="hud-best" id="hud-best">BEST 0</span>
+    </div>
+    <button class="pause-button" id="pause" type="button" aria-label="Pause game" hidden>
+      <svg viewBox="0 0 18 18" aria-hidden="true"><rect x="3" y="2" width="4" height="14" rx="1"/><rect x="11" y="2" width="4" height="14" rx="1"/></svg>
+    </button>
+    <div class="hud-chain" id="hud-chain" hidden></div>
+  </div>
+  <p class="sr-only" id="announcer" aria-live="polite"></p>
+  <p class="sr-only" id="chain-announcer" aria-live="polite"></p>
+
   <section class="menu" id="title-menu" aria-label="Main menu">
     <div class="panel">
       <h1>Blood Joust</h1>
-      <p>Only the highest shall survive.</p>
+      <p class="tagline">Only the highest shall survive.</p>
       <p>Fly above your enemies to win each joust.</p>
       <div class="menu-actions">
-        <button id="start" type="button">Start game</button>
+        <button id="start" class="primary" type="button">Start game</button>
         <button id="help" type="button">How to play</button>
         <button id="sound" type="button">Sound settings</button>
       </div>
-      <p>Keyboard: A / D or arrow keys to move; Space / W to flap.</p>
+      <p class="best-line" id="title-best" hidden></p>
+      <p class="hint key-hint">Keyboard: A / D or arrow keys to move; Space / W to flap.</p>
+      <p class="hint touch-hint">Hold ◀ ▶ to move. Tap FLAP or the arena to fly.</p>
     </div>
   </section>
   <section class="menu" id="help-menu" aria-label="How to play" hidden>
     <div class="panel">
       <h2>How to play</h2>
-      <ul>
-        <li>Move with A / D or the arrow keys. Press Space / W to flap. On a touch screen, hold the arrows to move and tap or hold FLAP to fly; tapping the arena also flaps.</li>
-        <li>Collide with an enemy from above to win. Equal-height jousters bounce apart.</li>
-        <li>Collect dropped eggs for 250 points before they hatch. Clear all enemies and eggs to advance.</li>
-        <li>Platforms are solid on every side. Enemies must rest for one second after five flaps.</li>
-        <li>Avoid lava and escape the fiery hands by flapping. You have three lives.</li>
-        <li>Use Pause or Escape to pause. Sound settings are available from the main menu.</li>
+      <ul class="help-list">
+        <li class="key-hint"><strong>Controls:</strong> move with A / D or the arrow keys. Press Space / W to flap.</li>
+        <li class="touch-hint"><strong>Controls:</strong> hold ◀ ▶ to move. Tap or hold FLAP to fly; tapping the arena also flaps.</li>
+        <li><strong>Joust:</strong> collide with an enemy from above to win. Equal-height jousters bounce apart.</li>
+        <li><strong>Kill chains:</strong> defeat another enemy within 3 seconds of your last kill for 2x points, then 3x, 4x, and so on. Each kill refreshes the window. Pausing freezes it; losing a life ends the chain.</li>
+        <li><strong>Eggs:</strong> collect dropped eggs for 250 points before they hatch. Clear all enemies and eggs to advance.</li>
+        <li><strong>Platforms</strong> are solid on every side. Enemies must rest for one second after five flaps.</li>
+        <li><strong>Hazards:</strong> avoid lava and escape the fiery hands by flapping. You have three lives.</li>
+        <li><strong>Pause</strong> with the pause button<span class="key-hint"> or Escape</span>. Sound settings are on the main menu.</li>
       </ul>
-      <div class="menu-actions"><button class="back" type="button">Back</button></div>
+      <div class="menu-actions panel-sticky-actions"><button class="back" type="button">Back</button></div>
     </div>
   </section>
   <section class="menu" id="sound-menu" aria-label="Sound settings" hidden>
     <div class="panel">
       <h2>Sound settings</h2>
-      <label class="sound-row" for="volume">Volume <input id="volume" type="range" min="0" max="100" step="10"><output id="volume-value"></output></label>
+      <label class="sound-row" for="volume">Volume <input id="volume" type="range" min="0" max="100" step="10"><output id="volume-value" for="volume"></output></label>
       <div class="menu-actions">
         <button id="sfx-toggle" type="button"></button>
         <button id="music-toggle" type="button"></button>
         <button class="back" type="button">Back</button>
       </div>
-      <p>Keyboard: Left / Right adjust volume; F toggles effects; M toggles music; Escape returns.</p>
+      <p class="hint key-hint">Keyboard: Left / Right adjust volume; F toggles effects; M toggles music; Escape returns.</p>
     </div>
   </section>
   <section class="menu" id="paused-menu" aria-label="Game paused" hidden>
-    <div class="panel"><h2>Paused</h2><p>Release any held controls, then press them again after resuming.</p><div class="menu-actions"><button id="resume" type="button">Resume</button></div></div>
+    <div class="panel">
+      <h2>Paused</h2>
+      <p>Take a breath. Your controls reset when you resume.</p>
+      <div class="menu-actions">
+        <button id="resume" class="primary" type="button">Resume</button>
+        <button id="pause-quit" type="button">Quit to main menu</button>
+      </div>
+    </div>
   </section>
   <section class="menu" id="game-over-menu" aria-label="Game over" hidden>
-    <div class="panel"><h2>Game over</h2><p id="result" aria-live="polite"></p><div class="menu-actions"><button id="restart" type="button">Play again</button><button id="main-menu" type="button">Main menu</button></div></div>
+    <div class="panel">
+      <h2>Game over</h2>
+      <p class="new-best" id="new-best" hidden>New personal best!</p>
+      <dl class="stats" id="result" aria-live="polite">
+        <div class="stat score"><dt>Score</dt><dd id="go-score">0</dd></div>
+        <div class="stat"><dt>Best</dt><dd id="go-best">0</dd></div>
+        <div class="stat"><dt>Wave</dt><dd id="go-wave">1</dd></div>
+      </dl>
+      <div class="menu-actions"><button id="restart" class="primary" type="button">Play again</button><button id="main-menu" type="button">Main menu</button></div>
+    </div>
   </section>
-  <button class="pause-button" id="pause" type="button" hidden>Pause</button>
 
   <!-- Mobile on-screen controls -->
   <div class="touch-controls" id="touch-controls" hidden>
@@ -221,6 +395,7 @@
       <button class="tc-btn tc-flap" id="tc-flap" aria-label="Flap">FLAP</button>
     </div>
   </div>
+  <script src="audio/bj-sfx-cc0.js"></script>
   <script>
     (() => {
       'use strict';
@@ -243,6 +418,7 @@
         if (newW === oldW && newH === oldH) return;
         W = C.width = newW; H = C.height = newH;
         X.imageSmoothingEnabled = false;
+        if (document.documentElement) document.documentElement.style.setProperty('--ar', String(W / H));
         buildPlatforms();
         if (oldW && oldH) {
           for (const e of [player, ...enemies]) {
@@ -260,7 +436,6 @@
             t.x = t.ent ? t.ent.x : t.x * W / oldW;
             t.y = t.ent ? t.ent.y : t.y * H / oldH;
           }
-          if (spawnPos) { spawnPos.x *= W / oldW; spawnPos.y *= H / oldH; }
           for (const part of [...bloods, ...gores, ...bones, ...fragments, ...embers, ...lavaPx]) {
             part.x *= W / oldW; part.y *= H / oldH;
           }
@@ -301,6 +476,26 @@
         catch (error) { console.warn('Unable to save game settings:', error); }
       }
       let score = 0, hiScore = +readSetting('bjHi') || 0;
+      const CHAIN_WINDOW_MS = 3000;
+      let chainCount = 0, chainRemaining = 0, chainPoints = 0;
+      function resetChain() {
+        chainCount = 0; chainRemaining = 0; chainPoints = 0;
+        document.getElementById('chain-announcer').textContent = '';
+      }
+      function advanceChain(elapsed) {
+        if (!chainCount) return;
+        chainRemaining -= elapsed;
+        if (chainRemaining < 0) resetChain();
+      }
+      function awardKill(type) {
+        const base = type === 'deathLord' ? 500 : type === 'shadowRider' ? 250 : 100;
+        chainCount++;
+        chainRemaining = CHAIN_WINDOW_MS;
+        chainPoints = base * chainCount;
+        score += chainPoints;
+        document.getElementById('chain-announcer').textContent =
+          `Kill chain ${chainCount}x. ${chainPoints} points. Next kill ${chainCount + 1}x within 3 seconds.`;
+      }
       let lives = 3, wave = 0, waveT = 0;
       let shakeT = 0, shakeI = 0, flashT = 0;
       let frame = 0, dt = 1, lastT = 0, accumulator = 0;
@@ -353,7 +548,8 @@
         el.addEventListener('pointerdown', e => {
           e.preventDefault(); unlockAudio();
           active.add(e.pointerId); el.setPointerCapture(e.pointerId);
-          if (code === 'Space') touchFlapHeld = true; else K[code] = 1;
+          // Queue one flap so taps shorter than a frame are never dropped.
+          if (code === 'Space') { touchFlapHeld = true; K.Space = 1; } else K[code] = 1;
           el.classList.add('pressed');
         });
         el.addEventListener('pointerup', release);
@@ -363,11 +559,14 @@
       tcBind('tc-left', 'ArrowLeft');
       tcBind('tc-right', 'ArrowRight');
       tcBind('tc-flap', 'Space');
-      C.addEventListener('pointerdown', e => {
+      const flapFromArena = e => {
         if (e.pointerType === 'touch' && state === 'playing') {
           e.preventDefault(); unlockAudio(); K.Space = 1;
         }
-      });
+      };
+      C.addEventListener('pointerdown', flapFromArena);
+      const touchDeck = document.getElementById('touch-controls');
+      touchDeck.addEventListener('pointerdown', e => { if (e.target === touchDeck) flapFromArena(e); });
 
       function clearInput() {
         for (const key of Object.keys(K)) K[key] = 0;
@@ -377,45 +576,61 @@
       }
       function pauseGame() {
         if (state !== 'playing' && state !== 'waveAnnounce') return;
-        pausedFrom = state; state = 'paused'; clearInput(); droneOff(); spawnSoundOff();
+        pausedFrom = state; state = 'paused'; clearInput(); droneOff(); sfx('uiBack');
       }
       function resumeGame() {
         if (state !== 'paused') return;
-        unlockAudio(); state = pausedFrom; pausedFrom = null; lastT = 0; accumulator = 0; droneOn();
+        unlockAudio(); sfx('uiSelect'); state = pausedFrom; pausedFrom = null; lastT = 0; accumulator = 0; droneOn();
       }
       addEventListener('blur', pauseGame);
       document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
 
       document.getElementById('start').addEventListener('click', () => { unlockAudio(); startGame(); });
-      document.getElementById('help').addEventListener('click', () => { clearInput(); state = 'help'; });
-      document.getElementById('sound').addEventListener('click', () => { unlockAudio(); clearInput(); state = 'sound'; });
-      document.querySelectorAll('.back').forEach(button => button.addEventListener('click', () => { clearInput(); state = 'title'; }));
+      document.getElementById('help').addEventListener('click', () => { sfx('uiSelect'); clearInput(); state = 'help'; });
+      document.getElementById('sound').addEventListener('click', () => { unlockAudio(); sfx('uiSelect'); clearInput(); state = 'sound'; });
+      document.querySelectorAll('.back').forEach(button => button.addEventListener('click', () => { sfx('uiBack'); clearInput(); state = 'title'; }));
       document.getElementById('pause').addEventListener('click', pauseGame);
       document.getElementById('resume').addEventListener('click', resumeGame);
       document.getElementById('restart').addEventListener('click', () => { unlockAudio(); startGame(); });
       document.getElementById('main-menu').addEventListener('click', () => { clearInput(); state = 'title'; });
+      document.getElementById('pause-quit').addEventListener('click', () => {
+        if (state !== 'paused') return;
+        recordBest(); resetChain(); clearInput(); droneOff(); sfx('uiBack'); pausedFrom = null; state = 'title';
+      });
       document.getElementById('volume').addEventListener('input', e => setVolume(Number(e.target.value) / 100));
-      document.getElementById('sfx-toggle').addEventListener('click', () => { sfxMuted = !sfxMuted; syncSoundUI(); if (!sfxMuted) sfx('eggPop'); });
-      document.getElementById('music-toggle').addEventListener('click', () => { musicMuted = !musicMuted; syncSoundUI(); });
+      document.getElementById('volume').addEventListener('change', () => sfx('eggPop'));
+      document.getElementById('sfx-toggle').addEventListener('click', () => setSfxMuted(!sfxMuted));
+      document.getElementById('music-toggle').addEventListener('click', () => setMusicMuted(!musicMuted));
 
       // ─── Audio ─────────────────────────────────────────────────────────
-      let ac = null;
-      let masterGain = null;
+      // Mix: sfxBus + musicBus -> masterGain (user volume) -> limiter -> output.
+      // Recorded CC0 samples (audio/bj-sfx-cc0.js) layer over synthesis; synthesis alone is the fallback.
+      let ac = null, masterGain = null, sfxBus = null, musicBus = null, noiseBuf = null;
       let audioUnavailable = false;
       const storedVolume = readSetting('bjVol');
       let masterVol = storedVolume === null || !Number.isFinite(+storedVolume) ? 1 : Math.max(0, Math.min(1, +storedVolume));
-      let sfxMuted = false;
-      let musicMuted = false;
+      let sfxMuted = readSetting('bjSfxOff') === '1';
+      let musicMuted = readSetting('bjMusicOff') === '1';
+      const samples = {}, lastPlayed = {};
+      const MIN_GAP = { flap: .06, enemyFlap: .09, land: .09, clash: .12, lava: .1, eggPop: .05, ui: .04 };
 
       function audio() {
         if (!ac && !audioUnavailable) {
           try {
             const Audio = window.AudioContext || window.webkitAudioContext;
             if (!Audio) { audioUnavailable = true; console.warn('Web Audio is not available.'); return null; }
+            // Mix with the player's own music and respect the iOS silent switch.
+            try { if (navigator.audioSession) navigator.audioSession.type = 'ambient'; } catch (e) { }
             ac = new Audio();
             masterGain = ac.createGain();
             masterGain.gain.value = masterVol;
-            masterGain.connect(ac.destination);
+            const limiter = ac.createDynamicsCompressor();
+            limiter.threshold.value = -12; limiter.knee.value = 8; limiter.ratio.value = 10;
+            limiter.attack.value = .003; limiter.release.value = .2;
+            masterGain.connect(limiter); limiter.connect(ac.destination);
+            sfxBus = ac.createGain(); sfxBus.gain.value = sfxMuted ? 0 : 1; sfxBus.connect(masterGain);
+            musicBus = ac.createGain(); musicBus.gain.value = musicMuted ? 0 : 1; musicBus.connect(masterGain);
+            loadSamples();
           } catch (error) {
             audioUnavailable = true;
             console.warn('Unable to initialize audio:', error);
@@ -424,17 +639,55 @@
         }
         return ac;
       }
+      function loadSamples() {
+        const source = window.BJ_SFX;
+        if (!source) return;
+        for (const key of Object.keys(source)) {
+          try {
+            const uri = source[key], bin = atob(uri.slice(uri.indexOf(',') + 1)), bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            const fail = error => console.warn('Unable to decode sound sample ' + key + ':', error);
+            const pending = ac.decodeAudioData(bytes.buffer, buffer => { samples[key] = buffer; }, fail);
+            if (pending && pending.catch) pending.catch(fail);
+          } catch (error) { console.warn('Unable to load sound sample ' + key + ':', error); }
+        }
+      }
       function unlockAudio() {
         try {
           const a = audio();
-          if (a && a.state === 'suspended') a.resume().catch(error => console.warn('Unable to resume audio:', error));
+          if (a && a.state === 'suspended' && !document.hidden) a.resume().catch(error => console.warn('Unable to resume audio:', error));
         } catch (error) { console.warn('Unable to initialize audio:', error); }
       }
-      function getMaster() { audio(); return masterGain; }
+      addEventListener('pointerdown', unlockAudio, true);
+      addEventListener('keydown', unlockAudio, true);
+      document.addEventListener('visibilitychange', () => {
+        if (!ac) return;
+        if (document.hidden) ac.suspend().catch(() => { });
+        else unlockAudio();
+      });
+      function ramp(param, value, time = .05) {
+        const n = ac.currentTime;
+        param.cancelScheduledValues(n); param.setValueAtTime(param.value, n); param.setTargetAtTime(value, n, time);
+      }
       function setVolume(v) {
         masterVol = Math.round(Math.max(0, Math.min(1, v)) * 100) / 100;
         writeSetting('bjVol', masterVol);
-        if (masterGain) masterGain.gain.value = masterVol;
+        if (masterGain) ramp(masterGain.gain, masterVol);
+        syncSoundUI();
+      }
+      function setSfxMuted(muted) {
+        sfxMuted = muted;
+        writeSetting('bjSfxOff', muted ? '1' : '0');
+        if (sfxBus) ramp(sfxBus.gain, muted ? 0 : 1);
+        syncSoundUI();
+        if (!muted) sfx('uiSelect');
+      }
+      function setMusicMuted(muted) {
+        musicMuted = muted;
+        writeSetting('bjMusicOff', muted ? '1' : '0');
+        if (musicBus) ramp(musicBus.gain, muted ? 0 : 1, .15);
+        if (muted) droneOff();
+        else if (state === 'playing' || state === 'waveAnnounce') droneOn();
         syncSoundUI();
       }
       function syncSoundUI() {
@@ -449,110 +702,219 @@
       }
       syncSoundUI();
 
-      function noise(len, decay, vol, mod) {
-        const a = audio(), g = a.createGain(), b = a.createBuffer(1, len, a.sampleRate), d = b.getChannelData(0);
-        const n = a.currentTime;
-        for (let i = 0; i < len; i++) {
-          let v = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
-          if (mod) v *= Math.sin(i / a.sampleRate * mod * Math.PI * 2);
-          d[i] = v;
+      // ─── Sound building blocks ──────────────────────────────────────────
+      const panAt = x => x == null || !W ? 0 : Math.max(-.7, Math.min(.7, (x / W * 2 - 1) * .7));
+      const vary = (amount = .08) => 1 + (Math.random() * 2 - 1) * amount;
+      const pick = keys => keys[Math.random() * keys.length | 0];
+      function out(pan, bus = sfxBus) {
+        if (!pan || !ac.createStereoPanner) return bus;
+        const p = ac.createStereoPanner(); p.pan.value = pan; p.connect(bus); return p;
+      }
+      function play(key, vol, { rate = 1, pan = 0, when = 0 } = {}) {
+        const buffer = samples[key];
+        if (!buffer) return false;
+        const s = ac.createBufferSource(), g = ac.createGain();
+        s.buffer = buffer; s.playbackRate.value = rate; g.gain.value = vol;
+        s.connect(g); g.connect(out(pan)); s.start(ac.currentTime + when);
+        return true;
+      }
+      function tone(type, f0, f1, dur, vol, { pan = 0, when = 0, attack = .004, filter = 0, bus } = {}) {
+        const n = ac.currentTime + when, o = ac.createOscillator(), g = ac.createGain();
+        o.type = type; o.frequency.setValueAtTime(f0, n);
+        if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, n + dur);
+        g.gain.setValueAtTime(.0001, n);
+        g.gain.exponentialRampToValueAtTime(vol, n + attack);
+        g.gain.exponentialRampToValueAtTime(.0001, n + dur);
+        let node = o;
+        if (filter) {
+          const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = 1.5;
+          f.frequency.setValueAtTime(filter * .4, n);
+          f.frequency.exponentialRampToValueAtTime(filter, n + Math.min(.08, dur / 3));
+          f.frequency.exponentialRampToValueAtTime(filter * .5, n + dur);
+          o.connect(f); node = f;
         }
-        const s = a.createBufferSource(); s.buffer = b; s.connect(g); g.connect(getMaster());
-        g.gain.setValueAtTime(vol, n); g.gain.exponentialRampToValueAtTime(.001, n + len / a.sampleRate);
-        s.start(n);
+        node.connect(g); g.connect(out(pan, bus || sfxBus)); o.start(n); o.stop(n + dur + .03);
+      }
+      function noise(dur, vol, { type = 'lowpass', f0 = 2000, f1 = f0, q = .8, pan = 0, when = 0, attack = .003, bus } = {}) {
+        if (!noiseBuf) {
+          noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
+          const d = noiseBuf.getChannelData(0);
+          for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        }
+        const n = ac.currentTime + when, s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+        s.buffer = noiseBuf; s.loop = true;
+        f.type = type; f.Q.value = q; f.frequency.setValueAtTime(f0, n);
+        if (f1 !== f0) f.frequency.exponentialRampToValueAtTime(f1, n + dur);
+        g.gain.setValueAtTime(.0001, n);
+        g.gain.exponentialRampToValueAtTime(vol, n + attack);
+        g.gain.exponentialRampToValueAtTime(.0001, n + dur);
+        s.connect(f); f.connect(g); g.connect(out(pan, bus || sfxBus));
+        s.start(n, Math.random() * .8); s.stop(n + dur + .03);
+      }
+      function duckMusic(depth, hold) {
+        if (!music) return;
+        const p = music.duck.gain, n = ac.currentTime;
+        p.cancelScheduledValues(n); p.setValueAtTime(p.value, n);
+        p.linearRampToValueAtTime(1 - depth, n + .03);
+        p.setTargetAtTime(1, n + hold, .25);
+      }
+      const NOTE = { D3: 146.83, F3: 174.61, A3: 220, C4: 261.63, D4: 293.66, F4: 349.23, G4: 392, A4: 440, C5: 523.25, D5: 587.33, F5: 698.46, A5: 880 };
+      function brass(freq, when, dur, vol) {
+        tone('sawtooth', freq, freq, dur, vol, { when, attack: .03, filter: 2200 });
+        tone('sawtooth', freq * 1.006, freq * 1.006, dur, vol * .6, { when, attack: .04, filter: 1600 });
       }
 
-      function sfx(id) {
+      // ─── Sound effects ─────────────────────────────────────────────────
+      function sfx(id, x) {
         if (sfxMuted) return;
         try {
-          const a = audio(); if (!a) return;
-          const n = a.currentTime, g = a.createGain(); g.connect(getMaster());
+          const a = audio(); if (!a || a.state === 'closed') return;
+          const now = a.currentTime, gapKey = id.startsWith('ui') ? 'ui' : id;
+          if (MIN_GAP[gapKey] && gapKey in lastPlayed && now - lastPlayed[gapKey] < MIN_GAP[gapKey]) return;
+          lastPlayed[gapKey] = now;
+          const pan = panAt(x);
           switch (id) {
-            case 'flap': noise(2400, 2, .12); break;
-            case 'kill': {
-              noise(9000, 4, .5, 80);
-              const o = a.createOscillator(); o.type = 'sine';
-              o.frequency.setValueAtTime(150, n); o.frequency.exponentialRampToValueAtTime(30, n + .2);
-              const g2 = a.createGain(); g2.connect(getMaster());
-              g2.gain.setValueAtTime(.3, n); g2.gain.exponentialRampToValueAtTime(.001, n + .25);
-              o.connect(g2); o.start(n); o.stop(n + .3); break;
-            }
-            case 'die': {
-              const o = a.createOscillator(); o.type = 'sawtooth';
-              o.frequency.setValueAtTime(220, n); o.frequency.exponentialRampToValueAtTime(35, n + .9);
-              g.gain.setValueAtTime(.3, n); g.gain.exponentialRampToValueAtTime(.001, n + 1);
-              o.connect(g); o.start(n); o.stop(n + 1); break;
-            }
-            case 'lava': noise(14000, 3, .25, 200); break;
-            case 'wave': {
-              const o = a.createOscillator(); o.type = 'square';
-              o.frequency.setValueAtTime(90, n); o.frequency.exponentialRampToValueAtTime(400, n + .15);
-              o.frequency.exponentialRampToValueAtTime(250, n + .35);
-              o.frequency.exponentialRampToValueAtTime(500, n + .55);
-              g.gain.setValueAtTime(.22, n); g.gain.exponentialRampToValueAtTime(.001, n + .7);
-              o.connect(g); o.start(n); o.stop(n + .7); break;
-            }
-            case 'hatch': {
-              const o = a.createOscillator(); o.type = 'triangle';
-              o.frequency.setValueAtTime(300, n);
-              o.frequency.exponentialRampToValueAtTime(800, n + .1);
-              o.frequency.exponentialRampToValueAtTime(200, n + .2);
-              g.gain.setValueAtTime(.2, n); g.gain.exponentialRampToValueAtTime(.001, n + .25);
-              o.connect(g); o.start(n); o.stop(n + .3); break;
-            }
-            case 'eggPop': {
-              const o = a.createOscillator(); o.type = 'sine';
-              o.frequency.setValueAtTime(600, n);
-              o.frequency.exponentialRampToValueAtTime(1200, n + .08);
-              g.gain.setValueAtTime(.15, n); g.gain.exponentialRampToValueAtTime(.001, n + .12);
-              o.connect(g); o.start(n); o.stop(n + .15); break;
-            }
+            case 'flap':
+              if (!play(pick(['wing0', 'wing1']), .5, { rate: vary(.1), pan }))
+                noise(.12, .22, { f0: 1800, f1: 500, pan });
+              noise(.07, .08, { f0: 380, pan });
+              break;
+            case 'enemyFlap':
+              if (!play(pick(['wing0', 'wing1']), .16, { rate: .78 * vary(.08), pan }))
+                noise(.1, .07, { f0: 1100, f1: 400, pan });
+              break;
+            case 'land':
+              if (!play('land', .4, { rate: vary(.08), pan })) tone('sine', 130, 60, .09, .22, { pan });
+              break;
+            case 'clash':
+              if (!play(pick(['clash0', 'clash1']), .75, { rate: vary(.05), pan }))
+                noise(.18, .25, { type: 'highpass', f0: 3000, pan });
+              tone('triangle', 1760, 1650, .35, .05, { pan });
+              tone('square', 2637, 2600, .12, .015, { pan });
+              break;
+            case 'kill':
+              if (!play(pick(['hit0', 'hit1']), .85, { rate: vary(.06), pan }))
+                noise(.25, .45, { f0: 1500, f1: 150, pan });
+              play('slice', .3, { rate: vary(.08), pan, when: .02 });
+              tone('sine', 160, 38, .3, .4, { pan });
+              tone('triangle', NOTE.A4, NOTE.D5, .14, .07, { when: .07 });
+              tone('triangle', NOTE.D5, NOTE.A5, .18, .06, { when: .14 });
+              duckMusic(.5, .25);
+              break;
+            case 'die':
+              if (!play('armor', .85, { rate: .92 * vary(.04), pan })) noise(.3, .4, { f0: 2500, f1: 300, pan });
+              tone('sawtooth', 220, 40, 1, .16, { filter: 1400 });
+              noise(.7, .14, { f0: 900, f1: 120, when: .05 });
+              duckMusic(.7, .9);
+              break;
+            case 'lava':
+              noise(.55, .3, { type: 'bandpass', f0: 500, f1: 140, q: 1.2, pan });
+              noise(.45, .07, { type: 'highpass', f0: 4500, f1: 7000, pan, when: .03 });
+              tone('sine', 80, 38, .45, .3, { pan });
+              break;
+            case 'lavaGrab':
+              tone('sawtooth', 58, 44, .55, .14, { pan, attack: .06, filter: 420 });
+              noise(.5, .16, { f0: 320, f1: 120, pan, attack: .05 });
+              break;
+            case 'eggPop':
+              play('shell', .3, { rate: 1.35, pan });
+              tone('triangle', NOTE.A5, NOTE.A5, .12, .13, { pan });
+              tone('triangle', NOTE.A5 * 1.5, NOTE.A5 * 1.5, .14, .12, { pan, when: .05 });
+              tone('sine', NOTE.A5 * 2, NOTE.A5 * 2, .22, .06, { pan, when: .1 });
+              break;
+            case 'hatch':
+              if (!play('shell', .45, { rate: .75, pan })) noise(.08, .2, { type: 'highpass', f0: 2500, pan });
+              play('shell', .35, { rate: .62, pan, when: .07 });
+              tone('triangle', 320, 820, .1, .1, { pan, when: .1 });
+              tone('triangle', 820, 260, .14, .08, { pan, when: .2 });
+              break;
+            case 'spawn':
+              tone('sine', 220, 880, .55, .07, { pan, attack: .2 });
+              tone('sine', 330, 1320, .55, .045, { pan, attack: .2 });
+              noise(.5, .05, { type: 'highpass', f0: 2500, f1: 8000, pan, attack: .25 });
+              break;
+            case 'wave':
+              noise(.22, .25, { f0: 700, f1: 90 });
+              tone('sine', 95, 45, .3, .35);
+              brass(NOTE.D3, .05, .3, .07);
+              brass(NOTE.A3, .2, .3, .07);
+              brass(NOTE.D4, .35, .65, .08);
+              duckMusic(.6, .9);
+              break;
+            case 'gameOver':
+              brass(NOTE.D4, .55, .55, .07);
+              brass(NOTE.C4, .95, .55, .07);
+              brass(NOTE.A3, 1.35, .55, .07);
+              brass(NOTE.D3, 1.75, 1.6, .08);
+              tone('sine', NOTE.D3 / 2, NOTE.D3 / 2, 2.2, .14, { when: 1.75, attack: .02 });
+              break;
+            case 'newBest':
+              [NOTE.D5, NOTE.F5, NOTE.A5, NOTE.D5 * 2].forEach((f, i) =>
+                tone('triangle', f, f, .35, .16, { when: 3.6 + i * .09 }));
+              tone('sine', NOTE.A5 * 2, NOTE.A5 * 2, .8, .08, { when: 3.95, attack: .02 });
+              break;
+            case 'uiSelect':
+              if (!play('uiSelect', .22)) tone('sine', 880, 1100, .06, .05);
+              break;
+            case 'uiBack':
+              if (!play('uiBack', .22)) tone('sine', 700, 520, .07, .05);
+              break;
           }
         } catch (e) { console.warn('Unable to play sound effect:', e); }
       }
 
-      // ─── Teleport Spawn Sound ──────────────────────────────────────────
-      let spawnSound = null;
-      let spawnPos = null; // {x, y} where player spawned
-
-      function spawnSoundOn() {
-        if (spawnSound) return;
-        try {
-          const a = audio();
-          if (!a || sfxMuted) return;
-          const g = a.createGain(); g.gain.value = .12; g.connect(getMaster());
-          // Warbling electronic tone
-          const o1 = a.createOscillator(); o1.type = 'sine'; o1.frequency.value = 440; o1.connect(g); o1.start();
-          const o2 = a.createOscillator(); o2.type = 'square'; o2.frequency.value = 445; o2.connect(g); o2.start();
-          // LFO for wobble
-          const lfo = a.createOscillator(); lfo.frequency.value = 8;
-          const lfoG = a.createGain(); lfoG.gain.value = 30;
-          lfo.connect(lfoG); lfoG.connect(o1.frequency); lfoG.connect(o2.frequency); lfo.start();
-          spawnSound = { g, o1, o2, lfo };
-        } catch (e) { console.warn('Unable to play spawn sound:', e); }
-      }
-
-      function spawnSoundOff() {
-        if (!spawnSound) return;
-        try {
-          spawnSound.o1.stop(); spawnSound.o2.stop(); spawnSound.lfo.stop();
-        } catch (e) { }
-        spawnSound = null;
-      }
-
-      let drone = null;
+      // ─── Music: quiet generative dread bed during play ─────────────────
+      // A filtered D-minor pad, a war-drum heartbeat that quickens with the wave, and sparse bell tones.
+      let music = null;
       function droneOn() {
-        if (drone || musicMuted) return;
+        if (music || musicMuted) return;
         const a = audio(); if (!a) return;
-        const g = a.createGain(); g.gain.value = .032; g.connect(getMaster());
-        const o1 = a.createOscillator(); o1.type = 'sawtooth'; o1.frequency.value = 38; o1.connect(g); o1.start();
-        const o2 = a.createOscillator(); o2.type = 'sine'; o2.frequency.value = 57; o2.connect(g); o2.start();
-        drone = { g, o1, o2 };
+        try {
+          const n = a.currentTime;
+          const fade = a.createGain(), duck = a.createGain(), filter = a.createBiquadFilter();
+          fade.gain.setValueAtTime(.0001, n); fade.gain.exponentialRampToValueAtTime(1, n + 2);
+          fade.connect(duck); duck.connect(musicBus);
+          filter.type = 'lowpass'; filter.frequency.value = 420; filter.Q.value = 2; filter.connect(fade);
+          const padGain = a.createGain(); padGain.gain.value = .045; padGain.connect(filter);
+          const oscs = [73.42, 73.42 * 1.004, 110, 174.61 * .5].map((f, i) => {
+            const o = a.createOscillator(); o.type = i === 3 ? 'triangle' : 'sawtooth';
+            o.frequency.value = f; o.connect(padGain); o.start(n); return o;
+          });
+          const lfo = a.createOscillator(), lfoDepth = a.createGain();
+          lfo.frequency.value = .07; lfoDepth.gain.value = 180;
+          lfo.connect(lfoDepth); lfoDepth.connect(filter.frequency); lfo.start(n);
+          oscs.push(lfo);
+          music = { fade, duck, oscs, nextBeat: n + 1, beat: 0, timer: setInterval(musicTick, 100) };
+        } catch (e) { console.warn('Unable to start music:', e); music = null; }
+      }
+      function musicTick() {
+        if (!music || !ac || ac.state !== 'running') return;
+        const bpm = 58 + Math.min(wave, 12) * 3, spb = 60 / bpm;
+        while (music.nextBeat < ac.currentTime + .3) {
+          const when = music.nextBeat - ac.currentTime;
+          if (when > -.05) {
+            const opts = { when: Math.max(0, when), bus: music.fade };
+            tone('sine', 92, 48, .22, .16, opts);
+            tone('sine', 84, 44, .18, .09, { when: Math.max(0, when) + spb * .28, bus: music.fade });
+            if (music.beat % 4 === 2 && Math.random() < .55) {
+              const f = pick([NOTE.D4, NOTE.F4, NOTE.G4, NOTE.A4, NOTE.C5]);
+              tone('triangle', f, f, 1.4, .022, { when: Math.max(0, when), attack: .01, bus: music.fade });
+              tone('sine', f * 2, f * 2, .9, .008, { when: Math.max(0, when), attack: .01, bus: music.fade });
+            }
+          }
+          music.beat++; music.nextBeat += spb;
+        }
       }
       function droneOff() {
-        if (!drone) return;
-        try { drone.o1.stop(); drone.o2.stop(); } catch (e) { }
-        drone = null;
+        if (!music) return;
+        const m = music; music = null;
+        clearInterval(m.timer);
+        try {
+          const n = ac.currentTime;
+          m.fade.gain.cancelScheduledValues(n); m.fade.gain.setValueAtTime(m.fade.gain.value, n);
+          m.fade.gain.setTargetAtTime(.0001, n, .12);
+          m.oscs.forEach(o => o.stop(n + .6));
+        } catch (e) { }
       }
 
       // ─── Platforms (Joust layout) ──────────────────────────────────────
@@ -701,10 +1063,9 @@
         player.ground = true;
         player.gPlat = plats.length - 1;
         invulnT = INVULN_T;
-        // Start teleport effect and sound for player
+        // Start teleport effect and materialize sound for player
         addTeleport(ppx, ppy, spW, spH, null);
-        spawnPos = { x: ppx, y: ppy };
-        spawnSoundOn();
+        sfx('spawn', ppx + spW / 2);
       }
 
       function spawnWave() {
@@ -828,7 +1189,7 @@
                   sz: 2 + Math.random() * 3,
                   life: .6 + Math.random() * .4
                 });
-              sfx('lava');
+              sfx('lava', eg.x);
               eggs.splice(i, 1);
               continue;
             }
@@ -850,7 +1211,7 @@
             const dy = (player.y + player.h / 2) - (eg.y + EGG_H / 2);
             if (Math.abs(dx) < 24 && Math.abs(dy) < 22) {
               score += 250;
-              sfx('eggPop');
+              sfx('eggPop', eg.x);
               // Small particle burst
               addBlood(eg.x + EGG_W / 2, eg.y + EGG_H / 2, 4);
               eggs.splice(i, 1);
@@ -875,7 +1236,7 @@
         e.spawning = true;
         addTeleport(e.x, e.y, spW, spH, e);
         enemies.push(e);
-        sfx('hatch');
+        sfx('hatch', eg.x);
       }
 
       function drawEggs() {
@@ -1038,6 +1399,7 @@
             resolvedY = Math.max(resolvedY, p.y + p.h);
         }
         e.y = resolvedY;
+        if (isP && landed !== -1 && !e.ground && e.vy > 2.5) sfx('land', e.x);
         if (resolvedY !== nextY || landed !== -1) e.vy = 0;
         e.ground = landed !== -1; e.gPlat = landed;
         e.vx *= HDRAG;
@@ -1067,7 +1429,7 @@
               sz: 2 + Math.random() * 5,
               life: .9 + Math.random() * .7
             });
-          sfx('lava');
+          sfx('lava', e.x);
           if (isP) loseLife();
         }
       }
@@ -1078,15 +1440,22 @@
         if (e.type !== 'player' && ++e.flapCount === 5) {
           e.flapCount = 0; e.restT = ENEMY_REST_T;
         }
-        if (e === player) sfx('flap');
+        if (e === player) sfx('flap', e.x);
+        else if (!e.spawning) sfx('enemyFlap', e.x);
       }
 
+      let newBest = false;
+      function recordBest() {
+        if (score > hiScore) { hiScore = score; newBest = true; writeSetting('bjHi', hiScore); saveRemote(); }
+      }
       function loseLife() {
+        resetChain();
         lives--;
-        spawnSoundOff(); spawnPos = null;
         if (lives <= 0) {
           state = 'gameOver'; droneOff();
-          if (score > hiScore) { hiScore = score; writeSetting('bjHi', hiScore); saveRemote(); }
+          recordBest();
+          sfx('gameOver');
+          if (newBest) sfx('newBest');
         } else {
           respawnT = RESPAWN_T;
         }
@@ -1142,8 +1511,8 @@
           if (pcy < ecy - 5) {
             // Player wins — enemy becomes an egg
             e.alive = false;
-            killFX(ecx, ecy, e);
-            score += e.type === 'deathLord' ? 500 : e.type === 'shadowRider' ? 250 : 100;
+            killFX(ecx, ecy, e); sfx('kill', ecx);
+            awardKill(e.type);
             player.vy = -4.5;
             // Spawn egg with enemy's momentum
             spawnEgg(ecx - 6, ecy - 6, e.vx, e.vy - 3, e.type);
@@ -1155,7 +1524,7 @@
           } else if (ecy < pcy - 5) {
             // Enemy wins
             player.alive = false;
-            killFX(pcx, pcy, player); sfx('die');
+            killFX(pcx, pcy, player); sfx('die', pcx);
             loseLife();
             break;
           } else {
@@ -1163,6 +1532,7 @@
             const sign = Math.sign(pcx - ecx) || 1;
             player.vx = sign * 4; e.vx = -sign * 4;
             player.vy = -3.5; e.vy = -3.5;
+            sfx('clash', (pcx + ecx) / 2);
           }
         }
       }
@@ -1292,7 +1662,7 @@
               h.reachY -= 1.5;
               // Don't reach above the lowest platform
               if (h.reachY < maxReach) { h.life = 0; }
-              if (h.reachY <= bottom + 5) { h.grip = 1; }
+              if (h.reachY <= bottom + 5) { h.grip = 1; sfx('lavaGrab', h.x); }
             } else {
               ent.vy += HAND_PULL * dt;
               h.reachY = bottom + 3;
@@ -1478,22 +1848,33 @@
 
       // ─── HUD ───────────────────────────────────────────────────────────
       const FONT = '"Courier New", Courier, monospace';
-      function drawHUD() {
-        for (let i = 0; i < lives; i++) hudSkull(16 + i * 28, 14);
-        X.textAlign = 'center'; X.fillStyle = '#f44';
-        X.font = `bold 18px ${FONT}`;
-        X.fillText('WAVE ' + wave, W / 2, 28);
-        X.textAlign = 'right'; X.fillStyle = '#ff0';
-        X.font = `bold 24px ${FONT}`;
-        X.fillText(score.toLocaleString(), W - 18, 28);
-        X.font = `12px ${FONT}`; X.fillStyle = '#888';
-        X.fillText('HI: ' + hiScore.toLocaleString(), W - 18, 46);
+      const SKULL_SVG = '<svg class="hud-life" viewBox="0 0 14 17" aria-hidden="true"><path fill="#eee" d="M0 0h14v12H0zM2 12h10v5H2z"/><path fill="#d00" d="M2 3h4v4H2zM8 3h4v4H8z"/><path fill="#999" d="M4 12h2v5H4zM8 12h2v5H8z"/></svg>';
+      const hudCache = {};
+      function hudSet(id, key, value, apply) {
+        if (hudCache[key] === value) return false;
+        hudCache[key] = value; apply(document.getElementById(id), value); return true;
       }
-
-      function hudSkull(x, y) {
-        X.fillStyle = '#eee'; X.fillRect(x, y, 14, 12); X.fillRect(x + 2, y + 12, 10, 5);
-        X.fillStyle = '#f00'; X.fillRect(x + 2, y + 3, 4, 4); X.fillRect(x + 8, y + 3, 4, 4);
-        X.fillStyle = '#aaa'; X.fillRect(x + 4, y + 12, 2, 5); X.fillRect(x + 8, y + 12, 2, 5);
+      function syncHUD() {
+        const shown = state === 'playing' || state === 'waveAnnounce' || state === 'paused';
+        hudSet('hud', 'shown', shown, (el, v) => { el.hidden = !v; });
+        if (!shown) return;
+        hudSet('hud-lives', 'lives', lives, (el, v) => {
+          el.innerHTML = Array.from({ length: 3 }, (_, i) => SKULL_SVG.replace('hud-life', i < v ? 'hud-life' : 'hud-life lost')).join('');
+          el.setAttribute('aria-label', `Lives: ${Math.max(0, v)}`);
+        });
+        hudSet('hud-wave', 'wave', wave, (el, v) => { el.textContent = 'WAVE ' + v; });
+        const prevScore = hudCache.score;
+        if (hudSet('hud-score', 'score', score, (el, v) => { el.textContent = v.toLocaleString(); }) && prevScore !== undefined && score > prevScore) {
+          const el = document.getElementById('hud-score');
+          el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+        }
+        hudSet('hud-best', 'best', Math.max(hiScore, score), (el, v) => { el.textContent = 'BEST ' + v.toLocaleString(); });
+        hudSet('hud-chain', 'chain', chainCount ? `${chainCount}:${Math.ceil(chainRemaining / 100)}:${chainPoints}` : '', el => {
+          el.hidden = !chainCount;
+          el.textContent = chainCount
+            ? `CHAIN ${chainCount}x +${chainPoints.toLocaleString()} | NEXT ${chainCount + 1}x ${(Math.ceil(chainRemaining / 100) / 10).toFixed(1)}s`
+            : '';
+        });
       }
 
       // ─── Screen FX ─────────────────────────────────────────────────────
@@ -1674,7 +2055,6 @@
           X.textAlign = 'center'; X.fillText('WAVE COMPLETE', W / 2, H * .5);
         }
         drawScanlines();
-        drawHUD();
       }
 
       function drawGameOver() {
@@ -1713,10 +2093,10 @@
             break;
           case 'sound':
             tickEmbers();
-            if (K.ArrowLeft) { K.ArrowLeft = 0; setVolume(masterVol - .1); }
-            if (K.ArrowRight) { K.ArrowRight = 0; setVolume(masterVol + .1); }
-            if (K.KeyF) { K.KeyF = 0; sfxMuted = !sfxMuted; syncSoundUI(); }
-            if (K.KeyM) { K.KeyM = 0; musicMuted = !musicMuted; if (musicMuted) droneOff(); syncSoundUI(); }
+            if (K.ArrowLeft) { K.ArrowLeft = 0; setVolume(masterVol - .1); sfx('eggPop'); }
+            if (K.ArrowRight) { K.ArrowRight = 0; setVolume(masterVol + .1); sfx('eggPop'); }
+            if (K.KeyF) { K.KeyF = 0; setSfxMuted(!sfxMuted); }
+            if (K.KeyM) { K.KeyM = 0; setMusicMuted(!musicMuted); }
             if (K.Space || K.Escape) { K.Space = 0; K.Escape = 0; state = 'title'; }
             break;
           case 'waveAnnounce':
@@ -1736,7 +2116,7 @@
       }
 
       function startGame() {
-        clearInput(); spawnSoundOff(); droneOn();
+        resetChain(); clearInput(); droneOn(); newBest = false;
         state = 'waveAnnounce'; wave = 1; score = 0; lives = 3;
         stains = []; bloods = []; gores = []; bones = []; fragments = []; teleports = []; eggs = []; lavaHands = [];
         mkPlayer(); spawnWave(); waveT = 130; sfx('wave');
@@ -1750,14 +2130,6 @@
           if (K.Space || K.KeyW || touchFlapHeld) { doFlap(player); K.Space = 0; K.KeyW = 0; }
           physEnt(player, true);
           if (state !== 'playing') return;
-
-          // Stop spawn sound when player moves away from spawn point
-          if (spawnPos && spawnSound) {
-            if (Math.abs(player.x - spawnPos.x) > 5 || Math.abs(player.y - spawnPos.y) > 5) {
-              spawnSoundOff();
-              spawnPos = null;
-            }
-          }
         }
 
         if ((!player || !player.alive) && lives > 0) {
@@ -1782,7 +2154,6 @@
         // Wave complete when all enemies dead AND no eggs remain
         if (state === 'playing' && enemies.every(e => !e.alive) && eggs.length === 0) {
           wave++; state = 'waveAnnounce'; waveT = 130; spawnWave(); sfx('wave');
-          spawnSoundOff(); spawnPos = null;
         }
       }
 
@@ -1803,7 +2174,7 @@
             drawTeleports(); drawEggs();
             for (const e of enemies) drawEnt(e);
             if (player) drawEnt(player);
-            drawParts(); drawFlash(); drawScanlines(); drawHUD();
+            drawParts(); drawFlash(); drawScanlines();
             break;
         }
         X.restore();
@@ -1818,21 +2189,34 @@
         const active = state === 'playing' || state === 'waveAnnounce';
         document.getElementById('touch-controls').hidden = !active;
         document.getElementById('pause').hidden = !active;
-        if (state === 'gameOver') document.getElementById('result').textContent =
-          `Score: ${score.toLocaleString()} | High score: ${hiScore.toLocaleString()} | Wave: ${wave}`;
+        document.getElementById('return-menu-link').hidden = active;
+        if (state === 'gameOver') {
+          document.getElementById('go-score').textContent = score.toLocaleString();
+          document.getElementById('go-best').textContent = hiScore.toLocaleString();
+          document.getElementById('go-wave').textContent = String(wave);
+          document.getElementById('new-best').hidden = !newBest;
+        }
+        if (state === 'title') {
+          const best = document.getElementById('title-best');
+          best.hidden = hiScore <= 0;
+          best.textContent = 'Personal best: ' + hiScore.toLocaleString();
+        }
+        if (state === 'waveAnnounce') document.getElementById('announcer').textContent = `Wave ${wave}`;
         if (menus[state]) document.querySelector(`#${menus[state]} button`).focus({ preventScroll: true });
         else if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
       }
 
       function loop(t) {
         if (!lastT) lastT = t;
+        // Chain windows use real active time, not the slowed physics clock.
+        if (state === 'playing' || state === 'waveAnnounce') advanceChain(t - lastT);
         accumulator += Math.min(t - lastT, 100) *
           (state === 'playing' || state === 'waveAnnounce' ? GAME_SPEED : 1);
         lastT = t;
         while (accumulator >= 1000 / 60) {
           update(); accumulator -= 1000 / 60;
         }
-        syncUI(); draw();
+        syncUI(); syncHUD(); draw();
         requestAnimationFrame(loop);
       }
       requestAnimationFrame(loop);

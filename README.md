@@ -16,7 +16,7 @@ This repo is a small collection of single-file browser games and apps.
 - **Aztec: The jade expedition** – original Apple II-inspired tomb adventure with 64 seeded rooms, classic commands, touch controls, and an idol-and-escape objective. Entry: `Aztec/index.html`
 - **2048** – classic sliding tile puzzle. Entry: `2048/2048.html`
 - **Bee** – simple bee game. Entry: `bee/bee.html`
-- **FruitPile** – physics fruit pile game with **Explosion** and **Merge** modes. Entry: `fruitpile/fruitpile.html`
+- **FruitPile** – physics fruit-merging game. Entry: `fruitpile/fruitpile.html`
 - **Geodes** – geode-themed game. Entry: `geodes/geodes.html`
 - **Real or AI** – pick which photo is real vs AI-generated. Entry: `real_or_ai/real_or_ai.html`
 - **GTA VI Countdown** – release countdown and the latest official GTA VI news. Entry: `gtavi_countdown/index.html`

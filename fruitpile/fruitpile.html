@@ -175,6 +175,22 @@
             display: flex;
         }
 
+        #hs-modal {
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 5;
+        }
+
+        #hs-modal .card {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
         .card {
             width: min(92vw, 560px);
             background: rgba(12, 16, 30, 0.9);
@@ -289,39 +305,6 @@
             font-size: 12px;
         }
 
-        .modeToggle {
-            display: inline-flex;
-            gap: 6px;
-            padding: 3px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            background: rgba(0, 0, 0, 0.14);
-        }
-
-        .modeToggle button {
-            appearance: none;
-            border: 1px solid rgba(255, 255, 255, 0.10);
-            background: rgba(255, 255, 255, 0.06);
-            color: var(--ui-text);
-            padding: 6px 10px;
-            border-radius: 10px;
-            font-weight: 650;
-            cursor: pointer;
-            transition: transform .12s ease, background .12s ease, border-color .12s ease;
-        }
-
-        .modeToggle button:hover {
-            transform: translateY(-1px);
-            background: rgba(255, 255, 255, 0.09);
-            border-color: rgba(255, 255, 255, 0.16);
-        }
-
-        .modeToggle button[aria-pressed="true"] {
-            background: rgba(90, 220, 255, 0.18);
-            border-color: rgba(90, 220, 255, 0.35);
-            box-shadow: 0 0 0 1px rgba(90, 220, 255, 0.12) inset, 0 10px 26px rgba(0, 0, 0, 0.25);
-        }
-
         @media (prefers-reduced-motion: reduce) {
             * {
                 transition: none !important;
@@ -404,7 +387,7 @@
         #danger { position: absolute; top: 24%; color: #ffb4bb; background: #261522; padding: 6px 10px; border-radius: 8px; z-index: 2; pointer-events: none; font-weight: 700; }
         #danger:empty { display: none; }
         #controls { grid-row: 3; display: flex; align-items: stretch; justify-content: center; gap: 8px; z-index: 3; width: min(100%, 600px); justify-self: center; }
-        button, .modeToggle button { min-width: 44px; min-height: 44px; font-size: 14px; touch-action: manipulation; transition: transform .08s ease, filter .1s ease, background-color .12s ease, border-color .12s ease; }
+        button { min-width: 44px; min-height: 44px; font-size: 14px; touch-action: manipulation; transition: transform .08s ease, filter .1s ease, background-color .12s ease, border-color .12s ease; }
         #controls button { min-height: 56px; padding: 0 8px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; }
         #btnLeft, #btnRight { flex: 0 0 52px; touch-action: none; }
         #btnLeft .icon, #btnRight .icon { width: 30px; height: 30px; stroke-width: 3; }
@@ -430,8 +413,6 @@
         #btnPlay { flex-basis: 100%; min-height: 56px; font-size: 18px; font-weight: 800; }
         #modal, #hs-modal { position: fixed; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
         #menuOptions { display: grid; gap: 4px; margin: 14px 0; }
-        .modeToggle { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 16px; }
-        .modeToggle button { min-height: 48px; border-radius: 12px; font-size: 16px; }
         .setting { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; font-size: 15px; }
         .setting:has(input[type=checkbox]) { cursor: pointer; }
         .setting input[type=range] { -webkit-appearance: none; appearance: none; width: min(190px, 50%); height: 44px; margin: 0; background: transparent; accent-color: var(--accent); }
@@ -443,7 +424,7 @@
         .setting input[type=checkbox]::after { content: ''; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .15s ease, background-color .15s ease; }
         .setting input[type=checkbox]:checked { background: var(--accent); }
         .setting input[type=checkbox]:checked::after { transform: translateX(22px); background: #071b19; }
-        #modeNote, #runSummary { color: #c2ccdb; font-size: 14px; line-height: 1.5; }
+        #gameNote, #runSummary { color: #c2ccdb; font-size: 14px; line-height: 1.5; }
         #runSummary:empty { display: none; }
         .hint { margin: 10px 0 0; font-size: 13px; color: #c2ccdb; }
         .hintTouch { display: none; }
@@ -515,8 +496,9 @@
   #return-menu-link { position: fixed; top: max(4px, env(safe-area-inset-top)); left: max(8px, env(safe-area-inset-left)); z-index: 2147483647; display: inline-flex; align-items: center; min-height: 44px; padding: 0 10px; border: 1px solid #71809f; border-radius: 8px; background: #10172d; color: #e8f7ff; font: 700 14px/1.2 system-ui, sans-serif; text-decoration: none; touch-action: manipulation; }
   #return-menu-link:hover { background: #25375c; }
   #return-menu-link:focus-visible { outline: 3px solid #75e6ff; outline-offset: 2px; }
+  #modal, #hs-modal { padding-top: max(56px, calc(env(safe-area-inset-top, 0px) + 52px)); }
 </style>
-<style>.hud { top: calc(50px + env(safe-area-inset-top, 0px)); }</style>
+<style>.hud { margin-top: calc(50px + env(safe-area-inset-top, 0px)); }</style>
 </head>
 
 <body>
@@ -535,7 +517,7 @@
                 <div class="nextBox" title="Next fruit"><canvas id="nextSwatch" width="40" height="40" aria-hidden="true"></canvas><div class="nextText"><span class="label">Next</span><span id="nextName" class="value">Cherry</span></div></div>
                 <button id="btnPause" type="button" aria-label="Pause and open menu"><svg class="icon solid" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.6"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.6"/></svg><span class="btnText">Menu</span></button>
             </div>
-            <div class="statusline"><span id="goal">Explode: reach 1,500 points</span><span id="diamondRow" title="Diamonds created" aria-label="Diamonds created" hidden>&diams; <span id="diamondCount" class="value">0/1</span></span><span class="chain" title="Combo multiplier"><span id="combo" class="value">x1.00</span><progress id="comboProgress" max="3000" value="0" aria-label="Time left to chain"></progress></span></div>
+            <div class="statusline"><span id="goal">Merge: make a Grape</span><span id="diamondRow" title="Diamonds created" aria-label="Diamonds created">&diams; <span id="diamondCount" class="value">0/1</span></span><span class="chain" title="Combo multiplier"><span id="combo" class="value">x1.00</span><progress id="comboProgress" max="3000" value="0" aria-label="Time left to chain"></progress></span></div>
             <progress id="goalProgress" max="1500" value="0" aria-label="Next goal progress"></progress>
             <div id="toast" role="status" aria-live="polite"></div>
         </header>
@@ -559,12 +541,8 @@
                 </div>
                 <div class="menuSide">
                     <div id="menuOptions">
-                        <div class="modeToggle" role="group" aria-label="Game mode">
-                            <button id="btnModeExplode" type="button" aria-pressed="true">Explode</button>
-                            <button id="btnModeMerge" type="button" aria-pressed="false">Merge</button>
-                        </div>
-                        <div id="modeNote"></div>
-                        <label class="setting">Sound <input id="volSlider" type="range" aria-label="Sound volume" min="0" max="100" value="60"></label>
+                        <div id="gameNote">Grow matching fruit into bigger fruit. Your first diamond is the goal.</div>
+                        <label class="setting"><span id="soundLabel">Sound</span> <input id="volSlider" type="range" aria-label="Sound volume" min="0" max="100" value="60"></label>
                         <label class="setting">Vibration <input id="hapticsToggle" type="checkbox" checked></label>
                         <label class="setting">Reduced effects <input id="reducedEffects" type="checkbox"></label>
                         <label class="setting">Chaos next run (wind + fruit decay) <input id="chaosMode" type="checkbox"></label>
@@ -589,9 +567,8 @@
             </div>
         </div>
 
-        <div id="hs-modal" role="dialog" aria-modal="true" aria-label="Local high scores"
-            style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,0.7);z-index:5;">
-            <div class="card" style="max-height:80vh;overflow-y:auto;">
+        <div id="hs-modal" role="dialog" aria-modal="true" aria-label="Local high scores">
+            <div class="card">
                 <h1>🏆 High Scores</h1>
                 <div id="fp-hs-config" style="font-size:12px;color:var(--ui-muted);margin-bottom:12px;"></div>
                 <div id="fp-hs-wrap"></div>
@@ -624,11 +601,9 @@
 
             const btnNew = $('#btnNew');
             const volSlider = $('#volSlider');
+            const soundLabel = $('#soundLabel');
             const btnPlay = $('#btnPlay');
             const btnHow = $('#btnHow');
-            const btnModeExplode = $('#btnModeExplode');
-            const btnModeMerge = $('#btnModeMerge');
-            const diamondRowEl = $('#diamondRow');
             const diamondCountEl = $('#diamondCount');
             const infoBodyEl = $('#infoBody');
             const arenaEl = $('#arena');
@@ -641,13 +616,6 @@
             const btnDropLabelEl = $('#btnDropLabel');
             const btnLeftEl = $('#btnLeft');
             const btnRightEl = $('#btnRight');
-
-            const GAME_MODES = {
-                EXPLODE: 'explode',
-                MERGE: 'merge'
-            };
-
-            let gameMode = GAME_MODES.EXPLODE;
 
             const DIAMOND_WIN_COUNT = 1;
             let diamondsCreated = 0;
@@ -692,23 +660,10 @@
             let bestCombo = 0;
             let dropCount = 0;
             let swapUsed = false;
-            let scoreGoal = 1500;
             let simTime = 1;
             let accumulator = 0;
             const STEP_MS = 1000 / 60;
             const COMBO_WINDOW_MS = 3000;
-
-            function loadSavedMode() {
-                try {
-                    const v = window.localStorage.getItem('fruitpile.mode');
-                    if (v === GAME_MODES.EXPLODE || v === GAME_MODES.MERGE) return v;
-                } catch (error) { storageWarning(error); }
-                return GAME_MODES.EXPLODE;
-            }
-
-            function saveMode(v) {
-                try { window.localStorage.setItem('fruitpile.mode', v); } catch (error) { storageWarning(error); }
-            }
 
             // ── High Score System ───────────────────────────────
             const FP_HS_KEY = 'fruitpile.highscores.v2';
@@ -716,7 +671,7 @@
             let fpLastNewHsIdx = -1;
             let fpPendingScore = null;
 
-            function fpHsKey() { return `${gameMode}.${runChaos ? 'chaos' : 'classic'}`; }
+            function fpHsKey() { return `merge.${runChaos ? 'chaos' : 'classic'}`; }
 
             function getFpAllHs() {
                 const all = storageRead(FP_HS_KEY, {});
@@ -735,7 +690,7 @@
                 const all = getFpAllHs();
                 const key = fpHsKey();
                 const list = getFpHighScores();
-                const entry = { score: scoreVal, name: (nameVal || '').toUpperCase(), mode: gameMode, date: new Date().toISOString() };
+                const entry = { score: scoreVal, name: (nameVal || '').toUpperCase(), mode: 'merge', date: new Date().toISOString() };
                 let inserted = false;
                 for (let i = 0; i < list.length; i++) {
                     if (scoreVal > list[i].score) { list.splice(i, 0, entry); inserted = true; fpLastNewHsIdx = i; break; }
@@ -750,7 +705,7 @@
             function renderFpHighScores() {
                 const list = getFpHighScores();
                 const wrap = document.getElementById('fp-hs-wrap');
-                document.getElementById('fp-hs-config').textContent = `${gameMode === 'merge' ? 'Merge' : 'Explode'} / ${runChaos ? 'Chaos' : 'Classic'} - on this device only`;
+                document.getElementById('fp-hs-config').textContent = `${runChaos ? 'Chaos' : 'Classic'} - on this device only`;
                 if (list.length === 0) { wrap.innerHTML = '<p style="text-align:center;color:var(--ui-muted);">No scores yet.</p>'; return; }
                 const medals = ['hs-gold', 'hs-silver', 'hs-bronze'];
                 let html = '<table class="fruitTable"><thead><tr><th>#</th><th>Score</th><th>Name</th><th>Date</th></tr></thead><tbody>';
@@ -831,33 +786,67 @@
                 ctx: null,
                 _master: null,
                 _noise: null,
+                unavailable: false,
                 _tunePlaying: false,
                 _lastHitAt: {
                     fruit: 0,
                     ground: 0,
                     wall: 0
                 },
+                markUnavailable(error) {
+                    if (this.unavailable) return;
+                    this.unavailable = true;
+                    this.enabled = false;
+                    this._master = null;
+                    this._noise = null;
+                    volSlider.disabled = true;
+                    volSlider.setAttribute('aria-label', 'Sound unavailable');
+                    soundLabel.textContent = 'Sound unavailable';
+                    console.warn('[FruitPile] Audio unavailable:', error);
+                    showToast('Audio unavailable. Gameplay is unaffected.');
+                },
                 ensure() {
+                    if (this.unavailable) return null;
                     if (!this.ctx) {
-                        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                        this._master = this.ctx.createGain();
-                        this._master.gain.value = this.volume / 100;
-                        this._master.connect(this.ctx.destination);
+                        let ctx = null;
+                        try {
+                            const AudioContext = window.AudioContext || window.webkitAudioContext;
+                            if (typeof AudioContext !== 'function') throw new Error('Web Audio API is not supported');
+                            ctx = new AudioContext();
+                            const master = ctx.createGain();
+                            master.gain.value = this.volume / 100;
+                            master.connect(ctx.destination);
+                            this.ctx = ctx;
+                            this._master = master;
+                        } catch (error) {
+                            if (ctx && typeof ctx.close === 'function') {
+                                try {
+                                    const closing = ctx.close();
+                                    if (closing && typeof closing.catch === 'function') {
+                                        closing.catch(closeError => console.warn('[FruitPile] Audio context cleanup:', closeError));
+                                    }
+                                } catch (closeError) {
+                                    console.warn('[FruitPile] Audio context cleanup:', closeError);
+                                }
+                            }
+                            this.markUnavailable(error);
+                            return null;
+                        }
                     }
                     return this.ctx;
                 },
                 dest() {
-                    this.ensure();
-                    return this._master;
+                    return this.ensure() ? this._master : null;
                 },
                 setVolume(v) {
                     this.volume = v;
-                    this.enabled = v > 0;
+                    this.enabled = v > 0 && !this.unavailable;
                     if (this._master) this._master.gain.value = v / 100;
                 },
                 ensureNoise() {
                     if (this._noise) return this._noise;
                     const ctx = this.ensure();
+                    if (!ctx) return null;
                     const dur = 0.35;
                     const sr = ctx.sampleRate;
                     const len = Math.max(1, Math.floor(dur * sr));
@@ -876,6 +865,7 @@
                 pop(intensity = 0.6) {
                     if (!this.enabled) return;
                     const ctx = this.ensure();
+                    if (!ctx) return;
                     const t0 = ctx.currentTime;
 
                     const osc = ctx.createOscillator();
@@ -912,6 +902,7 @@
                     this._lastHitAt[kind] = now;
 
                     const ctx = this.ensure();
+                    if (!ctx) return;
                     const t0 = ctx.currentTime;
 
                     const osc = ctx.createOscillator();
@@ -962,6 +953,7 @@
                 buzz() {
                     if (!this.enabled) return;
                     const ctx = this.ensure();
+                    if (!ctx) return;
                     const t0 = ctx.currentTime;
 
                     // Two detuned square-wave oscillators for insect buzz texture
@@ -995,43 +987,41 @@
                     osc2.stop(t0 + 0.25);
                 },
 
-                playTune(mode) {
+                playTune() {
                     if (!this.enabled) return;
                     const ctx = this.ensure();
                     if (!ctx) return;
 
                     // Attempt to unlock if possible; will still be blocked until user gesture.
                     if (ctx.state === 'suspended') {
-                        try { ctx.resume(); } catch { /* ignore */ }
+                        try {
+                            const resume = ctx.resume();
+                            if (resume && typeof resume.catch === 'function') {
+                                resume.catch(error => console.warn('[FruitPile] Audio resume:', error));
+                            }
+                        } catch (error) {
+                            console.warn('[FruitPile] Audio resume:', error);
+                        }
                     }
                     if (ctx.state !== 'running') return;
                     if (this._tunePlaying) return;
                     this._tunePlaying = true;
 
                     const baseT = ctx.currentTime + 0.03;
-                    const seq = (mode === GAME_MODES.MERGE)
-                        ? [
+                    const seq = [
                             { f: 392.0, d: 0.12 },
                             { f: 493.9, d: 0.12 },
                             { f: 587.3, d: 0.14 },
                             { f: 659.3, d: 0.18 },
                             { f: 587.3, d: 0.12 },
                             { f: 739.9, d: 0.22 }
-                        ]
-                        : [
-                            { f: 261.6, d: 0.12 },
-                            { f: 329.6, d: 0.12 },
-                            { f: 392.0, d: 0.14 },
-                            { f: 523.3, d: 0.18 },
-                            { f: 392.0, d: 0.12 },
-                            { f: 659.3, d: 0.22 }
                         ];
 
                     let t = baseT;
                     for (const n of seq) {
                         const osc = ctx.createOscillator();
                         const g = ctx.createGain();
-                        osc.type = (mode === GAME_MODES.MERGE) ? 'triangle' : 'sine';
+                        osc.type = 'triangle';
                         osc.frequency.setValueAtTime(n.f, t);
 
                         g.gain.setValueAtTime(0.0001, t);
@@ -1052,6 +1042,7 @@
                 whoosh(dir = 1, intensity = 0.8) {
                     if (!this.enabled) return;
                     const ctx = this.ensure();
+                    if (!ctx) return;
                     const t0 = ctx.currentTime;
 
                     const src = ctx.createBufferSource();
@@ -1140,7 +1131,6 @@
             }
 
             // Check if all fruits in a tier have been combined at least once.
-            // "Combined" = merged (merge mode) or exploded (explosion mode).
             // We track the SOURCE fruit key (what was combined), so:
             //   small tier: cherry, grape, strawberry
             //   medium tier: orange, apple, peach
@@ -1159,29 +1149,7 @@
                 return false;
             }
 
-            function weightedRandomFruit() {
-                // Tier-based spawning (same rules for both modes):
-                // Small (0-2): always available
-                // Medium (3-5): 30% chance once all small have been combined
-                // Large (6-7): 10% chance once all medium have been combined
-                const roll = Math.random();
-                const canMedium = allSmallMerged();
-                const canLarge = canMedium && allMediumMerged();
-
-                let pool;
-                if (canLarge && roll < 0.10) {
-                    pool = FRUITS.slice(6, 8);
-                } else if (canMedium && roll < 0.40) {
-                    pool = FRUITS.slice(3, 6);
-                } else {
-                    pool = FRUITS.slice(0, 3);
-                }
-                return pool[Math.floor(Math.random() * pool.length)];
-            }
-
             function randomFruitForCurrentMode() {
-                if (gameMode !== GAME_MODES.MERGE) return weightedRandomFruit();
-
                 // Tier-based spawning for merge mode:
                 // As higher tiers unlock, small fruit frequency decreases.
                 //   Small only:   100% small
@@ -1217,7 +1185,6 @@
             }
 
             function clampQueuedFruitToUnlockedPool(fruit) {
-                if (gameMode !== GAME_MODES.MERGE) return fruit;
                 if (!fruit) return fruit;
                 const idx = FRUITS.findIndex(f => f.key === fruit.key);
                 if (idx < 0) return fruit;
@@ -1240,7 +1207,7 @@
             function basePointsForFruit(fruitKey) {
                 const fruit = fruitByKey.get(fruitKey);
                 const idx = FRUITS.findIndex(f => f.key === fruit.key);
-                return gameMode === GAME_MODES.MERGE ? 25 * (idx + 1) ** 2 : 25 * (FRUITS.length - idx);
+                return 25 * (idx + 1) ** 2;
             }
 
             // --- Tiny procedural textures (cached patterns) ---
@@ -1376,9 +1343,6 @@
             let score = 0;
             let comboCount = 0;
             let comboUntil = 0;
-            // Explosion mode: award a diamond when a combo chain reaches 4.
-            // Reset when the combo expires.
-            let comboDiamondAwardedForChain = false;
 
             // Viewport in CSS pixels (use actual app/canvas size so it works in embedded/preview panes too).
             let viewW = 0;
@@ -1428,8 +1392,8 @@
             };
 
             // "Now" is the fruit you'll drop next; "Next" is the one after that.
-            let currentFruit = weightedRandomFruit();
-            let nextFruit = weightedRandomFruit();
+            let currentFruit = randomFruitForCurrentMode();
+            let nextFruit = randomFruitForCurrentMode();
 
             const particles = [];
             const bursts = [];
@@ -1539,19 +1503,10 @@
                     hudCache.comboLeft = comboLeft;
                     comboProgressEl.value = comboLeft;
                 }
-                let goalText;
-                let goalMax;
-                let goalValue;
-                if (gameMode === GAME_MODES.MERGE) {
-                    const next = FRUITS[Math.min(8, largestCreated + 1)];
-                    goalText = diamondsCreated ? `${diamondsCreated} diamond${diamondsCreated === 1 ? '' : 's'} made - keep growing!` : `Merge: make a ${next.name}`;
-                    goalMax = 8;
-                    goalValue = largestCreated;
-                } else {
-                    goalText = `Explode: reach ${scoreGoal.toLocaleString()} points`;
-                    goalMax = scoreGoal;
-                    goalValue = score;
-                }
+                const next = FRUITS[Math.min(8, largestCreated + 1)];
+                let goalText = diamondsCreated ? `${diamondsCreated} diamond${diamondsCreated === 1 ? '' : 's'} made - keep growing!` : `Merge: make a ${next.name}`;
+                const goalMax = 8;
+                const goalValue = largestCreated;
                 if (runChaos) goalText += ' (Chaos)';
                 setHudText(goalEl, 'goal', goalText);
                 if (hudCache.goalMax !== goalMax) {
@@ -1579,7 +1534,6 @@
             function resetComboIfExpired(t) {
                 if (t > comboUntil) {
                     comboCount = 0;
-                    comboDiamondAwardedForChain = false;
                 }
             }
 
@@ -1587,28 +1541,6 @@
                 comboCount += 1;
                 bestCombo = Math.max(bestCombo, comboCount);
                 comboUntil = t + COMBO_WINDOW_MS;
-            }
-
-            const awardedDiamondEvents = new Set();
-
-            function maybeAwardComboDiamond(cx, cy, fruitKey, cluster) {
-                if (gameMode !== GAME_MODES.EXPLODE) return;
-                // One watermelon blast creates one diamond. A second diamond at the
-                // same blast would touch it and detonate immediately.
-                if (fruitKey !== 'watermelon') return;
-                const eventKey = (cluster || []).map(b => b && b.id).filter(id => id != null).sort((a, b) => a - b).join('|');
-                if (!eventKey || awardedDiamondEvents.has(eventKey)) return;
-                awardedDiamondEvents.add(eventKey);
-
-                const diamond = fruitByKey.get('diamond');
-                if (!diamond) return;
-
-                const d = fruitBodyAt(cx, cy, diamond);
-                if (!d.plugin) d.plugin = {};
-                d.plugin.bornAt = nowMs();
-                World.add(world, d);
-                Body.setVelocity(d, { x: (Math.random() - 0.5) * 2.4, y: -3.0 });
-                Body.setAngularVelocity(d, (Math.random() - 0.5) * 0.18);
             }
 
             // The How-to-play panel remembers the menu text it replaced so "Back to menu" can restore it exactly.
@@ -1670,13 +1602,8 @@
                 rules.className = 'note';
                 rules.innerHTML = `
                     <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
-                        <span class="pill">Explode: POP matching fruit</span>
-                        <span class="pill">Merge: MERGE matching fruit</span>
+                        <span class="pill">Merge matching fruit</span>
                         <span class="pill">Fuse: 0.75s + 0.25s per extra fruit</span>
-                    </div>
-                    <div style="margin-bottom:8px;">
-                        <b>Fruit Explode</b>: when 2+ of the same fruit stay touching through the fuse, they pop.
-                        If they bounce apart first, the fuse cancels. Bigger groups are worth more.
                     </div>
                     <div style="margin-bottom:8px;">
                         <b>Fruit Merge</b>: when 2+ of the same fruit stay touching through the fuse, they merge into the next fruit size.
@@ -1692,7 +1619,7 @@
                     <div>
                         Match again within <b>3 seconds</b> to grow your combo, up to <b>5x</b>. The small timer beside the multiplier shows the window.
                         Swap the current and next fruit once per drop to set up your next match.
-                        Small fruit earn more in Explode; larger fruit earn more in Merge.
+                        Larger fruit earn more points.
                         Bigger fruit are heavier, so the same fall shoves the pile harder.
                         Keep settled fruit below the dashed line. A visible <b>3-second warning</b> gives you time to clear a match.
                         Classic has no wind or decay. Optional Chaos brings back gusts. A fruit fly arrives after <b>20 idle seconds</b> and shrinks the fruit 4 seconds later.
@@ -1713,8 +1640,7 @@
                         <tr>
                             <th>Fruit</th>
                             <th>Base points</th>
-                            <th>Explode rule</th>
-                            <th>Merge rule</th>
+                            <th>Group points</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -1726,9 +1652,6 @@
                     // Show diamonds too (even though they don't randomly spawn).
                     const base = basePointsForFruit(fruit.key);
 
-                    // Explode: awarded = base * (2*(n-1)) * combo
-                    const explodeExample = `2→ ${base * 2}  •  3→ ${base * 4}  •  4→ ${base * 6}`;
-                    // Merge: awarded = base * max(2,n) * combo
                     const mergeExample = `2→ ${base * 2}  •  3→ ${base * 3}  •  4→ ${base * 4}`;
 
                     const tr = document.createElement('tr');
@@ -1743,7 +1666,6 @@
                             </div>
                         </td>
                         <td><span class="pill">${base}</span></td>
-                        <td style="color: rgba(255,255,255,0.78);">${explodeExample}</td>
                         <td style="color: rgba(255,255,255,0.78);">${mergeExample}</td>
                     `;
                     tbody.appendChild(tr);
@@ -1758,8 +1680,7 @@
                 foot.innerHTML = `
                     <div style="margin-top:10px;">
                         Notes: “Base points” are used as the starting value. Actual points also include group-size bonuses
-                        and the combo multiplier. In Explode mode, bigger groups scale as 2×(n−1). In Merge mode,
-                        bigger groups scale as max(2,n).
+                        and the combo multiplier. Bigger groups scale as max(2,n).
                     </div>
                 `;
                 infoBodyEl.appendChild(foot);
@@ -1942,7 +1863,7 @@
 
                 bounds = {
                     ground: Bodies.rectangle(fieldCenterX, h + thickness / 2, fieldW + 2 * thickness, thickness, { isStatic: true, friction: 0.9 }),
-                    // Invisible ceiling: keeps fruit from flying off screen during explosions
+                    // Invisible ceiling keeps fruit inside the play area.
                     ceiling: Bodies.rectangle(fieldCenterX, (playfield.top || 0) - thickness / 2, fieldW + 2 * thickness, thickness, { isStatic: true, friction: 0.0, restitution: 0.3 }),
                     // Hard containment walls aligned to the playfield edges.
                     left: Bodies.rectangle((playfield.left || 0) - thickness / 2, h / 2, thickness, wallH, { isStatic: true, friction: 0.0, frictionStatic: 0, restitution: 0.0 }),
@@ -2009,8 +1930,7 @@
                 const leftEdge = playfield.left || 0;
                 const rightEdge = playfield.right || (viewW || window.innerWidth);
                 const bottomEdge = playfield.bottom || (viewH || window.innerHeight);
-                // Velocity cap prevents tunneling through walls during very strong blasts.
-                // During mega-diamond blast, allow a short higher cap so fruit can clear the rails.
+                // Allow a short higher velocity cap for the diamond shockwave.
                 const MAX_FRUIT_SPEED = (nowMs() < diamondEjectUntilMs) ? 190 : 52;
                 const MAX_ANGULAR = (nowMs() < diamondEjectUntilMs) ? 1.25 : 0.45;
                 for (const b of list) {
@@ -2074,7 +1994,7 @@
                         Body.setAngularVelocity(b, (b.angularVelocity || 0) * 0.5);
                     }
 
-                    // Ceiling bounce: keep fruit inside the play area during explosions
+                    // Ceiling bounce keeps fruit inside the play area.
                     const topEdge = playfield.top || 0;
                     const minY = topEdge + r;
                     if (b.position.y < minY) {
@@ -2177,17 +2097,15 @@
             }
 
             // Short fuse leaves room to add to a group before it resolves.
-            const EXPLODE_FUSE_MS = 750;
-            // Global explosion knockback multiplier (applies to all fruits).
-            // Keep conservative: physics has velocity caps + rail clamps, but too high still feels chaotic.
-            const EXPLOSION_FORCE_MULT = 1.35;
-            // Mega diamond blast: briefly relax velocity caps so fruit can clear the rails.
+            const MATCH_FUSE_MS = 750;
+            // Diamond shockwave strength.
+            const SHOCKWAVE_FORCE_MULT = 1.35;
+            // Briefly relax velocity caps during the diamond shockwave.
             const DIAMOND_EJECT_WINDOW_MS = 1400;
             let diamondEjectUntilMs = 0;
-            // Both modes: 0.75s for a pair, +0.25s per extra touching fruit.
+            // 0.75s for a pair, +0.25s per extra touching fruit.
             const EXTRA_MATCH_FUSE_PER_FRUIT_MS = 250;
-            const explodeQueue = [];
-            const explodedIds = new Set();
+            const matchQueue = [];
             const removedIds = new Set();
             const scheduledPairs = new Set();
 
@@ -2198,213 +2116,14 @@
                 return true;
             }
 
-            function removeBodyById(id) {
-                const b = Composite.get(world, id, 'body');
-                if (!b) return false;
-                return removeBodyFromWorld(b);
-            }
-
-            // Explosion mode: staged detonation so groups pop in touch-order.
-            // Store both a direct body reference and an id. Some Matter.Composite.get(world, id, 'body') calls
-            // can fail for bodies in-flight between composite updates; the direct ref makes staging robust.
-            // Each entry: { dueAt, body, bodyId, fruitKey }
-            const stagedDetonations = [];
-            const DETONATION_STEP_MS = 100;
-
-            // Safety: in rare cases, a staged step can be skipped due to engine timing.
-            // Schedule a final sweep per staged cluster to guarantee no staged body remains.
-            // Note: by sweep time, shockwaves may have separated the cluster, so we force-remove the
-            // exact staged ids regardless of current contacts.
-            // Each entry: { dueAt, fruitKey, seedIds:Set<number>, cx:number, cy:number }
-            const stagedClusterSweeps = [];
-
             // Merge mode reliability: schedule a short post-merge sweep to ensure
             // no member of the merged cluster remains (rare engine timing edge cases).
             // Each entry: { dueAt, fruitKey, seedIds:Set<number>, cx:number, cy:number, windowUntil:number }
             const mergedClusterSweeps = [];
 
-            function sortClusterByFirstTouch(cluster) {
-                // Earlier firstTouchAt = earlier in the sequence. Fall back to id to stabilize.
-                return [...cluster].sort((a, b) => {
-                    const ta = (a.plugin && a.plugin.firstTouchAt) ? a.plugin.firstTouchAt : Number.POSITIVE_INFINITY;
-                    const tb = (b.plugin && b.plugin.firstTouchAt) ? b.plugin.firstTouchAt : Number.POSITIVE_INFINITY;
-                    if (ta !== tb) return ta - tb;
-                    return a.id - b.id;
-                });
-            }
-
-            function stageExplosionCluster(cluster, bodies, fruitKey) {
-                cluster = (cluster || []).filter(b => b && isFruitBody(b) && !removedIds.has(b.id) && !explodedIds.has(b.id));
-                if (cluster.length < 2) return;
-
-                // Use the same scoring + shockwave rules as explodeCluster(), but do removals sequentially.
-                const t = nowMs();
-                resetComboIfExpired(t);
-                beginComboWindow(t);
-
-                // Reward: in Explosion mode, reaching a 4-combo spawns a diamond.
-                // (We compute the spawn position slightly later once cx/cy are known.)
-
-                const fruit = fruitByKey.get(fruitKey);
-                if (!fruit) return;
-
-                // Immediately mark as exploded so nothing can re-queue while we stage.
-                // NOTE: We deliberately *do not* clear armed state here; each fruit should
-                // remain flashing until its own staged detonation step.
-                for (const b of cluster) {
-                    explodedIds.add(b.id);
-                }
-
-                // Center of mass (approx), consistent with explodeCluster().
-                let cx = 0;
-                let cy = 0;
-                for (const b of cluster) {
-                    cx += b.position.x;
-                    cy += b.position.y;
-                }
-                cx /= cluster.length;
-                cy /= cluster.length;
-
-                maybeAwardComboDiamond(cx, cy, fruitKey, cluster);
-
-                // Track the exploded fruit for tier-based spawning unlock.
-                maybeAdvanceMergeUnlockForFruitKey(fruitKey);
-                currentFruit = clampQueuedFruitToUnlockedPool(currentFruit);
-                nextFruit = clampQueuedFruitToUnlockedPool(nextFruit);
-
-                const minFruitR = FRUITS[0]?.radius ?? 14;
-                const maxFruitR = FRUITS[FRUITS.length - 1]?.radius ?? 58;
-                const srcSizeP = clamp01((fruit.radius - minFruitR) / Math.max(1, (maxFruitR - minFruitR)));
-
-                // Base intensity scales with fruit size. Larger clusters get a modest bump.
-                let intensity = 0.35 + 0.75 * srcSizeP;
-                intensity *= Math.min(2.35, 1 + 0.18 * (cluster.length - 2));
-
-                // Score uses the same formula as explodeCluster.
-                const groupMult = 2 * (cluster.length - 1);
-                const base = basePointsForFruit(fruit.key);
-                const comboMult = comboMultiplier(comboCount);
-                const awarded = base * groupMult * comboMult;
-                score += awarded;
-                updateHud();
-
-                // Effects.
-                shake = Math.min(14, shake + 2.6 + intensity * 6.2);
-                audio.pop(intensity);
-                haptic('pop', intensity);
-                spawnBurst(cx, cy, fruit, intensity);
-                spawnScorePop(cx, cy, awarded, fruit, comboMult * groupMult);
-
-                // Sequential removals in first-touch order.
-                const ordered = sortClusterByFirstTouch(cluster);
-                const t0 = nowMs();
-                for (let i = 0; i < ordered.length; i++) {
-                    const b = ordered[i];
-                    // Ensure every fruit in the cluster is armed for the full staged window.
-                    // This makes them keep flashing until they individually pop.
-                    markArmedWithFuse(b, t0 + i * DETONATION_STEP_MS, DETONATION_STEP_MS);
-                    stagedDetonations.push({
-                        dueAt: t0 + i * DETONATION_STEP_MS,
-                        body: b,
-                        bodyId: b.id,
-                        fruitKey,
-                    });
-                }
-
-                // Final sweep: after the last scheduled pop, re-check for any remaining touching bodies
-                // of the same fruit that are part of the same connected component and force-pop them.
-                // This protects against the "5th fruit survives" edge case.
-                {
-                    const seedIds = new Set();
-                    for (const b of ordered) seedIds.add(b.id);
-                    stagedClusterSweeps.push({
-                        dueAt: t0 + ordered.length * DETONATION_STEP_MS + 40,
-                        fruitKey,
-                        seedIds,
-                        cx,
-                        cy,
-                    });
-                }
-
-                // Shockwave (copy of explodeCluster's logic, applied once per cluster).
-                {
-                    const list = bodies || Composite.allBodies(world);
-
-                    const isWatermelon = fruit.key === 'watermelon';
-                    // Watermelon should be rare and feel like a screen-clearing blast.
-                    const specialBoost = isWatermelon ? 6.5 : 1;
-
-                    const shockRadius = Math.max(190, fruit.radius * (3.6 + 2.8 * srcSizeP) + 120) * (isWatermelon ? 1.35 : 1);
-                    // Requirement: strength multiplier = 2*(n-1) => 2→4x, 3→6x, 4→8x (cap at 4).
-                    const groupMult = 2 * (Math.min(4, cluster.length) - 1);
-                    const BLAST_STRENGTH = 8 * (groupMult / 4);
-                    const baseAccel = ((0.008 + 0.030 * srcSizeP) * (0.90 + 0.50 * intensity)) * specialBoost * BLAST_STRENGTH * EXPLOSION_FORCE_MULT;
-                    const forceFxMult = (fruit.key === 'diamond') ? 6.0 : 3.0;
-                    const maxAccel = baseAccel * forceFxMult;
-
-                    for (const b of list) {
-                        if (!isFruitBody(b)) continue;
-                        if (removedIds.has(b.id)) continue;
-
-                        const br = Math.max(1, b.circleRadius || 0);
-                        const sizeResponse = Math.max(0.30, Math.min(1.35, Math.pow(28 / br, 0.88)));
-
-                        const srcR = Math.max(1, fruit.radius || 0);
-                        const sizeRatio = srcR / br;
-                        const smallerThanSource = Math.max(0, Math.min(1, (srcR - br) / srcR));
-                        const smallerBoostCap = isWatermelon ? 12.0 : 5.2;
-                        const smallerBoost = 1 + (Math.min(smallerBoostCap, Math.pow(sizeRatio, 1.4)) - 1) * smallerThanSource;
-
-                        const dx = b.position.x - cx;
-                        const dy = b.position.y - cy;
-                        const d = Math.hypot(dx, dy);
-
-                        const influence = shockRadius + (b.circleRadius || 0) * 0.75;
-                        if (d <= 0.0001 || d > influence) continue;
-
-                        const falloff = 1 - (d / influence);
-                        const a = maxAccel * falloff * falloff * sizeResponse * smallerBoost;
-
-                        const invD = 1 / d;
-                        let nx = dx * invD;
-                        let ny = dy * invD;
-                        const nLen = Math.hypot(nx, ny) || 1;
-                        nx /= nLen;
-                        ny /= nLen;
-
-                        const forceMag = a * b.mass;
-                        Sleeping.set(b, false);
-                        Body.applyForce(b, b.position, { x: nx * forceMag, y: ny * forceMag });
-
-                        // Extra chaos for watermelon: add a small random sideways/jitter impulse.
-                        if (isWatermelon) {
-                            const jx = (Math.random() - 0.5);
-                            const jy = (Math.random() - 0.5);
-                            const jLen = Math.hypot(jx, jy) || 1;
-                            const jScale = (0.16 + 0.22 * falloff) * b.mass * a;
-                            Body.applyForce(b, b.position, { x: (jx / jLen) * jScale, y: (jy / jLen) * jScale });
-                        }
-
-                        Body.setAngularVelocity(b, (b.angularVelocity || 0) + (Math.random() - 0.5) * 0.03 * falloff * intensity * sizeResponse);
-                    }
-                }
-
-                // Particles burst for the cluster.
-                const sizeMul = 0.95 + clamp01(intensity) * 0.65;
-                spawnParticles(cx, cy, fruit.accent, 18 + Math.floor(intensity * 32), 0.95 + intensity * 2.7, sizeMul);
-                spawnParticles(cx, cy, 'rgba(255,255,255,0.85)', 9 + Math.floor(intensity * 14), 0.75 + intensity * 2.2, sizeMul);
-            }
-
             function desiredFuseMsForClusterSize(n) {
                 const size = Math.max(2, n || 2);
-                return EXPLODE_FUSE_MS + (size - 2) * EXTRA_MATCH_FUSE_PER_FRUIT_MS;
-            }
-
-            function markArmed(body, untilMs) {
-                if (!body || !isFruitBody(body)) return;
-                if (!body.plugin) body.plugin = {};
-                body.plugin.armedUntil = Math.max(body.plugin.armedUntil || 0, untilMs || 0);
-                body.plugin.lastActivityAt = nowMs();
+                return MATCH_FUSE_MS + (size - 2) * EXTRA_MATCH_FUSE_PER_FRUIT_MS;
             }
 
             function markArmedWithFuse(body, untilMs, fuseMs) {
@@ -2462,14 +2181,7 @@
                 const tNow = nowMs();
                 const list = bodies || Composite.allBodies(world);
 
-                // If an armed fruit stays overdue too long without a valid partner,
-                // we still must resolve it (never let flashing get "stuck").
-                // After this grace window, force-clear the body even if solo:
-                // - Merge mode: pop it (remove only; no merge result because no partner).
-                // - Explosion mode: explode it as a 1-item cluster for a consistent feel.
-                const OVERDUE_GRACE_MS = 650;
                 const FORCE_CLEAR_MAX_AGE_MS = 2200;
-                const MERGE_OVERDUE_EXTRA_RADIUS = 170;
 
                 // Bound work per frame.
                 let resolved = 0;
@@ -2487,25 +2199,11 @@
                     // force-resolve it no matter what (prevents "flashing forever").
                     if (overdueAge > FORCE_CLEAR_MAX_AGE_MS) {
                         b.plugin._overdueSince = 0;
-                        // A separated match must not delete, merge, or detonate the fruit.
+                        // A separated match must not remove or merge the fruit.
                         clearArmed(b);
                         resolved++;
                         continue;
                     }
-
-                    // IMPORTANT: `explodedIds` is used both for (a) bodies already fully handled
-                    // and (b) bodies that were staged for sequential popping.
-                    // Some edge cases can leave a staged body armed but without a scheduled
-                    // detonation step. If it's overdue, don't skip it — force-clear it.
-                    if (explodedIds.has(b.id) && gameMode === GAME_MODES.EXPLODE) {
-                        // If it's still physically present but overdue, it should be removed now.
-                        clearArmed(b);
-                        removedIds.add(b.id);
-                        removeBodyFromWorld(b);
-                        resolved++;
-                        continue;
-                    }
-                    if (explodedIds.has(b.id)) continue; // merge-mode or already handled elsewhere
 
                     const fk = b.plugin?.fruitKey;
                     if (!fk) continue;
@@ -2526,34 +2224,29 @@
                         continue;
                     }
 
-                    if (gameMode === GAME_MODES.MERGE) {
-                        mergeCluster(cluster, list);
-                    } else {
-                        stageExplosionCluster(cluster, list, fk);
-                    }
+                    mergeCluster(cluster, list);
                     resolved++;
                 }
             }
 
-            function releaseSeparatedExplosionFuses(bodies) {
+            function releaseSeparatedMatchFuses(bodies) {
                 const list = bodies || Composite.allBodies(world);
                 for (const b of list) {
-                    if (!isFruitBody(b) || removedIds.has(b.id) || explodedIds.has(b.id)) continue;
+                    if (!isFruitBody(b) || removedIds.has(b.id)) continue;
                     if (!((b.plugin?.armedUntil || 0) > 0)) continue;
                     if (findTouchingCluster(b, b, b.plugin.fruitKey, list).length >= 2) continue;
                     clearArmed(b);
                     b.plugin._overdueSince = 0;
                 }
-                for (let i = explodeQueue.length - 1; i >= 0; i--) {
-                    const item = explodeQueue[i];
-                    if (explodedIds.has(item.aId) || explodedIds.has(item.bId)) continue;
+                for (let i = matchQueue.length - 1; i >= 0; i--) {
+                    const item = matchQueue[i];
                     const stillArmed = (id) => {
                         const body = Composite.get(world, id, 'body');
-                        return body && !removedIds.has(body.id) && !explodedIds.has(body.id) && (body.plugin?.armedUntil || 0) > nowMs();
+                        return body && !removedIds.has(body.id) && (body.plugin?.armedUntil || 0) > 0;
                     };
                     if (stillArmed(item.aId) || stillArmed(item.bId)) continue;
                     scheduledPairs.delete(pairKey(item.aId, item.bId));
-                    explodeQueue.splice(i, 1);
+                    matchQueue.splice(i, 1);
                 }
             }
 
@@ -2563,10 +2256,8 @@
                 return `${lo}|${hi}`;
             }
 
-            function queueExplosion(bodyA, bodyB) {
+            function queueMatch(bodyA, bodyB) {
                 if (!bodyA || !bodyB) return;
-                // explodedIds may include bodies that are staged to pop but not removed yet.
-                // Only block scheduling for bodies that are actually gone.
                 if (removedIds.has(bodyA.id) || removedIds.has(bodyB.id)) return;
 
                 const aKey = bodyA.plugin?.fruitKey;
@@ -2576,23 +2267,18 @@
                 if (aKey === 'dried_cherry') return;
                 if (!assertKnownFruitKey(aKey)) return;
 
-                // Track first-touch time for sequencing (Explosion mode uses this).
-                const t0 = nowMs();
-                if (bodyA.plugin && !bodyA.plugin.firstTouchAt) bodyA.plugin.firstTouchAt = t0;
-                if (bodyB.plugin && !bodyB.plugin.firstTouchAt) bodyB.plugin.firstTouchAt = t0;
-
                 const pk = pairKey(bodyA.id, bodyB.id);
                 if (scheduledPairs.has(pk)) return;
                 scheduledPairs.add(pk);
 
                 const groupKey = `k:${aKey}|${pk}`;
                 const queuedAt = nowMs();
-                const fuseMs = EXPLODE_FUSE_MS;
+                const fuseMs = MATCH_FUSE_MS;
                 const until = queuedAt + fuseMs;
-                markArmedWithFuse(bodyA, until, EXPLODE_FUSE_MS);
-                markArmedWithFuse(bodyB, until, EXPLODE_FUSE_MS);
+                markArmedWithFuse(bodyA, until, MATCH_FUSE_MS);
+                markArmedWithFuse(bodyB, until, MATCH_FUSE_MS);
 
-                explodeQueue.push({
+                matchQueue.push({
                     aId: bodyA.id,
                     bId: bodyB.id,
                     fruitKey: aKey,
@@ -2618,9 +2304,9 @@
                     showToast(`${dstFruit.name} created! Next: ${FRUITS[Math.min(8, createdIndex + 1)].name}`, 2200);
                 }
 
-                // Special: diamond + diamond => mega-explosion that throws everything.
+                // Two diamonds trigger the existing shockwave.
                 if (srcFruit.key === 'diamond') {
-                    megaDiamondExplosion(cluster, bodies);
+                    diamondShockwave(cluster, bodies);
                     return;
                 }
 
@@ -2659,7 +2345,6 @@
 
                 // Remove originals.
                 for (const b of cluster) {
-                    explodedIds.add(b.id);
                     removedIds.add(b.id);
                     if (b && b.plugin) b.plugin.armedUntil = 0;
                 }
@@ -2688,7 +2373,7 @@
                 spawnParticles(cx, cy, dstFruit.accent, 16 + Math.floor(8 * mergeMult), 1.15 + 0.25 * mergeMult, 1.1);
             }
 
-            function megaDiamondExplosion(cluster, bodies) {
+            function diamondShockwave(cluster, bodies) {
                 if (!cluster || cluster.length < 2) return;
 
                 // Center of mass.
@@ -2719,7 +2404,6 @@
 
                 // Remove the diamonds that merged.
                 for (const b of cluster) {
-                    explodedIds.add(b.id);
                     removedIds.add(b.id);
                     if (b && b.plugin) b.plugin.armedUntil = 0;
                 }
@@ -2729,23 +2413,21 @@
                 // Shockwave: bigger than watermelon.
                 const list = bodies || Composite.allBodies(world);
                 const shockRadius = 720;
-                const maxAccel = 0.22 * EXPLOSION_FORCE_MULT;
+                const maxAccel = 0.22 * SHOCKWAVE_FORCE_MULT;
 
                 // Guarantee: throw *all* fruit out of the bowl.
                 // We apply an immediate upward impulse plus an outward (left/right) impulse.
-                // Then we still apply the existing radial shockwave so it looks/feels explosive.
+                // Apply the radial shockwave as well.
                 diamondEjectUntilMs = nowMs() + DIAMOND_EJECT_WINDOW_MS;
                 const w = viewW || window.innerWidth;
                 const centerX = playfield.centerX || (w * 0.5);
                 const topY = (playfield.top || 0);
-                const baseUpAccel = 0.165 * EXPLOSION_FORCE_MULT;
-                const baseSideAccel = 0.095 * EXPLOSION_FORCE_MULT;
+                const baseUpAccel = 0.165 * SHOCKWAVE_FORCE_MULT;
+                const baseSideAccel = 0.095 * SHOCKWAVE_FORCE_MULT;
 
                 for (const b of list) {
                     if (!isFruitBody(b)) continue;
                     if (removedIds.has(b.id)) continue;
-                    // explodedIds may include fruits staged to pop; they still exist in-world until removed.
-                    // Only skip bodies that are actually removed.
 
                     // Ejection impulse (applies to all fruit, regardless of radius).
                     {
@@ -2797,7 +2479,7 @@
             }
 
             function checkWinCondition(bodies) {
-                if (gameMode !== GAME_MODES.MERGE || winCelebrated || !running) return false;
+                if (winCelebrated || !running) return false;
                 if (diamondsCreated < DIAMOND_WIN_COUNT) return false;
 
                 winCelebrated = true;
@@ -2903,145 +2585,6 @@
                 return queue;
             }
 
-            function explodeCluster(cluster, bodies) {
-                cluster = (cluster || []).filter(b => b && isFruitBody(b) && !removedIds.has(b.id) && !explodedIds.has(b.id));
-                if (cluster.length < 2) return;
-
-                const t = nowMs();
-                resetComboIfExpired(t);
-                beginComboWindow(t);
-
-                const fruitKey = cluster[0]?.plugin?.fruitKey;
-                const fruit = fruitByKey.get(fruitKey);
-                if (!fruit) return;
-
-                // Center of mass (approx).
-                let cx = 0;
-                let cy = 0;
-                for (const b of cluster) {
-                    cx += b.position.x;
-                    cy += b.position.y;
-                }
-                cx /= cluster.length;
-                cy /= cluster.length;
-
-                // Reward: one diamond for the whole watermelon blast, never one per melon.
-                maybeAwardComboDiamond(cx, cy, fruitKey, cluster);
-
-                const minFruitR = FRUITS[0]?.radius ?? 14;
-                const maxFruitR = FRUITS[FRUITS.length - 1]?.radius ?? 58;
-                const srcSizeP = clamp01((fruit.radius - minFruitR) / Math.max(1, (maxFruitR - minFruitR)));
-
-                // Base intensity scales with fruit size. Larger clusters get a modest bump.
-                let intensity = 0.35 + 0.75 * srcSizeP;
-                intensity *= Math.min(2.35, 1 + 0.18 * (cluster.length - 2));
-
-                // Score: match the requested rule:
-                // 2 fruit => base * 2
-                // 3 fruit => (base*2) * 2
-                // 4 fruit => (base*2) * 3
-                // ... => base * 2 * (n - 1)
-                const groupMult = 2 * (cluster.length - 1);
-                const base = basePointsForFruit(fruit.key);
-                const comboMult = comboMultiplier(comboCount);
-                const awarded = base * groupMult * comboMult;
-                score += awarded;
-
-                // Effects.
-                shake = Math.min(14, shake + 2.6 + intensity * 6.2);
-                audio.pop(intensity);
-                haptic('pop', intensity);
-
-                spawnBurst(cx, cy, fruit, intensity);
-                spawnScorePop(cx, cy, awarded, fruit, comboMult * groupMult);
-
-                // In Explosion mode, detonating 2+ diamonds removes them and counts toward the win.
-                if (gameMode === GAME_MODES.EXPLODE && fruit.key === 'diamond' && cluster.length >= 2) {
-                    diamondsCreated += cluster.length;
-                }
-
-                // Mark & remove.
-                for (const b of cluster) {
-                    explodedIds.add(b.id);
-                    removedIds.add(b.id);
-                    if (b && b.plugin) b.plugin.armedUntil = 0;
-                }
-
-                for (const b of cluster) removeBodyFromWorld(b);
-
-                // Shockwave.
-                {
-                    const list = bodies || Composite.allBodies(world);
-
-                    const isWatermelon = fruit.key === 'watermelon';
-                    // Watermelon should be rare and feel like a screen-clearing blast.
-                    const specialBoost = isWatermelon ? 6.5 : 1;
-
-                    const shockRadius = Math.max(190, fruit.radius * (3.6 + 2.8 * srcSizeP) + 120) * (isWatermelon ? 1.35 : 1);
-                    // Shockwave strength scales with match size.
-                    // Requirement: strength multiplier = 2*(n-1) => 2→4x, 3→6x, 4→8x (cap at 4).
-                    const groupMult = 2 * (Math.min(4, cluster.length) - 1);
-                    // keepFruitInPlayfield() already caps velocity to avoid tunneling.
-                    const BLAST_STRENGTH = 8 * (groupMult / 4);
-                    const baseAccel = ((0.008 + 0.030 * srcSizeP) * (0.90 + 0.50 * intensity)) * specialBoost * BLAST_STRENGTH * EXPLOSION_FORCE_MULT;
-                    const forceFxMult = (fruit.key === 'diamond') ? 6.0 : 3.0;
-                    const maxAccel = baseAccel * forceFxMult;
-
-                    for (const b of list) {
-                        if (!isFruitBody(b)) continue;
-                        if (removedIds.has(b.id)) continue;
-
-                        const br = Math.max(1, b.circleRadius || 0);
-                        const sizeResponse = Math.max(0.30, Math.min(1.35, Math.pow(28 / br, 0.88)));
-
-                        const srcR = Math.max(1, fruit.radius || 0);
-                        const sizeRatio = srcR / br;
-                        const smallerThanSource = Math.max(0, Math.min(1, (srcR - br) / srcR));
-                        const smallerBoostCap = isWatermelon ? 12.0 : 5.2;
-                        const smallerBoost = 1 + (Math.min(smallerBoostCap, Math.pow(sizeRatio, 1.4)) - 1) * smallerThanSource;
-
-                        const dx = b.position.x - cx;
-                        const dy = b.position.y - cy;
-                        const d = Math.hypot(dx, dy);
-
-                        const influence = shockRadius + (b.circleRadius || 0) * 0.75;
-                        if (d <= 0.0001 || d > influence) continue;
-
-                        const falloff = 1 - (d / influence);
-                        const a = maxAccel * falloff * falloff * sizeResponse * smallerBoost;
-
-                        const invD = 1 / d;
-                        let nx = dx * invD;
-                        let ny = dy * invD;
-                        const nLen = Math.hypot(nx, ny) || 1;
-                        nx /= nLen;
-                        ny /= nLen;
-
-                        const forceMag = a * b.mass;
-                        Sleeping.set(b, false);
-                        Body.applyForce(b, b.position, { x: nx * forceMag, y: ny * forceMag });
-
-                        // Extra chaos for watermelon: add a small random sideways/jitter impulse.
-                        if (isWatermelon) {
-                            const jx = (Math.random() - 0.5);
-                            const jy = (Math.random() - 0.5);
-                            const jLen = Math.hypot(jx, jy) || 1;
-                            const jScale = (0.16 + 0.22 * falloff) * b.mass * a;
-                            Body.applyForce(b, b.position, { x: (jx / jLen) * jScale, y: (jy / jLen) * jScale });
-                        }
-
-                        Body.setAngularVelocity(b, (b.angularVelocity || 0) + (Math.random() - 0.5) * 0.03 * falloff * intensity * sizeResponse);
-                    }
-                }
-
-                const sizeMul = 0.95 + clamp01(intensity) * 0.65;
-                spawnParticles(cx, cy, fruit.accent, 18 + Math.floor(intensity * 32), 0.95 + intensity * 2.7, sizeMul);
-                spawnParticles(cx, cy, 'rgba(255,255,255,0.85)', 9 + Math.floor(intensity * 14), 0.75 + intensity * 2.2, sizeMul);
-
-                updateHud();
-                checkWinCondition();
-            }
-
             function isFruitBody(b) {
                 return !!(b && b.plugin && b.plugin.fruitKey);
             }
@@ -3098,15 +2641,11 @@
                 score = 0;
                 comboCount = 0;
                 comboUntil = 0;
-                explodedIds.clear();
-                explodeQueue.length = 0;
+                matchQueue.length = 0;
                 scheduledPairs.clear();
                 removedIds.clear();
-                stagedDetonations.length = 0;
-                stagedClusterSweeps.length = 0;
                 mergedClusterSweeps.length = 0;
                 diamondsCreated = 0;
-                awardedDiamondEvents.clear();
                 diamondEjectUntilMs = 0;
                 simTime = 1;
                 timeMs = 1;
@@ -3118,7 +2657,6 @@
                 bestCombo = 0;
                 dropCount = 0;
                 swapUsed = false;
-                scoreGoal = 1500;
                 runChaos = settings.chaos;
                 cancelAim();
                 input.x = 260;
@@ -3155,51 +2693,12 @@
                 resumeAudio();
                 canvas.focus({ preventScroll: true });
 
-                showToast(gameMode === GAME_MODES.MERGE
-                    ? 'Drop these two cherries together to grow a grape.'
-                    : 'Drop these two cherries together for your first pop.', 4000);
+                const intro = 'Drop these two cherries together to grow a grape.';
+                showToast(audio.unavailable ? `${intro} Sound unavailable; gameplay is unaffected.` : intro, 4000);
                 updateHud();
 
-                audio.playTune(gameMode);
+                audio.playTune();
             }
-
-            function updateModeButtons() {
-                if (btnModeExplode) btnModeExplode.setAttribute('aria-pressed', String(gameMode === GAME_MODES.EXPLODE));
-                if (btnModeMerge) btnModeMerge.setAttribute('aria-pressed', String(gameMode === GAME_MODES.MERGE));
-                if (diamondRowEl) diamondRowEl.hidden = gameMode !== GAME_MODES.MERGE;
-                $('#modeNote').textContent = gameMode === GAME_MODES.MERGE
-                    ? 'Grow matching fruit into bigger fruit. Your first diamond is the goal.'
-                    : 'Pop matching fruit. Set up groups and chain matches to beat your best.';
-            }
-
-            function setMode(v) {
-                const next = (v === GAME_MODES.MERGE) ? GAME_MODES.MERGE : GAME_MODES.EXPLODE;
-                if (gameMode === next) {
-                    updateModeButtons();
-                    return;
-                }
-                savePendingScore();
-                if (running) {
-                    endGame();
-                    savePendingScore();
-                }
-                gameMode = next;
-                saveMode(gameMode);
-                updateModeButtons();
-                showToast(gameMode === GAME_MODES.MERGE ? 'Mode: Fruit Merge' : 'Mode: Fruit Explosion');
-                runChaos = settings.chaos;
-                hasRun = false;
-                $('#fp-name-entry')?.remove();
-                $('#runSummary').textContent = '';
-                $('#goHsRow').style.display = 'none';
-                setModal(true, 'Choose your next run', $('#modeNote').textContent);
-            }
-
-            // Mode switching (Explosion vs Merge)
-            gameMode = loadSavedMode();
-            updateModeButtons();
-            if (btnModeExplode) btnModeExplode.addEventListener('click', () => setMode(GAME_MODES.EXPLODE));
-            if (btnModeMerge) btnModeMerge.addEventListener('click', () => setMode(GAME_MODES.MERGE));
 
             function endGame() {
                 running = false;
@@ -3221,7 +2720,7 @@
 
                 setModal(true, 'Bowl full', 'Settled fruit stayed above the line for 3 seconds.');
                 modalBody.innerHTML = bodyHtml;
-                $('#runSummary').textContent = `The pile stayed above the line. ${dropCount} drops | Best chain: ${bestCombo} | ${gameMode === GAME_MODES.MERGE ? `Largest made: ${FRUITS[largestCreated].name}` : `Next target: ${scoreGoal.toLocaleString()}`}. Try leaving space for your next fruit.`;
+                $('#runSummary').textContent = `The pile stayed above the line. ${dropCount} drops | Best chain: ${bestCombo} | Largest made: ${FRUITS[largestCreated].name}. Try leaving space for your next fruit.`;
                 $('#menuOptions').hidden = false;
                 $('#btnPlay').textContent = 'Play again';
                 if (infoBodyEl) infoBodyEl.style.display = 'none';
@@ -3450,7 +2949,7 @@
 
                 const armedUntil = b.plugin?.armedUntil || 0;
                 const isArmed = armedUntil > timeMs;
-                const denom = Math.max(1, (b.plugin?._armedFuseMs || EXPLODE_FUSE_MS));
+                const denom = Math.max(1, (b.plugin?._armedFuseMs || MATCH_FUSE_MS));
                 const armedPhase = isArmed ? Math.min(1, Math.max(0, (armedUntil - timeMs) / denom)) : 0;
                 const pulse = isArmed ? (0.5 + 0.5 * Math.sin(timeMs * 0.028)) : 0;
                 const shakeP = isArmed ? (0.7 + 1.8 * (1 - armedPhase)) : 0;
@@ -3461,7 +2960,7 @@
                 ctx.translate(x + sx, y + sy);
                 ctx.rotate(a);
 
-                // "Armed" indicator: pulsing ring while waiting to pop.
+                // "Armed" indicator: pulsing ring while waiting to merge.
                 if (isArmed) {
                     ctx.save();
                     ctx.globalAlpha = 0.35 + 0.35 * pulse;
@@ -3909,7 +3408,6 @@
 
                             // Remove the old body
                             removedIds.add(b.id);
-                            explodedIds.add(b.id);
                             removeBodyFromWorld(b);
 
                             if (idx === 0) {
@@ -3968,95 +3466,12 @@
 
             function simulateStep(t) {
                 if (running) {
-                    // Process staged detonations (Explosion mode sequencing).
-                    if (stagedDetonations.length) {
-                        // Keep stable due ordering.
-                        stagedDetonations.sort((a, b) => a.dueAt - b.dueAt);
-                        while (stagedDetonations.length && stagedDetonations[0].dueAt <= nowMs()) {
-                            const step = stagedDetonations.shift();
-                            // Prefer the captured body reference; fall back to lookup by id.
-                            const body = (step.body && !removedIds.has(step.body.id))
-                                ? step.body
-                                : Composite.get(world, step.bodyId, 'body');
-                            if (!body) continue;
-                            // removedIds is a global set tracking bodies already removed.
-                            if (removedIds.has(body.id)) continue;
-
-                            // Clear flashing now that this fruit is actually popping.
-                            clearArmed(body);
-
-                            // Mark as removed even if removal throws; prevents later logic from treating it
-                            // as a valid target and leaving it behind.
-                            removedIds.add(body.id);
-                            removeBodyFromWorld(body);
-                        }
-                    }
-
-                    // Process staged cluster sweeps (Explosion mode reliability).
-                    if (stagedClusterSweeps.length) {
-                        stagedClusterSweeps.sort((a, b) => a.dueAt - b.dueAt);
-                        while (stagedClusterSweeps.length && stagedClusterSweeps[0].dueAt <= nowMs()) {
-                            const sweep = stagedClusterSweeps.shift();
-                            if (!sweep) continue;
-                            if (gameMode !== GAME_MODES.EXPLODE) continue;
-
-                            let forced = 0;
-                            const forcedIds = [];
-
-                            // 1) Always force-remove any staged ids still present, regardless of touching.
-                            for (const id of sweep.seedIds) {
-                                const b = Composite.get(world, id, 'body');
-                                if (!b || !isFruitBody(b)) continue;
-                                if (removedIds.has(b.id)) continue;
-                                if (b.plugin?.fruitKey !== sweep.fruitKey) continue;
-                                if (!explodedIds.has(b.id)) explodedIds.add(b.id);
-                                clearArmed(b);
-                                removedIds.add(b.id);
-                                removeBodyFromWorld(b);
-                                forced++;
-                                forcedIds.push(b.id);
-                            }
-
-                            // 2) Optional extra: if there are still same-fruit bodies touching near the
-                            // original centroid, remove them too (helps with edge cluster growth).
-                            const bodiesNow = Composite.allBodies(world);
-                            let seed = null;
-                            for (const b of bodiesNow) {
-                                if (!isFruitBody(b)) continue;
-                                if (removedIds.has(b.id)) continue;
-                                if (b.plugin?.fruitKey !== sweep.fruitKey) continue;
-                                const dx = (b.position.x || 0) - (sweep.cx || 0);
-                                const dy = (b.position.y || 0) - (sweep.cy || 0);
-                                if (dx * dx + dy * dy <= 140 * 140) {
-                                    seed = b;
-                                    break;
-                                }
-                            }
-                            if (seed) {
-                                const cluster2 = findTouchingCluster(seed, seed, sweep.fruitKey, bodiesNow);
-                                for (const b of cluster2) {
-                                    if (!b || removedIds.has(b.id)) continue;
-                                    if (b.plugin?.fruitKey !== sweep.fruitKey) continue;
-                                    if (!explodedIds.has(b.id)) explodedIds.add(b.id);
-                                    clearArmed(b);
-                                    removedIds.add(b.id);
-                                    removeBodyFromWorld(b);
-                                    forced++;
-                                    forcedIds.push(b.id);
-                                }
-                            }
-
-                            // Intentionally no logging here; keep runtime quiet.
-                        }
-                    }
-
                     // Process merge cluster sweeps (Merge mode reliability).
                     if (mergedClusterSweeps.length) {
                         mergedClusterSweeps.sort((a, b) => a.dueAt - b.dueAt);
                         while (mergedClusterSweeps.length && mergedClusterSweeps[0].dueAt <= nowMs()) {
                             const sweep = mergedClusterSweeps.shift();
                             if (!sweep) continue;
-                            if (gameMode !== GAME_MODES.MERGE) continue;
 
                             // 1) Force-remove any original cluster ids still present.
                             for (const id of sweep.seedIds) {
@@ -4066,7 +3481,6 @@
                                 if (!removedIds.has(b.id)) {
                                     clearArmed(b);
                                     removedIds.add(b.id);
-                                    explodedIds.add(b.id);
                                     removeBodyFromWorld(b);
                                 }
                             }
@@ -4119,13 +3533,10 @@
                     // Snapshot bodies once per tick; avoids repeated deep traversals.
                     const bodies = Composite.allBodies(world);
 
-                    // Explosion fuses survive only while matching fruit keep touching.
-                    releaseSeparatedExplosionFuses(bodies);
+                    // Fuses survive only while matching fruit keep touching.
+                    releaseSeparatedMatchFuses(bodies);
 
-                    // Enforce flashing contract: overdue armed fruit must resolve.
-                    resolveOverdueArmedBodies(bodies);
-
-                    // Safety: if the drop-gate body was removed (exploded) before it
+                    // Safety: if the drop-gate body was removed before it
                     // collided with anything, the gate would stay locked forever.
                     if (dropGate.awaitingImpact && dropGate.body) {
                         if (removedIds.has(dropGate.body.id) || !Composite.get(world, dropGate.body.id, 'body')) {
@@ -4145,28 +3556,27 @@
                     applyCenterBias(bodies);
                     keepFruitInPlayfield(bodies);
 
-                    // Process queued explosions.
-                    if (explodeQueue.length) {
+                    // Process queued matches.
+                    if (matchQueue.length) {
                         // Avoid shift() (O(n^2)) which can cause freezes as the queue grows.
-                        // Also cap the amount of explosion work per frame to prevent long frames.
-                        const MAX_EXPLOSIONS_PER_TICK = 12;
+                        // Cap match work per frame to prevent long frames.
+                        const MAX_MATCHES_PER_TICK = 12;
                         const now = nowMs();
                         // Merge mode: avoid resolving multiple queued pairs for the *same connected component* in a single frame.
                         // Throttling only by fruitKey can still leave certain mid-tier fruits (like peach) in a weird state
                         // where a 3+ cluster never fully resolves.
                         const mergedClusterRootsThisTick = new Set();
-                        const explodedClusterRootsThisTick = new Set();
                         let processed = 0;
-                        for (let i = 0; i < explodeQueue.length && processed < MAX_EXPLOSIONS_PER_TICK;) {
-                            const item = explodeQueue[i];
+                        for (let i = 0; i < matchQueue.length && processed < MAX_MATCHES_PER_TICK;) {
+                            const item = matchQueue[i];
                             if (!item || item.at > now) {
                                 i++;
                                 continue;
                             }
 
                             // Remove this item (swap-remove).
-                            explodeQueue[i] = explodeQueue[explodeQueue.length - 1];
-                            explodeQueue.pop();
+                            matchQueue[i] = matchQueue[matchQueue.length - 1];
+                            matchQueue.pop();
                             processed++;
 
                             const pk = pairKey(item.aId, item.bId);
@@ -4177,16 +3587,12 @@
                             // flashing forever.
                             const clearArmedById = (id) => {
                                 const body = Composite.get(world, id, 'body');
-                                // If this body is staged for explosion, it should remain flashing until its step.
                                 if (!body) return;
                                 // If still legitimately armed, do not clear (prevents “flashing stops” survivors).
                                 if ((body.plugin?.armedUntil || 0) > nowMs()) return;
-                                if (!explodedIds.has(id)) clearArmed(body);
+                                if (!removedIds.has(id)) clearArmed(body);
                             };
 
-                            // explodedIds is used as a general "already handled" marker.
-                            // In Explosion mode, staged detonations mark bodies as explodedIds before removal.
-                            // For merge/explosion scheduling, only treat the pair as invalid if bodies are *actually removed*.
                             if (removedIds.has(item.aId) || removedIds.has(item.bId)) {
                                 clearArmedById(item.aId);
                                 clearArmedById(item.bId);
@@ -4196,7 +3602,7 @@
                             const aInWorld = Composite.get(world, item.aId, 'body');
                             const bInWorld = Composite.get(world, item.bId, 'body');
                             if (!aInWorld || !bInWorld) {
-                                // One or both bodies got removed before detonation.
+                                // One or both bodies were removed before the match resolved.
                                 if (aInWorld) clearArmed(aInWorld); else clearArmedById(item.aId);
                                 if (bInWorld) clearArmed(bInWorld); else clearArmedById(item.bId);
                                 continue;
@@ -4209,20 +3615,19 @@
                                 continue;
                             }
 
-                            // Seeds are included even after they bounce apart. Both modes resolve
-                            // only the fruit that are still physically connected.
+                            // Resolve only fruit that are still physically connected.
                             const fromA = findTouchingCluster(aInWorld, aInWorld, item.fruitKey, bodies);
                             const fromB = findTouchingCluster(bInWorld, bInWorld, item.fruitKey, bodies);
                             let cluster = fromA.length >= fromB.length ? fromA : fromB;
                             if (cluster.length >= 2) {
-                                // Dynamic fuse: base 3s + 1s per extra fruit.
+                                // Extend the fuse by 0.25s per additional fruit.
                                 // If the cluster has grown since the event was queued,
-                                // extend the detonation time so bigger clusters "cook" longer.
+                                // extend the resolution time for larger clusters.
                                 const desiredFuse = desiredFuseMsForClusterSize(cluster.length);
                                 // Extend deterministically from the original schedule baseline.
                                 // This prevents a "sliding" fuse that can cause partial merges (e.g., 2 merge, 3rd stops flashing).
-                                const baseQueuedAt = (typeof item.queuedAt === 'number') ? item.queuedAt : (item.at - (item.fuseMs || EXPLODE_FUSE_MS));
-                                const currentFuse = (typeof item.fuseMs === 'number') ? item.fuseMs : EXPLODE_FUSE_MS;
+                                const baseQueuedAt = (typeof item.queuedAt === 'number') ? item.queuedAt : (item.at - (item.fuseMs || MATCH_FUSE_MS));
+                                const currentFuse = (typeof item.fuseMs === 'number') ? item.fuseMs : MATCH_FUSE_MS;
                                 const extraNeeded = Math.max(0, desiredFuse - currentFuse);
                                 const desiredAt = (baseQueuedAt + currentFuse) + extraNeeded;
 
@@ -4235,90 +3640,68 @@
                                     for (const b of cluster) markArmedWithFuse(b, desiredAt, desiredFuse);
                                     // Keep this pair "scheduled" while it's waiting.
                                     scheduledPairs.add(pk);
-                                    // Put this item back by skipping processing it now (it remains in explodeQueue).
+                                    // Put this item back by skipping processing it now (it remains in matchQueue).
                                     // Since we've already removed it above, re-add it.
-                                    explodeQueue.push(item);
+                                    matchQueue.push(item);
 
                                     // Ensure we can schedule additional pairs for this cluster later.
                                     // (The original pair key was removed earlier.)
                                     continue;
                                 }
 
-                                // Treat both modes as *cluster* events once due.
+                                // Treat matches as cluster events once due.
                                 // This prevents partial resolution when multiple queued pairs refer to the same
                                 // connected component (common in 4-5 groups).
                                 let rootId = Infinity;
                                 for (const b of cluster) rootId = Math.min(rootId, b.id);
 
-                                if (gameMode === GAME_MODES.MERGE) {
-                                    // At the moment a merge becomes due, treat it as a *cluster* event.
-                                    // Multiple queued pair-items can refer to the same connected component; handling
-                                    // them as pair events can lead to starvation/requeue loops for some fruits.
+                                // At the moment a merge becomes due, treat it as a *cluster* event.
+                                // Multiple queued pair-items can refer to the same connected component; handling
+                                // them as pair events can lead to starvation/requeue loops for some fruits.
 
-                                    if (mergedClusterRootsThisTick.has(rootId)) {
-                                        // This cluster already merged this frame; any more due items for the same
-                                        // cluster are stale. We simply drop them.
-                                        continue;
-                                    }
-                                    mergedClusterRootsThisTick.add(rootId);
+                                if (mergedClusterRootsThisTick.has(rootId)) {
+                                    // This cluster already merged this frame; any more due items for the same
+                                    // cluster are stale. We simply drop them.
+                                    continue;
+                                }
+                                mergedClusterRootsThisTick.add(rootId);
 
-                                    // Seed a safety sweep for this specific due cluster.
-                                    {
-                                        const seedIds = new Set();
-                                        let cx = 0;
-                                        let cy = 0;
-                                        for (const b of cluster) {
-                                            seedIds.add(b.id);
-                                            cx += b.position.x;
-                                            cy += b.position.y;
-                                        }
-                                        cx /= cluster.length;
-                                        cy /= cluster.length;
-                                        mergedClusterSweeps.push({
-                                            dueAt: nowMs() + 55,
-                                            fruitKey: item.fruitKey,
-                                            seedIds,
-                                            cx,
-                                            cy,
-                                            windowUntil: item.at,
-                                        });
+                                // Seed a safety sweep for this specific due cluster.
+                                {
+                                    const seedIds = new Set();
+                                    let cx = 0;
+                                    let cy = 0;
+                                    for (const b of cluster) {
+                                        seedIds.add(b.id);
+                                        cx += b.position.x;
+                                        cy += b.position.y;
                                     }
+                                    cx /= cluster.length;
+                                    cy /= cluster.length;
+                                    mergedClusterSweeps.push({
+                                        dueAt: nowMs() + 55,
+                                        fruitKey: item.fruitKey,
+                                        seedIds,
+                                        cx,
+                                        cy,
+                                        windowUntil: item.at,
+                                    });
+                                }
 
-                                    mergeCluster(cluster, bodies);
+                                mergeCluster(cluster, bodies);
 
-                                    // Remove ALL queue items that reference a body in the cluster
-                                    // (including not-yet-due ones) so no stale pairs remain.
-                                    const idsInCluster = new Set();
-                                    for (const b of cluster) idsInCluster.add(b.id);
-                                    for (let j = explodeQueue.length - 1; j >= 0; j--) {
-                                        const other = explodeQueue[j];
-                                        if (!other) continue;
-                                        if (other.fruitKey !== item.fruitKey) continue;
-                                        if (!idsInCluster.has(other.aId) && !idsInCluster.has(other.bId)) continue;
-                                        try { scheduledPairs.delete(pairKey(other.aId, other.bId)); } catch { /* ignore */ }
-                                        explodeQueue[j] = explodeQueue[explodeQueue.length - 1];
-                                        explodeQueue.pop();
-                                    }
-                                } else {
-                                    if (explodedClusterRootsThisTick.has(rootId)) {
-                                        // Already exploded this cluster this frame; drop stale items.
-                                        continue;
-                                    }
-                                    explodedClusterRootsThisTick.add(rootId);
-                                    stageExplosionCluster(cluster, bodies, item.fruitKey);
-
-                                    // Remove ALL queue items for this cluster's bodies.
-                                    const idsInCluster = new Set();
-                                    for (const b of cluster) idsInCluster.add(b.id);
-                                    for (let j = explodeQueue.length - 1; j >= 0; j--) {
-                                        const other = explodeQueue[j];
-                                        if (!other) continue;
-                                        if (other.fruitKey !== item.fruitKey) continue;
-                                        if (!idsInCluster.has(other.aId) && !idsInCluster.has(other.bId)) continue;
-                                        try { scheduledPairs.delete(pairKey(other.aId, other.bId)); } catch { /* ignore */ }
-                                        explodeQueue[j] = explodeQueue[explodeQueue.length - 1];
-                                        explodeQueue.pop();
-                                    }
+                                // Remove ALL queue items that reference a body in the cluster
+                                // (including not-yet-due ones) so no stale pairs remain.
+                                const idsInCluster = new Set();
+                                for (const b of cluster) idsInCluster.add(b.id);
+                                for (let j = matchQueue.length - 1; j >= 0; j--) {
+                                    const other = matchQueue[j];
+                                    if (!other) continue;
+                                    if (other.fruitKey !== item.fruitKey) continue;
+                                    if (!idsInCluster.has(other.aId) && !idsInCluster.has(other.bId)) continue;
+                                    try { scheduledPairs.delete(pairKey(other.aId, other.bId)); } catch { /* ignore */ }
+                                    matchQueue[j] = matchQueue[matchQueue.length - 1];
+                                    matchQueue.pop();
                                 }
                             } else {
                                 clearArmed(aInWorld);
@@ -4327,11 +3710,9 @@
                         }
                     }
 
+                    // Resolve leftovers only after queued groups have extended their fuses.
+                    resolveOverdueArmedBodies(Composite.allBodies(world));
                     resetComboIfExpired(t);
-                    if (gameMode === GAME_MODES.EXPLODE && score >= scoreGoal) {
-                        showToast(`${scoreGoal.toLocaleString()} reached! Keep the chain going.`, 2200);
-                        scoreGoal = Math.ceil(score / 1500 + 1) * 1500;
-                    }
                     if (!checkWinCondition()) checkGameOver(Composite.allBodies(world));
                 }
             }
@@ -4454,7 +3835,7 @@
                     if (!isFruitBody(a) || !isFruitBody(b)) continue;
                     if (a.plugin?.flyStartedAt) scareFly(a, b);
                     if (b.plugin?.flyStartedAt) scareFly(b, a);
-                    queueExplosion(a, b);
+                    queueMatch(a, b);
                 }
             }
 
@@ -4476,8 +3857,14 @@
             function resumeAudio() {
                 if (!audio.enabled) return;
                 try {
-                    audio.ensure();
-                    if (audio.ctx.state === 'suspended') audio.ctx.resume().catch(error => console.warn('[FruitPile] Audio resume:', error));
+                    const ctx = audio.ensure();
+                    if (!ctx) return;
+                    if (ctx.state === 'suspended') {
+                        const resume = ctx.resume();
+                        if (resume && typeof resume.catch === 'function') {
+                            resume.catch(error => console.warn('[FruitPile] Audio resume:', error));
+                        }
+                    }
                 } catch (error) {
                     console.warn('[FruitPile] Audio unavailable:', error);
                     showToast('Audio unavailable. Gameplay is unaffected.');
@@ -4503,7 +3890,7 @@
                 btnNew.textContent = 'New run';
                 $('#menuOptions').hidden = false;
                 setModal(true, running ? 'Take a breather' : 'FruitPile', running
-                    ? 'Your bowl is safe. Resume when you are ready. Switching modes ends this run.'
+                    ? 'Your bowl is safe. Resume when you are ready.'
                     : 'Aim, drop, match. Same fruit touching starts a short fuse. Keep the pile below the line.');
             }
 
@@ -4826,8 +4213,8 @@
                 input.x = playfield.centerX || (viewW || window.innerWidth) * 0.5;
 
                 // Initialize fruit queue.
-                currentFruit = weightedRandomFruit();
-                nextFruit = weightedRandomFruit();
+                currentFruit = randomFruitForCurrentMode();
+                nextFruit = randomFruitForCurrentMode();
                 wind.nextAt = nowMs() + 3000 + Math.random() * 3000;
 
                 showMenu();
