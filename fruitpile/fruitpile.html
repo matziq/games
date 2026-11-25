@@ -831,6 +831,7 @@
                 ctx: null,
                 _master: null,
                 _noise: null,
+                unavailable: false,
                 _tunePlaying: false,
                 _lastHitAt: {
                     fruit: 0,
@@ -838,26 +839,38 @@
                     wall: 0
                 },
                 ensure() {
+                    if (this.unavailable) return null;
                     if (!this.ctx) {
-                        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                        this._master = this.ctx.createGain();
-                        this._master.gain.value = this.volume / 100;
-                        this._master.connect(this.ctx.destination);
+                        try {
+                            const AudioContext = window.AudioContext || window.webkitAudioContext;
+                            if (typeof AudioContext !== 'function') throw new Error('Web Audio API is not supported');
+                            const ctx = new AudioContext();
+                            const master = ctx.createGain();
+                            master.gain.value = this.volume / 100;
+                            master.connect(ctx.destination);
+                            this.ctx = ctx;
+                            this._master = master;
+                        } catch (error) {
+                            this.unavailable = true;
+                            this.enabled = false;
+                            console.warn('[FruitPile] Audio unavailable:', error);
+                            return null;
+                        }
                     }
                     return this.ctx;
                 },
                 dest() {
-                    this.ensure();
-                    return this._master;
+                    return this.ensure() ? this._master : null;
                 },
                 setVolume(v) {
                     this.volume = v;
-                    this.enabled = v > 0;
+                    this.enabled = v > 0 && !this.unavailable;
                     if (this._master) this._master.gain.value = v / 100;
                 },
                 ensureNoise() {
                     if (this._noise) return this._noise;
                     const ctx = this.ensure();
+                    if (!ctx) return null;
                     const dur = 0.35;
                     const sr = ctx.sampleRate;
                     const len = Math.max(1, Math.floor(dur * sr));
@@ -876,6 +889,7 @@
                 pop(intensity = 0.6) {
                     if (!this.enabled) return;
                     const ctx = this.ensure();
+                    if (!ctx) return;
                     const t0 = ctx.currentTime;
 
                     const osc = ctx.createOscillator();
@@ -912,6 +926,7 @@
                     this._lastHitAt[kind] = now;
 
                     const ctx = this.ensure();
+                    if (!ctx) return;
                     const t0 = ctx.currentTime;
 
                     const osc = ctx.createOscillator();
@@ -962,6 +977,7 @@
                 buzz() {
                     if (!this.enabled) return;
                     const ctx = this.ensure();
+                    if (!ctx) return;
                     const t0 = ctx.currentTime;
 
                     // Two detuned square-wave oscillators for insect buzz texture
@@ -1002,7 +1018,14 @@
 
                     // Attempt to unlock if possible; will still be blocked until user gesture.
                     if (ctx.state === 'suspended') {
-                        try { ctx.resume(); } catch { /* ignore */ }
+                        try {
+                            const resume = ctx.resume();
+                            if (resume && typeof resume.catch === 'function') {
+                                resume.catch(error => console.warn('[FruitPile] Audio resume:', error));
+                            }
+                        } catch (error) {
+                            console.warn('[FruitPile] Audio resume:', error);
+                        }
                     }
                     if (ctx.state !== 'running') return;
                     if (this._tunePlaying) return;
@@ -1052,6 +1075,7 @@
                 whoosh(dir = 1, intensity = 0.8) {
                     if (!this.enabled) return;
                     const ctx = this.ensure();
+                    if (!ctx) return;
                     const t0 = ctx.currentTime;
 
                     const src = ctx.createBufferSource();
@@ -4476,8 +4500,17 @@
             function resumeAudio() {
                 if (!audio.enabled) return;
                 try {
-                    audio.ensure();
-                    if (audio.ctx.state === 'suspended') audio.ctx.resume().catch(error => console.warn('[FruitPile] Audio resume:', error));
+                    const ctx = audio.ensure();
+                    if (!ctx) {
+                        showToast('Audio unavailable. Gameplay is unaffected.');
+                        return;
+                    }
+                    if (ctx.state === 'suspended') {
+                        const resume = ctx.resume();
+                        if (resume && typeof resume.catch === 'function') {
+                            resume.catch(error => console.warn('[FruitPile] Audio resume:', error));
+                        }
+                    }
                 } catch (error) {
                     console.warn('[FruitPile] Audio unavailable:', error);
                     showToast('Audio unavailable. Gameplay is unaffected.');

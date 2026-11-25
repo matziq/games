@@ -68,6 +68,7 @@ window.testGame = {
   end: () => endGame(),
   scores: () => getFpHighScores(),
   save: (score,name) => addFpHighScore(score,name),
+  setScore: value => { score=value; updateHud(); },
   queue: (a,b) => {currentFruit=fruitByKey.get(a);nextFruit=fruitByKey.get(b);updateHud();},
   idleFruit: () => { const b=fruitBodyAt(260,600,fruitByKey.get('apple')); b.plugin.lastActivityAt=-20000; World.add(world,b); },
   seedRandom: () => {let s=42;Math.random=()=>((s=Math.imul(s,1664525)+1013904223>>>0)/4294967296);},
@@ -180,6 +181,20 @@ const nativeProbe = canVibrate => `
         vibratePattern: csv => window.__native.push(['pattern', csv]),
         keepAwake: on => window.__native.push(['awake', on])
     };
+`;
+const unavailableAudioProbe = `
+    Object.defineProperty(window, 'AudioContext', { configurable: true, value: undefined });
+    Object.defineProperty(window, 'webkitAudioContext', { configurable: true, value: undefined });
+`;
+const rejectedAudioResumeProbe = `
+    window.__audioResumes = 0;
+    Object.defineProperty(window.AudioContext.prototype, 'resume', {
+        configurable: true,
+        value() {
+            window.__audioResumes++;
+            return Promise.reject(new Error('Synthetic audio resume rejection'));
+        }
+    });
 `;
 try {
     await test('Both modes resolve touching fruit, score, and use the documented fuse', async () => {
@@ -575,6 +590,128 @@ try {
         await page.locator('#btnPlay').click();
         await page.evaluate(() => testGame.stopRaf());
         assert.equal((await state(page)).running, true);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    await test('Sound activates from a user gesture and follows pause and resume', async () => {
+        const { page, context, errors } = await setup();
+        await page.locator('#btnPlay').click();
+        await page.waitForFunction(() => window._fpAudio?.ctx?.state === 'running');
+        assert.equal(await page.evaluate(() => window._fpAudio.enabled), true);
+        await page.locator('#btnPause').click();
+        await page.waitForFunction(() => window._fpAudio.ctx.state === 'suspended');
+        await page.locator('#btnPlay').click();
+        await page.waitForFunction(() => window._fpAudio.ctx.state === 'running');
+        await page.locator('#btnDrop').click();
+        assert.equal((await state(page)).dropCount, 1);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    await test('Unavailable Web Audio does not interrupt gameplay or re-enable after settings change', async () => {
+        const { page, context, errors } = await setup({ width: 1280, height: 800 }, false, true, unavailableAudioProbe);
+        await page.locator('#btnPlay').click();
+        assert.equal((await state(page)).running, true);
+        assert.equal(await page.evaluate(() => window._fpAudio.enabled), false);
+        await page.locator('#btnDrop').click();
+        assert.equal((await state(page)).dropCount, 1);
+        await page.locator('#btnPause').click();
+        await page.locator('#volSlider').evaluate(slider => {
+            slider.value = '80';
+            slider.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        assert.equal(await page.evaluate(() => window._fpAudio.enabled), false);
+        await page.locator('#btnPlay').click();
+        assert.equal((await state(page)).running, true);
+        await page.waitForTimeout(20);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    await test('Rejected AudioContext resume promises are handled without stopping play', async () => {
+        const { page, context, errors } = await setup({ width: 1280, height: 800 }, false, true, rejectedAudioResumeProbe);
+        await page.locator('#btnPlay').click();
+        await page.locator('#btnPause').click();
+        await page.locator('#btnPlay').click();
+        await page.waitForTimeout(40);
+        assert.equal((await state(page)).running, true);
+        assert(await page.evaluate(() => window.__audioResumes > 0));
+        await page.locator('#btnDrop').click();
+        await page.waitForTimeout(20);
+        assert.equal((await state(page)).dropCount, 1);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    await test('Touch-only tablet landscape can pause, read help, view scores, restart and aim/drop', async () => {
+        const { page, context, errors } = await setup({ width: 1024, height: 768 }, true);
+        const touch = await touchPad(context, page);
+        const tap = async selector => {
+            const point = await centerOf(page, selector);
+            await touch('touchStart', point.x, point.y);
+            await touch('touchEnd');
+            await page.waitForTimeout(20);
+        };
+        await tap('#btnPlay');
+        assert.equal((await state(page)).running, true);
+        await tap('#btnPause');
+        assert.equal((await state(page)).paused, true);
+        assert.equal((await state(page)).dropCount, 0, 'tapping pause must not drop a fruit');
+        await tap('#btnHow');
+        assert.equal(await page.locator('#modalTitle').innerText(), 'How to play');
+        await tap('#btnHow');
+        await tap('#btnScores');
+        assert.equal(await page.locator('#hs-modal').evaluate(el => el.style.display), 'flex');
+        await tap('#fpHsClose');
+        await tap('#btnNew');
+        await tap('#btnNew');
+        assert.equal((await state(page)).running, true);
+        await tap('#btnSwap');
+        assert.equal((await state(page)).swapUsed, true);
+
+        const game = (await rects(page, ['game'])).game;
+        const x1 = game.left + game.width * .3;
+        const x2 = game.left + game.width * .7;
+        const y = game.top + game.height * .3;
+        await touch('touchStart', x1, y);
+        await touch('touchMove', x2, y);
+        await touch('touchEnd');
+        const dropped = await state(page);
+        assert.equal(dropped.dropCount, 1);
+        assert(Math.abs(dropped.inputX - (x2 - game.left) * 520 / game.width) < 1.5);
+
+        await page.setViewportSize({ width: 768, height: 1024 });
+        const portraitPause = await rects(page, ['btnPause']);
+        assert(portraitPause.btnPause.bottom <= 1025 && portraitPause.btnPause.top >= 0);
+        await page.setViewportSize({ width: 1024, height: 768 });
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    await test('Short landscape game-over name entry remains touch-accessible after rotation', async () => {
+        const { page, context, errors } = await setup({ width: 390, height: 844 }, true);
+        const touch = await touchPad(context, page);
+        const tap = async selector => {
+            const point = await centerOf(page, selector);
+            await touch('touchStart', point.x, point.y);
+            await touch('touchEnd');
+            await page.waitForTimeout(20);
+        };
+        await tap('#btnPlay');
+        await page.setViewportSize({ width: 667, height: 375 });
+        await page.evaluate(() => { testGame.setScore(100); testGame.end(); });
+        assert.equal(await page.locator('#modalTitle').innerText(), 'Bowl full');
+        assert(await page.locator('#fp-hs-name').isVisible());
+
+        const saveBox = await page.locator('#fp-save-name').boundingBox();
+        if (saveBox.top < 0 || saveBox.bottom > 375) {
+            const card = await page.locator('#modal .card').boundingBox();
+            await touch('touchStart', card.x + card.width / 2, card.y + card.height * .8);
+            await touch('touchMove', card.x + card.width / 2, card.y + card.height * .3);
+            await touch('touchEnd');
+        }
+        const visibleSave = await page.locator('#fp-save-name').boundingBox();
+        assert(visibleSave.x >= 0 && visibleSave.x + visibleSave.width <= 668 && visibleSave.y >= 0 && visibleSave.y + visibleSave.height <= 376, JSON.stringify(visibleSave));
+        await page.locator('#fp-hs-name').fill('TABLET');
+        await tap('#fp-save-name');
+        assert.equal(await page.locator('#fp-name-saved').isVisible(), true);
+        assert.equal((await page.evaluate(() => testGame.scores()))[0].name, 'TABLET');
         assert.deepEqual(errors, []);
         await context.close();
     });
