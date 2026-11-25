@@ -85,7 +85,8 @@ with sync_playwright() as p:
     for event in ["strike", "hit", "damage", "break", "gold", "chest", "equip", "rank",
                   "heal", "victory", "dragon", "warning", "magic", "dodge", "death", "floor",
                   "armor", "bottle", "barrel", "crate", "voice", "spellCharge", "venom",
-                  "lightning", "fire", "poison"]:
+                  "lightning", "fire", "poison", "fireball", "cold", "web",
+                  "gun", "bowRelease", "whoosh", "arrowImpact", "poof", "scream"]:
         before = page.evaluate("audioProbe.sources")
         page.evaluate("(name)=>DungeonAudio.play(name)", event)
         page.wait_for_timeout(80)
@@ -213,7 +214,7 @@ with sync_playwright() as p:
               "checks": [              "gesture startup", "connected audio destination", "nonzero ambient/music output",
               "eight-phrase score and five reactive music mixes", "realm-specific convolution reverb",
               "bundled CC0 recording playback and spatial attenuation/panning",
-              "26 isolated synthesized effect outputs",
+              "isolated synthesized effect outputs",
                          "independent music/effects mute behavior", "muted attack silence",
                          "unmute", "volume zero", "volume adjustment", "browser suspend/gesture resume",
                          "single context", "pause silence/resume", "explicit autoplay error/retry status"],

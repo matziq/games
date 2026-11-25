@@ -5,7 +5,7 @@ const { webcrypto } = require('node:crypto');
 const elements = new Map();
 const context = new Proxy({createImageData(width,height){return {width,height,data:new Uint8ClampedArray(width*height*4)}}}, { get: (target, key) => Object.hasOwn(target,key) ? target[key] : key === 'createRadialGradient' ? () => ({ addColorStop() {} }) : () => {} });
 function element() {
-  return { style: {}, hidden: false, textContent: '', open: false, children: [], getContext: () => context,
+  return { style: {}, hidden: false, textContent: '', innerHTML: '', open: false, children: [], getContext: () => context,
     getBoundingClientRect: () => ({ left: 0, top: 0, width: 1000, height: 700 }), focus() {}, addEventListener() {},
     append(...e) { this.children.push(...e); }, before() {}, prepend(e) { this.children.unshift(e); }, replaceChildren(...e) { this.children = e; },
     attributes:{}, setAttribute(name,value) { this.attributes[name]=String(value); }, getAttribute(name) { return this.attributes[name]??null; },
@@ -29,6 +29,45 @@ scripts.forEach(script => vm.runInContext(script, sandbox));
 const run = code => vm.runInContext(code, sandbox);
 let count = 0;
 function check(name, fn) { fn(); count++; console.log('PASS ' + name); }
+check('wand cones use mana, regenerate in active time, and restore with potions', () => {
+  for(const effect of ['fire','fireball','light','lightning','poison','web','cold']){
+    run(`begin();world.tiles.fill(1);world.merchant=null;world.traps=[];world.torches=[];props=[];player.angle=0;player.weapon={kind:'wand',effect:'${effect}',power:2,range:300,color:'#aaccff'};player.cool=0;player.mana=10;var foe=makeEnemy('slime',{x:player.x+40,y:player.y});foe.hp=300;enemies=[foe];attack()`);
+    assert.equal(run("player.mana===0&&foe.hp<300&&heroShots.length===0&&world.scrollFlashes.some(f=>f.kind==='wand-"+effect+"')"),true,effect);
+    run('player.cool=0;attack()');assert.equal(run('player.mana'),0);
+  }
+  run("player.manaPotions=1;state='playing';drinkManaPotion();saveRun();player.mana=0;player.manaPotions=5;savedRun=null;restoreSavedRun()");
+  assert.equal(run("player.mana===65&&player.manaPotions===0"),true);
+  run("enemies=[];world.traps=[];update(2)");assert.equal(run("player.mana"),71);
+  run("state='paused';var beforeMana=player.mana");assert.equal(run('drinkManaPotion()'),false);assert.equal(run('player.mana'),run('beforeMana'));
+  run("state='playing';player.manaPotions=1;player.mana=0;$('touchMana').onclick()");assert.equal(run("player.mana===65&&player.manaPotions===0"),true);
+  run("loot=[{x:player.x,y:player.y,type:'manaPotion'}];update(.01)");assert.equal(run("player.manaPotions"),1);
+});
+check('spellbooks collect, persist, cast five stronger free spells and drop intact on weapon change', () => {
+  run("begin();world.tiles.fill(1);props=[];enemies=[];world.traps=[];player.weapon={kind:'wand',effect:'fire',power:1,range:300,color:'#ff954d'};loot=[{x:player.x,y:player.y,type:'spellbook',scroll:'fireball',uses:5}];updateScrolls(.01);player.selectedScroll='fireball';player.spellSource='book';player.mana=0");
+  assert.equal(run("player.spellbooks.fireball[0]"),5);
+  run("saveRun();savedRun=null;restoreSavedRun()");
+  assert.equal(run("player.spellbooks.fireball[0]===5&&player.spellSource==='book'"),true);
+  run("props=[];enemies=[];var victim=makeEnemy('slime',{x:player.x+50,y:player.y});victim.hp=1000;enemies=[victim];player.angle=0;player.scrollCooldown=0;castScroll()");
+  assert.equal(run("player.mana===0&&player.spellbooks.fireball[0]===4&&victim.hp===888"),true);
+  run("for(let i=0;i<4;i++){player.scrollCooldown=0;castScroll()}");
+  assert.equal(run("player.spellbooks.fireball.length===0&&player.mana===0"),true);
+  run("player.spellbooks.cold=[3];reconcileInventory({kind:'sword'})");
+  assert.equal(run("player.spellbooks.cold.length===0&&loot.some(l=>l.type==='spellbook'&&l.scroll==='cold'&&l.uses===3)"),true);
+});
+check('trap creature expiry always says Poof and giant spider drops useful loot', () => {
+  run("begin();world.tiles.fill(1);world.merchant=null;world.traps=[];props=[];loot=[];var bug=makeEnemy('bug',player);Object.assign(bug,{trapSwarm:true,swarmLife:.01,trapSource:{revealed:false},emerge:0});enemies=[bug];floatingTexts=[];updateTraps(.1,false)");
+  assert.equal(run("bug.hp===0&&floatingTexts.some(f=>f.text==='Poof!')"),true);
+  run("loot=[];drops({x:player.x,y:player.y,type:'cave_spider',giant:true})");
+  assert.equal(run("loot.some(x=>x.type==='weapon')&&loot.some(x=>x.type==='potion')"),true);
+});
+check('weapon sounds and rare synthesized humanoid death cue are routed on real events', () => {
+  for(const [kind,cue] of [['bow','bowRelease'],['crossbow','bowRelease'],['pistol','gun'],['rifle','gun'],['boomerang','whoosh'],['sword','strike']]){
+    run(`begin();world.tiles.fill(1);world.torches=[];enemies=[];props=[];player.weapon={...weaponTypes.${kind},kind:'${kind}',damage:20};player.cool=0;var beforeCue=window.DungeonAudio.diagnostic().events.${cue}||0;attack()`);
+    assert.equal(run(`window.DungeonAudio.diagnostic().events.${cue}===beforeCue+1`),true,kind);
+  }
+  run("begin();world.tiles.fill(1);enemies=[];props=[];var screams=0;for(let i=0;i<500;i++){var target=makeEnemy('goblin',{x:player.x+40,y:player.y});target.hp=1;var prior=window.DungeonAudio.diagnostic().events.scream||0;hurtEnemy(target,10);screams+=(window.DungeonAudio.diagnostic().events.scream||0)-prior}");
+  assert.ok(run('screams>0&&screams<35'));
+});
 check('food drops from crates and barrels, boosts armor, and persists and expires in active time', () => {
   for(const kind of ['crate','barrel']){
     const foods=new Set();
@@ -218,7 +257,7 @@ check('manual creature traps create allied swarms for ten active seconds with sa
     run("saveRun();savedRun=null;restoreSavedRun();brood=enemies.filter(e=>e.trapSource);brood[0].charmed=100;updateTraps(9.8,false)");
     assert.equal(run("brood.every(e=>e.hp>0&&e.swarmLife>0)"),true,kind);
     run("floatingTexts=[];updateTraps(.11,false)");
-    assert.equal(run("brood.every(e=>e.hp===0)&&floatingTexts.some(f=>f.text==='POOF!')"),true,kind);
+    assert.equal(run("brood.every(e=>e.hp===0)&&floatingTexts.some(f=>f.text==='Poof!')"),true,kind);
   }
 });
 check('manual damaging traps affect the knight as well as monsters only in their area', () => {
@@ -392,7 +431,7 @@ check('wand powers scale by actual floor and effects chain, cloud, root and illu
   run("impactWand({x:first.x,y:first.y,power:6,wandEffect:'poison',color:'#abcdef'},first);impactWand({x:first.x,y:first.y,power:6,wandEffect:'web',color:'#abcdef'},first)");
   assert.equal(run("world.scrollZones.at(-1).damage===9&&second.rooted===5"),true);
   run("player.weapon={kind:'wand',effect:'light',power:6,cooldown:.55};player.cool=0;attack()");
-  assert.equal(run("world.scrollLights.at(-1).coneAngle===player.angle&&world.scrollLights.at(-1).life>5"),true);
+  assert.equal(run("world.scrollLights.at(-1).coneAngle===player.angle&&world.scrollLights.at(-1).life>0"),true);
   run("begin()");
 });
 check('local save restores the current world, shared references, timers and random sequence', () => {
@@ -466,7 +505,7 @@ check('scroll and ammunition cycling skip empty types, wrap without consumption,
   assert.equal(run('player.selectedScroll'),'light');
   run('cycleScroll()');assert.equal(run('player.selectedScroll'),'lightning');
   run('cycleScroll()');assert.equal(run('player.selectedScroll'),'light');
-  assert.equal(run('JSON.stringify(player.scrolls)'),JSON.stringify({fireball:0,light:2,poison:0,lightning:1}));
+  assert.equal(run('JSON.stringify(player.scrolls)'),JSON.stringify({fireball:0,light:2,poison:0,lightning:1,cold:0}));
   run("player.scrolls.light=player.scrolls.lightning=0;cycleScroll()");
   assert.equal(run('player.selectedScroll'),'light');
   run("player.scrolls.lightning=1;state='paused';cycleScroll()");
@@ -787,13 +826,17 @@ check('light ammunition pierces three distinct monsters, survives save, and stop
   run("begin();world.tiles.fill(1);world.torches=[];props=[];player.x=400;player.y=420;player.angle=0;player.weapon={...weaponTypes.rifle,kind:'rifle',damage:20,range:600};player.ammoShared.light=1;selectedAmmo='light';player.cool=0;enemies=[470,650].map(x=>{const e=makeEnemy('slime',{x,y:420});e.hp=300;return e});for(let y=0;y<H;y++)world.tiles[y*W+15]=0;attack();updateHeroShots(1)");
   assert.equal(run("enemies[0].hp<300&&enemies[1].hp===300&&heroShots.length===0&&world.scrollLights.length===1"),true);
 });
-check('melee and projectiles can extinguish and relight a torch exactly once per shot', () => {
+check('ordinary attacks do not toggle torches, but use and elemental hits do', () => {
   for(const kind of run('Object.keys(weaponTypes)')){
     run(`loadFloor(1,604);world.tiles.fill(1);props=[];enemies=[];player.angle=0;player.cool=0;state='playing';var struck={x:player.x+34,y:player.y,lit:true};world.torches=[struck];player.weapon={...weaponTypes.${kind},kind:'${kind}',damage:20};heroShots=[];attack();if(heroShots.length)updateHeroShots(.2)`);
-    assert.equal(run('struck.lit'),false,kind);
-    run('heroShots=[];player.cool=0;attack();if(heroShots.length)updateHeroShots(.2)');
     assert.equal(run('struck.lit'),true,kind);
   }
+  run("world.merchant=null;world.traps=[];world.end.x=2000;world.end.y=1900;selectedWorldItem=null;interact()");
+  assert.equal(run("struck.lit"),false);
+  run("player.weapon={...weaponTypes.bow,kind:'bow',damage:20};player.ammoShared.fire=1;selectedAmmo='fire';player.cool=0;heroShots=[];attack();updateHeroShots(.2)");
+  assert.equal(run('struck.lit'),true);
+  run("player.weapon={kind:'wand',effect:'cold',power:1,range:300};player.scrolls.cold=1;player.selectedScroll='cold';player.spellSource='scroll';player.scrollCooldown=0;castScroll()");
+  assert.equal(run('struck.lit'),false);
 });
 check('entering nests hatches only intact eggs into lootless converging spiderlings', () => {
   run("loadFloor(1,604);enemies=[];world.traps=[];var nest=world.rooms.find(r=>r.kind==='spider');var egg=nest.decor[0];breakProp(egg,999);loot=[];updateNestsAndPits(5,player)");
@@ -1051,8 +1094,8 @@ check('weapon types and wands drop with valid stats and no whips', () => {
   for (let i=0;i<200;i++) {
     const w=run('makeWeapon()'); kinds.add(w.kind);
     assert.ok(w.damage>0&&w.range>=68&&w.range<=700&&w.cooldown>=.3&&w.cooldown<=.95);
-    run(`heroShots=[];player.weapon=${JSON.stringify(w)};player.cool=0;attack()`);
-    assert.equal(run('player.cool'),w.cooldown);
+    run(`heroShots=[];player.weapon=${JSON.stringify(w)};player.cool=0;player.mana=100;attack()`);
+    assert.equal(run('player.cool'),w.kind==='wand'?.22:w.cooldown);
   }
   assert.equal(kinds.size,14);
   assert.equal([...kinds].some(kind=>kind.includes('whip')),false);
@@ -1426,10 +1469,10 @@ check('room lighting, reachable torches and hazard placement preserve safe entra
   assert.ok(kinds.has('bedbugs'));
   run("loadFloor(1,604);enemies=[];props=[];loot=[];const torch=world.torches.find(t=>!t.lit);player.x=torch.x;player.y=torch.y+35;world.end.x=2500;world.end.y=1900");
   const before=run('lightAt({x:torch.x+70,y:torch.y+70})');
-  run('interact()');assert.equal(run('torch.lit'),false);
+  run('interact()');assert.equal(run('torch.lit'),true);
   run('player.angle=-Math.PI/2;player.cool=0;player.weapon={...weaponTypes.sword,kind:"sword"};attack();update(.01)');assert.equal(run('torch.lit'),true);
   assert.ok(run('lightAt({x:torch.x+70,y:torch.y+70})')>before);
-  run('player.cool=0;attack()');assert.equal(run('torch.lit'),false);
+  run('interact()');assert.equal(run('torch.lit'),false);
   run("loot=[{x:player.x,y:player.y,type:'armor',armor:{name:'Priority mail',kind:'chain',reduction:.2}}];interact()");
   assert.equal(run('player.armor.name'),'Priority mail');assert.equal(run('torch.lit'),false);
   run('player.x=world.start.x;player.y=world.start.y;var roomIndex=3;var samplePoint={x:world.torches[roomIndex*4].x+15,y:world.torches[roomIndex*4].y+15};world.torches.filter(t=>t.room===roomIndex).forEach(t=>t.lit=true)');
@@ -1620,7 +1663,7 @@ check('repeated floor motifs, tile outlines, and expired overlays are absent but
   assert.ok(images.some(args=>args[0]===run('floorImage')),'supplied floor texture disappeared');
   context.strokeRect = originalStroke;context.drawImage = originalImage;
 });
-check('overlapping gear cycles without selecting the underlying torch', () => {
+check('overlapping gear and torches remain separately selectable', () => {
   run(`loadFloor(1,604);state='playing';enemies=[];props=[];world.traps=[];world.torches=[];
     var overlap={x:player.x+40,y:player.y}, sword={...overlap,type:'weapon',weapon:makeWeapon()}, mail={...overlap,type:'armor',armor:makeArmor()}, sconce={...overlap,type:'torch',lit:false};
     loot=[sword,mail];world.torches=[sconce];world.seen.fill(1);
@@ -1628,8 +1671,9 @@ check('overlapping gear cycles without selecting the underlying torch', () => {
     var oldWeapon=player.weapon;var oldCool=player.cool;var oldAngle=player.angle;mouse.down=true`);
   assert.equal(run("selectWorldPointer(selectEvent)"),true);
   assert.equal(run("selectedWorldItem===sword&&nearby()===sword"),true);
-  assert.equal(run("selectionChoices.length"),2);
+  assert.equal(run("selectionChoices.length"),3);
   run("selectWorldPointer(selectEvent)");assert.equal(run("selectedWorldItem===mail"),true);
+  run("selectWorldPointer(selectEvent)");assert.equal(run("selectedWorldItem===sconce"),true);
   run("selectWorldPointer(selectEvent)");assert.equal(run("selectedWorldItem===sword"),true);
   assert.equal(run("player.weapon===oldWeapon&&player.cool===oldCool&&player.angle===oldAngle&&mouse.down&&!sconce.lit"),true);
   run('mouse.down=false');
@@ -1638,13 +1682,14 @@ check('overlapping gear cycles without selecting the underlying torch', () => {
   assert.equal(run("selectedWorldItem"),null);
   assert.ok(elements.get('selectionChoices').children.length>=1);
 });
-check('torches have no selection or nearby use action, while weapon hits toggle without fire', () => {
+check('torches support selection and use without ordinary weapon toggles', () => {
   run("loadFloor(1,604);state='playing';props=[];world.traps=[];var dedicatedTorch={x:player.x+40,y:player.y,type:'torch',lit:false};world.torches=[dedicatedTorch];loot=[{x:dedicatedTorch.x,y:dedicatedTorch.y,type:'armor',armor:makeArmor()}];selectedWorldItem=loot[0]");
   run("interact()");
   assert.equal(run("dedicatedTorch.lit"),false);
-  assert.equal(run("worldTargets().includes(dedicatedTorch)"),false);
+  assert.equal(run("worldTargets().includes(dedicatedTorch)"),true);
   run("loot=[];selectedWorldItem=null;interact()");
-  assert.equal(run("nearby()"),null);
+  assert.equal(run("nearby()"),run("dedicatedTorch"));
+  assert.equal(run("dedicatedTorch.lit"),true);
   run("player.angle=0;player.cool=0;player.weapon={...weaponTypes.sword,kind:'sword'};attack()");
   assert.equal(run("dedicatedTorch.lit"),true);
 });

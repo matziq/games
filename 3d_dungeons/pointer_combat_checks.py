@@ -56,7 +56,12 @@ with sync_playwright() as playwright:
 
         place("window.torch={x:player.x+48,y:player.y,lit:true};world.torches=[torch]")
         hit(point(48))
-        assert not page.evaluate("torch.lit"), (name, "torch tap")
+        assert page.evaluate("torch.lit && selectedWorldItem===torch"), (name, "torch selection")
+        if touch:
+            page.locator("#touchInteract").tap()
+        else:
+            page.keyboard.press("e")
+        assert not page.evaluate("torch.lit"), (name, "torch use")
 
         place("window.chest={x:player.x+48,y:player.y,type:'chest',hp:20,open:false};props=[chest]")
         hit(point(48))

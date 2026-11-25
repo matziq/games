@@ -45,11 +45,15 @@ with sync_playwright() as playwright:
         inside(page, "#start", width, height)
         page.locator("#start").tap()
         assert page.evaluate("state") == "playing"
+        page.evaluate("player.weapon={kind:'wand',effect:'cold',power:1,damage:6,range:300,color:'#a9eaff'};updateHUD()")
+        mana = inside(page, "#manaDisplay", width, height)
+        spell_panel = inside(page, "#scrollPanel", width, height)
+        assert mana["y"] + mana["height"] <= spell_panel["y"] or mana["x"] + mana["width"] <= spell_panel["x"], (name, mana, spell_panel)
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         for selector in ("#pause", "#restart"):
             inside(page, selector, width, height)
         controls = [inside(page, "#" + selector, width, height) for selector in
-                    ("movePad", "touchAttack", "touchInteract", "touchDodge", "touchHeal")]
+                    ("movePad", "touchAttack", "touchInteract", "touchDodge", "touchHeal", "touchMana")]
         for rect in controls:
             assert rect["width"] >= 48 and rect["height"] >= 48, (name, rect)
         for i, a in enumerate(controls):
@@ -76,6 +80,9 @@ with sync_playwright() as playwright:
         page.evaluate("player.hp=40;player.potions=3")
         page.locator("#touchHeal").tap()
         assert page.evaluate("player.hp") == 105
+        page.evaluate("player.mana=0;player.manaPotions=1")
+        page.locator("#touchMana").tap()
+        assert page.evaluate("player.mana >= 65 && player.manaPotions===0")
         if page.locator("#extraControls > summary").is_visible():
             page.locator("#extraControls > summary").tap()
         inside(page, "#mute", width, height)

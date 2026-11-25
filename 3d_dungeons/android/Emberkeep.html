@@ -33,10 +33,10 @@
 <div class="viewport"><canvas id="game" role="application" tabindex="0" aria-label="Emberkeep game. Use the accessible action controls or keyboard to move, attack, use objects, dodge, heal and pause." aria-describedby="gameStateSummary"></canvas>
 <section id="accessibleGameState" class="sr-only" role="region" aria-label="Current game state" aria-live="off"><h2>Current game state</h2><p id="gameStateSummary">Enter the halls to begin. The game state and controls will be available here.</p></section>
 <div id="gameEvent" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
-<div class="hud"><div class="label">Knight <span id="level">I</span> <span id="health"></span></div><bar><i id="hp"></i></bar><div class="label">Resolve / dodge</div><bar><i id="stamina"></i></bar><bar style="height:3px"><i id="xp"></i></bar></div>
+<div class="hud"><div class="label">Knight <span id="level">I</span> <span id="health"></span></div><bar><i id="hp"></i></bar><div id="manaDisplay" hidden><div class="label">Mana <span id="manaValue"></span></div><bar><i id="mana" style="background:#79b9f1"></i></bar></div><div class="label">Resolve / dodge</div><bar><i id="stamina"></i></bar><bar style="height:3px"><i id="xp"></i></bar></div>
 <div class="area"><span id="area">The Sunken Halls</span><small id="floor">CHAPTER I / V</small><small id="roomName"></small></div>
 <div id="audioStatus" role="status" aria-live="polite">Sound starts when you enter the halls.</div><div id="threatStatus" role="status" aria-live="polite" hidden></div><div class="prompt" id="prompt" role="note" aria-label="Nearby action"></div><div class="boss" id="boss" role="group" aria-label="Boss health" hidden>VARKHOS, THE CINDER KING<bar><i id="bosshp"></i></bar></div>
-<details id="scrollPanel" aria-label="Ammo and single-use scrolls" hidden><summary id="scrollSummary">Scrolls / right-click or R</summary><div id="scrollChoices" class="scroll-choices"><button id="scroll-fireball" aria-pressed="true">Fireball</button><button id="scroll-light" aria-pressed="false">Light</button><button id="scroll-poison" aria-pressed="false">Poison</button><button id="scroll-lightning" aria-pressed="false">Lightning</button></div><button id="castScroll">Cast Fireball [R]</button><div id="scrollStatus" role="status" aria-live="polite"></div><button id="cycleAmmo">Cycle ammo or scrolls [T]</button></details>
+<details id="scrollPanel" aria-label="Ammo and spells" hidden><summary id="scrollSummary">Spells / right-click or R</summary><div id="scrollChoices" class="scroll-choices"><button id="scroll-fireball" aria-pressed="true">Fireball</button><button id="scroll-light" aria-pressed="false">Light</button><button id="scroll-poison" aria-pressed="false">Poison</button><button id="scroll-lightning" aria-pressed="false">Lightning</button><button id="scroll-cold" aria-pressed="false">Cold</button></div><button id="spellSource">Use scroll</button><button id="castScroll">Cast Fireball [R]</button><div id="scrollStatus" role="status" aria-live="polite"></div><button id="cycleAmmo">Cycle ammo or spells [T]</button></details>
 <section id="selectionPanel" aria-label="World item selection" hidden><div id="selectionStatus" role="status" aria-live="polite"></div><div id="selectionChoices" aria-label="Overlapping items"></div><div class="selection-actions"><button id="useSelected">Use [E]</button><button id="deleteSelected" disabled>Delete gear [X]</button><button id="clearSelected">Clear</button></div><button id="undoDelete" disabled>Undo last delete</button></section>
 <div class="overlay" id="overlay"><div class="intro"><div class="eyebrow">A PROCEDURAL MEDIEVAL ADVENTURE</div><h2 id="title">Steel. Stone.<br>Something beneath.</h2><p id="story">Descend through five changing medieval realms and survive sixteen floors of monsters, traps, treasure, and rotating bosses. Defeat the guardians on Floors 8 and 16 to open every route down; claim their spoils and carry your progress into a harder cycle.</p><div class="controls"><kbd>WASD / ARROWS</kbd> move &nbsp; <kbd>MOUSE</kbd> aim<br><kbd>CLICK / SPACE</kbd> attack &nbsp; <kbd>SHIFT</kbd> dodge &nbsp; <kbd>Q</kbd> potion<br><kbd>E</kbd> loot / descend &nbsp; <kbd>T</kbd> cycle ammo / scrolls &nbsp; <kbd>P</kbd> pause<br>Gold and eligible consumables vacuum toward you; gear remains available for deliberate pickup unless Auto-equip is enabled.<br>Spider webs strike nearly instantly inside their attack zone; a webbed knight is rooted, then rushed by the spider's follow-up melee attack.<br>Use light, fire, explosion, poison, lightning, web, and charm ammo with every ranged weapon.</div><button class="primary" id="start">Enter the halls</button><p id="error"></p></div></div>
 </div>
@@ -211,7 +211,16 @@ window.DungeonAudio=(()=>{
   events[name]=(events[name]||0)+1;if(!context||context.state!=='running'||muted||!playing)return;
   if(typeof kind==='object'&&kind){position=kind;kind=''}
   const t=context.currentTime;variation=.88+Math.random()*.24;
-  if(name==='strike'){
+  if(name==='gun'){hiss(t,.23,.22,900,'lowpass',position);tone(90,t,.25,.14,'sawtooth',35,position)}
+  else if(name==='bowRelease'){tone(kind==='crossbow'?230:150,t,.12,.1,'triangle',55,position);hiss(t,.11,.08,2400,'bandpass',position)}
+  else if(name==='whoosh'){hiss(t,.3,.11,1150,'bandpass',position);tone(480,t,.23,.03,'sine',180,position)}
+  else if(name==='arrowImpact'){hiss(t,.06,.12,2500,'highpass',position);tone(210,t,.1,.07,'triangle',70,position)}
+  else if(name==='poof'){hiss(t,.18,.07,950,'lowpass',position);tone(240,t,.15,.035,'sine',100,position)}
+  else if(name==='cold'){hiss(t,.16,.07,4200,'highpass',position);tone(1300,t,.22,.04,'sine',750,position)}
+  else if(name==='web'){hiss(t,.14,.08,1800,'bandpass',position);tone(420,t,.14,.04,'triangle',170,position)}
+  else if(name==='fireball'){hiss(t,.4,.15,750,'lowpass',position);tone(85,t,.36,.12,'sawtooth',35,position);hiss(t+.08,.28,.07,1900,'bandpass',position)}
+  else if(name==='scream'){tone(470,t,.23,.055,'sawtooth',690,position);tone(690,t+.2,.32,.045,'triangle',240,position);hiss(t,.5,.025,1400,'bandpass',position)}
+  else if(name==='strike'){
    const profile={sword:[2600,.17,200],axe:[1000,.25,120],mace:[480,.2,85],spear:[3400,.12,310],bow:[1800,.08,420],crossbow:[2200,.06,280],boomerang:[800,.32,175],javelin:[2900,.2,260],halberd:[1400,.28,145],knife:[3900,.09,540],throwing_axe:[1200,.22,155]}[kind]||[2600,.17,200];
    hiss(t,profile[1],.2,profile[0],'bandpass',position);tone(profile[2],t,.12,.07,'triangle',60,position);
    if(kind==='mace')tone(65,t+.04,.16,.12,'sine',65,position);if(kind==='axe')hiss(t+.06,.16,.1,650,'lowpass',position);
@@ -413,7 +422,6 @@ function attack(){
  const ball=world.boulder;
  if(ball&&distance(ball,player)<w.range+(ball.radius||25)&&clearLine(player,ball)&&Math.abs(angleDiff(Math.atan2(ball.y-player.y,ball.x-player.x),player.angle))<1.2)damageBoulder(ball,'melee');
  props.filter(p=>canStrikeProp(p)&&distance(p,player)<w.range&&clearLine(player,p)&&Math.abs(angleDiff(Math.atan2(p.y-player.y,p.x-player.x),player.angle))<1.3).forEach(p=>breakProp(p,w.damage));
- for(const torch of world.torches)if(distance(torch,player)<w.range&&clearLine(player,torch)&&Math.abs(angleDiff(Math.atan2(torch.y-player.y,torch.x-player.x),player.angle))<1.3)strikeTorch(torch);
 }
 function nearby(){const candidates=[...props.filter(p=>p.type==='chest'&&!p.open),...loot.filter(l=>l.type==='weapon'||l.type==='armor'),{...world.end,type:'stairs'}].filter(o=>distance(o,player)<70&&clearLine(player,o));return candidates.sort((a,b)=>distance(a,player)-distance(b,player))[0]}
 function usesAmmo(weapon){return !!weapon&&!isWand(weapon)&&rangedKinds.includes(weaponKind(weapon))}
@@ -433,6 +441,10 @@ function reconcileInventory(weapon){
   for(let i=0;i<count;i++)loot.push({x:player.x+12,y:player.y+12,type:'scroll',scroll:kind,weaponSwitchDrop:true});
   player.scrolls[kind]=0;
  }
+  if(!isWand(weapon))for(const [kind,books] of Object.entries(player.spellbooks||{})){
+   for(const uses of books)loot.push({x:player.x+12,y:player.y+12,type:'spellbook',scroll:kind,uses,weaponSwitchDrop:true});
+   player.spellbooks[kind]=[];
+  }
  if(!usesAmmo(weapon)&&player.ammoShared){
   for(const [kind,count] of Object.entries(player.ammoShared))if(count>0){
    loot.push({x:player.x-12,y:player.y+12,type:'ammo',special:kind,ammoKind:'bow',value:count,weaponSwitchDrop:true});
@@ -525,11 +537,11 @@ function update(dt){
  shots=shots.filter(s=>s.life>0);enemies=enemies.filter(e=>e.hp>0);
  for(const l of loot){
   l.age=(l.age||0)+dt;if(l.age>=lootLifetime(l)){l.taken=true;continue}
-  if((['gold','potion','food'].includes(l.type)||l.type==='ammo'&&usesAmmo(player.weapon)||l.type==='scroll'&&isWand(player.weapon))&&!l.taken){
+  if((['gold','potion','manaPotion','food'].includes(l.type)||l.type==='ammo'&&usesAmmo(player.weapon)||['scroll','spellbook'].includes(l.type)&&isWand(player.weapon))&&!l.taken){
    const gap=distance(l,player);
    if(gap<=3.75*T&&gap>0){const step=Math.min(gap,360*dt);l.x+=(player.x-l.x)/gap*step;l.y+=(player.y-l.y)/gap*step}
   }
-  if(!l.taken&&['gold','potion','food'].includes(l.type)&&distance(l,player)<32){window.DungeonAudio.play(l.type==='gold'?'gold':'bottle');if(l.type==='gold'){player.gold+=l.value;floatText(l.x,l.y-10,'+'+l.value+' GOLD','gold')}else if(l.type==='food'){player.foodArmorTime=30;floatText(l.x,l.y-10,l.food.toUpperCase()+' +15% ARMOR','treasure','#8fdde0');log('A hearty '+l.food+' grants 15% armor for 30 seconds.')}else{player.potions++;floatText(l.x,l.y-10,'+1 HEALING POTION','heal')}l.taken=true;particle(l.x,l.y,l.type==='gold'?'#edbf72':'#7ae4ba',5)}
+  if(!l.taken&&['gold','potion','manaPotion','food'].includes(l.type)&&distance(l,player)<32){window.DungeonAudio.play(l.type==='gold'?'gold':'bottle');if(l.type==='gold'){player.gold+=l.value;floatText(l.x,l.y-10,'+'+l.value+' GOLD','gold')}else if(l.type==='food'){player.foodArmorTime=30;floatText(l.x,l.y-10,l.food.toUpperCase()+' +15% ARMOR','treasure','#8fdde0');log('A hearty '+l.food+' grants 15% armor for 30 seconds.')}else if(l.type==='manaPotion'){player.manaPotions++;floatText(l.x,l.y-10,'+1 MANA POTION','treasure','#79b9f1')}else{player.potions++;floatText(l.x,l.y-10,'+1 HEALING POTION','heal')}l.taken=true;particle(l.x,l.y,l.type==='gold'?'#edbf72':'#7ae4ba',5)}
  }
  loot=loot.filter(l=>!l.taken);for(const p of effects){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;if(p.coin)p.vy+=200*dt}effects=effects.filter(p=>p.life>0);tickFloatingTexts(dt);updateHUD();
  $('prompt').textContent=interactionPrompt(nearby());
@@ -633,7 +645,7 @@ function render(){
   }else if(p.broken){polygon([[-16,9],[-8,-7],[-3,8],[6,-13],[11,8],[17,11]],'#997044');ctx.strokeStyle='#593e2c';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-16,9);ctx.lineTo(-8,-7);ctx.lineTo(-3,8);ctx.lineTo(6,-13);ctx.lineTo(11,8);ctx.lineTo(17,11);ctx.stroke()}
   else{ctx.fillStyle='#815b39';ctx.fillRect(-15,-11,30,23);ctx.strokeStyle='#aa8357';ctx.lineWidth=2;ctx.strokeRect(-14,-10,28,21);ctx.fillStyle='#99734b';for(let x of [-9,-3,3,9])ctx.fillRect(x-1,-9,2,19);ctx.strokeStyle='#c09a65';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-14,-10);ctx.lineTo(14,10);ctx.moveTo(14,-10);ctx.lineTo(-14,10);ctx.stroke();ctx.fillStyle='#d5b17a';for(const x of [-11,11])for(const y of [-7,7])circle(x,y,1.3,'#d5b17a')}
   ctx.restore()}
- for(const l of loot)if(lootVisible(l)&&l.type!=='ammo'&&world.seen[Math.floor(l.y/T)*W+Math.floor(l.x/T)]){const c=l.type==='scroll'?scrollTypes[l.scroll].color:l.type==='weapon'?l.weapon.color:l.type==='armor'?l.armor.color:l.type==='gold'?'#edbf72':l.type==='food'?'#8fdde0':'#76d9ac';glow(l.x,l.y,24,c+'44');if(l.type==='gold'){circle(l.x,l.y,5,c);circle(l.x-5,l.y+4,4,'#a78041')}else if(l.type==='food'){circle(l.x,l.y,8,l.food==='fruit'?'#d85e4b':l.food==='pie'?'#d5a35b':'#a76d4b');ctx.fillStyle='#e6c997';ctx.fillRect(l.x-5,l.y-2,10,3)}else if(l.type==='scroll'){ctx.fillStyle='#ecd6a5';ctx.fillRect(l.x-7,l.y-9,14,18);ctx.strokeStyle=c;ctx.lineWidth=3;ctx.strokeRect(l.x-8,l.y-9,16,18);ctx.fillStyle=c;ctx.font='bold 11px Georgia';ctx.textAlign='center';ctx.fillText(l.scroll[0].toUpperCase(),l.x,l.y+4)}else if(l.type==='potion'){ctx.fillStyle=c;ctx.fillRect(l.x-5,l.y-3,10,12);ctx.fillStyle='#d9d6ba';ctx.fillRect(l.x-3,l.y-7,6,4)}else{ctx.save();ctx.translate(l.x,l.y);if(l.type==='armor')drawArmor(l.armor);else{ctx.rotate(-.8);ctx.scale(.8,.8);ctx.translate(-15,0);drawWeapon(l.weapon)}ctx.restore()}}
+ for(const l of loot)if(lootVisible(l)&&l.type!=='ammo'&&world.seen[Math.floor(l.y/T)*W+Math.floor(l.x/T)]){const c=['scroll','spellbook'].includes(l.type)?scrollTypes[l.scroll].color:l.type==='manaPotion'?'#79b9f1':l.type==='weapon'?l.weapon.color:l.type==='armor'?l.armor.color:l.type==='gold'?'#edbf72':l.type==='food'?'#8fdde0':'#76d9ac';glow(l.x,l.y,24,c+'44');if(l.type==='gold'){circle(l.x,l.y,5,c);circle(l.x-5,l.y+4,4,'#a78041')}else if(l.type==='food'){circle(l.x,l.y,8,l.food==='fruit'?'#d85e4b':l.food==='pie'?'#d5a35b':'#a76d4b');ctx.fillStyle='#e6c997';ctx.fillRect(l.x-5,l.y-2,10,3)}else if(['scroll','spellbook'].includes(l.type)){ctx.fillStyle=l.type==='spellbook'?'#55447e':'#ecd6a5';ctx.fillRect(l.x-7,l.y-9,14,18);ctx.strokeStyle=c;ctx.lineWidth=3;ctx.strokeRect(l.x-8,l.y-9,16,18);ctx.fillStyle=c;ctx.font='bold 11px Georgia';ctx.textAlign='center';ctx.fillText(l.scroll[0].toUpperCase(),l.x,l.y+4)}else if(['potion','manaPotion'].includes(l.type)){ctx.fillStyle=c;ctx.fillRect(l.x-5,l.y-3,10,12);ctx.fillStyle='#d9d6ba';ctx.fillRect(l.x-3,l.y-7,6,4)}else{ctx.save();ctx.translate(l.x,l.y);if(l.type==='armor')drawArmor(l.armor);else{ctx.rotate(-.8);ctx.scale(.8,.8);ctx.translate(-15,0);drawWeapon(l.weapon)}ctx.restore()}}
  for(const e of enemies)if(distance(e,player)<440&&world.seen[Math.floor(e.y/T)*W+Math.floor(e.x/T)]){
   if(e.wind>0){const spell=e.attack==='venom'||e.attack==='web'||e.attack==='fire'||e.attack==='lightning',color=e.type==='dragon'?'#f28b57':e.attack==='web'?'#e4e6d3':e.attack==='venom'?'#9be05c':e.attack==='fire'?'#ff713c':e.attack==='lightning'?'#bbc5ff':e.color;ctx.fillStyle=color+'38';ctx.strokeStyle=color;ctx.lineWidth=2;
    if(e.attack==='lightning'&&e.attackTarget){const tx=e.attackTarget.x,ty=e.attackTarget.y;ctx.setLineDash([5,5]);ctx.beginPath();ctx.arc(tx,ty,24+Math.sin(clock*10)*3,0,TAU);ctx.fill();ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.moveTo(e.x,e.y);for(let i=1;i<=6;i++){const f=i/7,offset=(i%2?1:-1)*10;ctx.lineTo(e.x+(tx-e.x)*f+offset,e.y+(ty-e.y)*f-offset)}ctx.lineTo(tx,ty);ctx.stroke()}
@@ -813,7 +825,7 @@ function updateTraps(dt,moved){
    if(e[status+'Tick']<=0){e[status+'Tick']+=.65;hurtEnemy(e,status==='burn'?4:3)}
   }
   if(e.trapSwarm&&e.hp>0&&!e.baby){
-   e.swarmLife-=dt;if(e.swarmLife<=0){e.hp=0;particle(e.x,e.y,e.color,12);if(e.trapSource?.manualByPlayer){floatText(e.x,e.y-16,'POOF!','treasure');window.DungeonAudio.play('magic')}continue}
+   e.swarmLife-=dt;if(e.swarmLife<=0){e.hp=0;particle(e.x,e.y,e.color||'#c6c6bf',12);floatText(e.x,e.y-16,'Poof!','treasure');window.DungeonAudio.play('poof','',e);continue}
    if(e.charmed>0)continue;
    if(e.emerge>0)continue;
    const targets=e.trapSource?((e.trapSource.targetFaction||(e.trapSource.revealed?'enemy':'player'))==='enemy'?enemies.filter(other=>other!==e&&other.hp>0&&other.trapSource!==e.trapSource&&!(other.trapSource?.manualByPlayer&&e.trapSource.manualByPlayer)):[player]):[player];
@@ -880,7 +892,7 @@ function updateHeroShots(dt,activeShots=heroShots,initial=false){
     (s.x-object.x)*s.vx+(s.y-object.y)*s.vy>0;
    const next={x:s.x+s.vx*step,y:s.y+s.vy*step},colliders=[
     ...(world.flood?.doors||[]).filter(door=>!world.flood.draining).map(object=>({object,door:true,at:segmentDoor(s,{x:s.x+s.vx*step,y:s.y+s.vy*step},object)})),
-    ...world.torches.filter(object=>!s.hits.has(object)).map(object=>({object,radius:12,torch:true})),
+    ...world.torches.filter(object=>['light','fire'].includes(s.special)&&!s.hits.has(object)).map(object=>({object,radius:12,torch:true})),
     ...props.filter(p=>blocksShot(p)&&!canDepart(p)).map(object=>({object,radius:20,prop:true})),
     ...(world.boulder&&!canDepart(world.boulder)?[{object:world.boulder,radius:world.boulder.radius||25,boulder:true}]:[]),
     ...enemies.filter(e=>e.hp>0&&!canDepart(e)&&!(s.special==='light'&&s.hits.has(e))).map(object=>({object,radius:object.radius+(initial?12:5),prop:false}))
@@ -901,8 +913,9 @@ function updateHeroShots(dt,activeShots=heroShots,initial=false){
    }
    if(collision){
     s.hits.add(collision.object);
+    if(['bow','crossbow'].includes(s.kind)||s.special)window.DungeonAudio.play('arrowImpact','',collision.object);
     if(collision.door)damageFloodDoor(collision.object,s.damage);
-    else if(collision.torch)strikeTorch(collision.object);
+    else if(collision.torch)setTorch(collision.object,true);
     else if(collision.prop)breakProp(collision.object,s.damage);
     else if(collision.boulder)damageBoulder(collision.object,'ranged');
     else hurtEnemy(collision.object,s.damage);
@@ -1055,6 +1068,7 @@ function interactionPrompt(o){
  if(o.type==='merchant')return '[E / Use] Trade with the merchant';
  if(o.type==='stairs')return depth===MAX_FLOOR?(bossDefeated?'[E / Use] Begin Cycle '+(runCycle+1)+' / keep gear and rewards':'Defeat the dragon to claim the crown'):'[E / Use] Descend to Floor '+(depth+1)+' / restore vitality';
  if(o.type==='chest')return '[E / Use] Open treasure chest';
+ if(o.type==='torch')return '[E / Use] '+(o.lit?'Extinguish':'Light')+' torch';
  if(o.type==='armor'){const slot=armorSlot(o.armor);return allowedArmor(player.weapon,o.armor)?'[E / Use] Equip '+o.armor.name+' ('+Math.round(o.armor.reduction*100)+'% / slot currently '+Math.round((player[slot]?.reduction||0)*100)+'%; total cap 40%)':o.armor.name+' incompatible: this weapon allows only '+armorRequirement(player.weapon)+'.'}
  return '[E / Use] Equip '+o.weapon.name+' ('+(o.weapon.damage+player.level*2)+' power / current '+(player.weapon.damage+player.level*2)+')';
 }
@@ -1274,7 +1288,8 @@ loadFloor=function(floor,s){
  if(!player.ammo){player.ammo={bow:{fire:0,poison:0,explosive:0,light:0},crossbow:{fire:0,poison:0,explosive:0,light:0}};player.ammoChoice={bow:'regular',crossbow:'regular'}}
  player.root=0;world.pits=[];
  for(const room of world.rooms)room.collapse=depth<MAX_FLOOR&&room.kind!=='entrance'&&room.kind!=='throne'&&rng()<.04?{timer:7,warning:null,count:0}:null;
- if(!player.scrolls){player.scrolls={fireball:0,light:0,poison:0,lightning:0};player.selectedScroll='fireball';player.scrollCooldown=0}
+ if(!player.scrolls){player.scrolls={fireball:0,light:0,poison:0,lightning:0,cold:0};player.selectedScroll='fireball';player.scrollCooldown=0}
+ initializeMagicInventory();
  world.scrollLights=[];world.scrollZones=[];world.scrollFlashes=[];world.webStrikes=[];
  selectedWorldItem=null;selectionChoices=[];refreshSelectionPanel();
  idleThreat.elapsed=0;idleThreat.triggered=false;idleThreat.markers=[];
@@ -1358,8 +1373,22 @@ const scrollTypes={
  fireball:{name:'Fireball',color:'#ff954d',description:'Blasts the first target ahead; burns nearby foes.'},
  light:{name:'Light',color:'#ffe5a0',description:'A wall-bounded light beacon for 25 seconds; reveals glints.'},
  poison:{name:'Poison',color:'#a9e56c',description:'A six-second cloud ahead poisons enemies.'},
- lightning:{name:'Lightning',color:'#b8ccff',description:'Strikes the first target ahead for heavy damage.'}
+ lightning:{name:'Lightning',color:'#b8ccff',description:'Strikes the first target ahead for heavy damage.'},
+ cold:{name:'Cold',color:'#a9eaff',description:'A freezing burst that chills enemies and extinguishes torches.'}
 };
+function initializeMagicInventory(){
+ player.manaMax??=100;player.mana??=player.manaMax;player.manaPotions??=0;
+ player.spellbooks??={};player.spellSource??='scroll';
+ for(const kind of Object.keys(scrollTypes)){player.scrolls[kind]??=0;player.spellbooks[kind]??=[]}
+}
+function drinkManaPotion(){
+ if(state!=='playing'||!player)return false;
+ initializeMagicInventory();
+ if(!player.manaPotions||player.mana>=player.manaMax){log(player.manaPotions?'Mana is already full.':'No mana potions left.');return false}
+ player.manaPotions--;player.mana=Math.min(player.manaMax,player.mana+65);
+ floatText(player.x,player.y-15,'MANA RESTORED','treasure','#79b9f1');window.DungeonAudio.play('bottle');updateHUD();return true;
+}
+window.addEventListener('keydown',event=>{if(event.key.toLowerCase()==='y'&&!event.repeat&&!event.target?.matches?.('input,textarea,select'))drinkManaPotion()});
 const baseScrollDrops=drops,baseScrollHUD=updateHUD;
 const ammoColors={fire:'#ff954d',poison:'#a9e56c',explosion:'#ffcd65',light:'#e5efff',lightning:'#b8ccff',web:'#e4e6d3',charm:'#e0a9ef'};
 function magicPickupColor(type,effect){return type==='ammo'?ammoColors[effect]:scrollTypes[effect]?.color||ammoColors[effect]}
@@ -1368,6 +1397,7 @@ function strikeTorch(torch){
  torch.lit=!torch.lit;torch.burnoutRemaining=null;torch.burnedOut=true;particle(torch.x,torch.y,torch.lit?'#ffe5a0':'#89939b',8);
  floatText(torch.x,torch.y-15,torch.lit?'TORCH LIT':'TORCH OUT','treasure');
 }
+function setTorch(torch,lit){if(torch.lit!==lit)strikeTorch(torch)}
 function takeAmmo(kind){
  const choice=player.ammoChoice?.[kind]||'regular';
  if(choice==='regular'||!player.ammo?.[kind]?.[choice])return null;
@@ -1383,9 +1413,13 @@ function cycleAmmo(){
 $('cycleAmmo').onclick=()=>{cycleAmmo();canvas.focus()};
 function cycleScroll(){
  if(state!=='playing')return;
- const choices=Object.keys(scrollTypes).filter(kind=>player.scrolls[kind]>0);
+ initializeMagicInventory();
+ const choices=Object.keys(scrollTypes).filter(kind=>player.scrolls[kind]>0||player.spellbooks[kind].length);
  if(!choices.length)return;
- player.selectedScroll=choices[(choices.indexOf(player.selectedScroll)+1)%choices.length];refreshScrollHUD();
+ player.selectedScroll=choices[(choices.indexOf(player.selectedScroll)+1)%choices.length];
+ if(player.spellSource==='book'&&!player.spellbooks[player.selectedScroll].length&&player.scrolls[player.selectedScroll])player.spellSource='scroll';
+ else if(player.spellSource==='scroll'&&!player.scrolls[player.selectedScroll]&&player.spellbooks[player.selectedScroll].length)player.spellSource='book';
+ refreshScrollHUD();
 }
 function impactAmmo(shot,target){
  if(!shot.special||shot.specialDone)return;shot.specialDone=true;
@@ -1462,6 +1496,15 @@ drops=function(source,chest=false){
   const kinds=Object.keys(scrollTypes),kind=kinds[integer(0,kinds.length-1)];
   loot.push({x:source.x+12,y:source.y-28,type:'scroll',scroll:kind});
  }
+ if(!source.trapSwarm&&rng()<(chest?.025:.006*rate)){
+  const kinds=Object.keys(scrollTypes),kind=kinds[integer(0,kinds.length-1)];
+  loot.push({x:source.x+20,y:source.y-35,type:'spellbook',scroll:kind,uses:5});
+ }
+ if(!source.trapSwarm&&rng()<(chest?.18:.04*rate))loot.push({x:source.x-20,y:source.y+18,type:'manaPotion'});
+ if(source.giant&&source.type==='cave_spider'&&!source.boss){
+  loot.push({x:source.x+30,y:source.y,type:'weapon',weapon:makeWeapon()},{x:source.x-30,y:source.y+12,type:'potion'});
+  if(rng()<.7*rate)loot.push({x:source.x,y:source.y+25,type:'armor',armor:makeArmor()});
+ }
  if(!source.trapSwarm&&(chest||rng()<.18*rate)){
   const kinds=Object.keys(ammoColors),special=kinds[integer(0,kinds.length-1)],ammoKind=rng()<.5?'bow':'crossbow';
   loot.push({x:source.x-18,y:source.y-30,type:'ammo',special,ammoKind,value:5});
@@ -1474,14 +1517,19 @@ updateHUD=function(){baseScrollHUD();refreshScrollHUD()};
 function refreshScrollHUD(){
  $('scrollPanel').hidden=!player||!['playing','paused','shop'].includes(state);
  if(!player?.scrolls)return;
+ initializeMagicInventory();
+ $('manaDisplay').hidden=!isWand(player.weapon);
+ $('mana').style.width=(100*player.mana/player.manaMax)+'%';
+ $('manaValue').textContent=Math.floor(player.mana)+' / '+player.manaMax+' · '+player.manaPotions+' potions [Y]';
  for(const [kind,spell] of Object.entries(scrollTypes)){
   const button=$('scroll-'+kind);button.textContent=spell.name+' ('+player.scrolls[kind]+')';
   button.setAttribute('aria-pressed',String(player.selectedScroll===kind));
  }
- const spell=scrollTypes[player.selectedScroll];
- $('scrollSummary').textContent='Scrolls / Ammo: '+spell.name+' ('+player.scrolls[player.selectedScroll]+')';
- $('castScroll').textContent='Cast '+spell.name+' [R]';
- $('castScroll').disabled=state!=='playing'||!isWand(player.weapon)||player.scrolls[player.selectedScroll]<=0||player.scrollCooldown>0;
+ const spell=scrollTypes[player.selectedScroll],books=player.spellbooks[player.selectedScroll],book=player.spellSource==='book';
+ $('spellSource').textContent=book?'Spellbook ('+(books[0]||0)+' uses; '+books.length+' books)':'Scroll ('+player.scrolls[player.selectedScroll]+')';
+ $('scrollSummary').textContent='Spells / Ammo: '+spell.name+' · '+(book?'book':'scroll');
+ $('castScroll').textContent='Cast '+spell.name+' '+(book?'book':'scroll')+' [R]';
+ $('castScroll').disabled=state!=='playing'||!isWand(player.weapon)||(book?!books.length:player.scrolls[player.selectedScroll]<=0)||player.scrollCooldown>0;
  $('scrollStatus').textContent=spell.description;
  const ammoKind=weaponKind(player.weapon)==='crossbow'?'crossbow':'bow',choice=player.ammoChoice?.[ammoKind]||'regular';
  $('cycleAmmo').textContent=(ammoKind==='bow'?'Arrows: ':'Bolts: ')+choice+(choice==='regular'?'': ' ('+player.ammo[ammoKind][choice]+')')+' ['+keyBindings.cycle.toUpperCase()+']';
@@ -1501,24 +1549,32 @@ function castScroll(){
  if(state!=='playing'||!player.scrolls||player.scrollCooldown>0)return false;
  if(!isWand(player.weapon)){log('Equip a wand to use scrolls.');return false}
  const kind=player.selectedScroll,spell=scrollTypes[kind];
- if(!spell||player.scrolls[kind]<=0){log('No '+(spell?.name||'selected')+' scrolls left. Find scrolls in chests and monster loot.');return false}
+ initializeMagicInventory();
+ const book=player.spellSource==='book',books=player.spellbooks[kind];
+ if(!spell||(book?!books.length:player.scrolls[kind]<=0)){log('No '+(spell?.name||'selected')+' '+(book?'spellbooks':'scrolls')+' left.');return false}
  const point=kind==='light'?{x:player.x,y:player.y}:scrollAimPoint();
  if(kind!=='light'&&distance(point,player)<8){log('No room to cast: aim away from the wall.');return false}
- player.scrolls[kind]--;player.scrollCooldown=.45;
- if(kind==='light')world.scrollLights.push({...point,lit:true,magicRadius:220,life:25});
- else if(kind==='poison')world.scrollZones.push({...point,life:6,tick:0,radius:76,magicRadius:76,damage:7+wandPower(),wandPoison:false});
+ if(book){books[0]--;if(books[0]<=0)books.shift()}else player.scrolls[kind]--;
+ player.scrollCooldown=.45;
+ if(['light','fireball','cold'].includes(kind)){
+  const end=scrollAimPoint();
+  for(const torch of world.torches)if(segmentHit(player,end,torch,14)!==null&&clearLine(player,torch))setTorch(torch,kind!=='cold');
+ }
+ if(kind==='light')world.scrollLights.push({...point,lit:true,magicRadius:book?300:220,life:book?40:25});
+ else if(kind==='poison')world.scrollZones.push({...point,life:book?9:6,tick:0,radius:book?100:76,magicRadius:book?100:76,damage:(7+wandPower())*(book?2:1),wandPoison:false});
  else{
   const radius=kind==='fireball'?82:36;
   for(const enemy of [...enemies])if(enemy.hp>0&&distance(point,enemy)<radius+enemy.radius&&clearLine(point,enemy)){
    if(kind==='fireball'){enemy.burn=3;enemy.burnTick=.4}
-   hurtEnemy(enemy,(kind==='fireball'?55:100)+wandPower());
+   if(kind==='cold')enemy.slow=Math.max(enemy.slow||0,book?5:3);
+   hurtEnemy(enemy,((kind==='fireball'?55:kind==='cold'?40:100)+wandPower())*(book?2:1));
   }
   for(const prop of props)if(canStrikeProp(prop)&&distance(point,prop)<radius+15&&clearLine(point,prop))breakProp(prop,80);
  }
  world.scrollFlashes.push({...point,from:{x:player.x,y:player.y},kind,life:.45});
- particle(point.x,point.y,spell.color,24);window.DungeonAudio.play(kind==='light'?'magic':kind==='fireball'?'fire':kind==='poison'?'poison':'lightning');
- floatText(point.x,point.y-20,spell.name.toUpperCase()+' SCROLL','treasure');
- log(spell.name+' scroll consumed.');$('scrollPanel').open=false;refreshScrollHUD();return true;
+ particle(point.x,point.y,spell.color,24);window.DungeonAudio.play(kind==='light'?'magic':kind,'',point);
+ floatText(point.x,point.y-20,spell.name.toUpperCase()+(book?' BOOK':' SCROLL'),'treasure');
+ log(spell.name+(book?' spellbook used.':' scroll consumed.'));$('scrollPanel').open=false;refreshScrollHUD();return true;
 }
 function updateScrolls(dt){
  player.scrollCooldown=Math.max(0,player.scrollCooldown-dt);
@@ -1526,6 +1582,10 @@ function updateScrolls(dt){
   player.scrolls[item.scroll]++;item.taken=true;
   floatText(item.x,item.y-12,'+1 '+scrollTypes[item.scroll].name.toUpperCase()+' SCROLL','treasure',magicPickupColor('scroll',item.scroll));
   window.DungeonAudio.play('magic');log('Found a '+scrollTypes[item.scroll].name+' scroll.');
+ }
+ for(const item of loot)if(isWand(player.weapon)&&item.type==='spellbook'&&!item.taken&&distance(item,player)<32){
+  initializeMagicInventory();player.spellbooks[item.scroll].push(item.uses??5);item.taken=true;
+  floatText(item.x,item.y-12,'+ '+scrollTypes[item.scroll].name.toUpperCase()+' SPELLBOOK','treasure',magicPickupColor('scroll',item.scroll));window.DungeonAudio.play('magic');
  }
  for(const item of loot)if(usesAmmo(player.weapon)&&item.type==='ammo'&&!item.taken&&distance(item,player)<32){
   const amount=item.value??5;player.ammo[item.ammoKind][item.special]+=amount;item.taken=true;
@@ -1566,7 +1626,7 @@ for(const [action,label] of [['cycle','Cycle ammo or scrolls'],['potion','Health
  const row=document.createElement('label');row.textContent=label+' ';
  const input=document.createElement('input');input.type='text';input.maxLength=1;input.value=keyBindings[action];input.setAttribute('aria-label',label+' key');input.style.width='3em';
  input.addEventListener('change',()=>{
-  const key=input.value.toLowerCase(),reserved='wasdeprx';
+  const key=input.value.toLowerCase(),reserved='wasdeprxy';
   if(!/^[a-z0-9]$/.test(key)||reserved.includes(key)||Object.entries(keyBindings).some(([other,value])=>other!==action&&value===key)){
    $('bindingError').textContent='Choose a unique letter or number not used by movement or other controls.';input.value=keyBindings[action];return;
   }
@@ -1626,11 +1686,11 @@ function drawScrollMagic(){
  }
  for(const flash of world.scrollFlashes){
   ctx.save();const fade=Math.max(0,Math.min(1,flash.life/.45)),progress=1-fade;
-  if(flash.kind==='wand-fire'||flash.kind==='wand-light'){
+  if(flash.kind.startsWith('wand-')){
    const bounds=torchVisibility({x:flash.x,y:flash.y,magicRadius:flash.range});ctx.beginPath();
    bounds.forEach((point,index)=>index?ctx.lineTo(point.x,point.y):ctx.moveTo(point.x,point.y));ctx.closePath();ctx.clip();
    ctx.translate(flash.x,flash.y);ctx.rotate(flash.angle);ctx.globalAlpha=fade*.35;
-   ctx.fillStyle=flash.kind==='wand-fire'?'#ff8b38':'#fff3ad';
+   ctx.fillStyle=scrollTypes[flash.kind.slice(5)]?.color||ammoColors[flash.kind.slice(5)]||'#fff3ad';
    ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,flash.range,-flash.width/2,flash.width/2);ctx.closePath();ctx.fill();
    if(flash.kind==='wand-fire')for(let i=0;i<18;i++){const a=(i%5/4-.5)*flash.width,dist=flash.range*((i*.37+progress)%1);circle(Math.cos(a)*dist,Math.sin(a)*dist,3+(i%4),'#ffc36d')}
   }else if(flash.kind==='fireball'){
@@ -1658,6 +1718,7 @@ function drawScrollMagic(){
  }
 }
 for(const kind of Object.keys(scrollTypes))$('scroll-'+kind).onclick=()=>{player.selectedScroll=kind;refreshScrollHUD();canvas.focus()};
+$('spellSource').onclick=()=>{if(!player)return;player.spellSource=player.spellSource==='book'?'scroll':'book';refreshScrollHUD();canvas.focus()};
 function cycleAvailable(){if(isWand(player.weapon))cycleScroll();else if(usesAmmo(player.weapon))cycleAmmo()}
 $('cycleAmmo').onclick=()=>{if(state==='playing')cycleAvailable();canvas.focus()};
 window.addEventListener('keydown',event=>{
@@ -1684,7 +1745,8 @@ function worldTargets(){
  world.end.type='stairs';
  if(world.merchant)world.merchant.type='merchant';
  for(const trap of world.traps)trap.type='trap';
- return [...loot.filter(o=>o.type==='weapon'||o.type==='armor'),...props.filter(p=>!p.open&&p.type==='chest'),...world.traps.filter(t=>t.revealed&&!t.triggered),...(world.merchant?[world.merchant]:[]),world.end];
+ for(const torch of world.torches)torch.type='torch';
+ return [...loot.filter(o=>o.type==='weapon'||o.type==='armor'),...props.filter(p=>!p.open&&p.type==='chest'),...world.traps.filter(t=>t.revealed&&!t.triggered),...world.torches,...(world.merchant?[world.merchant]:[]),world.end];
 }
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Click or tap the hall to aim and attack. Click or tap a nearby chest to open it; other nearby gear can still be selected and equipped with E / Use. Hold the mouse or Attack button to keep attacking.');
 document.querySelector('.intro .controls').insertAdjacentHTML('beforeend','<br>Rubble and furnishings are attack-only obstacles, not selectable items. Click or tap to strike them. E / Use does not break them.');
@@ -1697,6 +1759,7 @@ function targetReachable(target){return distance(target,player)<72&&clearLine(pl
 function worldTargetName(target){
  if(target.type==='weapon'||target.type==='armor')return target[target.type].name;
  if(target.type==='trap')return 'Safe '+target.kind+' trap';
+ if(target.type==='torch')return 'Torch';
  return target.type==='stairs'?'Stairway':target.type==='merchant'?'Merchant':'Treasure chest';
 }
 function refreshSelectionPanel(){
@@ -1768,11 +1831,15 @@ nearby=function(){
  if(target)return target;
  const trap=world?.traps.filter(t=>t.revealed&&!t.triggered&&targetReachable(t)).sort((a,b)=>distance(a,player)-distance(b,player))[0];
  if(trap)trap.type='trap';
- return trap||null;
+ if(trap)return trap;
+ const torch=world?.torches.filter(targetReachable).sort((a,b)=>distance(a,player)-distance(b,player))[0];
+ if(torch)torch.type='torch';
+ return torch||null;
 };
 interact=function(){
 if(state!=='playing')return;
 const target=nearby();
+if(target?.type==='torch'){strikeTorch(target);refreshSelectionPanel();return}
 if(target?.type==='trap'&&target.revealed&&!target.triggered){triggerTrap(target,true,true);refreshSelectionPanel();return}
 if(target?.type==='merchant'){openShop();return}
 if(target?.type==='stairs'){
@@ -1948,7 +2015,7 @@ if(window.emberkeep){
 </style>
 <div class="touch-controls" id="touchControls" aria-label="Touch game controls">
  <div id="movePad" role="application" aria-label="Drag to move and face the knight"><span id="moveKnob"></span></div>
- <div class="touch-actions"><button id="touchAttack" aria-label="Hold to attack">Attack</button><button id="touchInteract">Use / Equip</button><button id="touchDodge">Dodge</button><button id="touchHeal">Heal</button></div>
+ <div class="touch-actions"><button id="touchAttack" aria-label="Hold to attack">Attack</button><button id="touchInteract">Use / Equip</button><button id="touchDodge">Dodge</button><button id="touchHeal">Heal</button><button id="touchMana" aria-label="Drink mana potion">Mana</button></div>
  <span id="touchFeedback" role="status"></span>
 </div>
 <script id="mobile-controls">
@@ -1988,6 +2055,7 @@ for(const event of ['pointerup','pointercancel','lostpointercapture'])attackButt
 $('touchInteract').onclick=()=>{if(state!=='playing')return;const target=nearby();interact();touchFeedback(target?'Used '+target.type:'Move closer to loot, stairs or merchant')};
 $('touchDodge').onclick=()=>{if(state!=='playing')return;dodge();touchFeedback(player.dash>0?'Dodging':'Need 35 resolve')};
 $('touchHeal').onclick=()=>{if(state!=='playing')return;const before=player.hp;potion();touchFeedback(player.hp>before?'Vitality restored':player.potions?'Already at full vitality':'No potions left')};
+$('touchMana').onclick=()=>{if(state==='playing'){drinkManaPotion();touchFeedback('Mana: '+Math.floor(player.mana)+' / '+player.manaMax)}};
 canvas.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'||state!=='playing')return;const r=canvas.getBoundingClientRect();player.angle=Math.atan2((e.clientY-r.top)*vh/r.height+camera.y-player.y,(e.clientX-r.left)*vw/r.width+camera.x-player.x);mouse.active=false;if(openPointerChest(e))touchFeedback('Chest opened');else{selectWorldPointer(e);attack();touchFeedback('Striking')}});
 window.addEventListener('blur',resetTouch);document.addEventListener('visibilitychange',()=>{if(document.hidden)resetTouch()});
 const touchUpdate=update;
@@ -2014,8 +2082,8 @@ const expansionWorldTargets=worldTargets,expansionNearby=nearby;
 const ordinaryWeapon=makeWeapon;
 makeWeapon=function(){
  if(rng()>=.2)return ordinaryWeapon();
- const kinds=['lightning','fireball','fire','poison','web','light'],effect=kinds[integer(0,kinds.length-1)],power=Math.max(1,currentFloor);
- return {name:effect[0].toUpperCase()+effect.slice(1)+' Wand +'+power,kind:'wand',effect,power,damage:5+power,range:300+Math.min(power*5,200),cooldown:.55,color:ammoColors[effect]||'#ff954d'};
+ const kinds=['lightning','fireball','fire','poison','web','light','cold'],effect=kinds[integer(0,kinds.length-1)],power=Math.max(1,currentFloor);
+ return {name:effect[0].toUpperCase()+effect.slice(1)+' Wand +'+power,kind:'wand',effect,power,damage:5+power,range:300+Math.min(power*5,200),cooldown:.55,color:magicPickupColor('wand',effect)||'#ff954d'};
 };
 function applyWandDot(target,kind,power,duration=3){
  if(!target||target.destroyed||target.open||target.hp<=0)return;
@@ -2051,11 +2119,14 @@ function wandCone(effect,power,range,width){
   if(enemies.includes(target)){
    hurtEnemy(target,5+power);
    if(effect==='light')target.blind=Math.max(target.blind||0,1.5+power*.1);
+   if(effect==='web')target.rooted=Math.max(target.rooted||0,1);
+   if(effect==='cold')target.slow=Math.max(target.slow||0,1.5);
    applyWandDot(target,effect,power);
   }else{
    breakProp(target,5+power);
    if(effect==='fire')applyWandDot(target,effect,power);
   }
+  if(['light','fire','fireball'].includes(effect))for(const torch of world.torches)if(distance(player,torch)<=range&&clearLine(player,torch)&&inAttackArc(torch,width/2))setTorch(torch,true);
  }
  world.scrollFlashes.push({x:player.x,y:player.y,from:{x:player.x,y:player.y},kind:'wand-'+effect,angle:player.angle,range,width,life:.45});
 }
@@ -2202,7 +2273,7 @@ refreshScrollHUD=function(){
  expansionRefreshScrollHUD();
  const amount=player.ammoShared?.[selectedAmmo]||0;
  const magic=isWand(player.weapon),ranged=usesAmmo(player.weapon);
- $('scrollChoices').hidden=!magic;$('castScroll').hidden=!magic;$('scrollStatus').hidden=!magic;
+ $('scrollChoices').hidden=!magic;$('castScroll').hidden=!magic;$('scrollStatus').hidden=!magic;$('spellSource').hidden=!magic;
  if(!magic)$('scrollSummary').textContent=ranged?'Ammo: '+(selectedAmmo==='regular'?'Regular':ammoLabels[selectedAmmo]+' ('+amount+')'):'No ammo or scrolls';
  $('cycleAmmo').disabled=!magic&&!ranged;
  $('cycleAmmo').textContent=(magic?'Next scroll':ranged?'Ammo: '+(selectedAmmo==='regular'?'Regular':ammoLabels[selectedAmmo]+' ('+amount+')'):'No ammo or scrolls')+' ['+keyBindings.cycle.toUpperCase()+']';
@@ -2236,21 +2307,17 @@ attack=function(){
  if(state!=='playing'||player.cool>0)return;
  const kind=weaponKind(player.weapon);
  if(isWand(player.weapon)){
-  const weapon=player.weapon,power=weapon.power||1;player.cool=weapon.cooldown||.55;player.swing=.2;
-  if(weapon.effect==='light'||weapon.effect==='fire'){
-   const width=weapon.effect==='light'?Math.min(1.7,.65+power*.04):.5,range=weapon.effect==='light'?170+power*10:Math.min(weapon.range||300,220+power*5);
-   if(weapon.effect==='light')world.scrollLights.push({x:player.x,y:player.y,lit:true,magicRadius:range,life:5+power*.25,coneAngle:player.angle,coneWidth:width});
-   wandCone(weapon.effect,power,range,width);
-   const ball=world.boulder;if(ball&&distance(ball,player)<range+(ball.radius||25)&&clearLine(player,ball)&&Math.abs(angleDiff(Math.atan2(ball.y-player.y,ball.x-player.x),player.angle))<width)damageBoulder(ball,'ranged');
-   window.DungeonAudio.play(weapon.effect==='light'?'magic':'fire');return;
-  }
-  const speed=520;heroShots.push({x:player.x,y:player.y,from:{x:player.x,y:player.y},vx:Math.cos(player.angle)*speed,vy:Math.sin(player.angle)*speed,kind:'wand',wandEffect:weapon.effect,power,age:0,travel:0,range:weapon.range,damage:5+power,color:weapon.color,hits:new Set(),life:4,lit:weapon.effect==='fireball',magicRadius:85});
-  updateHeroShots(0,[heroShots[heroShots.length-1]],true);
-  window.DungeonAudio.play('strike');return;
+  initializeMagicInventory();if(player.mana<10)return;
+  const weapon=player.weapon,power=weapon.power||1,width=.7,range=Math.min(weapon.range||300,220+power*5);
+  player.mana-=10;player.cool=.22;player.swing=.2;
+  if(weapon.effect==='light')world.scrollLights.push({x:player.x,y:player.y,lit:true,magicRadius:range,life:.35,coneAngle:player.angle,coneWidth:width});
+  wandCone(weapon.effect,power,range,width);
+  const ball=world.boulder;if(ball&&distance(ball,player)<range+(ball.radius||25)&&clearLine(player,ball)&&inAttackArc(ball,width/2))damageBoulder(ball,'ranged');
+  window.DungeonAudio.play(weapon.effect==='light'?'magic':weapon.effect,'',player);return;
  }
  if(!rangedKinds.includes(kind)){strikeFloodDoors(player.weapon.range,player.weapon.damage+player.level*2);expansionAttack();return}
  if(kind==='boomerang'&&heroShots.some(shot=>shot.kind==='boomerang'))return;
- window.DungeonAudio.play('strike',kind);player.cool=player.weapon.cooldown||.36;player.swing=.2;fireWeapon(kind);
+ window.DungeonAudio.play(['rifle','pistol'].includes(kind)?'gun':['bow','crossbow'].includes(kind)?'bowRelease':kind==='boomerang'?'whoosh':'strike',kind,player);player.cool=player.weapon.cooldown||.36;player.swing=.2;fireWeapon(kind);
 };
 const baseWeaponKind=weaponKind;
 weaponKind=function(weapon){
@@ -2462,9 +2529,11 @@ fallToFloor=function(destination,message){
 };
 hurtEnemy=function(enemy,amount,source=null){
  const wasBoss=enemy?.boss&&enemy.hp>0,originalType=enemy?.type;
+ const alive=enemy?.hp>0;
  if(wasBoss&&originalType==='dragon')enemy.type='boss_dragon';
  expansionHurtEnemy(enemy,amount,source);
  if(wasBoss&&originalType==='dragon')enemy.type=originalType;
+ if(alive&&enemy.hp<=0&&['goblin','zombie','skeleton','iron_knight','crypt_wizard','cinder_wizard','bone_archer'].includes(originalType)&&rng()<.025)window.DungeonAudio.play('scream','',enemy);
  if(wasBoss&&enemy.hp<=0&&!enemy.bossRewardDone){
   enemy.bossRewardDone=true;bossDefeated=true;world.end.sealed=false;
   dropBossRewards(enemy);player.crowns=(player.crowns||0)+1;
@@ -2504,6 +2573,7 @@ function updateTorchBurnout(dt){
  }
 }
 update=function(dt){
+ if(state==='playing'){initializeMagicInventory();player.mana=Math.min(player.manaMax,player.mana+3*dt)}
  const beforePedestalMove={x:player.x,y:player.y};
  for(const actor of [player,...enemies])if(actor.bedbugs>0)actor.bedbugs=Math.max(0,actor.bedbugs-dt);
  for(const enemy of enemies){
@@ -2678,12 +2748,12 @@ function restoreSavedRun(){
   runCycle=data.runCycle;bossDefeated=data.bossDefeated;selectedAmmo=data.selectedAmmo;activeBossName=data.activeBossName;shopFloor=data.shopFloor;
   Object.assign(idleThreat,data.idleThreat);Object.assign(gearPreferences,data.gearPreferences||{});
   const savedKeys=data.keyBindings||{},legacyCycle=savedKeys.scroll&&savedKeys.scroll!=='t'?savedKeys.scroll:savedKeys.ammo&&savedKeys.ammo!=='c'?savedKeys.ammo:'t';
-  keyBindings.potion=savedKeys.potion||'q';keyBindings.cycle=savedKeys.cycle||legacyCycle;if(keyBindings.cycle===keyBindings.potion)keyBindings.cycle=keyBindings.potion==='t'?'c':'t';
+  keyBindings.potion=savedKeys.potion==='y'?'q':savedKeys.potion||'q';keyBindings.cycle=savedKeys.cycle==='y'?'t':savedKeys.cycle||legacyCycle;if(keyBindings.cycle==='y'||keyBindings.cycle===keyBindings.potion)keyBindings.cycle=keyBindings.potion==='t'?'c':'t';
   difficulty=['easy','medium','hard'].includes(data.difficulty)?data.difficulty:'medium';currentFloor=depth;
   for(const zone of world.scrollZones||[])if(zone.wandPoison===undefined)zone.wandPoison=true;
   $('difficulty').value=difficulty;for(const [action,input] of Object.entries(bindingInputs))input.value=keyBindings[action];refreshKeyHints();
   selectedWorldItem=data.selectedWorldItem||null;selectionChoices=data.selectionChoices||[];lastGearDelete=data.lastGearDelete||null;
-  setSeed(data.seed);installSharedAmmo();reconcileArmor(player.weapon);reconcileInventory(player.weapon);distances=null;pathTimer=0;keys.clear();mouse.down=false;mouse.active=false;releaseTouchControls();
+  setSeed(data.seed);initializeMagicInventory();installSharedAmmo();reconcileArmor(player.weapon);reconcileInventory(player.weapon);distances=null;pathTimer=0;keys.clear();mouse.down=false;mouse.active=false;releaseTouchControls();
   state='playing';$('overlay').hidden=true;resumeSaved.hidden=true;refreshGearControls();
   $('area').textContent=chapters[realmForFloor(depth)-1];$('area').style.color=world.theme.accent;
   $('floor').textContent='CYCLE '+runCycle+'  |  FLOOR '+depth+' / '+MAX_FLOOR+'  |  '+world.theme.name.toUpperCase();
@@ -2814,11 +2884,12 @@ body>main{height:calc(100vh - 96px);height:calc(100dvh - 96px);min-height:0}
  #inventoryToggle,#closeInventory{display:none}
 }
 @media(pointer:coarse),(max-width:650px){
- .touch-actions{grid-template-columns:repeat(3,clamp(54px,16vw,68px));grid-template-areas:"attack use dodge" "attack heal heal";gap:6px}
+ .touch-actions{grid-template-columns:repeat(3,clamp(54px,16vw,68px));grid-template-areas:"attack use dodge" "attack heal mana";gap:6px}
  .touch-actions #touchAttack{grid-area:attack;min-height:102px}
  .touch-actions #touchInteract{grid-area:use}
  .touch-actions #touchDodge{grid-area:dodge}
  .touch-actions #touchHeal{grid-area:heal}
+ .touch-actions #touchMana{grid-area:mana}
  .touch-actions button{min-width:48px;min-height:48px;overflow-wrap:anywhere}
  #movePad{width:clamp(80px,25vw,116px);height:clamp(80px,25vw,116px)}
  #moveKnob{left:50%;top:50%;margin:-22px 0 0 -22px}
@@ -2849,17 +2920,22 @@ body>main{height:calc(100vh - 96px);height:calc(100dvh - 96px);min-height:0}
  .boss{bottom:150px}
 }
 .native-android #return-menu-link{display:none}
+@media(pointer:coarse),(max-width:1000px){.viewport:has(#manaDisplay:not([hidden])) #scrollPanel{top:124px}}
+@media(max-height:500px) and (pointer:coarse){.viewport:has(#manaDisplay:not([hidden])) #scrollPanel{top:105px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
 <script id="accessible-mobile-ui">
 'use strict';
-const introControls=document.querySelector('.intro .controls'),completeGuideMarkup=introControls.innerHTML;
+const introControls=document.querySelector('.intro .controls'),completeGuideMarkup=introControls.innerHTML
+ .replaceAll('Weapon strikes and projectiles toggle torches, including relighting them.','Use / Equip toggles torches; Light, Fire and Fireball ranged magic lights them, and Cold spells extinguish them.')
+ .replaceAll('Torches are attack-only: hit with any weapon to switch them off or on, no fire needed. E / Use cannot toggle or select them.','Use / Equip toggles torches. Light, Fire and Fireball ranged magic lights them; Cold spells extinguish them.')
+ .replaceAll('Some torches flicker out; strike them to relight them.','Some torches flicker out; use the action button to relight them.');
 introControls.innerHTML=`
  <p class="quick-start">Drag <strong>Move</strong> to walk. Tap the hall to attack or a nearby chest to open it. Hold <strong>Attack</strong> to keep striking; <strong>Use / Equip</strong> equips gear, trades, or descends.</p>
  <ol class="first-steps"><li>Enter the halls and move toward the monsters.</li><li>Attack, then dodge when an enemy winds up or a trap warns.</li><li>Use nearby chests, equipment and stairs. Heal when your vitality falls.</li></ol>
  <p class="quick-start">Tap gear to select it and attack; tap <strong>Use / Equip</strong> to equip it. Your run saves on this device.</p>
  <div class="guide-topics">
-  <details><summary>Combat, equipment and magic</summary><p>Use melee or ranged weapons, seven special ammunition types, or wands and single-use scrolls. Armor rules depend on weapon class. Better gear can auto-equip; incompatible gear stays as a temporary floor drop.</p></details>
+  <details><summary>Combat, equipment and magic</summary><p>Wands channel elemental cones using mana, which slowly regenerates. Press Y or tap Mana for a mana potion. Scrolls cast instantly once; rare spellbooks cast stronger spells five times without using mana. Use / Equip toggles torches; ranged Light, Fire and Fireball magic lights them, and Cold spells extinguish them.</p></details>
   <details><summary>Rooms, traps and bosses</summary><p>Search torchlit passages for hidden glints, disarm traps, break containers and watch for enemy attack warnings. Every eighth-floor boss seals all routes down until defeated; victory opens the stairway.</p></details>
   <details><summary>Settings, shops and saved runs</summary><p>Change difficulty, healing and cycle keys, audio, and auto-equipment preferences. Merchants offer a safe place to trade. Runs save locally and do not sync across devices or browser profiles.</p></details>
  </div>
@@ -2880,7 +2956,7 @@ adaptOptionsMenu();window.addEventListener('resize',adaptOptionsMenu);
 const guideDialog=document.createElement('dialog');guideDialog.id='guideDialog';guideDialog.setAttribute('aria-labelledby','guideTitle');
 guideDialog.innerHTML=`<h2 id="guideTitle">Field guide</h2>
  <p>Emberkeep is an overhead dungeon adventure. Essential actions are always available by keyboard, touch, or the accessible controls.</p>
- <h3>Move and survive</h3><ul><li>Drag Move, use the four direction controls, or press WASD / arrow keys.</li><li>Tap or click the arena to aim and attack, hold Attack, or press Space.</li><li>Use / Equip or E acts on the selected nearby object; it never attacks.</li><li>Dodge with Shift or Dodge. Heal with Q or Heal. Pause with P or Pause.</li></ul>
+ <h3>Move and survive</h3><ul><li>Drag Move, use the four direction controls, or press WASD / arrow keys.</li><li>Tap or click the arena to aim and attack, hold Attack, or press Space.</li><li>Use / Equip or E acts on the selected nearby object, including torches.</li><li>Dodge with Shift or Dodge. Heal with Q or Heal; restore mana with Y or Mana. Pause with P or Pause.</li></ul>
  <h3>Explore and equip</h3><p>Tap or click a nearby chest to open it. Tapping or clicking gear selects it and attacks; press Use / Equip to equip it. Clear selection to return to nearby interactions. Seven special ammo effects work with every ranged weapon. Wands collect scrolls. Incompatible armor, ammo and spells dropped by weapon changes are temporary; other floor drops also expire.</p>
  <h3>Progress</h3><p>Disarm revealed traps, break barrels and crates, and gather treasure. Bosses guard every eighth floor and block every descent route until defeated. Your run is saved locally on this device.</p>
  <div class="dialog-actions"><button type="button" id="closeGuide">Return to game</button></div>`;
@@ -2902,7 +2978,7 @@ accessibleControls.setAttribute('role','group');accessibleControls.setAttribute(
 accessibleControls.innerHTML=`<h2>Accessible game controls</h2><p>Activate a direction once for a short step or hold it to keep moving. Attack, use, dodge, heal, cycle or pause with these buttons.</p><div>
  <button type="button" data-move="w" aria-label="Move north">North</button><button type="button" data-move="a" aria-label="Move west">West</button><button type="button" data-move="s" aria-label="Move south">South</button><button type="button" data-move="d" aria-label="Move east">East</button>
  <button type="button" id="accessibleAttack" aria-label="Attack">Attack</button><button type="button" id="accessibleUse" aria-label="Use or equip selected nearby object">Use / Equip</button>
- <button type="button" id="accessibleDodge" aria-label="Dodge">Dodge</button><button type="button" id="accessibleHeal" aria-label="Drink healing potion">Heal</button>
+ <button type="button" id="accessibleDodge" aria-label="Dodge">Dodge</button><button type="button" id="accessibleHeal" aria-label="Drink healing potion">Heal</button><button type="button" id="accessibleMana" aria-label="Drink mana potion">Mana</button>
  <button type="button" id="accessibleCycle" aria-label="Cycle ammunition or spells">Cycle</button><button type="button" id="accessiblePause" aria-label="Pause or resume the game">Pause</button>
  <button type="button" id="readGameState">Read current game status</button></div>`;
 document.querySelector('.viewport').append(accessibleControls);
@@ -2957,6 +3033,7 @@ for(const eventName of ['pointerup','pointercancel','lostpointercapture'])access
 $('accessibleUse').onclick=()=>runAccessibleAction(interact);
 $('accessibleDodge').onclick=()=>runAccessibleAction(dodge);
 $('accessibleHeal').onclick=()=>runAccessibleAction(potion);
+$('accessibleMana').onclick=()=>runAccessibleAction(drinkManaPotion);
 $('accessibleCycle').onclick=()=>runAccessibleAction(cycleAvailable);
 $('accessiblePause').onclick=()=>{$('pause').click();announceGameEvent(state==='paused'?'Game paused.':'Game resumed.')};
 $('readGameState').onclick=()=>window.emberkeepA11y.readStatus();
