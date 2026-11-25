@@ -3,11 +3,36 @@ import { newTicTacToe, ticResult, playTicTacToe, newCheckers, checkersMoves, che
 import { playerNames, validPlayerNames } from "../party_names.mjs";
 
 const names = { tic: "Tic-Tac-Toe", checkers: "Checkers", chess: "Chess" };
-const symbols = {
-  wk: "♔", wq: "♕", wr: "♖", wb: "♗", wn: "♘", wp: "♙",
-  bk: "♚", bq: "♛", br: "♜", bb: "♝", bn: "♞", bp: "♟"
-};
 const pieceNames = { k: "king", q: "queen", r: "rook", b: "bishop", n: "knight", p: "pawn" };
+const pieceShapes = {
+  p: ["M32 13a8 8 0 1 1 0 16a8 8 0 0 1 0-16ZM25 29h14l-2 8c0 5 4 9 8 12H19c4-3 8-7 8-12Z", "M17 49h30l3 5H14Z"],
+  r: ["M16 12h8v6h6v-6h5v6h6v-6h7v13l-5 5v15H21V30l-5-5Z", "M18 45h28l3 5H15ZM14 50h36v5H14Z"],
+  n: ["M17 50c2-7 6-12 9-16l-7 1-4-5 7-5 5-11 5 4 7-3c8 5 11 15 10 35Z", "M15 50h35v5H15Z"],
+  b: ["M32 10c6 5 10 11 10 16 0 4-2 6-5 8l5 12H22l5-12c-3-2-5-4-5-8 0-5 4-11 10-16Z", "M19 46h26l4 5H15ZM14 51h36v4H14Z"],
+  q: ["M16 21l8 6 8-14 8 14 8-6-4 23H20Z", "M18 44h28l3 6H15ZM14 50h36v5H14Z"],
+  k: ["M30 8h4v4h4v4h-4v5h-4v-5h-4v-4h4Z", "M22 24c-7-5-11 2-6 8l6 13h20l6-13c5-6 1-13-6-8l-10 7Z", "M19 45h26l4 5H15ZM14 50h36v5H14Z"]
+};
+const pieceDetails = { n: ["M28 23h2", "M23 32l4-1"], b: ["M27 27l9-10"], q: ["M16 19h.1M32 11h.1M48 19h.1"] };
+function chessPiece(piece) {
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", "0 0 64 64");
+  svg.setAttribute("class", `piece ${piece.color === "w" ? "white" : "black"}`);
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("focusable", "false");
+  for (const d of pieceShapes[piece.type]) {
+    const path = document.createElementNS(ns, "path");
+    path.setAttribute("d", d);
+    svg.append(path);
+  }
+  for (const d of pieceDetails[piece.type] || []) {
+    const path = document.createElementNS(ns, "path");
+    path.setAttribute("d", d);
+    path.setAttribute("class", "detail");
+    svg.append(path);
+  }
+  return svg;
+}
 const byId = id => document.getElementById(id);
 const board = byId("board");
 const warning = byId("storage-warning");
@@ -151,11 +176,7 @@ function render(restoreFocus = false) {
     } else {
       cell.setAttribute("aria-label", `${squareName(i)}: ${piece ? `${piece.color === "w" ? "White" : "Black"} ${pieceNames[piece.type]}` : "empty"}${destinations.includes(i) ? ", legal move" : ""}`);
       if (piece) {
-        const token = document.createElement("span");
-        token.className = `piece ${piece.color === "w" ? "white" : "black"}`;
-        token.textContent = symbols[piece.color + piece.type];
-        token.setAttribute("aria-hidden", "true");
-        cell.append(token);
+        cell.append(chessPiece(piece));
       }
     }
     board.append(cell);
