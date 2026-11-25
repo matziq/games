@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-function game() {
+function game({ AudioContext, storage } = {}) {
   const calls = [];
   const context2d = new Proxy({}, {
     get(target, key) {
@@ -35,12 +35,13 @@ function game() {
   math.random = () => .5;
   const sandbox = {
     document, innerWidth: 960, innerHeight: 640, console: { warn() {} },
-    localStorage: { getItem: () => null, setItem() {} },
+    localStorage: storage || { getItem: () => null, setItem() {} },
     matchMedia: () => ({ matches: false }), addEventListener() {},
     requestAnimationFrame() {}, HTMLButtonElement: class {}, HTMLInputElement: class {},
     HTMLElement: class {}, onkeydown: null, onkeyup: null, Math: math, Set
   };
   sandbox.window = sandbox;
+  if (AudioContext) Object.assign(sandbox, { AudioContext, setInterval: () => 1, clearInterval() {} });
   const html = fs.readFileSync(path.join(__dirname, '..', 'blood_joust.html'), 'utf8');
   const script = html.match(/<script>\s*([\s\S]*?)<\/script>/)[1];
   const hook = `window.__test = {
@@ -56,7 +57,8 @@ function game() {
       if ('respawnT' in v) respawnT = v.respawnT;
       if ('plats' in v) plats = v.plats;
     },
-    setUpdate: fn => { update = fn; }
+    setUpdate: fn => { update = fn; },
+    sfx, setSfxMuted, setMusicMuted, audioState: () => ({ music, sfxMuted, musicMuted })
   };`;
   vm.runInNewContext(script.replace('    })();', hook + '\n    })();'), sandbox);
   return { t: sandbox.__test, sandbox, calls, context2d, element };
@@ -261,4 +263,66 @@ test('a touch flap tap shorter than one frame still flaps', () => {
   assert.equal(t.get().touchFlapHeld, false);
   t.updatePlaying();
   assert.ok(player.vy < 0, 'quick tap produced an upward flap');
+});
+function fakeAudio() {
+  const log = { oscillators: 0, sources: 0, stopped: 0, ctx: null };
+  const param = () => ({ value: 1, setValueAtTime() {}, exponentialRampToValueAtTime() {}, linearRampToValueAtTime() {},
+    setTargetAtTime() {}, cancelScheduledValues() {} });
+  const node = extra => Object.assign({ connect() {}, gain: param(), frequency: param(), Q: param(), pan: param(),
+    playbackRate: param(), threshold: param(), knee: param(), ratio: param(), attack: param(), release: param() }, extra);
+  class FakeAudioContext {
+    constructor() { this.state = 'running'; this.currentTime = 0; this.sampleRate = 8000; this.destination = node(); log.ctx = this; }
+    createGain() { return node(); }
+    createBiquadFilter() { return node(); }
+    createDynamicsCompressor() { return node(); }
+    createStereoPanner() { return node(); }
+    createOscillator() { log.oscillators++; return node({ start() {}, stop() { log.stopped++; } }); }
+    createBufferSource() { log.sources++; return node({ start() {}, stop() {} }); }
+    createBuffer(channels, length) { return { getChannelData: () => new Float32Array(length) }; }
+    decodeAudioData() { return Promise.resolve(); }
+    resume() { return Promise.resolve(); }
+    suspend() { return Promise.resolve(); }
+  }
+  return { FakeAudioContext, log };
+}
+function memoryStorage() {
+  const data = new Map();
+  return { getItem: key => data.has(key) ? data.get(key) : null, setItem: (key, value) => data.set(key, String(value)) };
+}
+
+test('sound toggles persist and the music bed stops and restarts mid-game', () => {
+  const { FakeAudioContext, log } = fakeAudio();
+  const storage = memoryStorage();
+  const { t } = game({ AudioContext: FakeAudioContext, storage });
+  t.startGame();
+  assert.ok(t.audioState().music, 'music starts with the game');
+  t.setMusicMuted(true);
+  assert.equal(t.audioState().music, null);
+  assert.ok(log.stopped > 0, 'music voices were stopped');
+  assert.equal(storage.getItem('bjMusicOff'), '1');
+  t.setMusicMuted(false);
+  assert.ok(t.audioState().music, 'unmuting during play restarts music');
+  t.setSfxMuted(true);
+  assert.equal(storage.getItem('bjSfxOff'), '1');
+
+  const before = log.oscillators + log.sources;
+  t.sfx('kill', 100);
+  assert.equal(log.oscillators + log.sources, before, 'muted effects create no voices');
+
+  const reloaded = game({ AudioContext: FakeAudioContext, storage }).t.audioState();
+  assert.equal(reloaded.sfxMuted, true);
+  assert.equal(reloaded.musicMuted, false);
+});
+
+test('rapidly repeated sound effects are rate-limited', () => {
+  const { FakeAudioContext, log } = fakeAudio();
+  const { t } = game({ AudioContext: FakeAudioContext });
+  t.sfx('flap', 100);
+  const first = log.oscillators + log.sources;
+  assert.ok(first > 0, 'first flap is audible');
+  t.sfx('flap', 100);
+  assert.equal(log.oscillators + log.sources, first, 'same-instant repeat is skipped');
+  log.ctx.currentTime = .2;
+  t.sfx('flap', 100);
+  assert.ok(log.oscillators + log.sources > first, 'later flap plays');
 });

@@ -379,6 +379,7 @@
       <button class="tc-btn tc-flap" id="tc-flap" aria-label="Flap">FLAP</button>
     </div>
   </div>
+  <script src="audio/bj-sfx-cc0.js"></script>
   <script>
     (() => {
       'use strict';
@@ -419,7 +420,6 @@
             t.x = t.ent ? t.ent.x : t.x * W / oldW;
             t.y = t.ent ? t.ent.y : t.y * H / oldH;
           }
-          if (spawnPos) { spawnPos.x *= W / oldW; spawnPos.y *= H / oldH; }
           for (const part of [...bloods, ...gores, ...bones, ...fragments, ...embers, ...lavaPx]) {
             part.x *= W / oldW; part.y *= H / oldH;
           }
@@ -540,49 +540,61 @@
       }
       function pauseGame() {
         if (state !== 'playing' && state !== 'waveAnnounce') return;
-        pausedFrom = state; state = 'paused'; clearInput(); droneOff(); spawnSoundOff();
+        pausedFrom = state; state = 'paused'; clearInput(); droneOff(); sfx('uiBack');
       }
       function resumeGame() {
         if (state !== 'paused') return;
-        unlockAudio(); state = pausedFrom; pausedFrom = null; lastT = 0; accumulator = 0; droneOn();
+        unlockAudio(); sfx('uiSelect'); state = pausedFrom; pausedFrom = null; lastT = 0; accumulator = 0; droneOn();
       }
       addEventListener('blur', pauseGame);
       document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
 
       document.getElementById('start').addEventListener('click', () => { unlockAudio(); startGame(); });
-      document.getElementById('help').addEventListener('click', () => { clearInput(); state = 'help'; });
-      document.getElementById('sound').addEventListener('click', () => { unlockAudio(); clearInput(); state = 'sound'; });
-      document.querySelectorAll('.back').forEach(button => button.addEventListener('click', () => { clearInput(); state = 'title'; }));
+      document.getElementById('help').addEventListener('click', () => { sfx('uiSelect'); clearInput(); state = 'help'; });
+      document.getElementById('sound').addEventListener('click', () => { unlockAudio(); sfx('uiSelect'); clearInput(); state = 'sound'; });
+      document.querySelectorAll('.back').forEach(button => button.addEventListener('click', () => { sfx('uiBack'); clearInput(); state = 'title'; }));
       document.getElementById('pause').addEventListener('click', pauseGame);
       document.getElementById('resume').addEventListener('click', resumeGame);
       document.getElementById('restart').addEventListener('click', () => { unlockAudio(); startGame(); });
       document.getElementById('main-menu').addEventListener('click', () => { clearInput(); state = 'title'; });
       document.getElementById('pause-quit').addEventListener('click', () => {
         if (state !== 'paused') return;
-        recordBest(); clearInput(); droneOff(); spawnSoundOff(); pausedFrom = null; state = 'title';
+        recordBest(); clearInput(); droneOff(); sfx('uiBack'); pausedFrom = null; state = 'title';
       });
       document.getElementById('volume').addEventListener('input', e => setVolume(Number(e.target.value) / 100));
-      document.getElementById('sfx-toggle').addEventListener('click', () => { sfxMuted = !sfxMuted; syncSoundUI(); if (!sfxMuted) sfx('eggPop'); });
-      document.getElementById('music-toggle').addEventListener('click', () => { musicMuted = !musicMuted; syncSoundUI(); });
+      document.getElementById('volume').addEventListener('change', () => sfx('eggPop'));
+      document.getElementById('sfx-toggle').addEventListener('click', () => setSfxMuted(!sfxMuted));
+      document.getElementById('music-toggle').addEventListener('click', () => setMusicMuted(!musicMuted));
 
       // ─── Audio ─────────────────────────────────────────────────────────
-      let ac = null;
-      let masterGain = null;
+      // Mix: sfxBus + musicBus -> masterGain (user volume) -> limiter -> output.
+      // Recorded CC0 samples (audio/bj-sfx-cc0.js) layer over synthesis; synthesis alone is the fallback.
+      let ac = null, masterGain = null, sfxBus = null, musicBus = null, noiseBuf = null;
       let audioUnavailable = false;
       const storedVolume = readSetting('bjVol');
       let masterVol = storedVolume === null || !Number.isFinite(+storedVolume) ? 1 : Math.max(0, Math.min(1, +storedVolume));
-      let sfxMuted = false;
-      let musicMuted = false;
+      let sfxMuted = readSetting('bjSfxOff') === '1';
+      let musicMuted = readSetting('bjMusicOff') === '1';
+      const samples = {}, lastPlayed = {};
+      const MIN_GAP = { flap: .06, enemyFlap: .09, land: .09, clash: .12, lava: .1, eggPop: .05, ui: .04 };
 
       function audio() {
         if (!ac && !audioUnavailable) {
           try {
             const Audio = window.AudioContext || window.webkitAudioContext;
             if (!Audio) { audioUnavailable = true; console.warn('Web Audio is not available.'); return null; }
+            // Mix with the player's own music and respect the iOS silent switch.
+            try { if (navigator.audioSession) navigator.audioSession.type = 'ambient'; } catch (e) { }
             ac = new Audio();
             masterGain = ac.createGain();
             masterGain.gain.value = masterVol;
-            masterGain.connect(ac.destination);
+            const limiter = ac.createDynamicsCompressor();
+            limiter.threshold.value = -12; limiter.knee.value = 8; limiter.ratio.value = 10;
+            limiter.attack.value = .003; limiter.release.value = .2;
+            masterGain.connect(limiter); limiter.connect(ac.destination);
+            sfxBus = ac.createGain(); sfxBus.gain.value = sfxMuted ? 0 : 1; sfxBus.connect(masterGain);
+            musicBus = ac.createGain(); musicBus.gain.value = musicMuted ? 0 : 1; musicBus.connect(masterGain);
+            loadSamples();
           } catch (error) {
             audioUnavailable = true;
             console.warn('Unable to initialize audio:', error);
@@ -591,17 +603,55 @@
         }
         return ac;
       }
+      function loadSamples() {
+        const source = window.BJ_SFX;
+        if (!source) return;
+        for (const key of Object.keys(source)) {
+          try {
+            const uri = source[key], bin = atob(uri.slice(uri.indexOf(',') + 1)), bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            const fail = error => console.warn('Unable to decode sound sample ' + key + ':', error);
+            const pending = ac.decodeAudioData(bytes.buffer, buffer => { samples[key] = buffer; }, fail);
+            if (pending && pending.catch) pending.catch(fail);
+          } catch (error) { console.warn('Unable to load sound sample ' + key + ':', error); }
+        }
+      }
       function unlockAudio() {
         try {
           const a = audio();
-          if (a && a.state === 'suspended') a.resume().catch(error => console.warn('Unable to resume audio:', error));
+          if (a && a.state === 'suspended' && !document.hidden) a.resume().catch(error => console.warn('Unable to resume audio:', error));
         } catch (error) { console.warn('Unable to initialize audio:', error); }
       }
-      function getMaster() { audio(); return masterGain; }
+      addEventListener('pointerdown', unlockAudio, true);
+      addEventListener('keydown', unlockAudio, true);
+      document.addEventListener('visibilitychange', () => {
+        if (!ac) return;
+        if (document.hidden) ac.suspend().catch(() => { });
+        else unlockAudio();
+      });
+      function ramp(param, value, time = .05) {
+        const n = ac.currentTime;
+        param.cancelScheduledValues(n); param.setValueAtTime(param.value, n); param.setTargetAtTime(value, n, time);
+      }
       function setVolume(v) {
         masterVol = Math.round(Math.max(0, Math.min(1, v)) * 100) / 100;
         writeSetting('bjVol', masterVol);
-        if (masterGain) masterGain.gain.value = masterVol;
+        if (masterGain) ramp(masterGain.gain, masterVol);
+        syncSoundUI();
+      }
+      function setSfxMuted(muted) {
+        sfxMuted = muted;
+        writeSetting('bjSfxOff', muted ? '1' : '0');
+        if (sfxBus) ramp(sfxBus.gain, muted ? 0 : 1);
+        syncSoundUI();
+        if (!muted) sfx('uiSelect');
+      }
+      function setMusicMuted(muted) {
+        musicMuted = muted;
+        writeSetting('bjMusicOff', muted ? '1' : '0');
+        if (musicBus) ramp(musicBus.gain, muted ? 0 : 1, .15);
+        if (muted) droneOff();
+        else if (state === 'playing' || state === 'waveAnnounce') droneOn();
         syncSoundUI();
       }
       function syncSoundUI() {
@@ -616,110 +666,219 @@
       }
       syncSoundUI();
 
-      function noise(len, decay, vol, mod) {
-        const a = audio(), g = a.createGain(), b = a.createBuffer(1, len, a.sampleRate), d = b.getChannelData(0);
-        const n = a.currentTime;
-        for (let i = 0; i < len; i++) {
-          let v = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
-          if (mod) v *= Math.sin(i / a.sampleRate * mod * Math.PI * 2);
-          d[i] = v;
+      // ─── Sound building blocks ──────────────────────────────────────────
+      const panAt = x => x == null || !W ? 0 : Math.max(-.7, Math.min(.7, (x / W * 2 - 1) * .7));
+      const vary = (amount = .08) => 1 + (Math.random() * 2 - 1) * amount;
+      const pick = keys => keys[Math.random() * keys.length | 0];
+      function out(pan, bus = sfxBus) {
+        if (!pan || !ac.createStereoPanner) return bus;
+        const p = ac.createStereoPanner(); p.pan.value = pan; p.connect(bus); return p;
+      }
+      function play(key, vol, { rate = 1, pan = 0, when = 0 } = {}) {
+        const buffer = samples[key];
+        if (!buffer) return false;
+        const s = ac.createBufferSource(), g = ac.createGain();
+        s.buffer = buffer; s.playbackRate.value = rate; g.gain.value = vol;
+        s.connect(g); g.connect(out(pan)); s.start(ac.currentTime + when);
+        return true;
+      }
+      function tone(type, f0, f1, dur, vol, { pan = 0, when = 0, attack = .004, filter = 0, bus } = {}) {
+        const n = ac.currentTime + when, o = ac.createOscillator(), g = ac.createGain();
+        o.type = type; o.frequency.setValueAtTime(f0, n);
+        if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, n + dur);
+        g.gain.setValueAtTime(.0001, n);
+        g.gain.exponentialRampToValueAtTime(vol, n + attack);
+        g.gain.exponentialRampToValueAtTime(.0001, n + dur);
+        let node = o;
+        if (filter) {
+          const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = 1.5;
+          f.frequency.setValueAtTime(filter * .4, n);
+          f.frequency.exponentialRampToValueAtTime(filter, n + Math.min(.08, dur / 3));
+          f.frequency.exponentialRampToValueAtTime(filter * .5, n + dur);
+          o.connect(f); node = f;
         }
-        const s = a.createBufferSource(); s.buffer = b; s.connect(g); g.connect(getMaster());
-        g.gain.setValueAtTime(vol, n); g.gain.exponentialRampToValueAtTime(.001, n + len / a.sampleRate);
-        s.start(n);
+        node.connect(g); g.connect(out(pan, bus || sfxBus)); o.start(n); o.stop(n + dur + .03);
+      }
+      function noise(dur, vol, { type = 'lowpass', f0 = 2000, f1 = f0, q = .8, pan = 0, when = 0, attack = .003, bus } = {}) {
+        if (!noiseBuf) {
+          noiseBuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate);
+          const d = noiseBuf.getChannelData(0);
+          for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        }
+        const n = ac.currentTime + when, s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+        s.buffer = noiseBuf; s.loop = true;
+        f.type = type; f.Q.value = q; f.frequency.setValueAtTime(f0, n);
+        if (f1 !== f0) f.frequency.exponentialRampToValueAtTime(f1, n + dur);
+        g.gain.setValueAtTime(.0001, n);
+        g.gain.exponentialRampToValueAtTime(vol, n + attack);
+        g.gain.exponentialRampToValueAtTime(.0001, n + dur);
+        s.connect(f); f.connect(g); g.connect(out(pan, bus || sfxBus));
+        s.start(n, Math.random() * .8); s.stop(n + dur + .03);
+      }
+      function duckMusic(depth, hold) {
+        if (!music) return;
+        const p = music.duck.gain, n = ac.currentTime;
+        p.cancelScheduledValues(n); p.setValueAtTime(p.value, n);
+        p.linearRampToValueAtTime(1 - depth, n + .03);
+        p.setTargetAtTime(1, n + hold, .25);
+      }
+      const NOTE = { D3: 146.83, F3: 174.61, A3: 220, C4: 261.63, D4: 293.66, F4: 349.23, G4: 392, A4: 440, C5: 523.25, D5: 587.33, F5: 698.46, A5: 880 };
+      function brass(freq, when, dur, vol) {
+        tone('sawtooth', freq, freq, dur, vol, { when, attack: .03, filter: 2200 });
+        tone('sawtooth', freq * 1.006, freq * 1.006, dur, vol * .6, { when, attack: .04, filter: 1600 });
       }
 
-      function sfx(id) {
+      // ─── Sound effects ─────────────────────────────────────────────────
+      function sfx(id, x) {
         if (sfxMuted) return;
         try {
-          const a = audio(); if (!a) return;
-          const n = a.currentTime, g = a.createGain(); g.connect(getMaster());
+          const a = audio(); if (!a || a.state === 'closed') return;
+          const now = a.currentTime, gapKey = id.startsWith('ui') ? 'ui' : id;
+          if (MIN_GAP[gapKey] && gapKey in lastPlayed && now - lastPlayed[gapKey] < MIN_GAP[gapKey]) return;
+          lastPlayed[gapKey] = now;
+          const pan = panAt(x);
           switch (id) {
-            case 'flap': noise(2400, 2, .12); break;
-            case 'kill': {
-              noise(9000, 4, .5, 80);
-              const o = a.createOscillator(); o.type = 'sine';
-              o.frequency.setValueAtTime(150, n); o.frequency.exponentialRampToValueAtTime(30, n + .2);
-              const g2 = a.createGain(); g2.connect(getMaster());
-              g2.gain.setValueAtTime(.3, n); g2.gain.exponentialRampToValueAtTime(.001, n + .25);
-              o.connect(g2); o.start(n); o.stop(n + .3); break;
-            }
-            case 'die': {
-              const o = a.createOscillator(); o.type = 'sawtooth';
-              o.frequency.setValueAtTime(220, n); o.frequency.exponentialRampToValueAtTime(35, n + .9);
-              g.gain.setValueAtTime(.3, n); g.gain.exponentialRampToValueAtTime(.001, n + 1);
-              o.connect(g); o.start(n); o.stop(n + 1); break;
-            }
-            case 'lava': noise(14000, 3, .25, 200); break;
-            case 'wave': {
-              const o = a.createOscillator(); o.type = 'square';
-              o.frequency.setValueAtTime(90, n); o.frequency.exponentialRampToValueAtTime(400, n + .15);
-              o.frequency.exponentialRampToValueAtTime(250, n + .35);
-              o.frequency.exponentialRampToValueAtTime(500, n + .55);
-              g.gain.setValueAtTime(.22, n); g.gain.exponentialRampToValueAtTime(.001, n + .7);
-              o.connect(g); o.start(n); o.stop(n + .7); break;
-            }
-            case 'hatch': {
-              const o = a.createOscillator(); o.type = 'triangle';
-              o.frequency.setValueAtTime(300, n);
-              o.frequency.exponentialRampToValueAtTime(800, n + .1);
-              o.frequency.exponentialRampToValueAtTime(200, n + .2);
-              g.gain.setValueAtTime(.2, n); g.gain.exponentialRampToValueAtTime(.001, n + .25);
-              o.connect(g); o.start(n); o.stop(n + .3); break;
-            }
-            case 'eggPop': {
-              const o = a.createOscillator(); o.type = 'sine';
-              o.frequency.setValueAtTime(600, n);
-              o.frequency.exponentialRampToValueAtTime(1200, n + .08);
-              g.gain.setValueAtTime(.15, n); g.gain.exponentialRampToValueAtTime(.001, n + .12);
-              o.connect(g); o.start(n); o.stop(n + .15); break;
-            }
+            case 'flap':
+              if (!play(pick(['wing0', 'wing1']), .5, { rate: vary(.1), pan }))
+                noise(.12, .22, { f0: 1800, f1: 500, pan });
+              noise(.07, .08, { f0: 380, pan });
+              break;
+            case 'enemyFlap':
+              if (!play(pick(['wing0', 'wing1']), .16, { rate: .78 * vary(.08), pan }))
+                noise(.1, .07, { f0: 1100, f1: 400, pan });
+              break;
+            case 'land':
+              if (!play('land', .4, { rate: vary(.08), pan })) tone('sine', 130, 60, .09, .22, { pan });
+              break;
+            case 'clash':
+              if (!play(pick(['clash0', 'clash1']), .75, { rate: vary(.05), pan }))
+                noise(.18, .25, { type: 'highpass', f0: 3000, pan });
+              tone('triangle', 1760, 1650, .35, .05, { pan });
+              tone('square', 2637, 2600, .12, .015, { pan });
+              break;
+            case 'kill':
+              if (!play(pick(['hit0', 'hit1']), .85, { rate: vary(.06), pan }))
+                noise(.25, .45, { f0: 1500, f1: 150, pan });
+              play('slice', .3, { rate: vary(.08), pan, when: .02 });
+              tone('sine', 160, 38, .3, .4, { pan });
+              tone('triangle', NOTE.A4, NOTE.D5, .14, .07, { when: .07 });
+              tone('triangle', NOTE.D5, NOTE.A5, .18, .06, { when: .14 });
+              duckMusic(.5, .25);
+              break;
+            case 'die':
+              if (!play('armor', .85, { rate: .92 * vary(.04), pan })) noise(.3, .4, { f0: 2500, f1: 300, pan });
+              tone('sawtooth', 220, 40, 1, .16, { filter: 1400 });
+              noise(.7, .14, { f0: 900, f1: 120, when: .05 });
+              duckMusic(.7, .9);
+              break;
+            case 'lava':
+              noise(.55, .3, { type: 'bandpass', f0: 500, f1: 140, q: 1.2, pan });
+              noise(.45, .07, { type: 'highpass', f0: 4500, f1: 7000, pan, when: .03 });
+              tone('sine', 80, 38, .45, .3, { pan });
+              break;
+            case 'lavaGrab':
+              tone('sawtooth', 58, 44, .55, .14, { pan, attack: .06, filter: 420 });
+              noise(.5, .16, { f0: 320, f1: 120, pan, attack: .05 });
+              break;
+            case 'eggPop':
+              play('shell', .3, { rate: 1.35, pan });
+              tone('triangle', NOTE.A5, NOTE.A5, .12, .13, { pan });
+              tone('triangle', NOTE.A5 * 1.5, NOTE.A5 * 1.5, .14, .12, { pan, when: .05 });
+              tone('sine', NOTE.A5 * 2, NOTE.A5 * 2, .22, .06, { pan, when: .1 });
+              break;
+            case 'hatch':
+              if (!play('shell', .45, { rate: .75, pan })) noise(.08, .2, { type: 'highpass', f0: 2500, pan });
+              play('shell', .35, { rate: .62, pan, when: .07 });
+              tone('triangle', 320, 820, .1, .1, { pan, when: .1 });
+              tone('triangle', 820, 260, .14, .08, { pan, when: .2 });
+              break;
+            case 'spawn':
+              tone('sine', 220, 880, .55, .07, { pan, attack: .2 });
+              tone('sine', 330, 1320, .55, .045, { pan, attack: .2 });
+              noise(.5, .05, { type: 'highpass', f0: 2500, f1: 8000, pan, attack: .25 });
+              break;
+            case 'wave':
+              noise(.22, .25, { f0: 700, f1: 90 });
+              tone('sine', 95, 45, .3, .35);
+              brass(NOTE.D3, .05, .3, .07);
+              brass(NOTE.A3, .2, .3, .07);
+              brass(NOTE.D4, .35, .65, .08);
+              duckMusic(.6, .9);
+              break;
+            case 'gameOver':
+              brass(NOTE.D4, .55, .55, .07);
+              brass(NOTE.C4, .95, .55, .07);
+              brass(NOTE.A3, 1.35, .55, .07);
+              brass(NOTE.D3, 1.75, 1.6, .08);
+              tone('sine', NOTE.D3 / 2, NOTE.D3 / 2, 2.2, .14, { when: 1.75, attack: .02 });
+              break;
+            case 'newBest':
+              [NOTE.D5, NOTE.F5, NOTE.A5, NOTE.D5 * 2].forEach((f, i) =>
+                tone('triangle', f, f, .35, .16, { when: 3.6 + i * .09 }));
+              tone('sine', NOTE.A5 * 2, NOTE.A5 * 2, .8, .08, { when: 3.95, attack: .02 });
+              break;
+            case 'uiSelect':
+              if (!play('uiSelect', .22)) tone('sine', 880, 1100, .06, .05);
+              break;
+            case 'uiBack':
+              if (!play('uiBack', .22)) tone('sine', 700, 520, .07, .05);
+              break;
           }
         } catch (e) { console.warn('Unable to play sound effect:', e); }
       }
 
-      // ─── Teleport Spawn Sound ──────────────────────────────────────────
-      let spawnSound = null;
-      let spawnPos = null; // {x, y} where player spawned
-
-      function spawnSoundOn() {
-        if (spawnSound) return;
-        try {
-          const a = audio();
-          if (!a || sfxMuted) return;
-          const g = a.createGain(); g.gain.value = .12; g.connect(getMaster());
-          // Warbling electronic tone
-          const o1 = a.createOscillator(); o1.type = 'sine'; o1.frequency.value = 440; o1.connect(g); o1.start();
-          const o2 = a.createOscillator(); o2.type = 'square'; o2.frequency.value = 445; o2.connect(g); o2.start();
-          // LFO for wobble
-          const lfo = a.createOscillator(); lfo.frequency.value = 8;
-          const lfoG = a.createGain(); lfoG.gain.value = 30;
-          lfo.connect(lfoG); lfoG.connect(o1.frequency); lfoG.connect(o2.frequency); lfo.start();
-          spawnSound = { g, o1, o2, lfo };
-        } catch (e) { console.warn('Unable to play spawn sound:', e); }
-      }
-
-      function spawnSoundOff() {
-        if (!spawnSound) return;
-        try {
-          spawnSound.o1.stop(); spawnSound.o2.stop(); spawnSound.lfo.stop();
-        } catch (e) { }
-        spawnSound = null;
-      }
-
-      let drone = null;
+      // ─── Music: quiet generative dread bed during play ─────────────────
+      // A filtered D-minor pad, a war-drum heartbeat that quickens with the wave, and sparse bell tones.
+      let music = null;
       function droneOn() {
-        if (drone || musicMuted) return;
+        if (music || musicMuted) return;
         const a = audio(); if (!a) return;
-        const g = a.createGain(); g.gain.value = .032; g.connect(getMaster());
-        const o1 = a.createOscillator(); o1.type = 'sawtooth'; o1.frequency.value = 38; o1.connect(g); o1.start();
-        const o2 = a.createOscillator(); o2.type = 'sine'; o2.frequency.value = 57; o2.connect(g); o2.start();
-        drone = { g, o1, o2 };
+        try {
+          const n = a.currentTime;
+          const fade = a.createGain(), duck = a.createGain(), filter = a.createBiquadFilter();
+          fade.gain.setValueAtTime(.0001, n); fade.gain.exponentialRampToValueAtTime(1, n + 2);
+          fade.connect(duck); duck.connect(musicBus);
+          filter.type = 'lowpass'; filter.frequency.value = 420; filter.Q.value = 2; filter.connect(fade);
+          const padGain = a.createGain(); padGain.gain.value = .045; padGain.connect(filter);
+          const oscs = [73.42, 73.42 * 1.004, 110, 174.61 * .5].map((f, i) => {
+            const o = a.createOscillator(); o.type = i === 3 ? 'triangle' : 'sawtooth';
+            o.frequency.value = f; o.connect(padGain); o.start(n); return o;
+          });
+          const lfo = a.createOscillator(), lfoDepth = a.createGain();
+          lfo.frequency.value = .07; lfoDepth.gain.value = 180;
+          lfo.connect(lfoDepth); lfoDepth.connect(filter.frequency); lfo.start(n);
+          oscs.push(lfo);
+          music = { fade, duck, oscs, nextBeat: n + 1, beat: 0, timer: setInterval(musicTick, 100) };
+        } catch (e) { console.warn('Unable to start music:', e); music = null; }
+      }
+      function musicTick() {
+        if (!music || !ac || ac.state !== 'running') return;
+        const bpm = 58 + Math.min(wave, 12) * 3, spb = 60 / bpm;
+        while (music.nextBeat < ac.currentTime + .3) {
+          const when = music.nextBeat - ac.currentTime;
+          if (when > -.05) {
+            const opts = { when: Math.max(0, when), bus: music.fade };
+            tone('sine', 92, 48, .22, .16, opts);
+            tone('sine', 84, 44, .18, .09, { when: Math.max(0, when) + spb * .28, bus: music.fade });
+            if (music.beat % 4 === 2 && Math.random() < .55) {
+              const f = pick([NOTE.D4, NOTE.F4, NOTE.G4, NOTE.A4, NOTE.C5]);
+              tone('triangle', f, f, 1.4, .022, { when: Math.max(0, when), attack: .01, bus: music.fade });
+              tone('sine', f * 2, f * 2, .9, .008, { when: Math.max(0, when), attack: .01, bus: music.fade });
+            }
+          }
+          music.beat++; music.nextBeat += spb;
+        }
       }
       function droneOff() {
-        if (!drone) return;
-        try { drone.o1.stop(); drone.o2.stop(); } catch (e) { }
-        drone = null;
+        if (!music) return;
+        const m = music; music = null;
+        clearInterval(m.timer);
+        try {
+          const n = ac.currentTime;
+          m.fade.gain.cancelScheduledValues(n); m.fade.gain.setValueAtTime(m.fade.gain.value, n);
+          m.fade.gain.setTargetAtTime(.0001, n, .12);
+          m.oscs.forEach(o => o.stop(n + .6));
+        } catch (e) { }
       }
 
       // ─── Platforms (Joust layout) ──────────────────────────────────────
@@ -868,10 +1027,9 @@
         player.ground = true;
         player.gPlat = plats.length - 1;
         invulnT = INVULN_T;
-        // Start teleport effect and sound for player
+        // Start teleport effect and materialize sound for player
         addTeleport(ppx, ppy, spW, spH, null);
-        spawnPos = { x: ppx, y: ppy };
-        spawnSoundOn();
+        sfx('spawn', ppx + spW / 2);
       }
 
       function spawnWave() {
@@ -995,7 +1153,7 @@
                   sz: 2 + Math.random() * 3,
                   life: .6 + Math.random() * .4
                 });
-              sfx('lava');
+              sfx('lava', eg.x);
               eggs.splice(i, 1);
               continue;
             }
@@ -1017,7 +1175,7 @@
             const dy = (player.y + player.h / 2) - (eg.y + EGG_H / 2);
             if (Math.abs(dx) < 24 && Math.abs(dy) < 22) {
               score += 250;
-              sfx('eggPop');
+              sfx('eggPop', eg.x);
               // Small particle burst
               addBlood(eg.x + EGG_W / 2, eg.y + EGG_H / 2, 4);
               eggs.splice(i, 1);
@@ -1042,7 +1200,7 @@
         e.spawning = true;
         addTeleport(e.x, e.y, spW, spH, e);
         enemies.push(e);
-        sfx('hatch');
+        sfx('hatch', eg.x);
       }
 
       function drawEggs() {
@@ -1205,6 +1363,7 @@
             resolvedY = Math.max(resolvedY, p.y + p.h);
         }
         e.y = resolvedY;
+        if (isP && landed !== -1 && !e.ground && e.vy > 2.5) sfx('land', e.x);
         if (resolvedY !== nextY || landed !== -1) e.vy = 0;
         e.ground = landed !== -1; e.gPlat = landed;
         e.vx *= HDRAG;
@@ -1234,7 +1393,7 @@
               sz: 2 + Math.random() * 5,
               life: .9 + Math.random() * .7
             });
-          sfx('lava');
+          sfx('lava', e.x);
           if (isP) loseLife();
         }
       }
@@ -1245,7 +1404,8 @@
         if (e.type !== 'player' && ++e.flapCount === 5) {
           e.flapCount = 0; e.restT = ENEMY_REST_T;
         }
-        if (e === player) sfx('flap');
+        if (e === player) sfx('flap', e.x);
+        else if (!e.spawning) sfx('enemyFlap', e.x);
       }
 
       let newBest = false;
@@ -1254,10 +1414,11 @@
       }
       function loseLife() {
         lives--;
-        spawnSoundOff(); spawnPos = null;
         if (lives <= 0) {
           state = 'gameOver'; droneOff();
           recordBest();
+          sfx('gameOver');
+          if (newBest) sfx('newBest');
         } else {
           respawnT = RESPAWN_T;
         }
@@ -1313,7 +1474,7 @@
           if (pcy < ecy - 5) {
             // Player wins — enemy becomes an egg
             e.alive = false;
-            killFX(ecx, ecy, e);
+            killFX(ecx, ecy, e); sfx('kill', ecx);
             score += e.type === 'deathLord' ? 500 : e.type === 'shadowRider' ? 250 : 100;
             player.vy = -4.5;
             // Spawn egg with enemy's momentum
@@ -1326,7 +1487,7 @@
           } else if (ecy < pcy - 5) {
             // Enemy wins
             player.alive = false;
-            killFX(pcx, pcy, player); sfx('die');
+            killFX(pcx, pcy, player); sfx('die', pcx);
             loseLife();
             break;
           } else {
@@ -1334,6 +1495,7 @@
             const sign = Math.sign(pcx - ecx) || 1;
             player.vx = sign * 4; e.vx = -sign * 4;
             player.vy = -3.5; e.vy = -3.5;
+            sfx('clash', (pcx + ecx) / 2);
           }
         }
       }
@@ -1463,7 +1625,7 @@
               h.reachY -= 1.5;
               // Don't reach above the lowest platform
               if (h.reachY < maxReach) { h.life = 0; }
-              if (h.reachY <= bottom + 5) { h.grip = 1; }
+              if (h.reachY <= bottom + 5) { h.grip = 1; sfx('lavaGrab', h.x); }
             } else {
               ent.vy += HAND_PULL * dt;
               h.reachY = bottom + 3;
@@ -1888,10 +2050,10 @@
             break;
           case 'sound':
             tickEmbers();
-            if (K.ArrowLeft) { K.ArrowLeft = 0; setVolume(masterVol - .1); }
-            if (K.ArrowRight) { K.ArrowRight = 0; setVolume(masterVol + .1); }
-            if (K.KeyF) { K.KeyF = 0; sfxMuted = !sfxMuted; syncSoundUI(); }
-            if (K.KeyM) { K.KeyM = 0; musicMuted = !musicMuted; if (musicMuted) droneOff(); syncSoundUI(); }
+            if (K.ArrowLeft) { K.ArrowLeft = 0; setVolume(masterVol - .1); sfx('eggPop'); }
+            if (K.ArrowRight) { K.ArrowRight = 0; setVolume(masterVol + .1); sfx('eggPop'); }
+            if (K.KeyF) { K.KeyF = 0; setSfxMuted(!sfxMuted); }
+            if (K.KeyM) { K.KeyM = 0; setMusicMuted(!musicMuted); }
             if (K.Space || K.Escape) { K.Space = 0; K.Escape = 0; state = 'title'; }
             break;
           case 'waveAnnounce':
@@ -1911,7 +2073,7 @@
       }
 
       function startGame() {
-        clearInput(); spawnSoundOff(); droneOn(); newBest = false;
+        clearInput(); droneOn(); newBest = false;
         state = 'waveAnnounce'; wave = 1; score = 0; lives = 3;
         stains = []; bloods = []; gores = []; bones = []; fragments = []; teleports = []; eggs = []; lavaHands = [];
         mkPlayer(); spawnWave(); waveT = 130; sfx('wave');
@@ -1925,14 +2087,6 @@
           if (K.Space || K.KeyW || touchFlapHeld) { doFlap(player); K.Space = 0; K.KeyW = 0; }
           physEnt(player, true);
           if (state !== 'playing') return;
-
-          // Stop spawn sound when player moves away from spawn point
-          if (spawnPos && spawnSound) {
-            if (Math.abs(player.x - spawnPos.x) > 5 || Math.abs(player.y - spawnPos.y) > 5) {
-              spawnSoundOff();
-              spawnPos = null;
-            }
-          }
         }
 
         if ((!player || !player.alive) && lives > 0) {
@@ -1957,7 +2111,6 @@
         // Wave complete when all enemies dead AND no eggs remain
         if (state === 'playing' && enemies.every(e => !e.alive) && eggs.length === 0) {
           wave++; state = 'waveAnnounce'; waveT = 130; spawnWave(); sfx('wave');
-          spawnSoundOff(); spawnPos = null;
         }
       }
 
