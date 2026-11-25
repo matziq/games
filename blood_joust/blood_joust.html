@@ -91,6 +91,19 @@
     .hud-score-value { color: #ffe14d; font-size: clamp(20px, 3.4vw, 28px); font-variant-numeric: tabular-nums; }
     .hud-score-value.bump { animation: bump .25s ease-out; }
     .hud-best { color: #c9c9c9; font-size: 12px; letter-spacing: .5px; }
+    .hud-chain {
+      grid-column: 1 / -1;
+      justify-self: center;
+      padding: 4px 8px;
+      border: 1px solid #bd8333;
+      border-radius: 5px;
+      background: rgba(20, 8, 4, .9);
+      color: #ffe14d;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      text-align: center;
+    }
+    .hud-chain[hidden] { display: none; }
     @keyframes bump { 40% { transform: scale(1.18); color: #fff; } }
 
     button:focus-visible, input:focus-visible {
@@ -301,8 +314,10 @@
     <button class="pause-button" id="pause" type="button" aria-label="Pause game" hidden>
       <svg viewBox="0 0 18 18" aria-hidden="true"><rect x="3" y="2" width="4" height="14" rx="1"/><rect x="11" y="2" width="4" height="14" rx="1"/></svg>
     </button>
+    <div class="hud-chain" id="hud-chain" hidden></div>
   </div>
   <p class="sr-only" id="announcer" aria-live="polite"></p>
+  <p class="sr-only" id="chain-announcer" aria-live="polite"></p>
 
   <section class="menu" id="title-menu" aria-label="Main menu">
     <div class="panel">
@@ -326,6 +341,7 @@
         <li class="key-hint"><strong>Controls:</strong> move with A / D or the arrow keys. Press Space / W to flap.</li>
         <li class="touch-hint"><strong>Controls:</strong> hold ◀ ▶ to move. Tap or hold FLAP to fly; tapping the arena also flaps.</li>
         <li><strong>Joust:</strong> collide with an enemy from above to win. Equal-height jousters bounce apart.</li>
+        <li><strong>Kill chains:</strong> defeat another enemy within 3 seconds of your last kill for 2x points, then 3x, 4x, and so on. Each kill refreshes the window. Pausing freezes it; losing a life ends the chain.</li>
         <li><strong>Eggs:</strong> collect dropped eggs for 250 points before they hatch. Clear all enemies and eggs to advance.</li>
         <li><strong>Platforms</strong> are solid on every side. Enemies must rest for one second after five flaps.</li>
         <li><strong>Hazards:</strong> avoid lava and escape the fiery hands by flapping. You have three lives.</li>
@@ -460,6 +476,26 @@
         catch (error) { console.warn('Unable to save game settings:', error); }
       }
       let score = 0, hiScore = +readSetting('bjHi') || 0;
+      const CHAIN_WINDOW_MS = 3000;
+      let chainCount = 0, chainRemaining = 0, chainPoints = 0;
+      function resetChain() {
+        chainCount = 0; chainRemaining = 0; chainPoints = 0;
+        document.getElementById('chain-announcer').textContent = '';
+      }
+      function advanceChain(elapsed) {
+        if (!chainCount) return;
+        chainRemaining -= elapsed;
+        if (chainRemaining < 0) resetChain();
+      }
+      function awardKill(type) {
+        const base = type === 'deathLord' ? 500 : type === 'shadowRider' ? 250 : 100;
+        chainCount++;
+        chainRemaining = CHAIN_WINDOW_MS;
+        chainPoints = base * chainCount;
+        score += chainPoints;
+        document.getElementById('chain-announcer').textContent =
+          `Kill chain ${chainCount}x. ${chainPoints} points. Next kill ${chainCount + 1}x within 3 seconds.`;
+      }
       let lives = 3, wave = 0, waveT = 0;
       let shakeT = 0, shakeI = 0, flashT = 0;
       let frame = 0, dt = 1, lastT = 0, accumulator = 0;
@@ -559,7 +595,7 @@
       document.getElementById('main-menu').addEventListener('click', () => { clearInput(); state = 'title'; });
       document.getElementById('pause-quit').addEventListener('click', () => {
         if (state !== 'paused') return;
-        recordBest(); clearInput(); droneOff(); sfx('uiBack'); pausedFrom = null; state = 'title';
+        recordBest(); resetChain(); clearInput(); droneOff(); sfx('uiBack'); pausedFrom = null; state = 'title';
       });
       document.getElementById('volume').addEventListener('input', e => setVolume(Number(e.target.value) / 100));
       document.getElementById('volume').addEventListener('change', () => sfx('eggPop'));
@@ -1413,6 +1449,7 @@
         if (score > hiScore) { hiScore = score; newBest = true; writeSetting('bjHi', hiScore); saveRemote(); }
       }
       function loseLife() {
+        resetChain();
         lives--;
         if (lives <= 0) {
           state = 'gameOver'; droneOff();
@@ -1475,7 +1512,7 @@
             // Player wins — enemy becomes an egg
             e.alive = false;
             killFX(ecx, ecy, e); sfx('kill', ecx);
-            score += e.type === 'deathLord' ? 500 : e.type === 'shadowRider' ? 250 : 100;
+            awardKill(e.type);
             player.vy = -4.5;
             // Spawn egg with enemy's momentum
             spawnEgg(ecx - 6, ecy - 6, e.vx, e.vy - 3, e.type);
@@ -1832,6 +1869,12 @@
           el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
         }
         hudSet('hud-best', 'best', Math.max(hiScore, score), (el, v) => { el.textContent = 'BEST ' + v.toLocaleString(); });
+        hudSet('hud-chain', 'chain', chainCount ? `${chainCount}:${Math.ceil(chainRemaining / 100)}:${chainPoints}` : '', el => {
+          el.hidden = !chainCount;
+          el.textContent = chainCount
+            ? `CHAIN ${chainCount}x +${chainPoints.toLocaleString()} | NEXT ${chainCount + 1}x ${(Math.ceil(chainRemaining / 100) / 10).toFixed(1)}s`
+            : '';
+        });
       }
 
       // ─── Screen FX ─────────────────────────────────────────────────────
@@ -2073,7 +2116,7 @@
       }
 
       function startGame() {
-        clearInput(); droneOn(); newBest = false;
+        resetChain(); clearInput(); droneOn(); newBest = false;
         state = 'waveAnnounce'; wave = 1; score = 0; lives = 3;
         stains = []; bloods = []; gores = []; bones = []; fragments = []; teleports = []; eggs = []; lavaHands = [];
         mkPlayer(); spawnWave(); waveT = 130; sfx('wave');
@@ -2165,6 +2208,8 @@
 
       function loop(t) {
         if (!lastT) lastT = t;
+        // Chain windows use real active time, not the slowed physics clock.
+        if (state === 'playing' || state === 'waveAnnounce') advanceChain(t - lastT);
         accumulator += Math.min(t - lastT, 100) *
           (state === 'playing' || state === 'waveAnnounce' ? GAME_SPEED : 1);
         lastT = t;

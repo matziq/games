@@ -46,7 +46,8 @@ function game({ AudioContext, storage } = {}) {
   const script = html.match(/<script>\s*([\s\S]*?)<\/script>/)[1];
   const hook = `window.__test = {
     mkEnt, physEnt, doFlap, aiUpdate, collisions, updatePlaying, startGame, loop, drawBirdPx, resize, loseLife,
-    get: () => ({ player, enemies, plats, state, lives, score, fragments, teleports, frame, K, touchFlapHeld }),
+    advanceChain, pauseGame, resumeGame, syncHUD, tickEggs,
+    get: () => ({ player, enemies, plats, state, lives, score, fragments, teleports, frame, K, touchFlapHeld, chainCount, chainRemaining }),
     set: v => {
       if ('player' in v) player = v.player;
       if ('enemies' in v) enemies = v.enemies;
@@ -56,6 +57,7 @@ function game({ AudioContext, storage } = {}) {
       if ('invulnT' in v) invulnT = v.invulnT;
       if ('respawnT' in v) respawnT = v.respawnT;
       if ('plats' in v) plats = v.plats;
+      if ('eggs' in v) eggs = v.eggs;
     },
     setUpdate: fn => { update = fn; },
     sfx, setSfxMuted, setMusicMuted, audioState: () => ({ music, sfxMuted, musicMuted })
@@ -63,6 +65,103 @@ function game({ AudioContext, storage } = {}) {
   vm.runInNewContext(script.replace('    })();', hook + '\n    })();'), sandbox);
   return { t: sandbox.__test, sandbox, calls, context2d, element };
 }
+
+function joust(t, type = 'bloodKnight') {
+  t.set({
+    state: 'playing', invulnT: 0,
+    player: t.mkEnt('player', 300, 250),
+    enemies: [t.mkEnt(type, 300, 270)]
+  });
+  t.collisions();
+}
+
+test('joust chains multiply each enemy base score and refresh the window', () => {
+  const { t, element } = game();
+  t.startGame();
+  joust(t);
+  assert.equal(t.get().score, 100);
+  t.advanceChain(2900);
+  joust(t, 'shadowRider');
+  assert.equal(t.get().score, 600);
+  assert.equal(t.get().chainRemaining, 3000);
+  t.advanceChain(2900);
+  joust(t, 'deathLord');
+  assert.equal(t.get().score, 2100);
+  for (let i = 4; i <= 12; i++) joust(t);
+  assert.equal(t.get().chainCount, 12, 'chain is not capped');
+  t.syncHUD();
+  assert.match(element('hud-chain').textContent, /CHAIN 12x \+1,200.*NEXT 13x 3.0s/);
+  assert.match(element('chain-announcer').textContent, /Kill chain 12x/);
+});
+
+test('exactly three seconds chains, but a later kill starts at 1x', () => {
+  for (const elapsed of [2999, 3000, 3001]) {
+    const { t, element } = game();
+    t.startGame();
+    joust(t);
+    t.advanceChain(elapsed);
+    t.syncHUD();
+    assert.equal(element('hud-chain').hidden, elapsed > 3000);
+    joust(t);
+    assert.equal(t.get().score, elapsed <= 3000 ? 300 : 200, `${elapsed}ms`);
+    assert.equal(t.get().chainCount, elapsed <= 3000 ? 2 : 1);
+  }
+});
+
+test('chain time is unscaled, freezes on pause, and runs during wave announcements', () => {
+  const { t } = game();
+  t.startGame(); joust(t);
+  t.setUpdate(() => {});
+  t.loop(100);
+  t.loop(1100);
+  assert.equal(t.get().chainRemaining, 2000);
+  t.pauseGame();
+  t.loop(11100);
+  assert.equal(t.get().chainRemaining, 2000);
+  t.resumeGame();
+  t.loop(11200);
+  t.loop(12200);
+  assert.equal(t.get().chainRemaining, 1000);
+  t.set({ state: 'waveAnnounce' });
+  t.loop(13201);
+  assert.equal(t.get().chainCount, 0);
+});
+
+test('life loss, game over, quit, and restart reset chains', () => {
+  const { t, element } = game();
+  for (const action of [
+    () => t.loseLife(),
+    () => { t.set({ lives: 1 }); t.loseLife(); },
+    () => { t.pauseGame(); element('pause-quit').events.click(); },
+    () => t.startGame()
+  ]) {
+    t.startGame(); joust(t); joust(t);
+    action();
+    assert.equal(t.get().chainCount, 0);
+    assert.equal(t.get().chainRemaining, 0);
+    assert.equal(element('chain-announcer').textContent, '');
+  }
+});
+
+test('eggs keep their flat award without refreshing chains and hazard kills do not count', () => {
+  const { t } = game();
+  t.startGame(); joust(t);
+  t.advanceChain(1000);
+  const player = t.get().player;
+  t.set({ plats: [], eggs: [{
+    x: player.x + player.w / 2 - 6, y: player.y + player.h / 2 - 7,
+    vx: 0, vy: 0, type: 'bloodKnight', landed: false, hatchTimer: 1000
+  }] });
+  t.tickEggs();
+  assert.equal(t.get().score, 350);
+  assert.equal(t.get().chainCount, 1);
+  assert.equal(t.get().chainRemaining, 2000);
+  const enemy = t.mkEnt('bloodKnight', 300, 600);
+  t.physEnt(enemy, false);
+  assert.equal(enemy.alive, false);
+  assert.equal(t.get().score, 350);
+  assert.equal(t.get().chainCount, 1);
+});
 
 test('active simulation advances at 80% without slowing menu updates', () => {
   for (const [state, expected] of [['playing', 48], ['title', 60]]) {

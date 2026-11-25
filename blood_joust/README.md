@@ -4,6 +4,12 @@ Blood Joust is a single-page arcade game about battling flying enemies in succes
 
 Platforms are solid on all sides. Enemies rest for one second after every five flaps, giving you an opportunity to gain height while they descend.
 
+## Kill chains
+
+Joust kills award their existing base points (100 for a Blood Knight, 250 for a Shadow Rider, 500 for a Death Lord) times a chain multiplier. The first kill is 1x; another kill within 3 seconds of the previous kill is 2x, then 3x, 4x, and so on without a cap. Exactly 3 seconds still qualifies. Every kill refreshes the window; after it expires the next kill starts at 1x. The HUD shows the last award, next multiplier, and remaining time.
+
+The window uses real active play time, including wave announcements, independent of the slowed physics. Pausing or switching tabs freezes it. Losing a life, quitting, or starting a new game resets it. Egg collection remains 250 points and neither extends nor multiplies the chain; enemies lost to hazards do not count.
+
 ## Run
 
 Open `blood_joust.html` in a browser, or launch it from the repository menu at `../gamemenu.html`. No build step is required.
