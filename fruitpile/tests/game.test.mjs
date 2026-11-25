@@ -189,6 +189,19 @@ const unavailableAudioProbe = `
     Object.defineProperty(window, 'AudioContext', { configurable: true, value: undefined });
     Object.defineProperty(window, 'webkitAudioContext', { configurable: true, value: undefined });
 `;
+const partialAudioGraphProbe = `
+    window.__closedAudioContexts = 0;
+    class PartialAudioContext {
+        constructor() { this.destination = {}; this.state = 'running'; }
+        createGain() { throw new Error('test gain creation failure'); }
+        close() {
+            window.__closedAudioContexts++;
+            this.state = 'closed';
+            return Promise.resolve();
+        }
+    }
+    Object.defineProperty(window, 'AudioContext', { configurable: true, value: PartialAudioContext });
+`;
 const rejectedAudioResumeProbe = `
     window.__audioResumes = 0;
     Object.defineProperty(window.AudioContext.prototype, 'resume', {
@@ -468,7 +481,7 @@ try {
         await context.close();
     });
     await test('320px, portrait, landscape, tablet and desktop retain controls and board geometry', async () => {
-        const sizes = [[320, 568], [390, 844], [667, 375], [844, 390], [768, 1024], [1440, 900]];
+        const sizes = [[320, 568], [390, 844], [667, 375], [844, 390], [768, 1024], [900, 561], [1024, 600], [1440, 900]];
         for (const [width, height] of sizes) {
             const { page, context, errors } = await setup({ width, height }, width < 900);
             await page.screenshot({ path: path.join(artifacts, `menu-${width}x${height}.png`) });
@@ -476,14 +489,30 @@ try {
             await page.evaluate(() => { testGame.stopRaf(); testGame.queue('watermelon', 'watermelon'); });
             const metrics = await page.evaluate(() => {
                 const rect = el => { const r = el.getBoundingClientRect(); return { x:r.x,y:r.y,width:r.width,height:r.height }; };
+                const intersects = (a,b) => a.width > 0 && a.height > 0 && b.width > 0 && b.height > 0
+                    && a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+                const hud = rect(document.querySelector('.hud'));
+                const arena = rect(document.querySelector('#arena'));
+                const controlsBox = rect(document.querySelector('#controls'));
+                const menuLink = rect(document.querySelector('#return-menu-link'));
+                const menuTarget = document.elementFromPoint(menuLink.x + menuLink.width / 2, menuLink.y + menuLink.height / 2);
                 return {
                     canvas: rect(document.querySelector('#game')),
                     controls: ['btnDrop','btnLeft','btnRight','btnSwap','btnPause'].map(id=>rect(document.getElementById(id))),
                     text: ['currentName','nextName','goal'].map(id=>({text:document.getElementById(id).textContent, ...rect(document.getElementById(id))})),
+                    hudArenaOverlap: intersects(hud, arena),
+                    hudControlsOverlap: intersects(hud, controlsBox),
+                    menuHudOverlap: intersects(menuLink, hud),
+                    menuLinkHeight: menuLink.height,
+                    menuLinkHit: menuTarget?.closest('#return-menu-link')?.id,
                     overflow: document.documentElement.scrollWidth > innerWidth
                 };
             });
             assert.equal(metrics.overflow, false);
+            assert.equal(metrics.hudArenaOverlap, false, `${width}x${height}: HUD covers the game board`);
+            assert.equal(metrics.hudControlsOverlap, false, `${width}x${height}: HUD covers touch controls`);
+            assert.equal(metrics.menuHudOverlap, false, `${width}x${height}: HUD covers the Games Menu link`);
+            assert(metrics.menuLinkHeight >= 44 && metrics.menuLinkHit === 'return-menu-link', `${width}x${height}: Games Menu link is not a reachable 44px target`);
             assert(Math.abs(metrics.canvas.width / metrics.canvas.height - 520 / 680) < .01);
             for (const r of metrics.controls) {
                 assert(r.width >= 44 && r.height >= 44, `${width}: touch target`);
@@ -518,6 +547,45 @@ try {
             assert.equal(tipPlacement.overlaps, false, `${width}x${height}: help covers the bowl`);
             assert.equal(tipPlacement.inView, true, `${width}x${height}: help is off screen`);
             await page.screenshot({ path: path.join(artifacts, `game-${width}x${height}.png`) });
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+    await test('Games Menu link stays clear of start, help, scores, pause and game-over dialogs', async () => {
+        for (const [width, height] of [[320, 568], [667, 375]]) {
+            const { page, context, errors } = await setup({ width, height }, true);
+            const assertClear = async stateName => {
+                const bounds = await page.evaluate(() => {
+                    const rect = el => {
+                        const r = el.getBoundingClientRect();
+                        return { x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom };
+                    };
+                    const intersects = (a,b) => a.width > 0 && a.height > 0
+                        && a.x < b.right && a.right > b.x && a.y < b.bottom && a.bottom > b.y;
+                    const link = rect(document.querySelector('#return-menu-link'));
+                    const scores = document.querySelector('#hs-modal').style.display === 'flex';
+                    const card = rect(document.querySelector(scores ? '#hs-modal .card' : '#modal .card'));
+                    const target = document.elementFromPoint(link.x + link.width / 2, link.y + link.height / 2);
+                    return { link, card, overlap: intersects(link, card), linkHit: target?.closest('#return-menu-link')?.id };
+                });
+                assert.equal(bounds.overlap, false, `${width}x${height} ${stateName}: Games Menu link covers dialog ${JSON.stringify(bounds)}`);
+                assert(bounds.link.y >= 0 && bounds.link.bottom <= height && bounds.link.height >= 44 && bounds.linkHit === 'return-menu-link',
+                    `${width}x${height} ${stateName}: Games Menu link is not reachable ${JSON.stringify(bounds)}`);
+                if (width === 667) await page.screenshot({ path: path.join(artifacts, `dialog-${stateName}-${width}x${height}.png`) });
+            };
+
+            await assertClear('start');
+            await page.locator('#btnHow').click();
+            await assertClear('help');
+            await page.locator('#btnHow').click();
+            await page.locator('#btnScores').click();
+            await assertClear('high-scores');
+            await page.locator('#fpHsClose').click();
+            await page.locator('#btnPlay').click();
+            await page.locator('#btnPause').click();
+            await assertClear('pause');
+            await page.evaluate(() => testGame.end());
+            await assertClear('game-over');
             assert.deepEqual(errors, []);
             await context.close();
         }
@@ -615,6 +683,11 @@ try {
         await page.locator('#btnPlay').click();
         assert.equal((await state(page)).running, true);
         assert.equal(await page.evaluate(() => window._fpAudio.enabled), false);
+        assert.equal(await page.evaluate(() => window._fpAudio.unavailable), true);
+        assert.equal(await page.locator('#volSlider').isDisabled(), true);
+        assert.equal(await page.locator('#volSlider').getAttribute('aria-label'), 'Sound unavailable');
+        assert.equal(await page.locator('#soundLabel').innerText(), 'Sound unavailable');
+        assert.match(await page.locator('#toast').innerText(), /Sound unavailable; gameplay is unaffected\./);
         await page.locator('#btnDrop').click();
         assert.equal((await state(page)).dropCount, 1);
         await page.locator('#btnPause').click();
@@ -626,6 +699,19 @@ try {
         await page.locator('#btnPlay').click();
         assert.equal((await state(page)).running, true);
         await page.waitForTimeout(20);
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    await test('Partial Web Audio initialization closes its context and disables the sound control', async () => {
+        const { page, context, errors } = await setup({ width: 1280, height: 800 }, false, true, partialAudioGraphProbe);
+        await page.locator('#btnPlay').click();
+        assert.equal(await page.evaluate(() => window.__closedAudioContexts), 1);
+        assert.equal(await page.evaluate(() => window._fpAudio.unavailable), true);
+        assert.equal(await page.locator('#volSlider').isDisabled(), true);
+        assert.equal(await page.locator('#soundLabel').innerText(), 'Sound unavailable');
+        assert.match(await page.locator('#toast').innerText(), /Sound unavailable; gameplay is unaffected\./);
+        await page.locator('#btnDrop').click();
+        assert.equal((await state(page)).dropCount, 1);
         assert.deepEqual(errors, []);
         await context.close();
     });

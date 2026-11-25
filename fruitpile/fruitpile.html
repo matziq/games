@@ -175,6 +175,22 @@
             display: flex;
         }
 
+        #hs-modal {
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 5;
+        }
+
+        #hs-modal .card {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
         .card {
             width: min(92vw, 560px);
             background: rgba(12, 16, 30, 0.9);
@@ -515,8 +531,9 @@
   #return-menu-link { position: fixed; top: max(4px, env(safe-area-inset-top)); left: max(8px, env(safe-area-inset-left)); z-index: 2147483647; display: inline-flex; align-items: center; min-height: 44px; padding: 0 10px; border: 1px solid #71809f; border-radius: 8px; background: #10172d; color: #e8f7ff; font: 700 14px/1.2 system-ui, sans-serif; text-decoration: none; touch-action: manipulation; }
   #return-menu-link:hover { background: #25375c; }
   #return-menu-link:focus-visible { outline: 3px solid #75e6ff; outline-offset: 2px; }
+  #modal, #hs-modal { padding-top: max(56px, calc(env(safe-area-inset-top, 0px) + 52px)); }
 </style>
-<style>.hud { top: calc(50px + env(safe-area-inset-top, 0px)); }</style>
+<style>.hud { margin-top: calc(50px + env(safe-area-inset-top, 0px)); }</style>
 </head>
 
 <body>
@@ -564,7 +581,7 @@
                             <button id="btnModeMerge" type="button" aria-pressed="false">Merge</button>
                         </div>
                         <div id="modeNote"></div>
-                        <label class="setting">Sound <input id="volSlider" type="range" aria-label="Sound volume" min="0" max="100" value="60"></label>
+                        <label class="setting"><span id="soundLabel">Sound</span> <input id="volSlider" type="range" aria-label="Sound volume" min="0" max="100" value="60"></label>
                         <label class="setting">Vibration <input id="hapticsToggle" type="checkbox" checked></label>
                         <label class="setting">Reduced effects <input id="reducedEffects" type="checkbox"></label>
                         <label class="setting">Chaos next run (wind + fruit decay) <input id="chaosMode" type="checkbox"></label>
@@ -589,9 +606,8 @@
             </div>
         </div>
 
-        <div id="hs-modal" role="dialog" aria-modal="true" aria-label="Local high scores"
-            style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,0.7);z-index:5;">
-            <div class="card" style="max-height:80vh;overflow-y:auto;">
+        <div id="hs-modal" role="dialog" aria-modal="true" aria-label="Local high scores">
+            <div class="card">
                 <h1>🏆 High Scores</h1>
                 <div id="fp-hs-config" style="font-size:12px;color:var(--ui-muted);margin-bottom:12px;"></div>
                 <div id="fp-hs-wrap"></div>
@@ -624,6 +640,7 @@
 
             const btnNew = $('#btnNew');
             const volSlider = $('#volSlider');
+            const soundLabel = $('#soundLabel');
             const btnPlay = $('#btnPlay');
             const btnHow = $('#btnHow');
             const btnModeExplode = $('#btnModeExplode');
@@ -838,22 +855,43 @@
                     ground: 0,
                     wall: 0
                 },
+                markUnavailable(error) {
+                    if (this.unavailable) return;
+                    this.unavailable = true;
+                    this.enabled = false;
+                    this._master = null;
+                    this._noise = null;
+                    volSlider.disabled = true;
+                    volSlider.setAttribute('aria-label', 'Sound unavailable');
+                    soundLabel.textContent = 'Sound unavailable';
+                    console.warn('[FruitPile] Audio unavailable:', error);
+                    showToast('Audio unavailable. Gameplay is unaffected.');
+                },
                 ensure() {
                     if (this.unavailable) return null;
                     if (!this.ctx) {
+                        let ctx = null;
                         try {
                             const AudioContext = window.AudioContext || window.webkitAudioContext;
                             if (typeof AudioContext !== 'function') throw new Error('Web Audio API is not supported');
-                            const ctx = new AudioContext();
+                            ctx = new AudioContext();
                             const master = ctx.createGain();
                             master.gain.value = this.volume / 100;
                             master.connect(ctx.destination);
                             this.ctx = ctx;
                             this._master = master;
                         } catch (error) {
-                            this.unavailable = true;
-                            this.enabled = false;
-                            console.warn('[FruitPile] Audio unavailable:', error);
+                            if (ctx && typeof ctx.close === 'function') {
+                                try {
+                                    const closing = ctx.close();
+                                    if (closing && typeof closing.catch === 'function') {
+                                        closing.catch(closeError => console.warn('[FruitPile] Audio context cleanup:', closeError));
+                                    }
+                                } catch (closeError) {
+                                    console.warn('[FruitPile] Audio context cleanup:', closeError);
+                                }
+                            }
+                            this.markUnavailable(error);
                             return null;
                         }
                     }
@@ -3179,9 +3217,10 @@
                 resumeAudio();
                 canvas.focus({ preventScroll: true });
 
-                showToast(gameMode === GAME_MODES.MERGE
+                const intro = gameMode === GAME_MODES.MERGE
                     ? 'Drop these two cherries together to grow a grape.'
-                    : 'Drop these two cherries together for your first pop.', 4000);
+                    : 'Drop these two cherries together for your first pop.';
+                showToast(audio.unavailable ? `${intro} Sound unavailable; gameplay is unaffected.` : intro, 4000);
                 updateHud();
 
                 audio.playTune(gameMode);
@@ -4501,10 +4540,7 @@
                 if (!audio.enabled) return;
                 try {
                     const ctx = audio.ensure();
-                    if (!ctx) {
-                        showToast('Audio unavailable. Gameplay is unaffected.');
-                        return;
-                    }
+                    if (!ctx) return;
                     if (ctx.state === 'suspended') {
                         const resume = ctx.resume();
                         if (resume && typeof resume.catch === 'function') {
