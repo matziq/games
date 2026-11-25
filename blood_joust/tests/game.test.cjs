@@ -44,13 +44,14 @@ function game() {
   const html = fs.readFileSync(path.join(__dirname, '..', 'blood_joust.html'), 'utf8');
   const script = html.match(/<script>\s*([\s\S]*?)<\/script>/)[1];
   const hook = `window.__test = {
-    mkEnt, physEnt, doFlap, aiUpdate, collisions, updatePlaying, startGame, loop, drawBirdPx, resize,
+    mkEnt, physEnt, doFlap, aiUpdate, collisions, updatePlaying, startGame, loop, drawBirdPx, resize, loseLife,
     get: () => ({ player, enemies, plats, state, lives, score, fragments, teleports, frame, K, touchFlapHeld }),
     set: v => {
       if ('player' in v) player = v.player;
       if ('enemies' in v) enemies = v.enemies;
       if ('state' in v) state = v.state;
       if ('lives' in v) lives = v.lives;
+      if ('score' in v) score = v.score;
       if ('invulnT' in v) invulnT = v.invulnT;
       if ('respawnT' in v) respawnT = v.respawnT;
       if ('plats' in v) plats = v.plats;
@@ -211,4 +212,53 @@ test('keyboard and simultaneous touch controls remain functional', () => {
   t.updatePlaying();
   assert.ok(player.vx > 0);
   sandbox.onkeyup({ code: 'KeyD' });
+});
+
+test('final life loss shows a structured result with a new personal best', () => {
+  const { t, element } = game();
+  t.startGame();
+  t.set({ state: 'playing', lives: 2, score: 1500 });
+  t.loop(1);
+  assert.equal(element('hud').hidden, false);
+  assert.equal(element('hud-score').textContent, '1,500');
+  assert.match(element('hud-lives').innerHTML, /hud-life lost/);
+  t.set({ lives: 1 });
+  t.loseLife();
+  t.loop(2);
+  assert.equal(t.get().state, 'gameOver');
+  assert.equal(element('hud').hidden, true);
+  assert.equal(element('go-score').textContent, '1,500');
+  assert.equal(element('go-best').textContent, '1,500');
+  assert.equal(element('new-best').hidden, false);
+  t.startGame();
+  t.loop(3);
+  assert.equal(element('new-best').hidden, false, 'flag is only rendered on game over');
+  t.set({ lives: 1, score: 10 });
+  t.loseLife();
+  t.loop(4);
+  assert.equal(element('new-best').hidden, true);
+});
+
+test('quitting from pause returns to the title and keeps the best score', () => {
+  const { t, element } = game();
+  t.startGame();
+  t.set({ state: 'paused', score: 2400 });
+  element('pause-quit').events.click();
+  t.loop(1);
+  assert.equal(t.get().state, 'title');
+  assert.equal(element('title-best').hidden, false);
+  assert.equal(element('title-best').textContent, 'Personal best: 2,400');
+  assert.equal(element('touch-controls').hidden, true);
+});
+test('a touch flap tap shorter than one frame still flaps', () => {
+  const { t, element } = game();
+  t.startGame();
+  const player = t.get().player;
+  t.set({ state: 'playing', invulnT: 999, enemies: [Object.assign(t.mkEnt('bloodKnight', 20, 20), { spawning: true })] });
+  const flap = element('tc-flap');
+  flap.events.pointerdown({ pointerId: 7, preventDefault() {} });
+  flap.events.pointerup({ pointerId: 7 });
+  assert.equal(t.get().touchFlapHeld, false);
+  t.updatePlaying();
+  assert.ok(player.vy < 0, 'quick tap produced an upward flap');
 });

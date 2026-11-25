@@ -14,6 +14,26 @@
       box-sizing: border-box
     }
 
+    :root {
+      --ar: 1.5;
+      --vh: 100vh;
+      --deck: 0px;
+      --safe-t: env(safe-area-inset-top, 0px);
+      --safe-r: env(safe-area-inset-right, 0px);
+      --safe-l: env(safe-area-inset-left, 0px);
+      --avail-h: calc(var(--vh) - var(--safe-t) - var(--deck));
+      --arena-w: min(100vw, calc(var(--avail-h) * var(--ar)));
+      --arena-h: calc(var(--arena-w) / var(--ar));
+      --arena-x: calc((100vw - var(--arena-w)) / 2);
+      --arena-y: calc(var(--safe-t) + (var(--avail-h) - var(--arena-h)) / 2);
+      --hud-font: "Courier New", Courier, monospace;
+    }
+    @supports (height: 100dvh) { :root { --vh: 100dvh; } }
+    /* Portrait touch devices get a dedicated control deck so thumbs never cover the arena. */
+    @media (any-pointer: coarse) and (orientation: portrait) {
+      :root { --deck: max(150px, calc(var(--vh) - var(--safe-t) - 100vw / var(--ar))); }
+    }
+
     html,
     body {
       width: 100%;
@@ -21,18 +41,57 @@
       overflow: hidden;
       background: #000;
       font-family: system-ui, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+      overscroll-behavior: none;
     }
 
     canvas {
       display: block;
-      width: 100vw;
-      height: 100vh;
-      height: 100dvh;
-      object-fit: contain;
+      position: fixed;
+      left: var(--arena-x);
+      top: var(--arena-y);
+      width: var(--arena-w);
+      height: var(--arena-h);
       image-rendering: pixelated;
       image-rendering: crisp-edges;
       touch-action: manipulation;
     }
+
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+    }
+
+    .hud {
+      position: fixed;
+      z-index: 11;
+      left: var(--arena-x);
+      top: var(--arena-y);
+      width: var(--arena-w);
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 8px max(10px, calc(var(--safe-r) - var(--arena-x))) 0 max(12px, calc(var(--safe-l) - var(--arena-x)));
+      font-family: "Courier New", Courier, monospace;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 2px 2px 0 #200000, 0 0 6px rgba(0, 0, 0, .9);
+      pointer-events: none;
+    }
+    .hud[hidden] { display: none; }
+    .hud-lives { display: flex; gap: 6px; min-height: 22px; align-items: center; }
+    .hud-life { width: 18px; height: 22px; display: block; }
+    .hud-life.lost { opacity: .22; }
+    .hud-wave { color: #ff5a4f; font-size: clamp(15px, 2.4vw, 20px); letter-spacing: 1px; }
+    .hud-score { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.05; }
+    .hud-score-value { color: #ffe14d; font-size: clamp(20px, 3.4vw, 28px); font-variant-numeric: tabular-nums; }
+    .hud-score-value.bump { animation: bump .25s ease-out; }
+    .hud-best { color: #c9c9c9; font-size: 12px; letter-spacing: .5px; }
+    @keyframes bump { 40% { transform: scale(1.18); color: #fff; } }
 
     button:focus-visible, input:focus-visible {
       outline: 3px solid #ffdc70;
@@ -62,13 +121,15 @@
       text-align: center;
       line-height: 1.45;
     }
-    .panel h1, .panel h2 { color: #ff6860; margin-bottom: .35em; }
+    .panel h1, .panel h2 { color: #ff6860; margin-bottom: .35em; font-family: "Courier New", Courier, monospace; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; text-shadow: 3px 3px 0 #200000; }
+    .panel h1 { font-size: clamp(30px, 7vw, 48px); line-height: 1.05; }
     .panel p { margin: .55em 0; }
     .panel ul { text-align: left; padding-left: 1.4em; }
-    .menu-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 14px; }
+    .menu-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 14px; }
     .menu button, .pause-button {
-      min-height: 44px;
-      padding: 8px 16px;
+      min-height: 48px;
+      min-width: 48px;
+      padding: 8px 18px;
       border: 1px solid #e97165;
       border-radius: 8px;
       background: #651a1a;
@@ -76,16 +137,61 @@
       font: inherit;
       font-weight: 700;
       cursor: pointer;
+      touch-action: manipulation;
     }
     .menu button:hover, .pause-button:hover { background: #8e2924; }
-    .sound-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 12px 0; }
-    .sound-row input { width: min(55vw, 260px); }
-    .pause-button {
-      position: fixed;
-      z-index: 11;
-      top: max(50px, env(safe-area-inset-top));
-      right: max(10px, env(safe-area-inset-right));
+    .menu button:active, .pause-button:active { transform: translateY(1px); background: #a5302a; }
+    .menu button.primary {
+      flex-basis: 100%;
+      max-width: 320px;
+      min-height: 56px;
+      font-size: 1.2em;
+      letter-spacing: .5px;
+      background: linear-gradient(#c8352b, #8e1f19);
+      border-color: #ffb0a0;
+      box-shadow: 0 4px 0 #3d0b08;
     }
+    .menu button.primary:hover { background: linear-gradient(#dc4034, #a1261f); }
+    .tagline { color: #ffb4a8; font-style: italic; }
+    .best-line { color: #ffc34d; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .hint { color: #c9b8b8; font-size: .9em; }
+    .touch-hint { display: none; }
+    @media (hover: none) and (pointer: coarse) {
+      .key-hint { display: none; }
+      .touch-hint { display: block; }
+      li.touch-hint { display: list-item; }
+    }
+    .sound-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 12px 0; font-weight: 700; }
+    .sound-row input { width: min(55vw, 260px); height: 32px; accent-color: #e0483c; cursor: pointer; }
+    .sound-row output { min-width: 4ch; text-align: right; font-variant-numeric: tabular-nums; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 4px; }
+    .stat { padding: 10px 6px; border: 1px solid #5a2222; border-radius: 8px; background: rgba(60, 10, 10, .5); }
+    .stat dt { font-size: .75em; letter-spacing: 1px; text-transform: uppercase; color: #d9a9a2; }
+    .stat dd { font-size: 1.45em; font-weight: 800; font-variant-numeric: tabular-nums; color: #fff; }
+    .stat.score dd { color: #ffe14d; }
+    .new-best { display: inline-block; margin-top: 6px; padding: 4px 12px; border-radius: 999px; background: #ffc34d; color: #2a0700; font-weight: 800; letter-spacing: 1px; }
+    .new-best[hidden] { display: none; }
+    .help-list li { margin: .35em 0; }
+    .help-list strong { color: #ffc34d; }
+    .panel-sticky-actions { position: sticky; bottom: calc(-1 * clamp(16px, 3vh, 28px)); padding: 10px 0 2px; background: linear-gradient(transparent, rgba(15, 5, 9, .98) 35%); }
+    @media (max-height: 500px) {
+      .panel { line-height: 1.3; font-size: 15px; }
+      .panel p { margin: .35em 0; }
+      .menu button.primary { min-height: 50px; }
+      .stats { margin: 8px 0 2px; }
+    }
+    .pause-button {
+      pointer-events: auto;
+      width: 48px;
+      height: 48px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(60, 12, 12, .78);
+      border-color: rgba(233, 113, 101, .85);
+    }
+    .pause-button svg { width: 18px; height: 18px; fill: #fff; }
+    .pause-button[hidden] { display: none; }
 
     .touch-controls {
       display: none;
@@ -137,17 +243,34 @@
       border-color: rgba(220, 80, 60, .8);
     }
 
+    .tc-btn.pressed { transform: scale(.94); }
+
     .tc-btn.tc-flap {
-      width: 88px;
-      height: 88px;
-      font-size: 14px;
+      width: 92px;
+      height: 92px;
+      font-size: 15px;
       font-weight: 800;
       letter-spacing: 1px;
       text-transform: uppercase;
     }
+    @media (any-pointer: coarse) and (orientation: portrait) {
+      .touch-controls {
+        height: var(--deck);
+        align-items: flex-end;
+        padding-bottom: max(28px, calc(env(safe-area-inset-bottom, 0px) + 16px));
+        pointer-events: auto;
+        background: linear-gradient(#0b0304, #160506);
+        border-top: 1px solid rgba(192, 57, 43, .35);
+        touch-action: none;
+      }
+      .tc-group { gap: 14px; }
+      .tc-btn { width: 80px; height: 80px; background: rgba(60, 14, 14, .8); border-color: rgba(220, 80, 60, .7); }
+      .tc-btn.tc-flap { width: 104px; height: 104px; font-size: 17px; }
+    }
     @media (max-height: 480px) {
-      .tc-btn { width: 56px; height: 56px; }
-      .tc-btn.tc-flap { width: 66px; height: 66px; }
+      .tc-group { gap: 12px; }
+      .tc-btn { width: 64px; height: 64px; font-size: 24px; }
+      .tc-btn.tc-flap { width: 82px; height: 82px; font-size: 14px; }
     }
     @media (prefers-reduced-motion: reduce) {
       .tc-btn { backdrop-filter: none; -webkit-backdrop-filter: none; }
@@ -158,58 +281,93 @@
   #return-menu-link:hover { background: #25375c; }
   #return-menu-link:focus-visible { outline: 3px solid #75e6ff; outline-offset: 2px; }
 </style>
+<style>
+  #return-menu-link[hidden] { display: none; }
+  .menu { padding-top: max(56px, calc(env(safe-area-inset-top) + 52px)); }
+</style>
 </head>
 
 <body>
 <a id="return-menu-link" href="https://memconfigmgr.org/games/index.html">&#8592; Games Menu</a>
   <canvas id="game" aria-label="Blood Joust game arena"></canvas>
 
+  <div class="hud" id="hud" hidden>
+    <div class="hud-lives" id="hud-lives" role="img" aria-label="Lives: 3"></div>
+    <div class="hud-wave" id="hud-wave">WAVE 1</div>
+    <div class="hud-score" aria-label="Score">
+      <span class="hud-score-value" id="hud-score">0</span>
+      <span class="hud-best" id="hud-best">BEST 0</span>
+    </div>
+    <button class="pause-button" id="pause" type="button" aria-label="Pause game" hidden>
+      <svg viewBox="0 0 18 18" aria-hidden="true"><rect x="3" y="2" width="4" height="14" rx="1"/><rect x="11" y="2" width="4" height="14" rx="1"/></svg>
+    </button>
+  </div>
+  <p class="sr-only" id="announcer" aria-live="polite"></p>
+
   <section class="menu" id="title-menu" aria-label="Main menu">
     <div class="panel">
       <h1>Blood Joust</h1>
-      <p>Only the highest shall survive.</p>
+      <p class="tagline">Only the highest shall survive.</p>
       <p>Fly above your enemies to win each joust.</p>
       <div class="menu-actions">
-        <button id="start" type="button">Start game</button>
+        <button id="start" class="primary" type="button">Start game</button>
         <button id="help" type="button">How to play</button>
         <button id="sound" type="button">Sound settings</button>
       </div>
-      <p>Keyboard: A / D or arrow keys to move; Space / W to flap.</p>
+      <p class="best-line" id="title-best" hidden></p>
+      <p class="hint key-hint">Keyboard: A / D or arrow keys to move; Space / W to flap.</p>
+      <p class="hint touch-hint">Hold ◀ ▶ to move. Tap FLAP or the arena to fly.</p>
     </div>
   </section>
   <section class="menu" id="help-menu" aria-label="How to play" hidden>
     <div class="panel">
       <h2>How to play</h2>
-      <ul>
-        <li>Move with A / D or the arrow keys. Press Space / W to flap. On a touch screen, hold the arrows to move and tap or hold FLAP to fly; tapping the arena also flaps.</li>
-        <li>Collide with an enemy from above to win. Equal-height jousters bounce apart.</li>
-        <li>Collect dropped eggs for 250 points before they hatch. Clear all enemies and eggs to advance.</li>
-        <li>Platforms are solid on every side. Enemies must rest for one second after five flaps.</li>
-        <li>Avoid lava and escape the fiery hands by flapping. You have three lives.</li>
-        <li>Use Pause or Escape to pause. Sound settings are available from the main menu.</li>
+      <ul class="help-list">
+        <li class="key-hint"><strong>Controls:</strong> move with A / D or the arrow keys. Press Space / W to flap.</li>
+        <li class="touch-hint"><strong>Controls:</strong> hold ◀ ▶ to move. Tap or hold FLAP to fly; tapping the arena also flaps.</li>
+        <li><strong>Joust:</strong> collide with an enemy from above to win. Equal-height jousters bounce apart.</li>
+        <li><strong>Eggs:</strong> collect dropped eggs for 250 points before they hatch. Clear all enemies and eggs to advance.</li>
+        <li><strong>Platforms</strong> are solid on every side. Enemies must rest for one second after five flaps.</li>
+        <li><strong>Hazards:</strong> avoid lava and escape the fiery hands by flapping. You have three lives.</li>
+        <li><strong>Pause</strong> with the pause button<span class="key-hint"> or Escape</span>. Sound settings are on the main menu.</li>
       </ul>
-      <div class="menu-actions"><button class="back" type="button">Back</button></div>
+      <div class="menu-actions panel-sticky-actions"><button class="back" type="button">Back</button></div>
     </div>
   </section>
   <section class="menu" id="sound-menu" aria-label="Sound settings" hidden>
     <div class="panel">
       <h2>Sound settings</h2>
-      <label class="sound-row" for="volume">Volume <input id="volume" type="range" min="0" max="100" step="10"><output id="volume-value"></output></label>
+      <label class="sound-row" for="volume">Volume <input id="volume" type="range" min="0" max="100" step="10"><output id="volume-value" for="volume"></output></label>
       <div class="menu-actions">
         <button id="sfx-toggle" type="button"></button>
         <button id="music-toggle" type="button"></button>
         <button class="back" type="button">Back</button>
       </div>
-      <p>Keyboard: Left / Right adjust volume; F toggles effects; M toggles music; Escape returns.</p>
+      <p class="hint key-hint">Keyboard: Left / Right adjust volume; F toggles effects; M toggles music; Escape returns.</p>
     </div>
   </section>
   <section class="menu" id="paused-menu" aria-label="Game paused" hidden>
-    <div class="panel"><h2>Paused</h2><p>Release any held controls, then press them again after resuming.</p><div class="menu-actions"><button id="resume" type="button">Resume</button></div></div>
+    <div class="panel">
+      <h2>Paused</h2>
+      <p>Take a breath. Your controls reset when you resume.</p>
+      <div class="menu-actions">
+        <button id="resume" class="primary" type="button">Resume</button>
+        <button id="pause-quit" type="button">Quit to main menu</button>
+      </div>
+    </div>
   </section>
   <section class="menu" id="game-over-menu" aria-label="Game over" hidden>
-    <div class="panel"><h2>Game over</h2><p id="result" aria-live="polite"></p><div class="menu-actions"><button id="restart" type="button">Play again</button><button id="main-menu" type="button">Main menu</button></div></div>
+    <div class="panel">
+      <h2>Game over</h2>
+      <p class="new-best" id="new-best" hidden>New personal best!</p>
+      <dl class="stats" id="result" aria-live="polite">
+        <div class="stat score"><dt>Score</dt><dd id="go-score">0</dd></div>
+        <div class="stat"><dt>Best</dt><dd id="go-best">0</dd></div>
+        <div class="stat"><dt>Wave</dt><dd id="go-wave">1</dd></div>
+      </dl>
+      <div class="menu-actions"><button id="restart" class="primary" type="button">Play again</button><button id="main-menu" type="button">Main menu</button></div>
+    </div>
   </section>
-  <button class="pause-button" id="pause" type="button" hidden>Pause</button>
 
   <!-- Mobile on-screen controls -->
   <div class="touch-controls" id="touch-controls" hidden>
@@ -243,6 +401,7 @@
         if (newW === oldW && newH === oldH) return;
         W = C.width = newW; H = C.height = newH;
         X.imageSmoothingEnabled = false;
+        if (document.documentElement) document.documentElement.style.setProperty('--ar', String(W / H));
         buildPlatforms();
         if (oldW && oldH) {
           for (const e of [player, ...enemies]) {
@@ -353,7 +512,8 @@
         el.addEventListener('pointerdown', e => {
           e.preventDefault(); unlockAudio();
           active.add(e.pointerId); el.setPointerCapture(e.pointerId);
-          if (code === 'Space') touchFlapHeld = true; else K[code] = 1;
+          // Queue one flap so taps shorter than a frame are never dropped.
+          if (code === 'Space') { touchFlapHeld = true; K.Space = 1; } else K[code] = 1;
           el.classList.add('pressed');
         });
         el.addEventListener('pointerup', release);
@@ -363,11 +523,14 @@
       tcBind('tc-left', 'ArrowLeft');
       tcBind('tc-right', 'ArrowRight');
       tcBind('tc-flap', 'Space');
-      C.addEventListener('pointerdown', e => {
+      const flapFromArena = e => {
         if (e.pointerType === 'touch' && state === 'playing') {
           e.preventDefault(); unlockAudio(); K.Space = 1;
         }
-      });
+      };
+      C.addEventListener('pointerdown', flapFromArena);
+      const touchDeck = document.getElementById('touch-controls');
+      touchDeck.addEventListener('pointerdown', e => { if (e.target === touchDeck) flapFromArena(e); });
 
       function clearInput() {
         for (const key of Object.keys(K)) K[key] = 0;
@@ -394,6 +557,10 @@
       document.getElementById('resume').addEventListener('click', resumeGame);
       document.getElementById('restart').addEventListener('click', () => { unlockAudio(); startGame(); });
       document.getElementById('main-menu').addEventListener('click', () => { clearInput(); state = 'title'; });
+      document.getElementById('pause-quit').addEventListener('click', () => {
+        if (state !== 'paused') return;
+        recordBest(); clearInput(); droneOff(); spawnSoundOff(); pausedFrom = null; state = 'title';
+      });
       document.getElementById('volume').addEventListener('input', e => setVolume(Number(e.target.value) / 100));
       document.getElementById('sfx-toggle').addEventListener('click', () => { sfxMuted = !sfxMuted; syncSoundUI(); if (!sfxMuted) sfx('eggPop'); });
       document.getElementById('music-toggle').addEventListener('click', () => { musicMuted = !musicMuted; syncSoundUI(); });
@@ -1081,12 +1248,16 @@
         if (e === player) sfx('flap');
       }
 
+      let newBest = false;
+      function recordBest() {
+        if (score > hiScore) { hiScore = score; newBest = true; writeSetting('bjHi', hiScore); saveRemote(); }
+      }
       function loseLife() {
         lives--;
         spawnSoundOff(); spawnPos = null;
         if (lives <= 0) {
           state = 'gameOver'; droneOff();
-          if (score > hiScore) { hiScore = score; writeSetting('bjHi', hiScore); saveRemote(); }
+          recordBest();
         } else {
           respawnT = RESPAWN_T;
         }
@@ -1478,22 +1649,27 @@
 
       // ─── HUD ───────────────────────────────────────────────────────────
       const FONT = '"Courier New", Courier, monospace';
-      function drawHUD() {
-        for (let i = 0; i < lives; i++) hudSkull(16 + i * 28, 14);
-        X.textAlign = 'center'; X.fillStyle = '#f44';
-        X.font = `bold 18px ${FONT}`;
-        X.fillText('WAVE ' + wave, W / 2, 28);
-        X.textAlign = 'right'; X.fillStyle = '#ff0';
-        X.font = `bold 24px ${FONT}`;
-        X.fillText(score.toLocaleString(), W - 18, 28);
-        X.font = `12px ${FONT}`; X.fillStyle = '#888';
-        X.fillText('HI: ' + hiScore.toLocaleString(), W - 18, 46);
+      const SKULL_SVG = '<svg class="hud-life" viewBox="0 0 14 17" aria-hidden="true"><path fill="#eee" d="M0 0h14v12H0zM2 12h10v5H2z"/><path fill="#d00" d="M2 3h4v4H2zM8 3h4v4H8z"/><path fill="#999" d="M4 12h2v5H4zM8 12h2v5H8z"/></svg>';
+      const hudCache = {};
+      function hudSet(id, key, value, apply) {
+        if (hudCache[key] === value) return false;
+        hudCache[key] = value; apply(document.getElementById(id), value); return true;
       }
-
-      function hudSkull(x, y) {
-        X.fillStyle = '#eee'; X.fillRect(x, y, 14, 12); X.fillRect(x + 2, y + 12, 10, 5);
-        X.fillStyle = '#f00'; X.fillRect(x + 2, y + 3, 4, 4); X.fillRect(x + 8, y + 3, 4, 4);
-        X.fillStyle = '#aaa'; X.fillRect(x + 4, y + 12, 2, 5); X.fillRect(x + 8, y + 12, 2, 5);
+      function syncHUD() {
+        const shown = state === 'playing' || state === 'waveAnnounce' || state === 'paused';
+        hudSet('hud', 'shown', shown, (el, v) => { el.hidden = !v; });
+        if (!shown) return;
+        hudSet('hud-lives', 'lives', lives, (el, v) => {
+          el.innerHTML = Array.from({ length: 3 }, (_, i) => SKULL_SVG.replace('hud-life', i < v ? 'hud-life' : 'hud-life lost')).join('');
+          el.setAttribute('aria-label', `Lives: ${Math.max(0, v)}`);
+        });
+        hudSet('hud-wave', 'wave', wave, (el, v) => { el.textContent = 'WAVE ' + v; });
+        const prevScore = hudCache.score;
+        if (hudSet('hud-score', 'score', score, (el, v) => { el.textContent = v.toLocaleString(); }) && prevScore !== undefined && score > prevScore) {
+          const el = document.getElementById('hud-score');
+          el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+        }
+        hudSet('hud-best', 'best', Math.max(hiScore, score), (el, v) => { el.textContent = 'BEST ' + v.toLocaleString(); });
       }
 
       // ─── Screen FX ─────────────────────────────────────────────────────
@@ -1674,7 +1850,6 @@
           X.textAlign = 'center'; X.fillText('WAVE COMPLETE', W / 2, H * .5);
         }
         drawScanlines();
-        drawHUD();
       }
 
       function drawGameOver() {
@@ -1736,7 +1911,7 @@
       }
 
       function startGame() {
-        clearInput(); spawnSoundOff(); droneOn();
+        clearInput(); spawnSoundOff(); droneOn(); newBest = false;
         state = 'waveAnnounce'; wave = 1; score = 0; lives = 3;
         stains = []; bloods = []; gores = []; bones = []; fragments = []; teleports = []; eggs = []; lavaHands = [];
         mkPlayer(); spawnWave(); waveT = 130; sfx('wave');
@@ -1803,7 +1978,7 @@
             drawTeleports(); drawEggs();
             for (const e of enemies) drawEnt(e);
             if (player) drawEnt(player);
-            drawParts(); drawFlash(); drawScanlines(); drawHUD();
+            drawParts(); drawFlash(); drawScanlines();
             break;
         }
         X.restore();
@@ -1818,8 +1993,19 @@
         const active = state === 'playing' || state === 'waveAnnounce';
         document.getElementById('touch-controls').hidden = !active;
         document.getElementById('pause').hidden = !active;
-        if (state === 'gameOver') document.getElementById('result').textContent =
-          `Score: ${score.toLocaleString()} | High score: ${hiScore.toLocaleString()} | Wave: ${wave}`;
+        document.getElementById('return-menu-link').hidden = active;
+        if (state === 'gameOver') {
+          document.getElementById('go-score').textContent = score.toLocaleString();
+          document.getElementById('go-best').textContent = hiScore.toLocaleString();
+          document.getElementById('go-wave').textContent = String(wave);
+          document.getElementById('new-best').hidden = !newBest;
+        }
+        if (state === 'title') {
+          const best = document.getElementById('title-best');
+          best.hidden = hiScore <= 0;
+          best.textContent = 'Personal best: ' + hiScore.toLocaleString();
+        }
+        if (state === 'waveAnnounce') document.getElementById('announcer').textContent = `Wave ${wave}`;
         if (menus[state]) document.querySelector(`#${menus[state]} button`).focus({ preventScroll: true });
         else if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
       }
@@ -1832,7 +2018,7 @@
         while (accumulator >= 1000 / 60) {
           update(); accumulator -= 1000 / 60;
         }
-        syncUI(); draw();
+        syncUI(); syncHUD(); draw();
         requestAnimationFrame(loop);
       }
       requestAnimationFrame(loop);
