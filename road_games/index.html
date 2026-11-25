@@ -4,22 +4,109 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#10172d">
+  <meta name="description" content="Choose and play road trip games in one place.">
   <title>Road Games</title>
-  <link rel="stylesheet" href="./style.css">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <style>
+    :root{color-scheme:dark;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#10172d;color:#f5f6ff}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 75% 0%,#233759,#10172d 48%);min-height:100vh}
+    .back{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;margin:max(8px,env(safe-area-inset-top)) 0 0 max(10px,env(safe-area-inset-left));border:1px solid #71809f;border-radius:10px;background:#10172d;color:#b8eaff;font-weight:700}
+    main{max-width:1280px;margin:auto;padding:20px 16px 48px}header{margin-bottom:20px}.eyebrow{color:#8cebd8;font-size:.75rem;letter-spacing:.16em;font-weight:800;margin:0 0 8px}
+    h1{font-size:clamp(2.4rem,7vw,4.4rem);line-height:1;margin:0;letter-spacing:-.04em}h1 span{color:#8cebd8}header p:last-child{color:#c4cce1;line-height:1.5}
+    .layout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:16px;align-items:start}.panel{background:#1b2840;border:1px solid #495675;border-radius:16px;padding:16px}.panel h2{margin:0 0 6px;font-size:1.15rem}.hint{margin:0 0 14px;color:#c4cce1;font-size:.9rem;line-height:1.5}
+    .choices{display:grid;gap:7px}.choice{display:flex;gap:12px;align-items:center;min-height:54px;padding:9px 10px;border:1px solid #52647e;border-radius:10px;background:#273a53;color:#f5f6ff;text-decoration:none}
+    .choice:hover{background:#34516a}.choice[aria-current="true"]{border-color:#8cebd8;background:#245154}.icon{display:grid;place-items:center;flex:0 0 38px;height:38px;border-radius:9px;background:#101e32;color:#9cebd9;font-weight:800;font-size:.8rem}
+    .choice strong,.choice small{display:block}.choice small{color:#c4cce1;margin-top:3px;font-size:.76rem}.viewer-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}.viewer-head h2{margin:0}.open{display:inline-flex;align-items:center;min-height:44px;color:#b8eaff;font-weight:700}
+    .empty{min-height:320px;display:grid;place-content:center;text-align:center;padding:24px;color:#c4cce1;border:1px dashed #71809f;border-radius:12px}.empty strong{font-size:1.35rem;color:#f5f6ff}.empty p{max-width:28rem;line-height:1.5}
+    iframe{display:block;width:100%;height:75vh;min-height:500px;border:1px solid #71809f;border-radius:12px;background:#10172d}.save-note{color:#c4cce1;font-size:.85rem;line-height:1.5;margin:12px 0 0}
+    .switch{font:inherit;font-weight:700;color:#b8eaff;border:1px solid #71809f;border-radius:8px;background:#273a53;min-height:44px;padding:8px 12px;cursor:pointer}
+    a:focus-visible,button:focus-visible{outline:3px solid #75e6ff;outline-offset:3px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}[hidden]{display:none!important}
+    @media(max-width:800px){.layout{grid-template-columns:1fr}.choices{grid-template-columns:repeat(2,minmax(0,1fr))}iframe{height:75vh;min-height:420px}}
+    @media(max-width:370px){.choices{grid-template-columns:1fr}main{padding-left:12px;padding-right:12px}.panel{padding:12px}}
+  </style>
 </head>
 <body>
+<a class="back" href="https://memconfigmgr.org/games/index.html">&#8592; Games Menu</a>
 <main>
-  <a class="back" href="https://memconfigmgr.org/games/index.html">&#8592; Games Menu</a>
   <header>
-    <p class="eyebrow">PASS &amp; PLAY</p>
-    <h1>Choose a game</h1>
-    <p>Your saved games are available on their individual pages.</p>
+    <p class="eyebrow">YOUR TRAVEL GAME COLLECTION</p>
+    <h1>Road <span>Games</span></h1>
+    <p>Pick a game, play together, and switch whenever you like.</p>
   </header>
-  <nav class="game-links" aria-label="Board games">
-    <a href="./tic-tac-toe.html">Tic-Tac-Toe</a>
-    <a href="./checkers.html">Checkers</a>
-    <a href="./chess.html">Chess</a>
-  </nav>
+  <div class="layout">
+    <nav class="panel" aria-labelledby="choose-heading">
+      <h2 id="choose-heading">Choose a game</h2>
+      <p class="hint">Select a game to play here. Your progress stays on this browser and device.</p>
+      <div class="choices">
+        <a class="choice" data-game="plates" href="../license_plate_game.html"><span class="icon" aria-hidden="true">50</span><span><strong>License Plate Game</strong><small>Spot all 50 states</small></span></a>
+        <a class="choice" data-game="questions" href="../20_questions.html"><span class="icon" aria-hidden="true">20?</span><span><strong>20 Questions</strong><small>Guess the secret answer</small></span></a>
+        <a class="choice" data-game="tic-tac-toe" href="./tic-tac-toe.html"><span class="icon" aria-hidden="true">XO</span><span><strong>Tic-Tac-Toe</strong><small>Two players</small></span></a>
+        <a class="choice" data-game="checkers" href="./checkers.html"><span class="icon" aria-hidden="true">CK</span><span><strong>Checkers</strong><small>Two players</small></span></a>
+        <a class="choice" data-game="chess" href="./chess.html"><span class="icon" aria-hidden="true">CH</span><span><strong>Chess</strong><small>Two players</small></span></a>
+        <a class="choice" data-game="trivia" href="../trivia/"><span class="icon" aria-hidden="true">?</span><span><strong>Road Trip Trivia</strong><small>One to four players</small></span></a>
+        <a class="choice" data-game="tower" href="../stack/"><span class="icon" aria-hidden="true">TT</span><span><strong>Tower Tumble</strong><small>Two players</small></span></a>
+        <a class="choice" data-game="starline" href="../starline_sprint/"><span class="icon" aria-hidden="true">SS</span><span><strong>Starline Sprint</strong><small>Arcade runner</small></span></a>
+      </div>
+    </nav>
+    <section class="panel" aria-labelledby="playing-heading">
+      <div class="viewer-head"><h2 id="playing-heading">Ready to play?</h2><button id="switch-game" class="switch" type="button" hidden>Choose another game &#8593;</button><a id="open-game" class="open" hidden>Open game on its own &#8599;</a></div>
+      <p id="announcement" class="sr-only" role="status" aria-live="polite"></p>
+      <div id="empty" class="empty"><div><strong>Adventure starts here.</strong><p>Choose a game to play in this window. You can switch games using the list.</p></div></div>
+      <iframe id="game-frame" title="Selected road game" hidden></iframe>
+      <p class="save-note">Each game keeps its own saved progress. Some games may pause when you switch or close the page.</p>
+    </section>
+  </div>
 </main>
+<script>
+  const choices = [...document.querySelectorAll(".choice")];
+  const frame = document.querySelector("#game-frame");
+  const heading = document.querySelector("#playing-heading");
+  const open = document.querySelector("#open-game");
+  const switchGame = document.querySelector("#switch-game");
+  function showGame() {
+    const id = location.hash.slice(1);
+    const choice = choices.find(item => item.dataset.game === id);
+    for (const item of choices) {
+      if (item === choice) item.setAttribute("aria-current", "true");
+      else item.removeAttribute("aria-current");
+    }
+    if (!choice) {
+      frame.hidden = true;
+      frame.removeAttribute("src");
+      open.hidden = true;
+      switchGame.hidden = true;
+      document.querySelector("#empty").hidden = false;
+      heading.textContent = "Ready to play?";
+      return;
+    }
+    const name = choice.querySelector("strong").textContent;
+    if (frame.getAttribute("src") !== choice.getAttribute("href")) frame.setAttribute("src", choice.getAttribute("href"));
+    frame.title = `${name} game`;
+    frame.hidden = false;
+    document.querySelector("#empty").hidden = true;
+    heading.textContent = name;
+    open.href = choice.href;
+    open.hidden = false;
+    switchGame.hidden = false;
+    document.querySelector("#announcement").textContent = `${name} selected.`;
+  }
+  for (const choice of choices) choice.addEventListener("click", event => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    if (location.hash === `#${choice.dataset.game}`) showGame();
+    else location.hash = choice.dataset.game;
+    if (matchMedia("(max-width:800px)").matches) heading.scrollIntoView({block:"start"});
+  });
+  switchGame.addEventListener("click", () => choices[0].focus());
+  frame.addEventListener("load", () => {
+    try {
+      for (const link of frame.contentDocument.querySelectorAll('a[href="https://memconfigmgr.org/games/index.html"]')) link.target = "_top";
+    } catch (error) {
+      console.warn("The game menu link could not be updated in the embedded page.", error);
+    }
+  });
+  window.addEventListener("hashchange", showGame);
+  showGame();
+</script>
 </body>
 </html>
