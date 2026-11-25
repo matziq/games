@@ -195,7 +195,9 @@ no test API. Separate uninstrumented tests play the real standalone HTML offline
 and capture live desktop/mobile gameplay after real animation frames.
 
 Environment variables: `FRUITPILE_TOOLS` points at the folder holding the
-restored `node_modules` when it is not `<output>\tools`, and
+restored `node_modules` when it is not `<output>\tools`; `FRUITPILE_CHROME_PATH`
+selects an installed Chrome/Chromium executable when Playwright's browser is
+not installed; and
 `FRUITPILE_TEST_FILTER` runs only tests whose name contains the given text (join
 several with `|`), for example `$env:FRUITPILE_TEST_FILTER = 'touch aims|android'`.
 

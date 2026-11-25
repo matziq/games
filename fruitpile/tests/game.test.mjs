@@ -123,7 +123,10 @@ window.testGame = {
 `;
 assert.equal((html.match(/            start\(\);/g) || []).length, 1);
 const testHtml = html.replace('            start();', `${hook}\n            start();`);
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({
+    headless: true,
+    ...(process.env.FRUITPILE_CHROME_PATH ? { executablePath: process.env.FRUITPILE_CHROME_PATH } : {})
+});
 const results = [];
 // FRUITPILE_TEST_FILTER=<text>[|<text>...] runs only the tests whose name contains one of the texts.
 const testFilters = (process.env.FRUITPILE_TEST_FILTER || '').toLowerCase().split('|').filter(Boolean);
@@ -700,7 +703,7 @@ try {
         assert(await page.locator('#fp-hs-name').isVisible());
 
         const saveBox = await page.locator('#fp-save-name').boundingBox();
-        if (saveBox.top < 0 || saveBox.bottom > 375) {
+        if (saveBox.y < 0 || saveBox.y + saveBox.height > 375) {
             const card = await page.locator('#modal .card').boundingBox();
             await touch('touchStart', card.x + card.width / 2, card.y + card.height * .8);
             await touch('touchMove', card.x + card.width / 2, card.y + card.height * .3);
