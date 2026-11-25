@@ -1,7 +1,7 @@
 # FruitPile 2.1
 
 An offline fruit-physics game for mouse, keyboard and touch, laid out for phones
-first. Both modes use the same 520 x 680 logical bowl on every screen, so a wider
+first. The game uses the same 520 x 680 logical bowl on every screen, so a wider
 monitor no longer buys extra room. Resizing or rotating scales the view without
 moving the pile.
 
@@ -13,20 +13,18 @@ The first two fruit are cherries: drop them in the same place for a quick first
 match. The drop preview, upcoming fruit and current objective stay visible on
 phones, including narrow 320px screens and landscape.
 
-| Mode | What to do | Progress |
-| --- | --- | --- |
-| Explode | Touch matching fruit together to pop the group. Bigger groups and quick chains score more. | Reach the next score milestone, then beat your local best. Smaller fruit have higher base values. |
-| Merge | Touch matching fruit together to create the next larger fruit. A group creates one next-size fruit; extra fruit increase the score. | Grow Cherry > Grape > Strawberry > Orange > Apple > Peach > Melon > Watermelon > Diamond. Celebrate the first diamond, then continue the same run. Larger fruit have higher base values. |
+Touch matching fruit together to create the next larger fruit. A group creates
+one next-size fruit; extra fruit increase the score. Grow Cherry > Grape >
+Strawberry > Orange > Apple > Peach > Melon > Watermelon > Diamond. Celebrate
+the first diamond, then continue the same run. Larger fruit have higher base values.
 
 Matches have a **0.75-second fuse, plus 0.25 seconds per extra touching fruit**.
 Bigger fruit are heavier: mass follows volume, so a watermelon shoves the pile harder than a cherry at the same speed. They do not fall faster.
-In both Explode and Merge, the fruit must still be touching when the fuse ends.
-Bouncing apart cancels that fuse; it does not pop or merge later. A watermelon blast creates **one**
-diamond. Two diamonds are created only by two separate blasts, so one blast cannot
-immediately detonate its own reward.
+Fruit must still be touching when the fuse ends. Bouncing apart cancels that
+fuse; separated fruit do not merge later. Matching watermelons creates one diamond.
 Match again within **3 seconds** to extend the combo (maximum 5x); its small
-timer shows how much time is left. In Merge, the progress bar tracks the largest
-fruit you have created. In Explode, it tracks the next score target.
+timer shows how much time is left. The progress bar tracks the largest fruit
+you have created.
 
 Small fruit are always in the random pool. Matching all three small types unlocks
 Orange, Apple and Peach. Matching all three medium types unlocks Melon and
@@ -66,7 +64,7 @@ popular one-thumb fruit-merge games:
 - **No stray browser gestures.** Pull-to-refresh, double-tap zoom, text selection,
   the long-press menu and page scrolling are suppressed on the board and the
   controls. The page does not disable browser zoom for accessibility.
-- **Haptics.** A light tick on swap, a short pulse on drop, pops that grow with the
+- **Haptics.** A light tick on swap, a short pulse on drop, merge pulses that grow with the
   size of the match, a triple pulse for the diamond shockwave, a warning buzz when
   the danger countdown starts, and a long pulse at game over. A **Vibration** switch
   in the menu turns them off. It only appears on devices that can vibrate, and the
@@ -103,9 +101,9 @@ the help panel, then pauses an active run into the menu, then resumes a paused
 run from the menu. Back only leaves the app from the start menu or the game-over
 screen.
 
-Local scores use the new `fruitpile.highscores.v2` storage key, separated by mode
-and Classic/Chaos. Old scores are left untouched because the board and scoring
-rules changed; they are not comparable. There is no cloud score upload, tracking,
+Local scores use the `fruitpile.highscores.v2` storage key, separated by
+Classic/Chaos. Existing merge scores and settings remain available. Other stored
+scores are left untouched. There is no cloud score upload, tracking,
 external background service or CDN. Storage failures are reported without
 preventing play. Active runs are not saved across page reloads or Android process
 death; only settings and saved scores persist.
@@ -114,7 +112,7 @@ death; only settings and saved scores persist.
 
 These are code-grounded hypotheses, not measured retention findings:
 
-- Mobile hid the current/next fruit, mode and goal, removing planning information.
+- Mobile hid the current/next fruit and goal, removing planning information.
 - Documentation, help and actual fuse/win values disagreed.
 - Merge rewarded cherries more than large fruit, opposing the advertised goal.
 - Early random gusts and 12-second decay undid setups before players understood them.
@@ -130,12 +128,12 @@ power-ups, accounts or artificial daily rewards.
 
 Ask five people who have not played to try it without coaching, across at least
 one real Android phone and a desktop. Observe whether they make the first match,
-notice the next fruit/swap, explain the two modes and know why a run ended.
+notice the next fruit/swap, explain matching and know why a run ended.
 After one loss, offer no prompt and note whether they choose a second run.
 Ask what felt planned versus random and what they were trying to achieve next.
 Record observations locally, not via hidden analytics. Compare Classic and
 Chaos only after each participant understands Classic. Tune bowl pressure,
-score milestones and spawn probabilities from this evidence; the current
+scoring and spawn probabilities from this evidence; the current
 balance is an informed starting point, not a proven retention improvement.
 
 Remaining opportunities, subject to playtesting: saving an in-progress run,
@@ -179,7 +177,7 @@ node .\build.mjs $out
 node .\tests\game.test.mjs $out
 ```
 
-Tests cover both actual match paths, scoring, fuse values, fixed-step parity at
+Tests cover matching, scoring, fuse values, fixed-step parity at
 30/60/120Hz, mouse/keyboard/touch input, cancellations, swap limits, pause/help/
 scores/background lifecycle, restart queues, settings, Chaos/Classic separation,
 diamond continuation and overflow grace. Layouts include 320x568, 360x800, 390x844,
