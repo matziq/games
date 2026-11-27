@@ -56,6 +56,8 @@ and arcade rules. The default look and rules are unchanged when it is off.
 - **Scoring rewards chains, not volume.** Each merge of a bigger fruit than the last
   one inside the combo window climbs the chain (x1, x1.5, x2, x3, x4, x6); a smaller
   fruit restarts it, and cherry or grape merges always score x1.
+- **Aiming:** arrow-button and keyboard aim stays selected while moving the mouse
+  across the bowl to Drop. Press the board to switch back to direct pointer aiming.
 - **Pace:** the level rises every 20 drops (up to 9). Each level adds 4% gravity and
   10% to the score.
 - **One credit per run:** when the bowl overflows, Continue clears the top of the bowl

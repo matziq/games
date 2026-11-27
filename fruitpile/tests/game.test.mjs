@@ -376,6 +376,92 @@ try {
         assert.deepEqual(errors, []);
         await context.close();
     });
+    await test('Cabinet arrow-button aim survives moving across the board to Drop', async () => {
+        for (const touchMode of [false, true]) {
+            const { page, context, errors } = await setup({ width: 667, height: 375 }, touchMode);
+            await page.evaluate(() => { testGame.setArcade(true); testGame.begin(); });
+            const left = await centerOf(page, '#btnLeft');
+            const drop = await centerOf(page, '#btnDrop');
+            const touch = touchMode ? await touchPad(context, page) : null;
+            if (touch) {
+                await touch('touchStart', left.x, left.y);
+                await touch('touchEnd');
+            } else {
+                await page.mouse.click(left.x, left.y);
+            }
+            const aim = (await state(page)).inputX;
+            assert.equal(aim, 236);
+            if (touch) {
+                await touch('touchStart', drop.x, drop.y);
+                await touch('touchEnd');
+            } else {
+                await page.mouse.move(drop.x, drop.y, { steps: 20 });
+                await page.mouse.click(drop.x, drop.y);
+            }
+            const dropped = await state(page);
+            assert.equal(dropped.dropCount, 1);
+            assert.equal(dropped.inputX, aim, 'crossing the bowl must not replace button aim');
+            assert(Math.abs(dropped.bodies[0].x - aim) < 1.5);
+            await page.evaluate(() => testGame.frames(30));
+            await page.keyboard.press('ArrowRight');
+            const keyboardAim = (await state(page)).inputX;
+            const box = await page.locator('#game').boundingBox();
+            const boardX = box.x + box.width * .25;
+            const boardY = box.y + box.height * .3;
+            if (!touchMode) {
+                await page.mouse.move(boardX, boardY, { steps: 10 });
+                await page.mouse.move(drop.x, drop.y, { steps: 10 });
+                assert.equal((await state(page)).inputX, keyboardAim, 'keyboard aim also survives hover');
+            }
+            if (touch) {
+                await touch('touchStart', boardX, boardY);
+                await touch('touchEnd');
+            } else {
+                await page.mouse.click(boardX, boardY);
+            }
+            const directDrop = await state(page);
+            assert.equal(directDrop.dropCount, 2);
+            assert(Math.abs(directDrop.bodies[1].x - 130) < 1.5, 'a deliberate board gesture takes over aiming');
+            assert.deepEqual(errors, []);
+            await context.close();
+        }
+    });
+    await test('Cabinet drops stay at the current mouse, touch and keyboard aim', async () => {
+        for (const arcade of [false, true]) {
+            for (const touchMode of [false, true]) {
+                const { page, context, errors } = await setup({ width: 390, height: 844 }, touchMode);
+                await page.evaluate(arcade => { testGame.setArcade(arcade); testGame.begin(); }, arcade);
+                const box = await page.locator('#game').boundingBox();
+                const left = box.x + box.width * .25;
+                const right = box.x + box.width * .75;
+                const y = box.y + box.height * .3;
+                if (touchMode) {
+                    const touch = await touchPad(context, page);
+                    await touch('touchStart', left, y);
+                    await touch('touchMove', right, y);
+                    assert(Math.abs((await state(page)).inputX - 390) < 1.5);
+                    await touch('touchEnd');
+                } else {
+                    await page.mouse.move(left, y);
+                    await page.mouse.move(right, y);
+                    assert(Math.abs((await state(page)).inputX - 390) < 1.5);
+                    await page.mouse.click(right, y);
+                }
+                const dropped = await state(page);
+                assert.equal(dropped.dropCount, 1);
+                assert(Math.abs(dropped.bodies[0].x - 390) < 1.5, JSON.stringify(dropped));
+                await page.evaluate(() => testGame.frames(30));
+                await page.keyboard.press('ArrowLeft');
+                const aim = (await state(page)).inputX;
+                await page.keyboard.press('Space');
+                const keyboardDrop = await state(page);
+                assert.equal(keyboardDrop.dropCount, 2);
+                assert(Math.abs(keyboardDrop.bodies[1].x - aim) < 1.5);
+                assert.deepEqual(errors, []);
+                await context.close();
+            }
+        }
+    });
     await test('Pause/help/scores/background freeze physics and fuse; restart clears all queues', async () => {
         const { page, context, errors } = await setup();
         await page.evaluate(() => { testGame.begin(); const ids = testGame.pair(); window.__releaseHold = testGame.hold(ids); testGame.frames(20); });
