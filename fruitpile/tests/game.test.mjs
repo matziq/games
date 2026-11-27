@@ -724,10 +724,22 @@ try {
         assert.deepEqual(errors, []);
         await context.close();
     });
-    await test('Game over plays its cue before audio sleeps, and danger sounds a warning once', async () => {
+    await test('Game over plays its cue before audio sleeps; the danger alarm is cabinet-only', async () => {
         const { page, context, errors } = await setup();
         await page.locator('#btnPlay').click();
         await page.waitForFunction(() => window._fpAudio?.ctx?.state === 'running');
+        const dangerTones = () => page.evaluate(() => {
+            const a = window._fpAudio, original = a._tone;
+            let n = 0;
+            a._cueAt = {};
+            a._tone = function (...args) { n++; return original.apply(this, args); };
+            try { a.danger(); } finally { a._tone = original; }
+            return n;
+        });
+        assert.equal(await dangerTones(), 0, 'the casual look gets no new danger alarm');
+        await page.evaluate(() => testGame.setArcade(true));
+        assert.equal(await dangerTones(), 2, 'the cabinet sounds a two-note alarm');
+        await page.evaluate(() => testGame.setArcade(false));
         await page.evaluate(() => {
             window.__cues = [];
             for (const name of ['danger', 'gameOver']) {
