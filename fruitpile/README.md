@@ -52,7 +52,7 @@ and arcade rules. The default look and rules are unchanged when it is off.
 - **Sound:** chip-style pulse and noise voices. Merges climb a pentatonic scale with
   the chain, the diamond gets a fanfare, and runs open and close with short jingles.
   The game-over cue plays before audio sleeps. A two-note alarm sounds when the danger
-  countdown starts (in both looks), with ticks each second in the cabinet.
+  countdown starts, with ticks each second (cabinet only; the casual look stays quiet).
 - **Scoring rewards chains, not volume.** Each merge of a bigger fruit than the last
   one inside the combo window climbs the chain (x1, x1.5, x2, x3, x4, x6); a smaller
   fruit restarts it, and cherry or grape merges always score x1.
