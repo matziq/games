@@ -48,7 +48,7 @@ function game({ AudioContext, storage, width = 960, height = 640 } = {}) {
     mkEnt, physEnt, doFlap, aiUpdate, collisions, updatePlaying, startGame, loop, drawBirdPx, resize, loseLife,
     advanceChain, pauseGame, resumeGame, syncHUD, tickEggs, spawnWave, advanceWave, buildPlatforms, layoutForWave,
     applyStats, updatePtero, pteroCollide, spawnPtero, pteroMouth, lanceTip, isRushWave, drawPtero, LAYOUTS,
-    consts: { G, FLAP, MAXVY, spW, spH, EGG_W, EGG_H, LAVA_H, RUSH_HATCH, RUSH_BONUS, PTERO_SCORE, LAYOUT_EVERY },
+    consts: { G, FLAP, MAXVY, DIVE, spW, spH, EGG_W, EGG_H, LAVA_H, RUSH_HATCH, RUSH_BONUS, PTERO_SCORE, LAYOUT_EVERY },
     get: () => ({ player, enemies, plats, state, lives, score, fragments, teleports, frame, K, touchFlapHeld, chainCount, chainRemaining,
       wave, eggs, ptero, pteroT, layoutIdx, rushActive, rushTotal, rushHatched, invulnT, W, H }),
     set: v => {
@@ -463,6 +463,64 @@ test('flight is a relaxed flap, rise, hang, and fall rhythm', () => {
   assert.ok(back >= 55, 'one flap keeps the rider aloft for over a second');
   for (let f = 0; f < 120; f++) t.physEnt(q, true);
   assert.ok(q.vy <= t.consts.MAXVY && t.consts.MAXVY <= 6, 'falls are capped at a readable speed');
+});
+
+function fallFrom(t, held, frames = 40) {
+  const q = t.mkEnt('player', 400, 40);
+  t.set({ player: q, plats: [] });
+  t.get().K.KeyS = held ? 1 : 0;
+  let y = q.y;
+  for (let f = 0; f < frames; f++) t.physEnt(q, true);
+  assert.ok(q.alive, 'the sample stays above the lava');
+  return { q, dist: q.y - y };
+}
+
+test('holding S dives at roughly twice the normal fall and releasing restores it', () => {
+  const { t, sandbox } = game();
+  const { DIVE, MAXVY } = t.consts;
+  assert.equal(DIVE, 2);
+  const normal = fallFrom(t, false), dive = fallFrom(t, true);
+  assert.equal(normal.q.vy, MAXVY);
+  assert.equal(dive.q.vy, MAXVY * DIVE, 'dive caps at double the normal fall speed');
+  const ratio = dive.dist / normal.dist;
+  assert.ok(ratio >= 1.8 && ratio <= 2.3, `dive covers ${ratio.toFixed(2)}x the distance in two-thirds of a second`);
+
+  const q = dive.q;
+  sandbox.onkeyup({ code: 'KeyS' });
+  t.physEnt(q, true);
+  assert.equal(q.vy, MAXVY, 'release returns to the normal cap at once');
+  const rest = t.mkEnt('player', 400, 40); t.set({ player: rest });
+  t.doFlap(rest);
+  const ref = t.mkEnt('player', 400, 40); t.doFlap(ref);
+  for (let f = 0; f < 40; f++) { t.physEnt(rest, true); t.physEnt(ref, true); }
+  assert.equal(rest.vy, ref.vy, 'normal flight is unchanged after diving');
+
+  sandbox.onkeydown({ code: 'ArrowDown', target: {}, preventDefault() {} });
+  const arrow = fallFrom(t, false);
+  assert.equal(arrow.q.vy, MAXVY * DIVE, 'Down arrow also dives');
+  sandbox.onkeyup({ code: 'ArrowDown' });
+});
+
+test('diving only affects the player, still allows flapping, and clears on pause', () => {
+  const { t, sandbox } = game();
+  t.startGame();
+  t.set({ state: 'playing', invulnT: 999, enemies: [] });
+  const player = t.get().player;
+  sandbox.onkeydown({ code: 'KeyS', target: {}, preventDefault() {} });
+  const enemy = t.mkEnt('bloodKnight', 400, 40);
+  t.set({ plats: [] });
+  for (let f = 0; f < 90; f++) t.physEnt(enemy, false);
+  assert.equal(enemy.vy, t.consts.MAXVY, 'enemies ignore the dive key');
+  player.ground = false; player.flapCD = 0; player.vy = 3;
+  sandbox.onkeydown({ code: 'Space', target: {}, preventDefault() {} });
+  t.updatePlaying();
+  assert.ok(player.vy < 0, 'a flap still lifts while S is held');
+  t.pauseGame();
+  assert.equal(t.get().K.KeyS, 0, 'pausing releases a held dive');
+  t.resumeGame();
+  sandbox.onkeydown({ code: 'KeyS', target: {}, preventDefault() {} });
+  t.startGame();
+  assert.equal(t.get().K.KeyS, 0, 'a new game starts without a held dive');
 });
 
 test('every fourth wave is an egg rush with fast hatch timers and a perfect bonus', () => {

@@ -344,7 +344,7 @@
         <button id="sound" type="button">Sound settings</button>
       </div>
       <p class="best-line" id="title-best" hidden></p>
-      <p class="hint key-hint">Keyboard: A / D or arrow keys to move; Space / W to flap.</p>
+      <p class="hint key-hint">Keyboard: A / D or arrow keys to move; Space / W to flap; hold S / ↓ to dive.</p>
       <p class="hint touch-hint">Hold ◀ ▶ to move. Tap FLAP or the arena to fly.</p>
     </div>
   </section>
@@ -352,7 +352,7 @@
     <div class="panel">
       <h2>How to play</h2>
       <ul class="help-list">
-        <li class="key-hint"><strong>Controls:</strong> move with A / D or the arrow keys. Press Space / W to flap.</li>
+        <li class="key-hint"><strong>Controls:</strong> move with A / D or the arrow keys. Press Space / W to flap. Hold S / ↓ to dive at about twice normal falling speed.</li>
         <li class="touch-hint"><strong>Controls:</strong> hold ◀ ▶ to move. Tap or hold FLAP to fly; tapping the arena also flaps.</li>
         <li><strong>Joust:</strong> collide with an enemy from above to win. Equal-height jousters bounce apart.</li>
         <li><strong>Kill chains:</strong> defeat another enemy within 3 seconds of your last kill for 2x points, then 3x, 4x, and so on. Each kill refreshes the window. Pausing freezes it; losing a life ends the chain.</li>
@@ -473,6 +473,7 @@
       const FLAP = -5.4;
       const APEX_V = 1.2, APEX_G = .55;
       const MAXVY = 6;
+      const DIVE = 2; // holding S / Down doubles the player's gravity and fall cap
       const FX_G = 0.34; // particles and loose eggs keep the original weight
       const HACC = 0.48;
       const HDRAG = 0.91;
@@ -547,7 +548,7 @@
           e.preventDefault(); resumeGame(); return;
         }
         K[e.code] = 1;
-        if (['Space', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+        if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowDown'].includes(e.code)) e.preventDefault();
       };
       onkeyup = e => { K[e.code] = 0; };
 
@@ -1489,8 +1490,10 @@
         if (e.flapCD > 0) e.flapCD--;
 
         separateFromPlatforms(e);
-        e.vy += G * (Math.abs(e.vy) < APEX_V ? APEX_G : 1) * dt;
-        if (e.vy > MAXVY) e.vy = MAXVY;
+        const diving = isP && (K.KeyS || K.ArrowDown);
+        e.vy += G * (Math.abs(e.vy) < APEX_V ? APEX_G : 1) * (diving ? DIVE : 1) * dt;
+        const maxFall = diving ? MAXVY * DIVE : MAXVY;
+        if (e.vy > maxFall) e.vy = maxFall;
         const oldX = e.x, nextX = e.x + e.vx * dt;
         let resolvedX = nextX;
         for (const p of plats) {

@@ -28,6 +28,7 @@ Run the gameplay regression checks with `node --test blood_joust\tests\game.test
 
 - **A / D** or **Left / Right**: move.
 - **Space / W**: flap.
+- **Hold S / Down arrow**: dive. While held, your rider falls with double gravity and reaches up to twice the normal maximum fall speed, so a drop covers about twice the distance in the same time. Releasing it restores normal flight immediately. Flapping still works while diving, and pausing or leaving the tab releases the dive.
 - On touch screens, hold the on-screen arrows to move and tap or hold **FLAP** to fly. You can also tap the arena, or the empty space in the portrait control deck, to flap.
 - Choose the pause button (top right) or press **Escape** to pause; the game also pauses when the browser loses focus. From the pause menu you can resume or quit to the main menu.
 - Use the main menu for instructions and sound settings. Volume, sound effects, and music settings are saved locally, and sound starts after a user interaction.
