@@ -103,7 +103,20 @@
       font-variant-numeric: tabular-nums;
       text-align: center;
     }
-    .hud-chain[hidden] { display: none; }
+    .hud-chain[hidden], .hud-rush[hidden] { display: none; }
+    .hud-rush {
+      grid-column: 1 / -1;
+      justify-self: center;
+      padding: 4px 8px;
+      border: 1px solid #e8d9a8;
+      border-radius: 5px;
+      background: rgba(30, 22, 6, .9);
+      color: #fff3c4;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      text-align: center;
+    }
+    .hud-rush.urgent { border-color: #ff3b30; color: #ffd0c8; }
     @keyframes bump { 40% { transform: scale(1.18); color: #fff; } }
 
     button:focus-visible, input:focus-visible {
@@ -315,6 +328,7 @@
       <svg viewBox="0 0 18 18" aria-hidden="true"><rect x="3" y="2" width="4" height="14" rx="1"/><rect x="11" y="2" width="4" height="14" rx="1"/></svg>
     </button>
     <div class="hud-chain" id="hud-chain" hidden></div>
+    <div class="hud-rush" id="hud-rush" hidden></div>
   </div>
   <p class="sr-only" id="announcer" aria-live="polite"></p>
   <p class="sr-only" id="chain-announcer" aria-live="polite"></p>
@@ -330,7 +344,7 @@
         <button id="sound" type="button">Sound settings</button>
       </div>
       <p class="best-line" id="title-best" hidden></p>
-      <p class="hint key-hint">Keyboard: A / D or arrow keys to move; Space / W to flap.</p>
+      <p class="hint key-hint">Keyboard: A / D or arrow keys to move; Space / W to flap; hold S / ↓ to dive.</p>
       <p class="hint touch-hint">Hold ◀ ▶ to move. Tap FLAP or the arena to fly.</p>
     </div>
   </section>
@@ -338,13 +352,15 @@
     <div class="panel">
       <h2>How to play</h2>
       <ul class="help-list">
-        <li class="key-hint"><strong>Controls:</strong> move with A / D or the arrow keys. Press Space / W to flap.</li>
+        <li class="key-hint"><strong>Controls:</strong> move with A / D or the arrow keys. Press Space / W to flap. Hold S / ↓ to dive at about twice normal falling speed.</li>
         <li class="touch-hint"><strong>Controls:</strong> hold ◀ ▶ to move. Tap or hold FLAP to fly; tapping the arena also flaps.</li>
         <li><strong>Joust:</strong> collide with an enemy from above to win. Equal-height jousters bounce apart.</li>
         <li><strong>Kill chains:</strong> defeat another enemy within 3 seconds of your last kill for 2x points, then 3x, 4x, and so on. Each kill refreshes the window. Pausing freezes it; losing a life ends the chain.</li>
         <li><strong>Eggs:</strong> collect dropped eggs for 250 points before they hatch. Clear all enemies and eggs to advance.</li>
-        <li><strong>Platforms</strong> are solid on every side. Enemies must rest for one second after five flaps.</li>
-        <li><strong>Hazards:</strong> avoid lava and escape the fiery hands by flapping. You have three lives.</li>
+        <li><strong>Egg rush:</strong> every fourth wave is a field of fast-hatching eggs. Grab them all before any hatch for a 1,000-point bonus.</li>
+        <li><strong>Pterodactyl:</strong> from wave 3 it swoops in now and then. Only your lance in its open, roaring mouth (watch for the glowing eyes and gold outline) kills it, for 1,000 points. Any other touch is fatal.</li>
+        <li><strong>Platforms</strong> are solid on every side, and the arena changes every three waves. Enemies must rest for one second after five flaps.</li>
+        <li><strong>Hazards:</strong> avoid the lava on either side and below, and escape the fiery hands by flapping. Purple and gray riders are faster and smarter. You have three lives.</li>
         <li><strong>Pause</strong> with the pause button<span class="key-hint"> or Escape</span>. Sound settings are on the main menu.</li>
       </ul>
       <div class="menu-actions panel-sticky-actions"><button class="back" type="button">Back</button></div>
@@ -421,7 +437,7 @@
         if (document.documentElement) document.documentElement.style.setProperty('--ar', String(W / H));
         buildPlatforms();
         if (oldW && oldH) {
-          for (const e of [player, ...enemies]) {
+          for (const e of [player, ptero, ...enemies]) {
             if (!e) continue;
             e.x *= W / oldW;
             e.y *= H / oldH;
@@ -452,9 +468,13 @@
       addEventListener('resize', resize);
 
       // ─── Tuning ────────────────────────────────────────────────────────
-      const G = 0.34;
-      const FLAP = -6.0;
-      const MAXVY = 9;
+      // Floaty flight: a flap rises ~75px, hangs near the apex, then falls at a capped speed.
+      const G = 0.2;
+      const FLAP = -5.4;
+      const APEX_V = 1.2, APEX_G = .55;
+      const MAXVY = 6;
+      const DIVE = 2; // holding S / Down doubles the player's gravity and fall cap
+      const FX_G = 0.34; // particles and loose eggs keep the original weight
       const HACC = 0.48;
       const HDRAG = 0.91;
       const MAXVX = 5.5;
@@ -488,7 +508,7 @@
         if (chainRemaining < 0) resetChain();
       }
       function awardKill(type) {
-        const base = type === 'deathLord' ? 500 : type === 'shadowRider' ? 250 : 100;
+        const base = type === 'ptero' ? PTERO_SCORE : type === 'deathLord' ? 500 : type === 'shadowRider' ? 250 : 100;
         chainCount++;
         chainRemaining = CHAIN_WINDOW_MS;
         chainPoints = base * chainCount;
@@ -528,7 +548,7 @@
           e.preventDefault(); resumeGame(); return;
         }
         K[e.code] = 1;
-        if (['Space', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+        if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowDown'].includes(e.code)) e.preventDefault();
       };
       onkeyup = e => { K[e.code] = 0; };
 
@@ -828,6 +848,29 @@
               tone('triangle', 320, 820, .1, .1, { pan, when: .1 });
               tone('triangle', 820, 260, .14, .08, { pan, when: .2 });
               break;
+            case 'pteroScreech':
+              tone('sawtooth', 1400, 620, .5, .07, { pan, attack: .03, filter: 2600 });
+              tone('square', 1900, 900, .4, .025, { pan, attack: .03, when: .05 });
+              noise(.45, .08, { type: 'bandpass', f0: 2400, f1: 1200, q: 2, pan });
+              break;
+            case 'pteroWindup':
+              tone('sawtooth', 90, 150, .6, .12, { pan, attack: .25, filter: 600 });
+              noise(.55, .06, { f0: 400, f1: 900, pan, attack: .3 });
+              break;
+            case 'pteroRoar':
+              tone('sawtooth', 210, 95, .9, .16, { pan, attack: .02, filter: 1300 });
+              tone('square', 140, 70, .9, .05, { pan, attack: .02, filter: 900 });
+              noise(.9, .18, { type: 'bandpass', f0: 900, f1: 300, q: 1.1, pan });
+              duckMusic(.5, .8);
+              break;
+            case 'pteroKill':
+              tone('sawtooth', 1300, 180, .7, .1, { pan, filter: 2200 });
+              [NOTE.D5, NOTE.F5, NOTE.A5].forEach((n, i) => tone('triangle', n, n, .2, .08, { when: .25 + i * .07 }));
+              duckMusic(.6, .6);
+              break;
+            case 'rushWin':
+              [NOTE.A4, NOTE.D5, NOTE.F5, NOTE.A5].forEach((n, i) => tone('triangle', n, n, .22, .1, { when: i * .08 }));
+              break;
             case 'spawn':
               tone('sine', 220, 880, .55, .07, { pan, attack: .2 });
               tone('sine', 330, 1320, .55, .045, { pan, attack: .2 });
@@ -918,24 +961,48 @@
       }
 
       // ─── Platforms (Joust layout) ──────────────────────────────────────
+      // Layouts rotate every LAYOUT_EVERY waves. Each entry is [x, y, w] as fractions of
+      // the arena; the last platform is the base where the player respawns. Lower
+      // platforms stay inside 10%–90% of the width so both side shafts reach the lava.
+      const LAYOUT_EVERY = 3;
+      const LAYOUTS = [
+        { name: 'Classic Crag', min: [80, 80, 100, 100, 100, 100, 200],
+          p: [[.08, .18, .12], [.80, .18, .12], [.25, .38, .18], [.58, .42, .16], [.10, .60, .17], [.73, .58, .17], [.18, .78, .64]],
+          pal: { body: '#6a3a1a', top: '#a06020', hi: '#c08030', under: '#3a1a08', bump: '#b08040', stal: '#4a2010', stalHi: '#5a3018' } },
+        { name: 'Twin Spires', min: [110, 80, 80, 90, 90, 90, 200],
+          p: [[.40, .19, .20], [.12, .35, .14], [.74, .35, .14], [.42, .50, .16], [.14, .65, .16], [.70, .65, .16], [.26, .81, .48]],
+          pal: { body: '#3b2152', top: '#6d43a0', hi: '#9a70d0', under: '#221232', bump: '#7d55b5', stal: '#2a1640', stalHi: '#3f2560' } },
+        { name: 'Bone Bridges', min: [100, 100, 140, 110, 110, 110, 200],
+          p: [[.05, .20, .22], [.73, .20, .22], [.34, .34, .32], [.12, .50, .24], [.64, .50, .24], [.36, .65, .28], [.15, .82, .70]],
+          pal: { body: '#6e6758', top: '#c9bea2', hi: '#eee3c6', under: '#433d33', bump: '#ddd2b4', stal: '#4f483c', stalHi: '#6a6252' } },
+        { name: 'Ember Steps', min: [80, 80, 80, 90, 90, 110, 200],
+          p: [[.14, .19, .13], [.44, .27, .12], [.73, .19, .13], [.24, .42, .14], [.62, .40, .14], [.40, .60, .20], [.22, .80, .56]],
+          pal: { body: '#3a1612', top: '#9a3320', hi: '#e0602e', under: '#220b08', bump: '#c4482a', stal: '#2e0e0a', stalHi: '#4a1a12' } },
+      ];
+      let layoutIdx = 0;
+      function layoutForWave(n) { return Math.floor(Math.max(0, n - 1) / LAYOUT_EVERY) % LAYOUTS.length; }
       function buildPlatforms() {
-        plats = [
-          // Top tier — small ledges
-          { x: W * .08, y: H * .18, w: Math.max(80, W * .12) },
-          { x: W * .78, y: H * .18, w: Math.max(80, W * .12) },
-          // Mid tier
-          { x: W * .25, y: H * .38, w: Math.max(100, W * .18) },
-          { x: W * .58, y: H * .42, w: Math.max(100, W * .16) },
-          // Lower tier
-          { x: W * .02, y: H * .60, w: Math.max(110, W * .20) },
-          { x: W * .74, y: H * .58, w: Math.max(110, W * .18) },
-          // Bottom wide platform (main base)
-          { x: W * .12, y: H * .78, w: Math.max(200, W * .55) },
-        ];
+        const L = LAYOUTS[layoutIdx];
+        plats = L.p.map(([fx, fy, fw], i) => ({ x: W * fx, y: H * fy, w: Math.max(L.min[i], W * fw) }));
         for (const p of plats) {
           p.h = 22;
-          if (p.x + p.w > W - 5) p.x = W - p.w - 5;
+          // Keep side shafts open: lower ledges never touch the arena walls.
+          const margin = p.y > H * .3 ? Math.max(spW + 12, W * .08) : 5;
+          if (p.w > W - margin * 2) p.w = W - margin * 2;
+          if (p.x < margin) p.x = margin;
+          if (p.x + p.w > W - margin) p.x = W - p.w - margin;
           if (p.y > H - LAVA_H - 30) p.y = H - LAVA_H - 35;
+        }
+        // Keep a rider's height between stacked ledges, and keep top ledges below the HUD band.
+        const gap = spH + 8;
+        const byDepth = plats.slice().sort((a, b) => b.y - a.y);
+        for (let i = 1; i < byDepth.length; i++) {
+          const up = byDepth[i];
+          for (let j = 0; j < i; j++) {
+            const lo = byDepth[j];
+            if (up.x >= lo.x + lo.w || up.x + up.w <= lo.x) continue;
+            if (up.y <= lo.y && lo.y - (up.y + up.h) < gap) up.y = Math.max(H * .18, lo.y - up.h - gap);
+          }
         }
         // Generate deterministic rocky texture per platform
         for (const p of plats) {
@@ -1027,6 +1094,7 @@
         bloodKnight: { body: '#060', wing: '#0a0', eye: '#ff0', rider: '#a00', helm: '#c22', beak: '#fc0', lance: '#aaa' },
         shadowRider: { body: '#606', wing: '#a0a', eye: '#ff0', rider: '#40a', helm: '#80f', beak: '#fc0', lance: '#88a' },
         deathLord: { body: '#444', wing: '#888', eye: '#f00', rider: '#000', helm: '#fff', beak: '#fa0', lance: '#888' },
+        ptero: { wing: '#c8743a', rider: '#9a4a24', helm: '#4a1e0c' },
       };
 
       function spr(type, flap, left) {
@@ -1068,15 +1136,56 @@
         sfx('spawn', ppx + spW / 2);
       }
 
+      // Purple shadow riders and gray death lords are the "smart" types.
+      const ENEMY_STATS = {
+        bloodKnight: { speed: .65, aggro: .25 },
+        shadowRider: { speed: 1.25, aggro: .8 },
+        deathLord: { speed: 1.6, aggro: .9 },
+      };
+      function applyStats(e) {
+        const s = ENEMY_STATS[e.type] || ENEMY_STATS.bloodKnight;
+        e.speed = s.speed; e.aggro = s.aggro;
+        e.smart = e.type === 'shadowRider' || e.type === 'deathLord';
+      }
+      function pickEnemyType() {
+        if (wave >= 5 && Math.random() < .35) return 'deathLord';
+        if (wave >= 3 && Math.random() < .45) return 'shadowRider';
+        return 'bloodKnight';
+      }
+
+      // Egg rush: every fourth wave scatters eggs that hatch fast; no riders spawn.
+      const RUSH_EVERY = 4, RUSH_HATCH = 420, RUSH_BONUS = 1000;
+      let rushActive = false, rushTotal = 0, rushHatched = 0, rushBonus = 0;
+      function isRushWave(n) { return n > 0 && n % RUSH_EVERY === 0; }
+      function spawnEggRush() {
+        enemies = [];
+        rushActive = true; rushHatched = 0;
+        rushTotal = Math.min(16, 8 + Math.floor(wave / 2));
+        const spots = plats.slice(0, -1);
+        const base = plats[plats.length - 1];
+        const baseFx = [.06, .94, .22, .78];
+        let k = 0, b = 0;
+        for (let i = 0; i < rushTotal; i++) {
+          // Spread eggs over the ledges; every fourth goes on the far ends of the base.
+          let p, fx;
+          if (i % 4 === 3) { p = base; fx = baseFx[b++ % baseFx.length]; }
+          else { p = spots[k % spots.length]; fx = [.3, .7, .5][Math.floor(k / spots.length) % 3]; k++; }
+          const x = p.x + p.w * fx - EGG_W / 2;
+          eggs.push({ x, y: p.y - EGG_H, vx: 0, vy: 0, type: pickEnemyType(), landed: true,
+            hatchTimer: -i * 6, hatchTime: RUSH_HATCH, onPlat: plats.indexOf(p), cracking: false, rush: true });
+        }
+      }
+
       function spawnWave() {
         enemies = [];
+        rushActive = false;
+        ptero = null; schedulePtero();
+        if (isRushWave(wave)) { spawnEggRush(); return; }
         const n = 2 + wave;
         // Exclude the bottom platform (reserved for player) for enemy spawns
         const spawnPlats = plats.slice(0, -1);
         for (let i = 0; i < n; i++) {
-          let t = 'bloodKnight';
-          if (wave >= 5 && Math.random() < .35) t = 'deathLord';
-          else if (wave >= 3 && Math.random() < .45) t = 'shadowRider';
+          const t = pickEnemyType();
           // Spawn on a platform
           const sp = spawnPlats[i % spawnPlats.length];
           const ex = sp.x + sp.w * (.2 + Math.random() * .6) - spW / 2;
@@ -1085,9 +1194,7 @@
           e.left = Math.random() < .5;
           e.ground = true;
           e.gPlat = plats.indexOf(sp);
-          if (t === 'bloodKnight') { e.speed = .65; e.aggro = .25; }
-          if (t === 'shadowRider') { e.speed = 1.1; e.aggro = .55; }
-          if (t === 'deathLord') { e.speed = 1.4; e.aggro = .8; }
+          applyStats(e);
           // Stagger patrol heights
           e.patrolY = H * (.2 + .45 * (i / Math.max(1, n - 1)));
           e.patrolDir = Math.random() < .5 ? 1 : -1;
@@ -1156,7 +1263,7 @@
 
           if (!eg.landed) {
             // Physics — gravity, movement
-            eg.vy += G * .6 * dt;
+            eg.vy += FX_G * .6 * dt;
             if (eg.vy > 8) eg.vy = 8;
             eg.x += eg.vx * dt;
             eg.y += eg.vy * dt;
@@ -1196,17 +1303,20 @@
           } else {
             // Landed — hatch countdown
             eg.hatchTimer++;
-            if (eg.hatchTimer > HATCH_TIME * .85) eg.cracking = true;
-            if (eg.hatchTimer >= HATCH_TIME) {
+            const hatchAt = eg.hatchTime || HATCH_TIME;
+            if (eg.hatchTimer > hatchAt * .85) eg.cracking = true;
+            if (eg.hatchTimer >= hatchAt) {
               // Hatch! Spawn new enemy
+              if (eg.rush) rushHatched++;
               hatchEgg(eg);
               eggs.splice(i, 1);
               continue;
             }
           }
 
-          // Player collection — touch egg for bonus points
-          if (player && player.alive && invulnT <= 0) {
+          // Player collection — touch egg for bonus points. Rush eggs can be grabbed
+          // straight out of the respawn shield so the clock is never wasted.
+          if (player && player.alive && (invulnT <= 0 || eg.rush)) {
             const dx = (player.x + player.w / 2) - (eg.x + EGG_W / 2);
             const dy = (player.y + player.h / 2) - (eg.y + EGG_H / 2);
             if (Math.abs(dx) < 24 && Math.abs(dy) < 22) {
@@ -1227,9 +1337,7 @@
         e.left = Math.random() < .5;
         e.ground = true;
         e.gPlat = eg.onPlat;
-        if (t === 'bloodKnight') { e.speed = .65; e.aggro = .25; }
-        if (t === 'shadowRider') { e.speed = 1.1; e.aggro = .55; }
-        if (t === 'deathLord') { e.speed = 1.4; e.aggro = .8; }
+        applyStats(e);
         e.patrolY = H * (.15 + Math.random() * .5);
         e.patrolDir = Math.random() < .5 ? 1 : -1;
         e.aiTimer = 40 + Math.random() * 60 | 0;
@@ -1263,6 +1371,14 @@
             X.fillRect(cx + 4, cy + 3, 1, 4);
             X.fillRect(cx + 3, cy + 5, 3, 1);
             X.fillRect(cx + 6, cy + 7, 2, 3);
+          }
+          if (eg.rush) {
+            // Countdown bar: gold → red as hatching nears.
+            const left = Math.max(0, Math.min(1, 1 - eg.hatchTimer / (eg.hatchTime || HATCH_TIME)));
+            X.fillStyle = 'rgba(0,0,0,.75)';
+            X.fillRect(cx - 3, cy - 7, EGG_W + 6, 4);
+            X.fillStyle = left > .5 ? '#ffe14d' : left > .2 ? '#ff9a2e' : '#ff3b30';
+            X.fillRect(cx - 2, cy - 6, Math.ceil((EGG_W + 4) * left), 2);
           }
         }
       }
@@ -1374,8 +1490,10 @@
         if (e.flapCD > 0) e.flapCD--;
 
         separateFromPlatforms(e);
-        e.vy += G * dt;
-        if (e.vy > MAXVY) e.vy = MAXVY;
+        const diving = isP && (K.KeyS || K.ArrowDown);
+        e.vy += G * (Math.abs(e.vy) < APEX_V ? APEX_G : 1) * (diving ? DIVE : 1) * dt;
+        const maxFall = diving ? MAXVY * DIVE : MAXVY;
+        if (e.vy > maxFall) e.vy = maxFall;
         const oldX = e.x, nextX = e.x + e.vx * dt;
         let resolvedX = nextX;
         for (const p of plats) {
@@ -1466,21 +1584,33 @@
         if (!e.alive) return;
         e.aiTimer--;
         const hasTarget = player && player.alive;
+        const smart = !!e.smart;
 
         if (e.aiTimer <= 0) {
-          e.aiMode = hasTarget && Math.random() < .6 ? 'chase' : 'patrol';
+          e.aiMode = hasTarget && Math.random() < (smart ? .85 : .6) ? 'chase' : 'patrol';
           e.patrolY = H * (.24 + Math.random() * .43);
           e.patrolDir = Math.random() < .5 ? 1 : -1;
-          e.aiTimer = 90 + Math.random() * 120 | 0;
+          e.aiTimer = (smart ? 50 : 90) + Math.random() * (smart ? 80 : 120) | 0;
         }
 
         const spdF = e.speed;
         const chasing = e.aiMode === 'chase' && hasTarget;
-        const targetY = chasing
+        let targetY = chasing
           ? Math.max(H * .18, Math.min(H * .7, player.y + (e.patrolY - H * .45) * .45))
           : e.patrolY;
-        let direction = chasing && Math.abs(player.x - e.x) > 8
-          ? Math.sign(player.x - e.x) : e.patrolDir;
+        let aimX = hasTarget ? player.x : e.x;
+        if (chasing && smart) {
+          // Smart riders hold a height advantage and lead the player's drift.
+          targetY = Math.max(H * .1, Math.min(H * .66, player.y - (e.type === 'deathLord' ? 55 : 40)));
+          aimX = player.x + player.vx * 15;
+        }
+        let direction = chasing && Math.abs(aimX - e.x) > 8
+          ? Math.sign(aimX - e.x) : e.patrolDir;
+        // Out-climbed while close: break away sideways instead of flying into the lance.
+        if (smart && hasTarget && player.y + 6 < e.y && Math.abs(player.x - e.x) < 110) {
+          direction = Math.sign(e.x - player.x) || 1;
+          targetY = Math.min(targetY, player.y - 30);
+        }
 
         // Fly around a ledge when the target is above its solid underside.
         if (e.y > targetY) {
@@ -1493,7 +1623,13 @@
         if (Math.abs(e.vx) > MAXVX * spdF) e.vx = Math.sign(e.vx) * MAXVX * spdF;
         if (e.x < 30) e.patrolDir = 1;
         if (e.x > W - 30 - e.w) e.patrolDir = -1;
-        if ((e.y > targetY + 20 && e.vy >= -1) || e.y > H - LAVA_H - 90) doFlap(e);
+        const lavaY = H - LAVA_H;
+        const lavaDanger = smart
+          ? e.y + e.h > lavaY - 120 || (e.vy > 3 && e.y + e.h > lavaY - 180)
+          : e.y > lavaY - 90;
+        // Smart riders skip their rest pause to escape the lava.
+        if (smart && lavaDanger) e.restT = 0;
+        if ((e.y > targetY + 20 && e.vy >= -1) || lavaDanger) doFlap(e);
         if (Math.random() < .02) e.vx += (Math.random() - .5) * 1.5;
       }
 
@@ -1537,12 +1673,162 @@
         }
       }
 
+      // ─── Pterodactyl ───────────────────────────────────────────────────
+      // Visits from wave 3 (never on egg-rush waves). Only a lance tip inside its open,
+      // roaring mouth while facing it kills it; any other contact kills the player.
+      const PTERO_W = 84, PTERO_H = 34, PTERO_FIRST_WAVE = 3;
+      const PTERO_LIFE = 1440, PTERO_WINDUP = 36, PTERO_ROAR = 60, PTERO_SCORE = 1000;
+      let ptero = null, pteroT = -1;
+      function schedulePtero(delay) {
+        pteroT = wave >= PTERO_FIRST_WAVE && !isRushWave(wave) ? (delay || 600 + Math.random() * 480) | 0 : -1;
+      }
+      function spawnPtero() {
+        const fromLeft = player && player.alive ? player.x + player.w / 2 > W / 2 : Math.random() < .5;
+        ptero = {
+          type: 'ptero', x: fromLeft ? -PTERO_W : W, y: H * .22, vx: 0, vy: 0, w: PTERO_W, h: PTERO_H,
+          left: !fromLeft, phase: 'fly', phaseT: 150 + Math.random() * 70 | 0, life: PTERO_LIFE,
+          turnCD: 120, clashCD: 0, wing: 0
+        };
+        sfx('pteroScreech', ptero.x);
+        document.getElementById('announcer').textContent = 'A pterodactyl attacks. Lance its open mouth while it roars.';
+      }
+      function pteroMouth(p) {
+        return { x: p.left ? p.x - 4 : p.x + p.w - 14, y: p.y + 10, w: 18, h: 14 };
+      }
+      function pteroBody(p) {
+        return { x: p.left ? p.x + 14 : p.x + 6, y: p.y + 6, w: p.w - 20, h: p.h - 10 };
+      }
+      function lanceTip(e) { return { x: e.left ? e.x + 3 : e.x + e.w - 3, y: e.y + 16 }; }
+      function boxHit(a, b) { return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y; }
+
+      function updatePtero() {
+        if (!ptero) {
+          if (pteroT > 0 && --pteroT === 0) spawnPtero();
+          return;
+        }
+        const p = ptero;
+        p.life--; p.wing++;
+        if (p.clashCD > 0) p.clashCD--;
+        if (--p.phaseT <= 0) {
+          if (p.phase === 'fly') { p.phase = 'windup'; p.phaseT = PTERO_WINDUP; sfx('pteroWindup', p.x); }
+          else if (p.phase === 'windup') { p.phase = 'roar'; p.phaseT = PTERO_ROAR; sfx('pteroRoar', p.x); }
+          else { p.phase = 'fly'; p.phaseT = 150 + Math.random() * 70 | 0; }
+        }
+        const leaving = p.life <= 0;
+        if (!leaving && player && player.alive) {
+          const pc = player.x + player.w / 2, mc = p.x + p.w / 2;
+          if (p.turnCD > 0) p.turnCD--;
+          else if (p.phase === 'fly' && ((p.left && pc > mc + 140) || (!p.left && pc < mc - 140))) { p.left = !p.left; p.turnCD = 150; }
+          const ty = player.y + 2;
+          p.vy += Math.sign(ty - p.y) * (p.phase === 'fly' ? .09 : .03);
+          if (Math.abs(ty - p.y) < 6) p.vy *= .85;
+        } else p.vy *= .94;
+        p.vy = Math.max(-1.6, Math.min(1.6, p.vy));
+        p.vx = (p.left ? -1 : 1) * (p.phase === 'fly' ? 2.6 : p.phase === 'windup' ? 1.1 : .8);
+        p.x += p.vx * dt; p.y += p.vy * dt;
+        p.y = Math.max(H * .06, Math.min(H - LAVA_H - p.h - 30, p.y));
+        if (leaving) {
+          if (p.x < -p.w * 1.5 || p.x > W + p.w * .5) { ptero = null; schedulePtero(900 + Math.random() * 600); }
+          return;
+        }
+        if (p.x < -p.w) p.x = W;
+        if (p.x > W) p.x = -p.w;
+      }
+
+      function pteroCollide() {
+        const p = ptero;
+        if (!p || !player || !player.alive) return;
+        const tip = lanceTip(player), m = pteroMouth(p);
+        const tipInMouth = tip.x >= m.x && tip.x <= m.x + m.w && tip.y >= m.y && tip.y <= m.y + m.h;
+        const facing = player.left !== p.left;
+        const pcx = player.x + player.w / 2;
+        const inFront = p.left ? pcx < p.x + 10 : pcx > p.x + p.w - 10;
+        if (tipInMouth && facing && inFront) {
+          if (p.phase === 'roar') { killPtero(); return; }
+          if (p.clashCD <= 0) {
+            // Closed jaws deflect the lance: bounce, no kill either way.
+            p.clashCD = 20;
+            player.vx = (p.left ? -1 : 1) * 5; player.vy = -3;
+            sfx('clash', tip.x);
+          }
+          return;
+        }
+        if (invulnT > 0) return;
+        const hurt = { x: player.x + 10, y: player.y + 4, w: player.w - 20, h: player.h - 6 };
+        if (boxHit(hurt, pteroBody(p)) || boxHit(hurt, m)) {
+          player.alive = false;
+          killFX(pcx, player.y + player.h * .4, player); sfx('die', pcx);
+          loseLife();
+        }
+      }
+
+      function killPtero() {
+        const p = ptero, cx = p.x + p.w / 2, cy = p.y + p.h / 2;
+        ptero = null; pteroT = -1;
+        killFX(cx, cy, p); sfx('pteroKill', cx);
+        awardKill('ptero');
+        player.vy = -4.5;
+        document.getElementById('announcer').textContent = `Pterodactyl slain. ${chainPoints} points.`;
+      }
+
+      function drawPtero() {
+        const p = ptero;
+        if (!p) return;
+        const open = p.phase === 'roar';
+        const wind = p.phase === 'windup';
+        const shake = wind && frame % 4 < 2 ? 2 : 0;
+        X.save();
+        if (p.left) X.translate(p.x | 0, p.y | 0);
+        else { X.translate((p.x + p.w) | 0, p.y | 0); X.scale(-1, 1); }
+        const body = '#9a4a24', wing = '#c8743a', dark = '#4a1e0c';
+        const wf = (p.wing >> 3) % 4;
+        // Wings
+        if (wf === 0) { px(X, 18, 1, 4, 6, wing); px(X, 22, 0, 10, 3, wing); px(X, 31, 1, 6, 2, dark); }
+        else if (wf === 2) { px(X, 18, 11, 4, 4, wing); px(X, 22, 13, 11, 3, wing); px(X, 32, 15, 5, 1, dark); }
+        else px(X, 17, 6, 20, 2, wing);
+        // Tail, body, neck
+        px(X, 28, 9, 9, 1, body); px(X, 36, 8, 3, 3, dark);
+        px(X, 16, 7, 12, 5, body); px(X, 17, 11, 9, 1, dark);
+        px(X, 12, 7, 5, 3, body);
+        px(X, 21, 12, 1, 3, dark); px(X, 24, 12, 1, 3, dark);
+        // Head with swept-back crest
+        X.translate(shake, 0);
+        px(X, 11, 2, 9, 2, dark); px(X, 4, 4, 9, 5, body);
+        px(X, 8, 5, 2, 1, open || wind ? '#ff2a1a' : '#ffe14d');
+        if (open) {
+          px(X, 0, 3, 6, 2, body);       // upper jaw raised
+          px(X, 1, 5, 5, 5, '#3a0000');  // throat
+          px(X, 1, 5, 1, 1, '#fff'); px(X, 3, 5, 1, 1, '#fff'); px(X, 2, 9, 1, 1, '#fff'); px(X, 4, 9, 1, 1, '#fff');
+          px(X, 1, 10, 6, 2, body);      // lower jaw dropped
+        } else {
+          px(X, 0, 6, 5, 2, body); px(X, 1, 8, 5, 1, dark);
+        }
+        X.restore();
+        if (open || wind) {
+          const m = pteroMouth(p);
+          const pulse = .5 + Math.sin(frame * .4) * .5;
+          X.strokeStyle = open ? `rgba(255,225,77,${.55 + pulse * .45})` : 'rgba(255,90,60,.6)';
+          X.lineWidth = 2;
+          X.strokeRect(m.x - 2, m.y - 2, m.w + 4, m.h + 4);
+          if (open) {
+            // Roar shock rings out of the mouth
+            const dir = p.left ? -1 : 1, ox = p.left ? m.x : m.x + m.w;
+            X.strokeStyle = `rgba(255,200,120,${.35 * (1 - pulse) + .15})`;
+            for (let r = 0; r < 2; r++) {
+              X.beginPath();
+              X.arc(ox, m.y + m.h / 2, 10 + r * 9 + pulse * 6, dir < 0 ? Math.PI * .7 : -Math.PI * .3, dir < 0 ? Math.PI * 1.3 : Math.PI * .3);
+              X.stroke();
+            }
+          }
+        }
+      }
+
       // ─── Particle Update ──────────────────────────────────────────────
       function tickParts() {
         // Blood
         for (let i = bloods.length - 1; i >= 0; i--) {
           const b = bloods[i];
-          b.vy += G * .4; b.x += b.vx; b.y += b.vy; b.life -= .017 * dt;
+          b.vy += FX_G * .4; b.x += b.vx; b.y += b.vy; b.life -= .017 * dt;
           for (let j = 0; j < plats.length; j++) {
             const p = plats[j];
             if (b.x > p.x && b.x < p.x + p.w && b.y >= p.y && b.y - b.vy <= p.y + 5) {
@@ -1554,7 +1840,7 @@
         // Gore
         for (let i = gores.length - 1; i >= 0; i--) {
           const g = gores[i];
-          g.vy += G * .5; g.x += g.vx; g.y += g.vy; g.rot += g.rv; g.life -= .017 * dt;
+          g.vy += FX_G * .5; g.x += g.vx; g.y += g.vy; g.rot += g.rv; g.life -= .017 * dt;
           for (let j = 0; j < plats.length; j++) {
             const p = plats[j];
             if (g.x > p.x && g.x < p.x + p.w && g.y >= p.y && g.y - g.vy <= p.y + 7 && g.bn < 1) {
@@ -1566,7 +1852,7 @@
         // Bones
         for (let i = bones.length - 1; i >= 0; i--) {
           const b = bones[i];
-          b.vy += G * .45; b.x += b.vx; b.y += b.vy; b.rot += b.rv; b.life -= .017 * dt;
+          b.vy += FX_G * .45; b.x += b.vx; b.y += b.vy; b.rot += b.rv; b.life -= .017 * dt;
           for (let j = 0; j < plats.length; j++) {
             const p = plats[j];
             if (b.x > p.x && b.x < p.x + p.w && b.y >= p.y && b.y - b.vy <= p.y + 7 && b.bn < 2) {
@@ -1577,7 +1863,7 @@
         }
         for (let i = fragments.length - 1; i >= 0; i--) {
           const part = fragments[i];
-          part.vy += G * .45; part.x += part.vx; part.y += part.vy;
+          part.vy += FX_G * .45; part.x += part.vx; part.y += part.vy;
           part.rot += part.rv; part.life -= .017;
           if (part.life <= 0 || part.y > H) fragments.splice(i, 1);
         }
@@ -1754,27 +2040,28 @@
       }
 
       function drawPlats() {
+        const pal = LAYOUTS[layoutIdx].pal;
         for (let i = 0; i < plats.length; i++) {
           const p = plats[i];
-          // Rocky brown platform body
-          X.fillStyle = '#6a3a1a'; X.fillRect(p.x, p.y, p.w, p.h);
+          // Rock body tinted by the current layout
+          X.fillStyle = pal.body; X.fillRect(p.x, p.y, p.w, p.h);
           // Orange highlight on top surface
-          X.fillStyle = '#a06020'; X.fillRect(p.x, p.y, p.w, 4);
-          X.fillStyle = '#c08030'; X.fillRect(p.x + 2, p.y, p.w - 4, 2);
+          X.fillStyle = pal.top; X.fillRect(p.x, p.y, p.w, 4);
+          X.fillStyle = pal.hi; X.fillRect(p.x + 2, p.y, p.w - 4, 2);
           // Darker underside
-          X.fillStyle = '#3a1a08'; X.fillRect(p.x, p.y + p.h - 4, p.w, 4);
+          X.fillStyle = pal.under; X.fillRect(p.x, p.y + p.h - 4, p.w, 4);
           // Rock texture bumps & stalactites
           if (p.rocks) {
             for (const r of p.rocks) {
               if (r.under) {
                 // Hanging stalactite/root
-                X.fillStyle = '#4a2010';
+                X.fillStyle = pal.stal;
                 X.fillRect(p.x + r.rx, p.y + r.ry, r.rw, r.rh);
-                X.fillStyle = '#5a3018';
+                X.fillStyle = pal.stalHi;
                 X.fillRect(p.x + r.rx, p.y + r.ry, r.rw, 2);
               } else {
                 // Surface bump
-                X.fillStyle = '#b08040';
+                X.fillStyle = pal.bump;
                 X.fillRect(p.x + r.rx, p.y + r.ry, r.rw, r.rh);
               }
             }
@@ -1875,6 +2162,18 @@
             ? `CHAIN ${chainCount}x +${chainPoints.toLocaleString()} | NEXT ${chainCount + 1}x ${(Math.ceil(chainRemaining / 100) / 10).toFixed(1)}s`
             : '';
         });
+        hudSet('hud-rush', 'rush', rushStatus(), (el, v) => {
+          el.hidden = !v; el.textContent = v;
+          const s = parseFloat(v.split('HATCH IN ')[1]);
+          el.classList[s < 2 ? 'add' : 'remove']('urgent');
+        });
+      }
+
+      function rushStatus() {
+        const left = eggs.filter(eg => eg.rush);
+        if (!rushActive || !left.length) return '';
+        const next = Math.max(0, Math.min(...left.map(eg => (eg.hatchTime || HATCH_TIME) - eg.hatchTimer)));
+        return `EGG RUSH ${left.length}/${rushTotal} LEFT | HATCH IN ${(Math.ceil(next / 4.8) / 10).toFixed(1)}s`;
       }
 
       // ─── Screen FX ─────────────────────────────────────────────────────
@@ -2042,17 +2341,30 @@
 
       function drawWaveScreen() {
         drawBG(); drawLava(); drawPlats(); drawParts();
-        drawTeleports();
+        drawTeleports(); drawEggs();
         for (const e of enemies) drawEnt(e);
         if (player) drawEnt(player);
         const t = waveT / 130;
         const sc = 1 + Math.sin(t * Math.PI) * .25;
         X.save(); X.translate(W / 2, H * .38); X.scale(sc, sc);
-        bloodText('WAVE ' + wave, 0, 0, 54);
+        bloodText(rushActive ? 'EGG RUSH' : 'WAVE ' + wave, 0, 0, Math.min(54, W * .11));
         X.restore();
+        X.textAlign = 'center';
+        const small = Math.max(13, Math.min(20, W * .042));
+        let line = H * .5;
         if (wave > 1) {
-          X.fillStyle = '#0f0'; X.font = `bold 20px ${FONT}`;
-          X.textAlign = 'center'; X.fillText('WAVE COMPLETE', W / 2, H * .5);
+          X.fillStyle = '#0f0'; X.font = `bold ${small}px ${FONT}`;
+          X.fillText(rushBonus ? `PERFECT RUSH +${rushBonus.toLocaleString()}` : 'WAVE COMPLETE', W / 2, line);
+          line += small * 1.5;
+        }
+        if (rushActive) {
+          X.fillStyle = '#ffe14d'; X.font = `bold ${small}px ${FONT}`;
+          X.fillText(`GRAB ${rushTotal} EGGS BEFORE THEY HATCH`, W / 2, line);
+          line += small * 1.5;
+        }
+        if (wave > 1 && (wave - 1) % LAYOUT_EVERY === 0) {
+          X.fillStyle = '#9fd8ff'; X.font = `bold ${small}px ${FONT}`;
+          X.fillText('NEW ARENA: ' + LAYOUTS[layoutIdx].name.toUpperCase(), W / 2, line);
         }
         drawScanlines();
       }
@@ -2115,10 +2427,27 @@
         }
       }
 
+      function applyLayoutForWave() {
+        const idx = layoutForWave(wave);
+        if (idx === layoutIdx && plats.length) return false;
+        layoutIdx = idx; buildPlatforms(); stains = []; lavaHands = [];
+        return true;
+      }
+      function advanceWave() {
+        rushBonus = rushActive && rushHatched === 0 ? RUSH_BONUS : 0;
+        if (rushBonus) { score += rushBonus; sfx('rushWin'); }
+        wave++; state = 'waveAnnounce'; waveT = 130;
+        // New layout: rebuild and re-materialize the player on the new base.
+        if (applyLayoutForWave() && player && player.alive) mkPlayer();
+        spawnWave(); sfx('wave');
+      }
+
       function startGame() {
         resetChain(); clearInput(); droneOn(); newBest = false;
         state = 'waveAnnounce'; wave = 1; score = 0; lives = 3;
         stains = []; bloods = []; gores = []; bones = []; fragments = []; teleports = []; eggs = []; lavaHands = [];
+        ptero = null; rushBonus = 0;
+        applyLayoutForWave();
         mkPlayer(); spawnWave(); waveT = 130; sfx('wave');
       }
 
@@ -2144,7 +2473,10 @@
             aiUpdate(e); physEnt(e, false);
           }
         }
+        updatePtero();
         collisions();
+        if (state !== 'playing') return;
+        pteroCollide();
         if (state !== 'playing') return;
         tickParts();
         tickTeleports();
@@ -2152,9 +2484,7 @@
         tickLavaHands();
 
         // Wave complete when all enemies dead AND no eggs remain
-        if (state === 'playing' && enemies.every(e => !e.alive) && eggs.length === 0) {
-          wave++; state = 'waveAnnounce'; waveT = 130; spawnWave(); sfx('wave');
-        }
+        if (state === 'playing' && enemies.every(e => !e.alive) && eggs.length === 0) advanceWave();
       }
 
       function draw() {
@@ -2173,6 +2503,7 @@
             drawBG(); drawLava(); drawLavaHands(); drawPlats();
             drawTeleports(); drawEggs();
             for (const e of enemies) drawEnt(e);
+            drawPtero();
             if (player) drawEnt(player);
             drawParts(); drawFlash(); drawScanlines();
             break;
@@ -2201,7 +2532,9 @@
           best.hidden = hiScore <= 0;
           best.textContent = 'Personal best: ' + hiScore.toLocaleString();
         }
-        if (state === 'waveAnnounce') document.getElementById('announcer').textContent = `Wave ${wave}`;
+        if (state === 'waveAnnounce') document.getElementById('announcer').textContent = rushActive
+          ? `Wave ${wave}: egg rush. Grab ${rushTotal} eggs before they hatch.`
+          : `Wave ${wave}${wave > 1 && (wave - 1) % LAYOUT_EVERY === 0 ? '. New arena: ' + LAYOUTS[layoutIdx].name : ''}`;
         if (menus[state]) document.querySelector(`#${menus[state]} button`).focus({ preventScroll: true });
         else if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
       }
