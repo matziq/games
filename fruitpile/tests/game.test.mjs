@@ -24,7 +24,9 @@ window.testGame = {
     diamondsCreated, bestCombo, comboCount, inputX: input.x,
     pending: matchQueue.length + mergedClusterSweeps.length,
     bodies: Composite.allBodies(world).filter(isFruitBody).map(b => ({id:b.id,key:b.plugin.fruitKey,x:b.position.x,y:b.position.y,vx:b.velocity.x,vy:b.velocity.y,armed:!!b.plugin.armedUntil})),
-    world: {...playfield}, key: fpHsKey()}),
+    world: {...playfield}, key: fpHsKey(),
+    runArcade, chainStep, level, credits, continueOffered, gravity: world.gravity.y,
+    arcadeClass: app.classList.contains('arcade'), scoreText: scoreEl.textContent}),
   begin: () => { newGame(); audio.setVolume(0); cancelAnimationFrame(rafId); lastT=100; },
   stopRaf: () => cancelAnimationFrame(rafId),
   frames: (count, dt=1000/60) => { for(let i=0;i<count;i++){tick(lastT+dt); cancelAnimationFrame(rafId);} },
@@ -118,6 +120,9 @@ window.testGame = {
   },
   freezeFruit: () => { for (const b of Composite.allBodies(world)) if (isFruitBody(b)) Body.setStatic(b, true); },
   setChaos: (on) => { settings.chaos = !!on; },
+  setArcade: (on) => { settings.arcade = !!on; applyArcade(); },
+  dropN: n => { for (let i = 0; i < n; i++) { input.lastDropAt = -Infinity; dropGate.awaitingImpact = false; dropGate.credits = 2; dropFruit(260); } },
+  audioState: () => audio.ctx ? audio.ctx.state : 'none',
   aim: x => { input.x = x; }
 };
 `;
@@ -169,6 +174,9 @@ async function touchPad(context, page) {
     return (type, x = 0, y = 0) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y, id: 0 }] });
 }
 const settle = page => page.evaluate(() => new Promise(resolve => setTimeout(resolve, 40)));
+const openMoreSettings = page => page.evaluate(() => { document.getElementById('moreSettings').open = true; });
+// Auto-opened dialogs ignore pointer clicks for a moment so a tap aimed at the bowl cannot land on a button.
+const passTapGuard = page => page.waitForTimeout(500);
 // Stands in for navigator.vibrate so the page's vibration calls can be read back.
 const vibrationProbe = `
     window.__vibes = [];
@@ -407,6 +415,7 @@ try {
     await test('Settings reload, Classic versus Chaos, and separated local score tables', async () => {
         const { page, context, errors } = await setup();
         await page.locator('#volSlider').fill('0');
+        await openMoreSettings(page);
         await page.locator('#reducedEffects').check();
         await page.locator('#chaosMode').check();
         await page.reload();
@@ -420,6 +429,7 @@ try {
         await page.evaluate(() => { testGame.save(1000, 'TEST'); });
         assert.equal((await page.evaluate(() => testGame.scores()))[0].score, 1000);
         await page.locator('#btnPause').click();
+        await openMoreSettings(page);
         await page.locator('#chaosMode').uncheck();
         await page.evaluate(() => { testGame.begin(); testGame.idleFruit(); testGame.frames(200); });
         assert.equal((await state(page)).bodies[0].key, 'apple');
@@ -502,6 +512,9 @@ try {
         assert.equal((await state(page)).diamondsCreated, 1);
         assert.equal((await state(page)).paused, true);
         assert.equal(await page.locator('#modalTitle').innerText(), 'Your first diamond!');
+        await page.locator('#btnPlay').click();
+        assert.equal((await state(page)).paused, true, 'a tap right as the milestone opens is ignored');
+        await passTapGuard(page);
         await page.locator('#btnPlay').click();
         await page.evaluate(() => testGame.stopRaf());
         assert.equal((await state(page)).diamondsCreated, 1);
@@ -711,6 +724,114 @@ try {
         assert.deepEqual(errors, []);
         await context.close();
     });
+    await test('Game over plays its cue before audio sleeps, and danger sounds a warning once', async () => {
+        const { page, context, errors } = await setup();
+        await page.locator('#btnPlay').click();
+        await page.waitForFunction(() => window._fpAudio?.ctx?.state === 'running');
+        await page.evaluate(() => {
+            window.__cues = [];
+            for (const name of ['danger', 'gameOver']) {
+                const original = window._fpAudio[name].bind(window._fpAudio);
+                window._fpAudio[name] = (...args) => { window.__cues.push(name); return original(...args); };
+            }
+            testGame.stopRaf(); testGame.danger(); testGame.frames(100);
+        });
+        assert.deepEqual(await page.evaluate(() => window.__cues), ['danger']);
+        await page.evaluate(() => testGame.frames(100));
+        assert.equal((await state(page)).running, false);
+        assert.deepEqual(await page.evaluate(() => window.__cues), ['danger', 'gameOver']);
+        assert.equal(await page.evaluate(() => testGame.audioState()), 'running', 'the game-over jingle gets to play');
+        await page.waitForFunction(() => window._fpAudio.ctx.state === 'suspended', null, { timeout: 4000 });
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    await test('Arcade cabinet: persisted look, separate scores, padded HUD, chain multiplier, and level ramp', async () => {
+        const { page, context, errors } = await setup();
+        await page.evaluate(() => testGame.begin());
+        let s = await state(page);
+        assert.equal(s.key, 'merge.classic');
+        assert.equal(s.arcadeClass, false);
+        await page.evaluate(() => testGame.setScore(1234));
+        assert.equal((await state(page)).scoreText, '1234', 'the default look keeps the plain score');
+        await page.locator('#btnPause').click();
+        await page.locator('#arcadeMode').check();
+        await page.reload();
+        await page.evaluate(() => testGame.stopRaf());
+        assert(await page.locator('#arcadeMode').isChecked());
+        assert(await page.locator('#pushStart').isVisible(), 'the start menu shows PUSH START in the cabinet');
+        await page.evaluate(() => testGame.begin());
+        s = await state(page);
+        assert.equal(s.runArcade, true);
+        assert.equal(s.arcadeClass, true);
+        assert.equal(s.key, 'arcade.classic');
+        assert.equal(s.credits, 1);
+        assert.equal(s.level, 1);
+        await page.evaluate(() => testGame.setScore(1234));
+        assert.equal((await state(page)).scoreText, '00001234');
+        const merged = await page.evaluate(() => {
+            const out = [];
+            for (const key of ['strawberry', 'orange', 'apple', 'cherry']) {
+                const before = testGame.state().score;
+                testGame.mergePair(key);
+                out.push({ key, step: testGame.state().chainStep, gain: testGame.state().score - before });
+            }
+            return out;
+        });
+        assert.deepEqual(merged.map(m => m.step), [1, 2, 3, 1], 'bigger tiers climb the chain; a smaller tier restarts it');
+        const base = await page.evaluate(() => ['orange', 'apple'].map(k => testGame.points(k)));
+        assert(merged[2].gain > merged[1].gain * (base[1] / base[0]) * 1.2, `chain multiplier should lift later links ${JSON.stringify(merged)}`);
+        await page.evaluate(() => { testGame.begin(); testGame.dropN(20); });
+        s = await state(page);
+        assert.equal(s.level, 2);
+        assert(s.gravity > 0.85, 'the pace ramps with level');
+        await page.screenshot({ path: path.join(artifacts, 'arcade-desktop.png') });
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    await test('Arcade continue spends the credit, ignores Escape, and End run reaches initials entry', async () => {
+        const { page, context, errors } = await setup();
+        await page.evaluate(() => { localStorage.setItem('fruitpile.settings.v2', JSON.stringify({ arcade: true })); });
+        await page.reload();
+        await page.evaluate(() => { testGame.begin(); testGame.setScore(500); testGame.danger(); testGame.frames(200); });
+        let s = await state(page);
+        assert.equal(s.continueOffered, true);
+        assert.equal(s.running, true);
+        assert.equal(await page.locator('#modalTitle').textContent(), 'Continue?');
+        await page.keyboard.press('Escape');
+        assert.equal((await state(page)).credits, 1, 'Escape must not spend the credit');
+        await page.locator('#btnPlay').click();
+        assert.equal((await state(page)).credits, 1, 'the tap guard ignores a click as the dialog appears');
+        await passTapGuard(page);
+        await page.locator('#btnPlay').click();
+        await page.evaluate(() => testGame.stopRaf());
+        s = await state(page);
+        assert.equal(s.credits, 0);
+        assert.equal(s.continueOffered, false);
+        assert.equal(s.paused, false);
+        assert.equal(s.score, 500, 'continuing keeps the score');
+        assert(s.bodies.every(b => b.y > 300), 'the top of the bowl is cleared');
+        await page.evaluate(() => { testGame.danger(); testGame.frames(200); });
+        s = await state(page);
+        assert.equal(s.running, false, 'no credits left: the run ends');
+        assert.equal(await page.locator('#modalTitle').textContent(), 'Game over');
+        assert.equal(await page.locator('#fp-hs-name').getAttribute('maxlength'), '3');
+
+        await page.evaluate(() => { testGame.begin(); testGame.setScore(700); testGame.danger(); testGame.frames(200); });
+        assert.equal((await state(page)).continueOffered, true);
+        await passTapGuard(page);
+        await page.locator('#btnNew').click();
+        s = await state(page);
+        assert.equal(s.running, false);
+        assert.equal(s.continueOffered, false);
+        assert.equal(await page.locator('#modalTitle').textContent(), 'Game over');
+        assert(await page.locator('#fp-hs-name').isVisible());
+        await passTapGuard(page);
+        await page.locator('#fp-hs-name').fill('abcd');
+        await page.locator('#fp-save-name').click();
+        assert.equal((await page.evaluate(() => testGame.scores()))[0].name, 'ABC');
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
     await test('Unavailable Web Audio does not interrupt gameplay or re-enable after settings change', async () => {
         const { page, context, errors } = await setup({ width: 1280, height: 800 }, false, true, unavailableAudioProbe);
         await page.locator('#btnPlay').click();
@@ -820,6 +941,7 @@ try {
         await page.evaluate(() => { testGame.setScore(100); testGame.end(); });
         assert.equal(await page.locator('#modalTitle').innerText(), 'Bowl full');
         assert(await page.locator('#fp-hs-name').isVisible());
+        await passTapGuard(page);
 
         const saveBox = await page.locator('#fp-save-name').boundingBox();
         if (saveBox.y < 0 || saveBox.y + saveBox.height > 375) {
@@ -917,6 +1039,7 @@ try {
         const { page } = touchCase;
         const vibes = () => page.evaluate(() => window.__vibes);
         const toggle = page.locator('#hapticsToggle');
+        await openMoreSettings(page);
         assert(await toggle.isVisible());
         assert(await toggle.isChecked());
         await page.evaluate(() => testGame.begin());
@@ -932,6 +1055,7 @@ try {
         assert.deepEqual(await vibes(), [12], 'no vibration while the setting is off');
         await page.reload();
         assert.equal(await page.locator('#hapticsToggle').isChecked(), false);
+        await openMoreSettings(page);
         await page.locator('#hapticsToggle').check();
         assert.deepEqual(await vibes(), [8], 'switching it on gives a confirming tick');
         assert.deepEqual(touchCase.errors, []);
@@ -948,6 +1072,7 @@ try {
         const { page, context, errors } = await setup({ width: 390, height: 844 }, true, true, nativeProbe(true));
         const calls = () => page.evaluate(() => window.__native);
         const awake = async () => (await calls()).filter(c => c[0] === 'awake').map(c => c[1]);
+        await openMoreSettings(page);
         assert(await page.locator('#hapticsToggle').isVisible());
         await settle(page);
         assert.deepEqual(await awake(), [false], 'the screen may sleep on the menu');
@@ -972,6 +1097,7 @@ try {
         assert.deepEqual(errors, []);
         await context.close();
         const off = await setup({ width: 390, height: 844 }, true, true, nativeProbe(false));
+        await openMoreSettings(off.page);
         assert.equal(await off.page.locator('#hapticsToggle').isVisible(), false);
         await off.page.evaluate(() => testGame.begin());
         await off.page.locator('#btnDrop').click();
