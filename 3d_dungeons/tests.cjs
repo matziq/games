@@ -29,6 +29,24 @@ scripts.forEach(script => vm.runInContext(script, sandbox));
 const run = code => vm.runInContext(code, sandbox);
 let count = 0;
 function check(name, fn) { fn(); count++; console.log('PASS ' + name); }
+check('deaths animate once without retaining combatants or resurrecting on resume', () => {
+  for(const type of ['skeleton','bone_archer','cave_spider','slime','wolf','bog_wraith']){
+    run(`begin();world.tiles.fill(1);world.merchant=null;world.traps=[];props=[];enemies=[];loot=[];var victim=makeEnemy('${type}',{x:player.x+40,y:player.y});victim.hp=1;enemies=[victim];var initialKills=kills;hurtEnemy(victim,20);var afterKill=kills;hurtEnemy(victim,20)`);
+    assert.equal(run("afterKill===initialKills+1&&kills===afterKill&&victim.hp<=0&&deathAnimations.length===1&&deathAnimations[0].actor.type===victim.type"),true,type);
+    run("drawDeathAnimation(deathAnimations[0]);update(.4)");
+    assert.equal(run("!enemies.includes(victim)&&deathAnimations.length===1&&deathAnimations[0].age>0"),true,type);
+    run("update(.61)");
+    assert.equal(run("deathAnimations.length"),0,type);
+  }
+  run("begin();world.tiles.fill(1);world.traps=[];enemies=[];var dying=makeEnemy('skeleton',player);hurtEnemy(dying,1e6);saveRun();savedRun=null;restoreSavedRun()");
+  assert.equal(run("deathAnimations.length===0"),true);
+  run("var dying2=makeEnemy('slime',player);hurtEnemy(dying2,1e6);loadFloor(2,604)");
+  assert.equal(run("deathAnimations.length===0"),true);
+  run("world.tiles.fill(1);world.traps=[];deathAnimations=[];var poofBug=makeEnemy('bug',player);Object.assign(poofBug,{trapSwarm:true,swarmLife:.01,trapSource:{revealed:false},emerge:0});enemies=[poofBug];updateTraps(.1,false)");
+  assert.equal(run("poofBug.hp===0&&deathAnimations.length===0"),true);
+  run("deathAnimations=[];for(let i=0;i<80;i++)addDeathAnimation(makeEnemy('slime',player))");
+  assert.equal(run("deathAnimations.length"),64);
+});
 check('wand cones use mana, regenerate in active time, and restore with potions', () => {
   for(const effect of ['fire','fireball','light','lightning','poison','web','cold']){
     run(`begin();world.tiles.fill(1);world.merchant=null;world.traps=[];world.torches=[];props=[];player.angle=0;player.weapon={kind:'wand',effect:'${effect}',power:2,range:300,color:'#aaccff'};player.cool=0;player.mana=10;var foe=makeEnemy('slime',{x:player.x+40,y:player.y});foe.hp=300;enemies=[foe];attack()`);
