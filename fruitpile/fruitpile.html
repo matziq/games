@@ -1591,6 +1591,7 @@
 
             const input = {
                 x: 0,
+                controlAim: false,
                 active: false,
                 lastDropAt: 0,
                 downX: 0,
@@ -2997,6 +2998,7 @@
                 refreshTableBest();
                 cancelAim();
                 input.x = 260;
+                input.controlAim = false;
                 setDangerText('');
                 dangerWasActive = false;
                 $('#runSummary').textContent = '';
@@ -4394,6 +4396,7 @@
             function aimBy(delta) {
                 if (!running || paused) return;
                 input.x = clampToPlayfield(input.x + delta, currentFruit.radius + 10);
+                input.controlAim = true;
             }
 
             // Hold the arrow buttons to keep aiming: one nudge on press, then a glide that speeds up.
@@ -4490,13 +4493,15 @@
                 if (!running || paused || !e.isPrimary || e.button !== 0 || input.pointerId !== null) return;
                 input.pointerId = e.pointerId;
                 input.active = true;
+                input.controlAim = false;
                 setInputX(e.clientX);
                 arenaEl.setPointerCapture(e.pointerId);
                 resumeAudio();
             });
             arenaEl.addEventListener('pointermove', e => {
                 if (paused || !running) return;
-                if (e.pointerId === input.pointerId || (input.pointerId === null && e.pointerType === 'mouse')) setInputX(e.clientX);
+                // Crossing the bowl to reach Drop must not overwrite cabinet button/keyboard aim.
+                if (e.pointerId === input.pointerId || (input.pointerId === null && e.pointerType === 'mouse' && !(runArcade && input.controlAim))) setInputX(e.clientX);
             });
             arenaEl.addEventListener('pointerup', e => {
                 if (e.pointerId !== input.pointerId) return;
