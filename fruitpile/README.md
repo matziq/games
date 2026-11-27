@@ -40,6 +40,34 @@ start attracting flies after 20 idle seconds and shrink 4 seconds later).
 A hit from another fruit scares the fly onto a different fruit and restarts its timer.
 Classic and Chaos have separate score tables.
 
+### Arcade cabinet (optional)
+
+The **Arcade cabinet** switch in the menu swaps the casual look for a cabinet skin
+and arcade rules. The default look and rules are unchanged when it is off.
+
+- **Look:** pixel-style type from system monospace fonts (no downloaded fonts),
+  hard-edged panels, a low-resolution board with scanlines, chunky fruit shading,
+  an 8-digit score, a 1UP / HI / LV / CREDIT bar and a blinking PUSH START on the
+  start menu. Reduced effects turns off scanlines, flashes, hit-stop and blinking.
+- **Sound:** chip-style pulse and noise voices. Merges climb a pentatonic scale with
+  the chain, the diamond gets a fanfare, and runs open and close with short jingles.
+  The game-over cue plays before audio sleeps. A two-note alarm sounds when the danger
+  countdown starts (in both looks), with ticks each second in the cabinet.
+- **Scoring rewards chains, not volume.** Each merge of a bigger fruit than the last
+  one inside the combo window climbs the chain (x1, x1.5, x2, x3, x4, x6); a smaller
+  fruit restarts it, and cherry or grape merges always score x1.
+- **Pace:** the level rises every 20 drops (up to 9). Each level adds 4% gravity and
+  10% to the score.
+- **One credit per run:** when the bowl overflows, Continue clears the top of the bowl
+  and keeps the score. End run goes straight to 3-letter initials.
+- The skin applies immediately; the rules lock at the start of each run. Cabinet runs
+  have their own score tables.
+
+The menu keeps Play, How it works, Sound and Arcade cabinet up front. Vibration,
+Reduced effects and Chaos sit under **More settings**. Dialogs that open on their own
+(first diamond, Continue, game over) ignore taps for under half a second, so a tap
+aimed at the bowl cannot hit a button by accident.
+
 ## Mobile play (new in 2.1)
 
 The touch experience is built around holding a phone in one hand, in the style of
@@ -180,6 +208,8 @@ node .\tests\game.test.mjs $out
 Tests cover matching, scoring, fuse values, fixed-step parity at
 30/60/120Hz, mouse/keyboard/touch input, cancellations, swap limits, pause/help/
 scores/background lifecycle, restart queues, settings, Chaos/Classic separation,
+the Arcade cabinet (persisted skin, separate scores, padded HUD, chain rules, level
+ramp, continue/End run/initials, tap guard), the game-over and danger sound cues,
 diamond continuation and overflow grace. Layouts include 320x568, 360x800, 390x844,
 412x915, 568x320, 667x375, 844x390, 915x412, 768x1024, 800x1280 and 1440x900 with
 rotation invariance. Mobile coverage adds whole-board touch aiming and
