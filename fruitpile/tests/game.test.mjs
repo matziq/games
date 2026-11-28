@@ -87,6 +87,33 @@ window.testGame = {
     return { apple: apple.id, grape: grape.id };
   },
   scare: (hostId, hitterId) => scareFly(Composite.get(world, hostId, 'body'), Composite.get(world, hitterId, 'body')),
+  flyTarget: () => {
+    const b = fruitBodyAt(260, 500, fruitByKey.get('apple'));
+    Body.setStatic(b, true);
+    World.add(world, b);
+    return b.id;
+  },
+  flyStatus: id => {
+    const b = Composite.get(world, id, 'body');
+    return { now: nowMs(), key: b?.plugin?.fruitKey,
+      startedAt: b?.plugin?.flyStartedAt || 0, awayUntil: b?.plugin?.flyAwayUntil || 0 };
+  },
+  flyContacts: [],
+  strikeFly: targetId => {
+    const target = Composite.get(world, targetId, 'body'), f = fruitByKey.get('grape');
+    const hitter = fruitBodyAt(target.position.x, target.position.y - target.circleRadius - f.radius - 12, f);
+    Body.setVelocity(hitter, { x: 0, y: 6 });
+    const observe = event => {
+      if (event.pairs.some(p => (p.bodyA.id === targetId && p.bodyB.id === hitter.id)
+        || (p.bodyB.id === targetId && p.bodyA.id === hitter.id))) {
+        testGame.flyContacts.push({ targetId, hitterId: hitter.id, at: nowMs() });
+        Events.off(engine, 'collisionStart', observe);
+      }
+    };
+    Events.on(engine, 'collisionStart', observe);
+    World.add(world, hitter);
+    return hitter.id;
+  },
   masses: () => FRUITS.map(f => ({ key: f.key, radius: f.radius, mass: fruitBodyAt(0, 0, f).mass })),
   fall: (key) => {
     const b = fruitBodyAt(260, 200, fruitByKey.get(key));
@@ -569,6 +596,66 @@ try {
         assert(!result.later.some(b => b.key === 'apple'), JSON.stringify(result.later));
         assert(result.later.some(b => b.key === 'orange'), 'after about 5 seconds of attack the apple shrinks to an orange');
         assert(result.later.every(b => !b.fly), JSON.stringify(result.later));
+        assert.deepEqual(errors, []);
+        await context.close();
+    });
+    await test('Real physics collision scares an attacking fly; it returns after 2 seconds and restarts a 5-second attack', async () => {
+        const { page, context, errors } = await setup();
+        const result = await page.evaluate(() => {
+            testGame.setChaos(true);
+            testGame.begin();
+            const target = testGame.flyTarget();
+            let attacking = testGame.flyStatus(target);
+            for (let i = 0; i < 1210 && !attacking.startedAt; i++) {
+                testGame.frames(1);
+                attacking = testGame.flyStatus(target);
+            }
+            testGame.frames(180);
+            const beforeHit = testGame.flyStatus(target);
+            const hitter = testGame.strikeFly(target);
+            for (let i = 0; i < 20 && !testGame.flyContacts.length; i++) testGame.frames(1);
+            const hit = testGame.flyStatus(target);
+            // Separate after observing contact so later jitter cannot cause another scare.
+            testGame.separate(hitter, 70);
+            testGame.freezeFruit();
+            testGame.frames(110);
+            const stillAway = testGame.flyStatus(target);
+            let returned = stillAway;
+            for (let i = 0; i < 20 && !returned.startedAt; i++) {
+                testGame.frames(1);
+                returned = testGame.flyStatus(target);
+            }
+            testGame.frames(299);
+            const beforeShrink = testGame.flyStatus(target);
+            let shrunk = beforeShrink;
+            for (let i = 0; i < 5 && shrunk.key; i++) {
+                testGame.frames(1);
+                shrunk = testGame.flyStatus(target);
+            }
+            return { attacking, beforeHit, contacts: testGame.flyContacts, hit, stillAway,
+                returned, beforeShrink, shrunk, bodies: testGame.state().bodies, flies: testGame.flies() };
+        });
+        assert.equal(result.attacking.key, 'apple');
+        assert(result.attacking.startedAt > 0, 'an idle fruit naturally attracts a fly');
+        assert(result.beforeHit.now - result.beforeHit.startedAt >= 2990, 'the first attack is already about 3 seconds old');
+        assert.equal(result.contacts.length, 1, 'Matter.js emits a real collisionStart for the target and striker');
+        assert.equal(result.hit.startedAt, 0, 'the production collision handler scares the fly away');
+        assert(result.hit.awayUntil > result.hit.now);
+        assert.equal(result.stillAway.startedAt, 0);
+        assert(result.stillAway.awayUntil > result.stillAway.now, 'the fly remains away after about 1.8 seconds');
+        const awayTime = result.returned.startedAt - result.contacts[0].at;
+        assert(awayTime >= 2000 && awayTime <= 2020, `return delay was ${awayTime} ms`);
+        assert.equal(result.returned.key, 'apple', 'the fly returns to the same fruit');
+        assert.equal(result.returned.awayUntil, 0);
+        assert.equal(result.beforeShrink.key, 'apple', 'the original attack time is not carried over');
+        assert.equal(result.beforeShrink.startedAt, result.returned.startedAt);
+        assert(result.beforeShrink.now - result.returned.startedAt < 5000);
+        assert.equal(result.shrunk.key, undefined, 'the attacked body is replaced');
+        const attackTime = result.shrunk.now - result.returned.startedAt;
+        assert(attackTime >= 5000 && attackTime <= 5020, `restarted attack lasted ${attackTime} ms`);
+        assert.equal(result.bodies.filter(b => b.key === 'orange').length, 1, 'the apple shrinks by exactly one tier');
+        assert(result.flies.every(b => !b.fly && !b.away), 'the fly does not transfer to another fruit');
+        console.log(`  Physics evidence: ${result.contacts.length} collision, return ${awayTime.toFixed(2)} ms, restarted attack ${attackTime.toFixed(2)} ms`);
         assert.deepEqual(errors, []);
         await context.close();
     });
