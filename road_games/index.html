@@ -13,13 +13,13 @@
     .back{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;margin:max(8px,env(safe-area-inset-top)) 0 0 max(10px,env(safe-area-inset-left));border:1px solid #71809f;border-radius:10px;background:#10172d;color:#b8eaff;font-weight:700}
     main{max-width:1280px;margin:auto;padding:20px 16px 48px}header{margin-bottom:20px}.eyebrow{color:#8cebd8;font-size:.75rem;letter-spacing:.16em;font-weight:800;margin:0 0 8px}
     h1{font-size:clamp(2.4rem,7vw,4.4rem);line-height:1;margin:0;letter-spacing:-.04em}h1 span{color:#8cebd8}header p:last-child{color:#c4cce1;line-height:1.5}
-    .layout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:16px;align-items:start}.panel{background:#1b2840;border:1px solid #495675;border-radius:16px;padding:16px}.panel h2{margin:0 0 6px;font-size:1.15rem}.hint{margin:0 0 14px;color:#c4cce1;font-size:.9rem;line-height:1.5}
+    .layout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:16px;align-items:start}.layout.nav-hidden{grid-template-columns:minmax(0,1fr)}.panel{background:#1b2840;border:1px solid #495675;border-radius:16px;padding:16px}.panel h2{margin:0 0 6px;font-size:1.15rem}.hint{margin:0 0 14px;color:#c4cce1;font-size:.9rem;line-height:1.5}
     .choices{display:grid;gap:7px}.choice{display:flex;gap:12px;align-items:center;min-height:54px;padding:9px 10px;border:1px solid #52647e;border-radius:10px;background:#273a53;color:#f5f6ff;text-decoration:none}
     .choice:hover{background:#34516a}.choice[aria-current="true"]{border-color:#8cebd8;background:#245154}.icon{display:grid;place-items:center;flex:0 0 38px;height:38px;border-radius:9px;background:#101e32;color:#9cebd9;font-weight:800;font-size:.8rem}
     .choice strong,.choice small{display:block}.choice small{color:#c4cce1;margin-top:3px;font-size:.76rem}.viewer-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}.viewer-head h2{margin:0}.open{display:inline-flex;align-items:center;min-height:44px;color:#b8eaff;font-weight:700}
     .empty{min-height:320px;display:grid;place-content:center;text-align:center;padding:24px;color:#c4cce1;border:1px dashed #71809f;border-radius:12px}.empty strong{font-size:1.35rem;color:#f5f6ff}.empty p{max-width:28rem;line-height:1.5}
     iframe{display:block;width:100%;height:75vh;min-height:500px;border:1px solid #71809f;border-radius:12px;background:#10172d}.save-note{color:#c4cce1;font-size:.85rem;line-height:1.5;margin:12px 0 0}
-    .switch{font:inherit;font-weight:700;color:#b8eaff;border:1px solid #71809f;border-radius:8px;background:#273a53;min-height:44px;padding:8px 12px;cursor:pointer}
+    .switch{font:inherit;font-weight:700;color:#b8eaff;border:1px solid #71809f;border-radius:8px;background:#273a53;min-height:44px;padding:8px 12px;cursor:pointer}.nav-toggle{width:100%;margin:8px 0 12px;color:#10243a;background:#8cebd8;border-color:#8cebd8}
     a:focus-visible,button:focus-visible{outline:3px solid #75e6ff;outline-offset:3px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}[hidden]{display:none!important}
     @media(max-width:800px){.layout{grid-template-columns:1fr}.choices{grid-template-columns:repeat(2,minmax(0,1fr))}iframe{height:75vh;min-height:420px}}
     @media(max-width:370px){.choices{grid-template-columns:1fr}main{padding-left:12px;padding-right:12px}.panel{padding:12px}}
@@ -34,8 +34,9 @@
     <p>Pick a game, play together, and switch whenever you like.</p>
   </header>
   <div class="layout">
-    <nav class="panel" aria-labelledby="choose-heading">
+    <nav id="game-navigation" class="panel" aria-labelledby="choose-heading">
       <h2 id="choose-heading">Choose a game</h2>
+      <button id="hide-nav" class="switch nav-toggle" type="button" aria-controls="game-navigation" aria-expanded="true" hidden>&#8592; Hide game menu</button>
       <p class="hint">Select a game to play here. Your progress stays on this browser and device.</p>
       <div class="choices">
         <a class="choice" data-game="plates" href="../license_plate_game.html"><span class="icon" aria-hidden="true">50</span><span><strong>License Plate Game</strong><small>Spot all 50 states</small></span></a>
@@ -49,7 +50,7 @@
       </div>
     </nav>
     <section class="panel" aria-labelledby="playing-heading">
-      <div class="viewer-head"><h2 id="playing-heading">Ready to play?</h2><button id="switch-game" class="switch" type="button" hidden>Choose another game &#8593;</button><a id="open-game" class="open" hidden>Open game on its own &#8599;</a></div>
+      <div class="viewer-head"><h2 id="playing-heading">Ready to play?</h2><button id="toggle-nav" class="switch" type="button" aria-controls="game-navigation" aria-expanded="true" hidden>Hide game menu</button><button id="switch-game" class="switch" type="button" hidden>Choose another game &#8593;</button><a id="open-game" class="open" hidden>Open game on its own &#8599;</a></div>
       <p id="announcement" class="sr-only" role="status" aria-live="polite"></p>
       <div id="empty" class="empty"><div><strong>Adventure starts here.</strong><p>Choose a game to play in this window. You can switch games using the list.</p></div></div>
       <iframe id="game-frame" title="Selected road game" hidden></iframe>
@@ -63,6 +64,24 @@
   const heading = document.querySelector("#playing-heading");
   const open = document.querySelector("#open-game");
   const switchGame = document.querySelector("#switch-game");
+  const nav = document.querySelector("#game-navigation");
+  const layout = document.querySelector(".layout");
+  const toggleNav = document.querySelector("#toggle-nav");
+  const hideNav = document.querySelector("#hide-nav");
+  function setNavigationVisible(visible) {
+    nav.hidden = !visible;
+    layout.classList.toggle("nav-hidden", !visible);
+    toggleNav.setAttribute("aria-expanded", String(visible));
+    hideNav.setAttribute("aria-expanded", String(visible));
+    toggleNav.textContent = visible ? "Hide game menu" : "Show game menu";
+  }
+  toggleNav.hidden = false;
+  hideNav.hidden = false;
+  toggleNav.addEventListener("click", () => setNavigationVisible(nav.hidden));
+  hideNav.addEventListener("click", () => {
+    setNavigationVisible(false);
+    toggleNav.focus();
+  });
   function showGame() {
     const id = location.hash.slice(1);
     const choice = choices.find(item => item.dataset.game === id);
@@ -97,7 +116,10 @@
     else location.hash = choice.dataset.game;
     if (matchMedia("(max-width:800px)").matches) heading.scrollIntoView({block:"start"});
   });
-  switchGame.addEventListener("click", () => choices[0].focus());
+  switchGame.addEventListener("click", () => {
+    setNavigationVisible(true);
+    (choices.find(choice => choice.getAttribute("aria-current") === "true") || choices[0]).focus();
+  });
   frame.addEventListener("load", () => {
     try {
       for (const link of frame.contentDocument.querySelectorAll('a[href="https://memconfigmgr.org/games/index.html"]')) link.target = "_top";
