@@ -36,8 +36,9 @@ allowed before the game waits for the latest fruit to land.
 
 **Classic** is the default: no random wind or fruit decay. **Chaos**, selected
 in the menu for the next run, restores the original gusts and decay (fruit
-start attracting flies after 20 idle seconds and shrink 4 seconds later).
-A hit from another fruit scares the fly onto a different fruit and restarts its timer.
+start attracting flies after 20 idle seconds; a fly's attack shrinks the fruit after 5 seconds).
+A hit from another fruit scares the fly away; it returns to the same fruit about 2 seconds
+later and restarts its attack.
 Classic and Chaos have separate score tables.
 
 ### Arcade cabinet (optional)
