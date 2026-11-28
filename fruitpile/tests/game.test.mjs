@@ -74,7 +74,7 @@ window.testGame = {
   queue: (a,b) => {currentFruit=fruitByKey.get(a);nextFruit=fruitByKey.get(b);updateHud();},
   idleFruit: () => { const b=fruitBodyAt(260,600,fruitByKey.get('apple')); b.plugin.lastActivityAt=-20000; World.add(world,b); },
   seedRandom: () => {let s=42;Math.random=()=>((s=Math.imul(s,1664525)+1013904223>>>0)/4294967296);},
-  flies: () => Composite.allBodies(world).filter(isFruitBody).map(b => ({key:b.plugin.fruitKey, fly:!!b.plugin.flyStartedAt})),
+  flies: () => Composite.allBodies(world).filter(isFruitBody).map(b => ({key:b.plugin.fruitKey, fly:!!b.plugin.flyStartedAt, away:(b.plugin.flyAwayUntil||0) > nowMs()})),
   plantFly: () => {
     const apple = fruitBodyAt(180, 500, fruitByKey.get('apple'));
     apple.plugin.flyStartedAt = nowMs() - 500;
@@ -509,7 +509,7 @@ try {
         assert.equal(await page.locator('#volSlider').inputValue(), '0');
         assert(await page.locator('#reducedEffects').isChecked());
         assert(await page.locator('#chaosMode').isChecked());
-        await page.evaluate(() => { testGame.begin(); testGame.idleFruit(); testGame.frames(300); });
+        await page.evaluate(() => { testGame.begin(); testGame.idleFruit(); testGame.frames(330); });
         assert.equal((await state(page)).runChaos, true);
         assert.equal((await state(page)).bodies[0].key, 'orange');
         await page.evaluate(() => { testGame.save(1000, 'TEST'); });
@@ -523,7 +523,7 @@ try {
         assert.deepEqual(errors, []);
         await context.close();
     });
-    await test('Merge stays in contact, and a hit moves the fruit fly onto another fruit', async () => {
+    await test('Merge stays in contact; a hit scares the fruit fly off, it returns in 2 seconds, and its attack takes 5', async () => {
         const { page, context, errors } = await setup();
         const result = await page.evaluate(() => {
             testGame.begin();
@@ -546,21 +546,29 @@ try {
             testGame.scare(planted.apple, planted.grape);
             testGame.freezeFruit();
             const moved = testGame.flies();
-            testGame.frames(140);
-            const beforeOldDeadline = testGame.flies();
-            testGame.frames(180);
-            return { armedBeforeSeparation, separated, separatedState, merged, moved, beforeOldDeadline, later: testGame.flies() };
+            testGame.frames(110);
+            const stillAway = testGame.flies();
+            testGame.frames(20);
+            const returned = testGame.flies();
+            testGame.frames(280);
+            const beforeShrink = testGame.flies();
+            testGame.frames(25);
+            return { armedBeforeSeparation, separated, separatedState, merged, moved, stillAway, returned, beforeShrink, later: testGame.flies() };
         });
         assert(result.armedBeforeSeparation);
         assert.deepEqual(result.separated, ['cherry', 'cherry']);
         assert(result.separatedState.bodies.every(b => !b.armed));
         assert.equal(result.separatedState.pending, 0);
         assert.deepEqual(result.merged, ['grape']);
-        assert.equal(result.moved.find(b => b.key === 'apple').fly, false);
-        assert.equal(result.moved.find(b => b.key === 'peach').fly, true);
-        assert.equal(result.moved.find(b => b.key === 'grape').fly, false);
-        assert(result.beforeOldDeadline.some(b => b.key === 'peach'), JSON.stringify(result.beforeOldDeadline));
-        assert(!result.later.some(b => b.key === 'peach'), JSON.stringify(result.later));
+        const apple = list => list.find(b => b.key === 'apple');
+        assert.deepEqual(apple(result.moved), { key: 'apple', fly: false, away: true }, 'the hit scares the fly off the apple');
+        assert(result.moved.every(b => b.key === 'apple' || (!b.fly && !b.away)), 'the fly does not jump to another fruit');
+        assert.deepEqual(apple(result.stillAway), { key: 'apple', fly: false, away: true }, JSON.stringify(result.stillAway));
+        assert.deepEqual(apple(result.returned), { key: 'apple', fly: true, away: false }, 'the fly returns about 2 seconds later');
+        assert.deepEqual(apple(result.beforeShrink), { key: 'apple', fly: true, away: false }, 'the restarted attack has not finished before 5 seconds');
+        assert(!result.later.some(b => b.key === 'apple'), JSON.stringify(result.later));
+        assert(result.later.some(b => b.key === 'orange'), 'after about 5 seconds of attack the apple shrinks to an orange');
+        assert(result.later.every(b => !b.fly), JSON.stringify(result.later));
         assert.deepEqual(errors, []);
         await context.close();
     });

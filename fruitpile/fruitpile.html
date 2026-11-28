@@ -1286,7 +1286,8 @@
 
             // Fruit fly decay constants
             const FLY_IDLE_MS = 20000;       // 20 seconds before fly appears
-            const FLY_SHRINK_MS = 4000;      // 4 seconds of fly buzzing before shrink
+            const FLY_SHRINK_MS = 5000;      // 5 seconds of attack before shrink
+            const FLY_AWAY_MS = 2000;        // a hit scares the fly off this long before it returns
             const DRIED_CHERRY_LIFE_MS = 10000; // dried cherry vanishes after 10s
 
             const fruitByKey = new Map(FRUITS.map(f => [f.key, f]));
@@ -1867,8 +1868,8 @@
                         Larger fruit earn more points.
                         Bigger fruit are heavier, so the same fall shoves the pile harder.
                         Keep settled fruit below the dashed line. A visible <b>3-second warning</b> gives you time to clear a match.
-                        Classic has no wind or decay. Optional Chaos brings back gusts. A fruit fly arrives after <b>20 idle seconds</b> and shrinks the fruit 4 seconds later.
-                        If another fruit hits the one a fly is attacking, the fly jumps to a different fruit and its timer starts over.
+                        Classic has no wind or decay. Optional Chaos brings back gusts. A fruit fly arrives after <b>20 idle seconds</b> and shrinks the fruit after <b>5 seconds</b> of attack.
+                        If another fruit hits the one a fly is attacking, the fly darts away, then returns about 2 seconds later and starts its attack over.
                         Orange, Apple and Peach can drop after you match all three small types; Melon and Watermelon unlock after matching all three medium types.
                     </div>
                 `;
@@ -3379,10 +3380,13 @@
                 ctx.stroke();
 
                 // Draw fruit fly if this fruit has one buzzing on it.
-                if (b.plugin.flyStartedAt && fruit.key !== 'dried_cherry') {
+                const flyAwayLeft = (b.plugin.flyAwayUntil || 0) - nowMs();
+                if ((b.plugin.flyStartedAt || flyAwayLeft > 0) && fruit.key !== 'dried_cherry') {
                     const flyPhase = (timeMs * 0.012 + (b.plugin.seed || 0)) % (Math.PI * 2);
-                    const fx = Math.cos(flyPhase) * r * 0.6;
-                    const fy = Math.sin(flyPhase * 1.7) * r * 0.4 - r * 0.3;
+                    // While scared off, the fly loops out from the fruit and back in.
+                    const out = flyAwayLeft > 0 ? 1 + 1.6 * Math.sin(Math.PI * (1 - flyAwayLeft / FLY_AWAY_MS)) : 1;
+                    const fx = Math.cos(flyPhase) * r * 0.6 * out;
+                    const fy = (Math.sin(flyPhase * 1.7) * r * 0.4 - r * 0.3) * out;
                     ctx.save();
                     ctx.translate(fx, fy);
                     // Body
@@ -3831,6 +3835,15 @@
                         continue;
                     }
 
+                    // A scared fly circles off, then lands on the same fruit and restarts its attack.
+                    if (p.flyAwayUntil) {
+                        if (now < p.flyAwayUntil) continue;
+                        p.flyAwayUntil = 0;
+                        p.flyStartedAt = now;
+                        p.lastActivityAt = Math.min(p.lastActivityAt || now, now - FLY_IDLE_MS);
+                        audio.buzz();
+                    }
+
                     const idle = now - (p.lastActivityAt || p.bornAt || now);
 
                     // After FLY_IDLE_MS, mark as having a fly
@@ -4165,25 +4178,8 @@
             // --- Collisions ---
             function scareFly(host, hitter) {
                 if (!host?.plugin?.flyStartedAt || !isFruitBody(hitter) || hitter.id === host.id) return;
-                const eligible = (body) => isFruitBody(body) && !removedIds.has(body.id)
-                    && body.plugin.fruitKey !== 'diamond' && body.plugin.fruitKey !== 'dried_cherry';
-                const others = Composite.allBodies(world).filter(body => eligible(body) && body.id !== host.id);
-                const away = others.filter(body => body.id !== hitter.id && !body.plugin.flyStartedAt);
-                const pool = away.length ? away : others.filter(body => !body.plugin.flyStartedAt);
-                const choices = pool.length ? pool : others;
-                let target = null;
-                let best = Infinity;
-                for (const body of choices) {
-                    const dx = body.position.x - host.position.x;
-                    const dy = body.position.y - host.position.y;
-                    const dist = dx * dx + dy * dy;
-                    if (dist < best) { best = dist; target = body; }
-                }
                 host.plugin.flyStartedAt = undefined;
-                host.plugin.lastActivityAt = nowMs();
-                if (!target) return;
-                target.plugin.flyStartedAt = nowMs();
-                target.plugin.lastActivityAt = nowMs() - FLY_IDLE_MS;
+                host.plugin.flyAwayUntil = nowMs() + FLY_AWAY_MS;
                 audio.buzz();
             }
 
