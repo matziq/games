@@ -359,8 +359,9 @@
         <li><strong>Eggs:</strong> collect dropped eggs for 250 points before they hatch. Clear all enemies and eggs to advance.</li>
         <li><strong>Egg rush:</strong> every fourth wave is a field of fast-hatching eggs. Grab them all before any hatch for a 1,000-point bonus.</li>
         <li><strong>Pterodactyl:</strong> from wave 3 it swoops in now and then. Only your lance in its open, roaring mouth (watch for the glowing eyes and gold outline) kills it, for 1,000 points. Any other touch is fatal.</li>
-        <li><strong>Platforms</strong> are solid on every side, and the arena changes every three waves. Enemies must rest for one second after five flaps.</li>
-        <li><strong>Hazards:</strong> avoid the lava on either side and below, and escape the fiery hands by flapping. Purple and gray riders are faster and smarter. You have three lives.</li>
+        <li><strong>Rider tiers:</strong> 1 green Blood Knight, 2 cyan Storm Rider, 3 purple Shadow Rider, 4 orange Ember Lord, 5 gray/black Death Lord. Each is faster, chases more, aims better, and rests less. Eggs hatch one tier higher, capped at 5.</li>
+        <li><strong>Platforms</strong> are solid on every side; arenas change every three waves. A walkable bridge covers the lava through wave 4 and burns away for wave 5.</li>
+        <li><strong>Skeleton hands:</strong> a flashing warning marks a reach from exposed lava. Dodge it or, if grabbed, press Space/W or tap FLAP <strong>6 times within 1.25 seconds</strong> to escape. Holding FLAP does not count. Hands cannot be killed; grabbed mobs are pulled into lava without points. You have three lives.</li>
         <li><strong>Pause</strong> with the pause button<span class="key-hint"> or Escape</span>. Sound settings are on the main menu.</li>
       </ul>
       <div class="menu-actions panel-sticky-actions"><button class="back" type="button">Back</button></div>
@@ -442,16 +443,19 @@
             e.x *= W / oldW;
             e.y *= H / oldH;
             if (e.ground && plats[e.gPlat]) e.y = plats[e.gPlat].y - e.h;
+            if (e.ground && e.gPlat === -2 && bridgeActive()) e.y = bridgeY() - e.h;
           }
           for (const egg of eggs) {
             egg.x *= W / oldW;
             egg.y *= H / oldH;
             if (egg.landed && plats[egg.onPlat]) egg.y = plats[egg.onPlat].y - EGG_H;
+            if (egg.landed && egg.onPlat === -2 && bridgeActive()) egg.y = bridgeY() - EGG_H;
           }
           for (const t of teleports) {
             t.x = t.ent ? t.ent.x : t.x * W / oldW;
             t.y = t.ent ? t.ent.y : t.y * H / oldH;
           }
+          for (const p of scorePopups) { p.x *= W / oldW; p.y *= H / oldH; }
           for (const part of [...bloods, ...gores, ...bones, ...fragments, ...embers, ...lavaPx]) {
             part.x *= W / oldW; part.y *= H / oldH;
           }
@@ -496,6 +500,31 @@
         catch (error) { console.warn('Unable to save game settings:', error); }
       }
       let score = 0, hiScore = +readSetting('bjHi') || 0;
+      let scorePopups = [];
+      function uiScale() { return Math.max(1, W / (C.clientWidth || W)); }
+      function awardPoints(points) {
+        score += points;
+        if (!player) return;
+        scorePopups.push({ points, x: player.x + player.w / 2, y: player.y, age: 0 });
+      }
+      function drawScorePopups() {
+        const scale = uiScale();
+        X.save();
+        X.font = `bold ${18 * scale}px monospace`; X.textAlign = 'center'; X.lineWidth = 4 * scale;
+        const highestLane = Math.max(0, scorePopups.length - 1);
+        for (const [lane, p] of scorePopups.entries()) {
+          X.globalAlpha = Math.min(1, (90 - p.age) / 24);
+          const txt = '+' + p.points.toLocaleString();
+          const w = X.measureText(txt).width / 2 + 5;
+          const x = Math.max(w, Math.min(W - w, p.x));
+          const offset = player && player.grabbed ? 65 : 10;
+          const y = Math.max(64 * scale, p.y - offset * scale - highestLane * 22 * scale - p.age * .35) +
+            (highestLane - lane) * 22 * scale;
+          X.strokeStyle = '#000'; X.strokeText(txt, x, y);
+          X.fillStyle = '#ffe66d'; X.fillText(txt, x, y);
+        }
+        X.restore();
+      }
       const CHAIN_WINDOW_MS = 3000;
       let chainCount = 0, chainRemaining = 0, chainPoints = 0;
       function resetChain() {
@@ -508,11 +537,11 @@
         if (chainRemaining < 0) resetChain();
       }
       function awardKill(type) {
-        const base = type === 'ptero' ? PTERO_SCORE : type === 'deathLord' ? 500 : type === 'shadowRider' ? 250 : 100;
+        const base = type === 'ptero' ? PTERO_SCORE : ENEMY_STATS[type].points;
         chainCount++;
         chainRemaining = CHAIN_WINDOW_MS;
         chainPoints = base * chainCount;
-        score += chainPoints;
+        awardPoints(chainPoints);
         document.getElementById('chain-announcer').textContent =
           `Kill chain ${chainCount}x. ${chainPoints} points. Next kill ${chainCount + 1}x within 3 seconds.`;
       }
@@ -533,10 +562,39 @@
 
       // Lava hands
       let lavaHands = [];  // {x, targetEnt, grip, life}
+      let bridgeBurnT = 0;
+      function bridgeActive() { return wave >= 1 && wave <= 4; }
+      function bridgeY() { return H - LAVA_H - 10; }
+      function drawBridge() {
+        if (!bridgeActive() && bridgeBurnT <= 0) return;
+        const y = bridgeY();
+        const burn = !bridgeActive();
+        X.fillStyle = burn ? '#6f2a10' : '#9c713b';
+        for (let x = 0; x < W; x += 24) {
+          if (burn && (x / 24) % 5 > bridgeBurnT / 24) continue;
+          X.fillRect(x, y, 22, 10);
+          X.fillStyle = burn ? '#ff9b32' : '#d3ad6a';
+          X.fillRect(x, y, 22, 2);
+          if (burn) {
+            X.fillStyle = frame % 8 < 4 ? '#ffdb55' : '#f65318';
+            X.fillRect(x + 6, y - 8 - (x % 13), 8, 16);
+          }
+          X.fillStyle = burn ? '#6f2a10' : '#9c713b';
+        }
+        if (burn) {
+          X.save(); X.font = `bold ${14 * uiScale()}px monospace`; X.textAlign = 'center';
+          X.fillStyle = '#fff'; X.strokeStyle = '#000'; X.lineWidth = 4;
+          X.strokeText('BRIDGE BURNED - LAVA EXPOSED', W / 2, y - 32);
+          X.fillText('BRIDGE BURNED - LAVA EXPOSED', W / 2, y - 32);
+          X.restore();
+        }
+      }
 
       // ─── Input ─────────────────────────────────────────────────────────
       const K = {};
       let touchFlapHeld = false;
+      let flapPresses = 0;
+      const flapKeysDown = new Set();
       onkeydown = e => {
         if (e.target instanceof HTMLInputElement && e.code !== 'Escape') return;
         if (e.target instanceof HTMLButtonElement && ['Space', 'Enter'].includes(e.code)) return;
@@ -548,9 +606,13 @@
           e.preventDefault(); resumeGame(); return;
         }
         K[e.code] = 1;
+        if (['Space', 'KeyW'].includes(e.code) && !e.repeat && !flapKeysDown.has(e.code)) {
+          flapKeysDown.add(e.code);
+          if (state === 'playing') flapPresses++;
+        }
         if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowDown'].includes(e.code)) e.preventDefault();
       };
-      onkeyup = e => { K[e.code] = 0; };
+      onkeyup = e => { K[e.code] = 0; flapKeysDown.delete(e.code); };
 
       // ─── Touch Controls ────────────────────────────────────────────────
       const clearTouchControls = [];
@@ -569,7 +631,10 @@
           e.preventDefault(); unlockAudio();
           active.add(e.pointerId); el.setPointerCapture(e.pointerId);
           // Queue one flap so taps shorter than a frame are never dropped.
-          if (code === 'Space') { touchFlapHeld = true; K.Space = 1; } else K[code] = 1;
+          if (code === 'Space') {
+            touchFlapHeld = true; K.Space = 1;
+            if (state === 'playing') flapPresses++;
+          } else K[code] = 1;
           el.classList.add('pressed');
         });
         el.addEventListener('pointerup', release);
@@ -581,7 +646,7 @@
       tcBind('tc-flap', 'Space');
       const flapFromArena = e => {
         if (e.pointerType === 'touch' && state === 'playing') {
-          e.preventDefault(); unlockAudio(); K.Space = 1;
+          e.preventDefault(); unlockAudio(); K.Space = 1; flapPresses++;
         }
       };
       C.addEventListener('pointerdown', flapFromArena);
@@ -591,6 +656,7 @@
       function clearInput() {
         for (const key of Object.keys(K)) K[key] = 0;
         touchFlapHeld = false;
+        flapPresses = 0; flapKeysDown.clear();
         clearTouchControls.forEach(clear => clear());
         document.querySelectorAll('.tc-btn').forEach(button => button.classList.remove('pressed'));
       }
@@ -632,7 +698,7 @@
       let sfxMuted = readSetting('bjSfxOff') === '1';
       let musicMuted = readSetting('bjMusicOff') === '1';
       const samples = {}, lastPlayed = {};
-      const MIN_GAP = { flap: .06, enemyFlap: .09, land: .09, clash: .12, lava: .1, eggPop: .05, ui: .04 };
+      const MIN_GAP = { flap: .06, enemyFlap: .09, land: .09, clash: .12, lava: .1, eggPop: .05, ui: .04, mobSpawn: .25 };
 
       function audio() {
         if (!ac && !audioUnavailable) {
@@ -876,6 +942,11 @@
               tone('sine', 330, 1320, .55, .045, { pan, attack: .2 });
               noise(.5, .05, { type: 'highpass', f0: 2500, f1: 8000, pan, attack: .25 });
               break;
+            case 'mobSpawn':
+              tone('sawtooth', 82, 68, .45, .10, { pan, attack: .04, filter: 550 });
+              tone('sawtooth', 83, 69, .45, .06, { pan, attack: .06, filter: 450 });
+              tone('sine', 164, 136, .38, .04, { pan, attack: .05 });
+              break;
             case 'wave':
               noise(.22, .25, { f0: 700, f1: 90 });
               tone('sine', 95, 45, .3, .35);
@@ -1092,7 +1163,9 @@
       const PAL = {
         player: { body: '#24a', wing: '#4cf', eye: '#fff', rider: '#ff0', helm: '#fc0', beak: '#f80', lance: '#ccc' },
         bloodKnight: { body: '#060', wing: '#0a0', eye: '#ff0', rider: '#a00', helm: '#c22', beak: '#fc0', lance: '#aaa' },
+        stormRider: { body: '#145b77', wing: '#39bdd4', eye: '#fff', rider: '#164', helm: '#7ef', beak: '#fc0', lance: '#9df' },
         shadowRider: { body: '#606', wing: '#a0a', eye: '#ff0', rider: '#40a', helm: '#80f', beak: '#fc0', lance: '#88a' },
+        emberLord: { body: '#8c300b', wing: '#f98432', eye: '#fff', rider: '#a10', helm: '#ffd16a', beak: '#fc0', lance: '#fc9' },
         deathLord: { body: '#444', wing: '#888', eye: '#f00', rider: '#000', helm: '#fff', beak: '#fa0', lance: '#888' },
         ptero: { wing: '#c8743a', rider: '#9a4a24', helm: '#4a1e0c' },
       };
@@ -1136,21 +1209,24 @@
         sfx('spawn', ppx + spW / 2);
       }
 
-      // Purple shadow riders and gray death lords are the "smart" types.
+      const RIDER_TIERS = ['bloodKnight', 'stormRider', 'shadowRider', 'emberLord', 'deathLord'];
       const ENEMY_STATS = {
-        bloodKnight: { speed: .65, aggro: .25 },
-        shadowRider: { speed: 1.25, aggro: .8 },
-        deathLord: { speed: 1.6, aggro: .9 },
+        bloodKnight: { speed: .65, aggro: .25, points: 100, lead: 0, height: 0, rest: 48 },
+        stormRider: { speed: .95, aggro: .55, points: 175, lead: 6, height: 20, rest: 42 },
+        shadowRider: { speed: 1.25, aggro: .8, points: 250, lead: 15, height: 40, rest: 36 },
+        emberLord: { speed: 1.45, aggro: .85, points: 375, lead: 19, height: 48, rest: 30 },
+        deathLord: { speed: 1.6, aggro: .9, points: 500, lead: 23, height: 55, rest: 24 },
       };
       function applyStats(e) {
         const s = ENEMY_STATS[e.type] || ENEMY_STATS.bloodKnight;
         e.speed = s.speed; e.aggro = s.aggro;
-        e.smart = e.type === 'shadowRider' || e.type === 'deathLord';
+        e.tier = RIDER_TIERS.indexOf(e.type) + 1;
+        e.smart = e.tier >= 3;
+        e.lead = s.lead; e.heightAdvantage = s.height; e.restDuration = s.rest;
       }
       function pickEnemyType() {
-        if (wave >= 5 && Math.random() < .35) return 'deathLord';
-        if (wave >= 3 && Math.random() < .45) return 'shadowRider';
-        return 'bloodKnight';
+        const unlocked = Math.min(5, Math.max(1, wave));
+        return RIDER_TIERS[Math.floor(Math.random() * unlocked)];
       }
 
       // Egg rush: every fourth wave scatters eggs that hatch fast; no riders spawn.
@@ -1219,7 +1295,10 @@
           t.life--;
           if (t.life <= 0) {
             // Reveal entity
-            if (t.ent) t.ent.spawning = false;
+            if (t.ent) {
+              t.ent.spawning = false;
+              if (t.ent.alive) sfx('mobSpawn', t.ent.x + t.ent.w / 2);
+            }
             teleports.splice(i, 1);
           }
         }
@@ -1260,6 +1339,7 @@
       function tickEggs() {
         for (let i = eggs.length - 1; i >= 0; i--) {
           const eg = eggs[i];
+          if (eg.onPlat === -2 && !bridgeActive()) { eg.landed = false; eg.onPlat = -1; }
 
           if (!eg.landed) {
             // Physics — gravity, movement
@@ -1284,6 +1364,10 @@
                 eg.onPlat = j;
                 break;
               }
+            }
+            if (!eg.landed && bridgeActive() && eb >= bridgeY() && eb - eg.vy * dt <= bridgeY() + 6) {
+              eg.y = bridgeY() - EGG_H; eg.vx = 0; eg.vy = 0;
+              eg.landed = true; eg.onPlat = -2;
             }
 
             // Lava — egg destroyed
@@ -1320,7 +1404,7 @@
             const dx = (player.x + player.w / 2) - (eg.x + EGG_W / 2);
             const dy = (player.y + player.h / 2) - (eg.y + EGG_H / 2);
             if (Math.abs(dx) < 24 && Math.abs(dy) < 22) {
-              score += 250;
+              awardPoints(250);
               sfx('eggPop', eg.x);
               // Small particle burst
               addBlood(eg.x + EGG_W / 2, eg.y + EGG_H / 2, 4);
@@ -1332,7 +1416,8 @@
       }
 
       function hatchEgg(eg) {
-        const t = eg.type;
+        const tier = RIDER_TIERS.indexOf(eg.type);
+        const t = RIDER_TIERS[Math.min(4, tier + 1)];
         const e = mkEnt(t, eg.x - spW / 2 + EGG_W / 2, eg.y - spH + EGG_H);
         e.left = Math.random() < .5;
         e.ground = true;
@@ -1359,7 +1444,7 @@
           X.fillStyle = '#fff';
           X.fillRect(cx + 3, cy + 2, 3, 3);
           // Spots based on type
-          const col = eg.type === 'deathLord' ? '#888' : eg.type === 'shadowRider' ? '#a0a' : '#0a0';
+          const col = PAL[eg.type].wing;
           X.fillStyle = col;
           X.fillRect(cx + 5, cy + 5, 2, 2);
           X.fillRect(cx + 2, cy + 8, 2, 2);
@@ -1486,6 +1571,13 @@
 
       function physEnt(e, isP) {
         if (!e.alive) return;
+        if (e.handCooldown > 0) e.handCooldown--;
+        if (e.grabbed) {
+          e.vx = 0; e.vy = .25 + e.grabbed.grabT * .009;
+          e.y += e.vy * dt; e.ground = false;
+          if (e.y + e.h > H - LAVA_H) drown(e, isP);
+          return;
+        }
         if (e.flapT > 0) e.flapT--;
         if (e.flapCD > 0) e.flapCD--;
 
@@ -1516,6 +1608,9 @@
           if (e.vy < 0 && oldY >= p.y + p.h && nextY < p.y + p.h)
             resolvedY = Math.max(resolvedY, p.y + p.h);
         }
+        if (bridgeActive() && e.vy >= 0 && oldY + e.h <= bridgeY() && nextY + e.h >= bridgeY()) {
+          if (bridgeY() - e.h <= resolvedY) { resolvedY = bridgeY() - e.h; landed = -2; }
+        }
         e.y = resolvedY;
         if (isP && landed !== -1 && !e.ground && e.vy > 2.5) sfx('land', e.x);
         if (resolvedY !== nextY || landed !== -1) e.vy = 0;
@@ -1536,27 +1631,30 @@
         }
 
         // Lava
-        if (e.y + e.h > H - LAVA_H) {
-          e.alive = false;
-          killFX(e.x + e.w / 2, e.y + e.h / 2, e);
-          for (let i = 0; i < 10; i++)
-            lavaPx.push({
-              x: e.x + e.w / 2 + (Math.random() - .5) * 50,
-              y: H - LAVA_H,
-              vy: -2.5 - Math.random() * 3.5,
-              sz: 2 + Math.random() * 5,
-              life: .9 + Math.random() * .7
-            });
-          sfx('lava', e.x);
-          if (isP) loseLife();
-        }
+        if (e.y + e.h > H - LAVA_H) drown(e, isP);
+      }
+
+      function drown(e, isP) {
+        e.alive = false;
+        killFX(e.x + e.w / 2, e.y + e.h / 2, e);
+        for (let i = 0; i < 10; i++)
+          lavaPx.push({
+            x: e.x + e.w / 2 + (Math.random() - .5) * 50,
+            y: H - LAVA_H,
+            vy: -2.5 - Math.random() * 3.5,
+            sz: 2 + Math.random() * 5,
+            life: .9 + Math.random() * .7
+          });
+        sfx('lava', e.x);
+        if (isP) loseLife();
       }
 
       function doFlap(e) {
+        if (e.grabbed) return;
         if (e.flapCD > 0 || (e.type !== 'player' && e.restT > 0)) return;
         e.vy = FLAP; e.flapT = 13; e.flapCD = 8; e.ground = false;
         if (e.type !== 'player' && ++e.flapCount === 5) {
-          e.flapCount = 0; e.restT = ENEMY_REST_T;
+          e.flapCount = 0; e.restT = e.restDuration || ENEMY_REST_T;
         }
         if (e === player) sfx('flap', e.x);
         else if (!e.spawning) sfx('enemyFlap', e.x);
@@ -1581,16 +1679,16 @@
 
       // ─── Enemy AI ──────────────────────────────────────────────────────
       function aiUpdate(e) {
-        if (!e.alive) return;
+        if (!e.alive || e.grabbed) return;
         e.aiTimer--;
         const hasTarget = player && player.alive;
         const smart = !!e.smart;
 
         if (e.aiTimer <= 0) {
-          e.aiMode = hasTarget && Math.random() < (smart ? .85 : .6) ? 'chase' : 'patrol';
+          e.aiMode = hasTarget && Math.random() < e.aggro ? 'chase' : 'patrol';
           e.patrolY = H * (.24 + Math.random() * .43);
           e.patrolDir = Math.random() < .5 ? 1 : -1;
-          e.aiTimer = (smart ? 50 : 90) + Math.random() * (smart ? 80 : 120) | 0;
+          e.aiTimer = (110 - (e.tier || 1) * 12) + Math.random() * 80 | 0;
         }
 
         const spdF = e.speed;
@@ -1599,10 +1697,10 @@
           ? Math.max(H * .18, Math.min(H * .7, player.y + (e.patrolY - H * .45) * .45))
           : e.patrolY;
         let aimX = hasTarget ? player.x : e.x;
-        if (chasing && smart) {
+        if (chasing && e.tier >= 2) {
           // Smart riders hold a height advantage and lead the player's drift.
-          targetY = Math.max(H * .1, Math.min(H * .66, player.y - (e.type === 'deathLord' ? 55 : 40)));
-          aimX = player.x + player.vx * 15;
+          targetY = Math.max(H * .1, Math.min(H * .66, player.y - e.heightAdvantage));
+          aimX = player.x + player.vx * e.lead;
         }
         let direction = chasing && Math.abs(aimX - e.x) > 8
           ? Math.sign(aimX - e.x) : e.patrolDir;
@@ -1635,11 +1733,11 @@
 
       // ─── Collision ─────────────────────────────────────────────────────
       function collisions() {
-        if (!player || !player.alive || invulnT > 0) return;
+        if (!player || !player.alive || player.grabbed || invulnT > 0) return;
         const pcx = player.x + player.w / 2, pcy = player.y + player.h * .4;
 
         for (let i = enemies.length - 1; i >= 0; i--) {
-          const e = enemies[i]; if (!e.alive) continue;
+          const e = enemies[i]; if (!e.alive || e.grabbed) continue;
           const ecx = e.x + e.w / 2, ecy = e.y + e.h * .4;
           if (e.spawning) continue;
           if (Math.hypot(pcx - ecx, pcy - ecy) > 42) continue;
@@ -1737,7 +1835,7 @@
 
       function pteroCollide() {
         const p = ptero;
-        if (!p || !player || !player.alive) return;
+        if (!p || !player || !player.alive || player.grabbed) return;
         const tip = lanceTip(player), m = pteroMouth(p);
         const tipInMouth = tip.x >= m.x && tip.x <= m.x + m.w && tip.y >= m.y && tip.y <= m.y + m.h;
         const facing = player.left !== p.left;
@@ -1825,6 +1923,9 @@
 
       // ─── Particle Update ──────────────────────────────────────────────
       function tickParts() {
+        if (bridgeBurnT > 0) bridgeBurnT--;
+        for (const p of scorePopups) p.age++;
+        scorePopups = scorePopups.filter(p => p.age < 90);
         // Blood
         for (let i = bloods.length - 1; i >= 0; i--) {
           const b = bloods[i];
@@ -1894,78 +1995,78 @@
       }
 
       // ─── Lava Hands ────────────────────────────────────────────────────
-      const LAVA_HAND_ZONE = 120;  // how close to lava before hands spawn
-      const HAND_PULL = 0.18;      // downward pull force per frame
+      const LAVA_HAND_ZONE = 120;
+      const HAND_WARN = 30, HAND_ESCAPE_WINDOW = 60, HAND_ESCAPE_PRESSES = 6;
+
+      function releaseHand(h) {
+        const e = h.targetEnt;
+        e.grabbed = null; e.handCooldown = 180;
+        h.phase = 'retract'; h.life = 20; h.grip = 0;
+      }
+      function escapeFlaps(presses) {
+        const h = player && player.grabbed;
+        if (!h || presses <= 0) return;
+        if (!h.presses || h.grabT - h.burstStart > HAND_ESCAPE_WINDOW) {
+          h.presses = 0; h.burstStart = h.grabT;
+        }
+        h.presses += presses;
+        player.flapT = 13; sfx('flap', player.x);
+        if (h.presses >= HAND_ESCAPE_PRESSES) {
+          releaseHand(h);
+          player.vy = FLAP; player.flapCD = 8;
+          invulnT = Math.max(invulnT, 60);
+        }
+      }
 
       function tickLavaHands() {
         const ly = H - LAVA_H;
-        // Find lowest platform Y to cap hand reach
-        let lowestPlatY = 0;
-        for (const p of plats) if (p.y > lowestPlatY) lowestPlatY = p.y;
-        const maxReach = lowestPlatY + 10; // hands can't go above lowest platform
-
-        // Check all alive entities near lava
+        if (bridgeActive()) { lavaHands = []; return; }
         const ents = [];
         if (player && player.alive) ents.push(player);
         for (const e of enemies) if (e.alive && !e.spawning) ents.push(e);
-
         for (const ent of ents) {
           const bottom = ent.y + ent.h;
           const dist = ly - bottom;
-
-          // Skip if entity is above a platform (standing on one or above one)
-          let abovePlat = false;
-          for (const p of plats) {
-            if (ent.x + ent.w > p.x && ent.x < p.x + p.w && bottom <= p.y + 5) {
-              abovePlat = true; break;
-            }
-          }
-
-          const existing = lavaHands.find(h => h.targetEnt === ent);
-
-          if (dist < 80 && dist > 0 && !existing && !abovePlat) {
-            const chance = .006 + (1 - dist / 80) * .015;
-            if (Math.random() < chance) {
-              lavaHands.push({
-                x: ent.x + ent.w / 2 + (Math.random() - .5) * 20,
-                targetEnt: ent,
-                grip: 0,
-                reachY: ly,
-                life: 150 + Math.random() * 100 | 0,
-                fingerAnim: 0
-              });
-            }
-          }
-
-          if (existing) {
-            const h = existing;
-            // Release if entity moved above a platform
-            if (abovePlat) { lavaHands.splice(lavaHands.indexOf(h), 1); continue; }
-            h.fingerAnim += .15;
-            h.x += (ent.x + ent.w / 2 - h.x) * .08;
-
-            if (h.grip < 1) {
-              h.reachY -= 1.5;
-              // Don't reach above the lowest platform
-              if (h.reachY < maxReach) { h.life = 0; }
-              if (h.reachY <= bottom + 5) { h.grip = 1; sfx('lavaGrab', h.x); }
-            } else {
-              ent.vy += HAND_PULL * dt;
-              h.reachY = bottom + 3;
-              if (ent.vy < -3) h.life -= 8;
-              h.life -= 1;
-            }
-
-            h.life--;
-            if (h.life <= 0) {
-              lavaHands.splice(lavaHands.indexOf(h), 1);
-            }
+          const blocked = plats.some(p => ent.x + ent.w > p.x && ent.x < p.x + p.w &&
+            bottom <= p.y + 5 && p.y < ly);
+          if (dist > 0 && dist < LAVA_HAND_ZONE && !blocked && !ent.handCooldown &&
+              !(ent === player && invulnT > 0) && !lavaHands.some(h => h.targetEnt === ent)) {
+            lavaHands.push({ x: ent.x + ent.w / 2, targetEnt: ent, phase: 'warn',
+              timer: HAND_WARN, reachY: ly, grip: 0, life: 160, fingerAnim: 0,
+              grabT: 0, presses: 0, burstStart: 0 });
           }
         }
-
-        // Remove hands whose target died
         for (let i = lavaHands.length - 1; i >= 0; i--) {
-          if (!lavaHands[i].targetEnt.alive) lavaHands.splice(i, 1);
+          const h = lavaHands[i], e = h.targetEnt;
+          h.fingerAnim += .15;
+          if (!e.alive) { e.grabbed = null; lavaHands.splice(i, 1); continue; }
+          if (h.phase === 'retract') {
+            h.reachY += 8;
+            if (--h.life <= 0) lavaHands.splice(i, 1);
+            continue;
+          }
+          if (h.phase === 'grab') {
+            h.grabT++; h.reachY = e.y + e.h;
+            if (h.grabT - h.burstStart > HAND_ESCAPE_WINDOW) h.presses = 0;
+            if (h.grabT >= 144) { drown(e, e === player); e.grabbed = null; }
+            continue;
+          }
+          const bottom = e.y + e.h;
+          const blocked = plats.some(p => e.x + e.w > p.x && e.x < p.x + p.w &&
+            bottom <= p.y + 5 && p.y < ly);
+          if (blocked || bottom < ly - LAVA_HAND_ZONE || --h.life <= 0) {
+            releaseHand(h); continue;
+          }
+          if (h.phase === 'warn') {
+            if (--h.timer <= 0) h.phase = 'reach';
+            continue;
+          }
+          h.reachY = Math.max(ly - LAVA_HAND_ZONE, h.reachY - 5);
+          if (Math.abs(e.x + e.w / 2 - h.x) < 30 && h.reachY <= bottom + 4) {
+            h.phase = 'grab'; h.grip = 1; h.grabT = 0; h.burstStart = 0;
+            e.grabbed = h; e.vx = 0; e.vy = 0; e.ground = false;
+            sfx('lavaGrab', h.x);
+          }
         }
       }
 
@@ -1974,20 +2075,28 @@
         for (const h of lavaHands) {
           const hx = h.x | 0;
           const hy = h.reachY | 0;
+          if (h.phase === 'warn') {
+            X.fillStyle = frame % 10 < 5 ? '#fff0a0' : '#ff691e';
+            X.fillRect(hx - 18, ly - 5, 36, 5);
+            X.save(); X.font = 'bold 16px monospace'; X.textAlign = 'center';
+            X.strokeStyle = '#000'; X.lineWidth = 4; X.strokeText('!', hx, ly - 14);
+            X.fillText('!', hx, ly - 14); X.restore();
+            continue;
+          }
           const armLen = ly - hy;
           if (armLen <= 0) continue;
 
           // Arm — rising from lava
           const glow = h.grip >= 1 ? 'rgba(255,100,0,.7)' : 'rgba(255,60,0,.5)';
-          X.fillStyle = '#a20';
+          X.fillStyle = '#aa9c7d';
           X.fillRect(hx - 3, hy + 8, 6, armLen - 8);
-          X.fillStyle = '#c40';
+          X.fillStyle = '#e8dfbd';
           X.fillRect(hx - 2, hy + 10, 4, armLen - 10);
 
           // Hand / claw — 5 fingers
           const grab = h.grip >= 1;
           const spread = grab ? 3 + Math.sin(h.fingerAnim) * 1 : 6;
-          X.fillStyle = grab ? '#f80' : '#e50';
+          X.fillStyle = '#eee4c6';
           // Palm
           X.fillRect(hx - 5, hy + 2, 10, 7);
           // Fingers
@@ -1998,12 +2107,24 @@
             // Fingertip glow
             X.fillStyle = 'rgba(255,200,0,.6)';
             X.fillRect(fx - 1, hy - 4 + curl, 2, 2);
-            X.fillStyle = grab ? '#f80' : '#e50';
+            X.fillStyle = '#eee4c6';
           }
 
           // Glow around hand
           X.fillStyle = glow;
           X.fillRect(hx - 8, hy - 2, 16, 4);
+          if (grab && h.targetEnt === player) {
+            const scale = uiScale();
+            const x = Math.max(75 * scale, Math.min(W - 75 * scale, hx));
+            const y = Math.max(64 * scale, hy - player.h - 25 * scale);
+            X.save(); X.font = `bold ${14 * scale}px monospace`; X.textAlign = 'center';
+            X.fillStyle = '#fff'; X.strokeStyle = '#000'; X.lineWidth = 4 * scale;
+            const label = `TAP FLAP! ${h.presses}/${HAND_ESCAPE_PRESSES}`;
+            X.strokeText(label, x, y); X.fillText(label, x, y);
+            X.fillStyle = '#111'; X.fillRect(x - 45 * scale, y + 6 * scale, 90 * scale, 7 * scale);
+            X.fillStyle = '#ffe66d'; X.fillRect(x - 45 * scale, y + 6 * scale, 90 * scale * h.presses / HAND_ESCAPE_PRESSES, 7 * scale);
+            X.restore();
+          }
         }
       }
 
@@ -2083,6 +2204,13 @@
         if (e.spawning) return; // hidden during teleport
         if (e === player && invulnT > 0 && invulnT % 8 < 4) return;
         X.drawImage(spr(e.type, e.flap, e.left), e.x, e.y, e.w, e.h);
+        if (e !== player && e.tier) {
+          const scale = uiScale();
+          X.save(); X.font = `bold ${12 * scale}px monospace`; X.textAlign = 'center';
+          X.fillStyle = '#000'; X.fillRect(e.x + e.w / 2 - 7 * scale, e.y - 15 * scale, 14 * scale, 14 * scale);
+          X.fillStyle = '#fff'; X.fillText(String(e.tier), e.x + e.w / 2, e.y - 4 * scale);
+          X.restore();
+        }
       }
 
       function drawParts() {
@@ -2435,8 +2563,9 @@
       }
       function advanceWave() {
         rushBonus = rushActive && rushHatched === 0 ? RUSH_BONUS : 0;
-        if (rushBonus) { score += rushBonus; sfx('rushWin'); }
+        if (rushBonus) { awardPoints(rushBonus); sfx('rushWin'); }
         wave++; state = 'waveAnnounce'; waveT = 130;
+        if (wave === 5) { bridgeBurnT = 130; sfx('lava'); }
         // New layout: rebuild and re-materialize the player on the new base.
         if (applyLayoutForWave() && player && player.alive) mkPlayer();
         spawnWave(); sfx('wave');
@@ -2446,20 +2575,23 @@
         resetChain(); clearInput(); droneOn(); newBest = false;
         state = 'waveAnnounce'; wave = 1; score = 0; lives = 3;
         stains = []; bloods = []; gores = []; bones = []; fragments = []; teleports = []; eggs = []; lavaHands = [];
-        ptero = null; rushBonus = 0;
+        ptero = null; rushBonus = 0; bridgeBurnT = 0; scorePopups = [];
         applyLayoutForWave();
         mkPlayer(); spawnWave(); waveT = 130; sfx('wave');
       }
 
       function updatePlaying() {
         if (player && player.alive) {
-          if (K.KeyA || K.ArrowLeft) { player.vx -= HACC; player.left = true; }
-          if (K.KeyD || K.ArrowRight) { player.vx += HACC; player.left = false; }
+          if (player.grabbed) escapeFlaps(flapPresses);
+          if (!player.grabbed && (K.KeyA || K.ArrowLeft)) { player.vx -= HACC; player.left = true; }
+          if (!player.grabbed && (K.KeyD || K.ArrowRight)) { player.vx += HACC; player.left = false; }
           if (Math.abs(player.vx) > MAXVX) player.vx = Math.sign(player.vx) * MAXVX;
           if (K.Space || K.KeyW || touchFlapHeld) { doFlap(player); K.Space = 0; K.KeyW = 0; }
+          flapPresses = 0;
           physEnt(player, true);
           if (state !== 'playing') return;
         }
+        flapPresses = 0;
 
         if ((!player || !player.alive) && lives > 0) {
           respawnT--;
@@ -2484,7 +2616,8 @@
         tickLavaHands();
 
         // Wave complete when all enemies dead AND no eggs remain
-        if (state === 'playing' && enemies.every(e => !e.alive) && eggs.length === 0) advanceWave();
+        if (state === 'playing' && !(player && player.alive && player.grabbed) &&
+            enemies.every(e => !e.alive) && eggs.length === 0) advanceWave();
       }
 
       function draw() {
@@ -2508,6 +2641,7 @@
             drawParts(); drawFlash(); drawScanlines();
             break;
         }
+        drawBridge(); drawScorePopups();
         X.restore();
       }
 

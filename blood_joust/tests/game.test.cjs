@@ -48,9 +48,12 @@ function game({ AudioContext, storage, width = 960, height = 640 } = {}) {
     mkEnt, physEnt, doFlap, aiUpdate, collisions, updatePlaying, startGame, loop, drawBirdPx, resize, loseLife,
     advanceChain, pauseGame, resumeGame, syncHUD, tickEggs, spawnWave, advanceWave, buildPlatforms, layoutForWave,
     applyStats, updatePtero, pteroCollide, spawnPtero, pteroMouth, lanceTip, isRushWave, drawPtero, LAYOUTS,
+    awardPoints, awardKill, tickParts, tickTeleports, hatchEgg, spawnEgg, draw, drawScorePopups,
+    tickLavaHands, escapeFlaps, bridgeActive, bridgeY, RIDER_TIERS, ENEMY_STATS, PAL,
     consts: { G, FLAP, MAXVY, DIVE, spW, spH, EGG_W, EGG_H, LAVA_H, RUSH_HATCH, RUSH_BONUS, PTERO_SCORE, LAYOUT_EVERY },
     get: () => ({ player, enemies, plats, state, lives, score, fragments, teleports, frame, K, touchFlapHeld, chainCount, chainRemaining,
-      wave, eggs, ptero, pteroT, layoutIdx, rushActive, rushTotal, rushHatched, invulnT, W, H }),
+      wave, eggs, ptero, pteroT, layoutIdx, rushActive, rushTotal, rushHatched, invulnT, W, H,
+      scorePopups, lavaHands, bridgeBurnT, flapPresses }),
     set: v => {
       if ('player' in v) player = v.player;
       if ('enemies' in v) enemies = v.enemies;
@@ -81,6 +84,229 @@ function joust(t, type = 'bloodKnight') {
   });
   t.collisions();
 }
+
+test('every award produces exactly one popup beside the player, including chains and bonuses', () => {
+  const { t, context2d } = game();
+  t.startGame();
+  joust(t); joust(t, 'shadowRider');
+  const p = t.get().player;
+  t.set({ eggs: [{ x: p.x + 20, y: p.y + 10, landed: true, hatchTimer: 0, type: 'bloodKnight' }] });
+  t.tickEggs();
+  assert.deepEqual(Array.from(t.get().scorePopups, x => x.points), [100, 500, 250]);
+  assert.equal(t.get().score, 850);
+  assert.equal(t.get().scorePopups[2].x, p.x + p.w / 2);
+  t.set({ wave: 4 }); t.spawnWave(); t.set({ eggs: [] }); t.advanceWave();
+  assert.equal(t.get().scorePopups.at(-1).points, 1000);
+  assert.equal(t.get().score, 1850);
+  t.awardKill('ptero');
+  assert.equal(t.get().scorePopups.at(-1).points, 3000);
+  assert.equal(t.get().score, 4850);
+  const labels = [];
+  context2d.strokeText = (txt, x, y) => labels.push({ txt, x, y });
+  t.drawScorePopups();
+  assert.equal(labels.length, 5);
+  assert.ok(labels.every(x => x.x > 0 && x.x < t.get().W && x.y >= 28));
+  for (const popup of t.get().scorePopups) { popup.y = 0; popup.x = 300; }
+  labels.length = 0; t.drawScorePopups();
+  assert.equal(new Set(labels.map(x => x.y)).size, 5, 'awards remain separated near the HUD');
+  t.pauseGame(); const age = t.get().scorePopups[0].age;
+  t.loop(100); t.loop(200);
+  assert.equal(t.get().scorePopups[0].age, age);
+  t.resumeGame();
+  for (let i = 0; i < 90; i++) t.tickParts();
+  assert.equal(t.get().scorePopups.length, 0);
+  t.startGame(); assert.equal(t.get().scorePopups.length, 0);
+});
+
+test('five rider tiers improve speed, aim, chase likelihood and recovery; eggs promote and cap', () => {
+  const { t } = game();
+  let previous;
+  for (const [i, type] of Array.from(t.RIDER_TIERS).entries()) {
+    const e = t.mkEnt(type, 100, 200); t.applyStats(e);
+    if (previous) {
+      assert.ok(e.speed > previous.speed);
+      assert.ok(e.aggro > previous.aggro);
+      assert.ok(e.lead > previous.lead);
+      assert.ok(e.heightAdvantage > previous.heightAdvantage);
+      assert.ok(e.restDuration < previous.restDuration);
+    }
+    previous = e;
+    t.set({ enemies: [] });
+    t.hatchEgg({ type, x: 100, y: 220, onPlat: 0 });
+    assert.equal(t.get().enemies[0].type, t.RIDER_TIERS[Math.min(4, i + 1)]);
+    assert.equal(t.get().enemies[0].tier, Math.min(5, i + 2));
+    assert.equal(t.get().enemies[0].spawning, true);
+    assert.notEqual(t.PAL[type].wing, i ? t.PAL[t.RIDER_TIERS[i - 1]].wing : '');
+  }
+  t.set({ eggs: [] });
+  t.spawnEgg(100, 200, 0, 0, 'emberLord');
+  assert.equal(t.get().eggs[0].type, 'emberLord', 'egg retains source tier');
+});
+
+test('higher tiers actually chase more frequently, accelerate harder and recover sooner', () => {
+  const { t, sandbox } = game();
+  const p = t.mkEnt('player', 500, 250);
+  t.set({ player: p, plats: [] });
+  let lastChases = -1, lastVelocity = 0, lastRest = 100;
+  for (const type of t.RIDER_TIERS) {
+    let chases = 0;
+    for (let sample = 0; sample < 100; sample++) {
+      sandbox.Math.random = () => sample / 100;
+      const e = t.mkEnt(type, 100, 200); t.applyStats(e); e.aiTimer = 0;
+      t.aiUpdate(e); if (e.aiMode === 'chase') chases++;
+    }
+    assert.ok(chases > lastChases); lastChases = chases;
+    const e = t.mkEnt(type, 100, 200); t.applyStats(e);
+    e.aiMode = 'chase'; e.aiTimer = 1000;
+    sandbox.Math.random = () => .5;
+    t.aiUpdate(e); assert.ok(e.vx > lastVelocity); lastVelocity = e.vx;
+    e.flapCount = 0;
+    for (let i = 0; i < 5; i++) { e.flapCD = 0; e.restT = 0; t.doFlap(e); }
+    assert.ok(e.restT > 0 && e.restT < lastRest); lastRest = e.restT;
+  }
+});
+
+test('mob materialization has one bounded electronic cue, rate-limited and muted', () => {
+  const tones = [];
+  const { FakeAudioContext } = fakeAudio();
+  class AudioContext extends FakeAudioContext {
+    createOscillator() {
+      const n = super.createOscillator();
+      n.start = at => tones.push({ start: at });
+      n.stop = at => { tones.at(-1).stop = at; };
+      return n;
+    }
+  }
+  const { t } = game({ AudioContext });
+  const e = t.mkEnt('bloodKnight', 100, 100); e.spawning = true;
+  t.set({ wave: 2 }); t.spawnWave();
+  tones.length = 0;
+  for (let i = 0; i < 45; i++) t.tickTeleports();
+  assert.ok(tones.length > 0);
+  assert.ok(tones.every(x => x.stop - x.start <= .5), 'no persistent drone');
+  const before = tones.length;
+  t.sfx('mobSpawn', 100); assert.equal(tones.length, before, 'same-time sound limited');
+  t.setSfxMuted(true); t.sfx('mobSpawn', 100); assert.equal(tones.length, before);
+});
+
+test('bridge protects both sides through wave 4, burns for 5 and resets across arenas', () => {
+  for (const size of [{ width: 960, height: 640 }, { width: 390, height: 844 }]) {
+    const { t } = game(size);
+    for (let layoutIdx = 0; layoutIdx < 4; layoutIdx++) {
+      for (const wave of [1, 4, 5]) {
+        t.set({ layoutIdx, wave, player: null });
+        for (const x of [2, t.get().W - t.consts.spW - 2]) {
+          const e = t.mkEnt('bloodKnight', x, t.bridgeY() - t.consts.spH - 12);
+          for (let i = 0; i < 60; i++) t.physEnt(e, false);
+          assert.equal(e.alive, wave <= 4);
+          if (wave <= 4) assert.equal(e.y + e.h, t.bridgeY());
+        }
+      }
+    }
+    t.set({ wave: 4, eggs: [] }); t.advanceWave();
+    assert.equal(t.get().bridgeBurnT, 130); assert.equal(t.bridgeActive(), false);
+    t.startGame(); assert.equal(t.bridgeActive(), true); assert.equal(t.get().bridgeBurnT, 0);
+  }
+});
+
+function waitingHand(t, type = 'player') {
+  t.set({ state: 'playing', wave: 5, plats: [], invulnT: 0,
+    player: t.mkEnt('player', 100, 100),
+    enemies: [Object.assign(t.mkEnt('bloodKnight', 800, 100), { spawning: true })] });
+  const e = type === 'player' ? t.get().player : t.mkEnt(type, 100, 100);
+  e.y = t.get().H - t.consts.LAVA_H - e.h - 80;
+  if (type !== 'player') t.set({ enemies: [e] });
+  t.tickLavaHands();
+  return e;
+}
+
+function grabHand(t, e) {
+  for (let i = 0; i < 60 && !e.grabbed; i++) t.tickLavaHands();
+  assert.ok(e.grabbed);
+  return e.grabbed;
+}
+
+test('hands telegraph, can be dodged, respect platforms and the bridge, and grab both rider types', () => {
+  const { t } = game();
+  let e = waitingHand(t);
+  assert.equal(t.get().lavaHands[0].phase, 'warn');
+  for (let i = 0; i < 28; i++) t.tickLavaHands();
+  assert.equal(e.grabbed, undefined);
+  e.x += 150;
+  for (let i = 0; i < 160; i++) t.tickLavaHands();
+  assert.ok(!e.grabbed, 'warning can be dodged sideways');
+  t.buildPlatforms(); t.startGame(); e = waitingHand(t);
+  t.set({ plats: [{ x: 0, y: e.y + e.h + 5, w: 960, h: 22 }] });
+  t.tickLavaHands(); assert.ok(!e.grabbed);
+  assert.equal(t.get().lavaHands[0].phase, 'retract');
+  t.set({ wave: 4 }); t.tickLavaHands(); assert.equal(t.get().lavaHands.length, 0);
+  for (const type of ['player', 'deathLord']) {
+    t.buildPlatforms(); t.startGame(); e = waitingHand(t, type); grabHand(t, e);
+    const score = t.get().score;
+    for (let i = 0; i < 160 && e.alive; i++) {
+      t.aiUpdate(e); t.doFlap(e); t.physEnt(e, type === 'player'); t.tickLavaHands();
+    }
+    assert.equal(e.alive, false); assert.equal(t.get().score, score);
+    assert.equal(t.get().chainCount, 0);
+    if (type === 'player') assert.equal(t.get().lives, 2);
+  }
+});
+
+test('escape needs six fresh presses within a burst, not held key repeat; pause clears queued taps', () => {
+  const { t, sandbox } = game();
+  const e = waitingHand(t); const h = grabHand(t, e);
+  const press = repeat => sandbox.onkeydown({ code: 'Space', repeat, preventDefault() {} });
+  press(false);
+  for (let i = 0; i < 20; i++) { press(true); t.updatePlaying(); }
+  assert.equal(h.presses, 1); assert.equal(e.grabbed, h);
+  sandbox.onkeyup({ code: 'Space' });
+  h.grabT = 65; t.tickLavaHands(); assert.equal(h.presses, 0);
+  for (let i = 0; i < 5; i++) {
+    press(false); sandbox.onkeyup({ code: 'Space' }); t.updatePlaying();
+  }
+  assert.equal(h.presses, 5); assert.equal(e.grabbed, h);
+  press(false); t.pauseGame();
+  assert.equal(t.get().flapPresses, 0);
+  t.resumeGame();
+  press(false); sandbox.onkeyup({ code: 'Space' }); t.updatePlaying();
+  assert.equal(e.grabbed, null); assert.equal(h.phase, 'retract');
+  assert.ok(e.vy < 0); assert.ok(e.handCooldown > 0);
+});
+
+test('touch taps escape but a held touch flap cannot; grabbed mobs cannot be lanced for points', () => {
+  const { t, element } = game();
+  const e = waitingHand(t); const h = grabHand(t, e);
+  const button = element('tc-flap');
+  const event = { pointerId: 1, preventDefault() {} };
+  button.events.pointerdown(event);
+  for (let i = 0; i < 12; i++) t.updatePlaying();
+  assert.equal(h.presses, 1);
+  for (let i = 0; i < 5; i++) {
+    button.events.pointerup(event); button.events.pointerdown(event); t.updatePlaying();
+  }
+  assert.equal(e.grabbed, null);
+  t.buildPlatforms(); t.startGame();
+  const mob = waitingHand(t, 'shadowRider'); grabHand(t, mob);
+  const p = t.get().player; p.x = mob.x; p.y = mob.y - 20;
+  t.collisions();
+  assert.equal(mob.alive, true); assert.equal(t.get().score, 0);
+  t.buildPlatforms(); t.startGame(); assert.equal(t.get().lavaHands.length, 0);
+});
+
+test('wave completion cannot rescue a grabbed player, and bridge eggs fall when it burns', () => {
+  const { t } = game();
+  const p = waitingHand(t); grabHand(t, p);
+  t.set({ enemies: [], eggs: [] }); t.updatePlaying();
+  assert.equal(t.get().wave, 5);
+  assert.ok(p.grabbed);
+  t.set({ wave: 4, player: null, eggs: [] });
+  t.spawnEgg(100, t.bridgeY() - t.consts.EGG_H - 1, 0, 1, 'bloodKnight');
+  t.tickEggs();
+  assert.equal(t.get().eggs[0].onPlat, -2);
+  assert.equal(t.get().eggs[0].landed, true);
+  t.set({ wave: 5 }); t.tickEggs();
+  assert.equal(t.get().eggs[0].landed, false);
+});
 
 test('joust chains multiply each enemy base score and refresh the window', () => {
   const { t, element } = game();
